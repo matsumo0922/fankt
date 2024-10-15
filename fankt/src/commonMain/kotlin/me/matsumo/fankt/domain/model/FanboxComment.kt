@@ -13,5 +13,5 @@ data class FanboxComment(
     val parentCommentId: FanboxCommentId,
     val rootCommentId: FanboxCommentId,
     val replies: List<FanboxComment>,
-    val user: FanboxUser,
+    val user: FanboxUser?,
 )

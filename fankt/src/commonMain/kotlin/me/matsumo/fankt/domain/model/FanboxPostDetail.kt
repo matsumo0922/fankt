@@ -14,7 +14,6 @@ data class FanboxPostDetail(
     val hasAdultContent: Boolean,
     val imageForShare: String,
     val isLiked: Boolean,
-    var isBookmarked: Boolean,
     val isRestricted: Boolean,
     val likeCount: Int,
     val tags: List<String>,
@@ -22,9 +21,9 @@ data class FanboxPostDetail(
     val publishedDatetime: Instant,
     val nextPost: OtherPost?,
     val prevPost: OtherPost?,
-    val user: FanboxUser,
+    val user: FanboxUser?,
 ) {
-    val browserUrl get() = "https://www.fanbox.cc/@${user.creatorId}/posts/$id"
+    val browserUrl get() = user?.creatorId?.let { "https://www.fanbox.cc/@$it/posts/$id" }
 
     sealed interface Body {
         val imageItems
