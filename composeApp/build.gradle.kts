@@ -8,7 +8,7 @@ plugins {
 }
 
 android {
-    namespace = "me.matsumo.fankt"
+    namespace = "me.matsumo.fankt.sample"
 
     // https://youtrack.jetbrains.com/issue/CMP-6707/Compose-Multiplatform-Resources-and-Kotlin-2.1.0-Beta1-SyncComposeResourcesForIosTask-configuration-failure
     tasks.findByName("checkSandboxAndWriteProtection")?.dependsOn("syncComposeResourcesForIos")

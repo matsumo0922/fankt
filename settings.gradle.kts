@@ -1,5 +1,4 @@
 rootProject.name = "fankt"
-enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
 
 pluginManagement {
     includeBuild("build-logic")
@@ -26,3 +25,4 @@ dependencyResolutionManagement {
 }
 
 include(":composeApp")
+include(":fankt")

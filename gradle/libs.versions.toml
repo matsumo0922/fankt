@@ -72,6 +72,7 @@ composeRichEditor = "1.0.0-rc09"
 autolink = "1.1.1"
 windowSize = "0.3.2"
 detekt = "1.23.7"
+ktorfit = "2.1.0"
 libraries = "11.2.3"
 buildKonfig = "0.15.1"
 cupertino = "0.1.0-alpha04"
@@ -82,6 +83,9 @@ firebase = "33.4.0"
 leakCanary = "2.12"
 flipper = "0.240.0"
 napier = "2.7.1"
+junit = "4.13.2"
+junitVersion = "1.1.5"
+espressoCore = "3.5.1"
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "gradle" }
@@ -91,6 +95,7 @@ kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", versi
 ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
 gms = { id = "com.google.gms.google-services", version.ref = "gms" }
 detekt = { id = "io.gitlab.arturbosch.detekt", version.ref = "detekt" }
+ktorfit = { id = "de.jensklingenberg.ktorfit", version.ref = "ktorfit" }
 firebase-crashlytics = { id = "com.google.firebase.crashlytics", version = "3.0.2" }
 libraries = { id = "com.mikepenz.aboutlibraries.plugin", version.ref = "libraries" }
 kmp = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
@@ -169,6 +174,10 @@ cupertino-native = { module = "io.github.alexzhirkevich:cupertino-native", versi
 cupertino-adaptive = { module = "io.github.alexzhirkevich:cupertino-adaptive", version.ref = "cupertino" }
 cupertino-icons = { module = "io.github.alexzhirkevich:cupertino-icons-extended", version.ref = "cupertino" }
 
+# Ktorfit
+ktorfit = { module = "de.jensklingenberg.ktorfit:ktorfit-lib", version.ref = "ktorfit" }
+
+
 # Google
 play-review = { module = "com.google.android.play:review-ktx", version.ref = "playReview" }
 play-update = { module = "com.google.android.play:app-update-ktx", version.ref = "playUpdate" }
@@ -236,6 +245,9 @@ facebook-noop = { module = "com.facebook.flipper:flipper-noop", version.ref = "f
 leakcanary = { module = "com.squareup.leakcanary:leakcanary-android", version.ref = "leakCanary" }
 napier = { module = "io.github.aakira:napier", version.ref = "napier" }
 twitter-compose-rule = { module = "com.twitter.compose.rules:detekt", version.ref = "twitterComposeRule" }
+junit = { group = "junit", name = "junit", version.ref = "junit" }
+androidx-junit = { group = "androidx.test.ext", name = "junit", version.ref = "junitVersion" }
+androidx-espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espressoCore" }
 
 [bundles]
 infra-api = [
