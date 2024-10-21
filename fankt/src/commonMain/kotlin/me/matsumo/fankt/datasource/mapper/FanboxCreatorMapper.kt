@@ -15,18 +15,18 @@ internal fun FanboxCreatorEntity.translate(): FanboxCreator {
     )
 }
 
-internal fun FanboxCreatorDetailEntity.translate(): FanboxCreatorDetail {
+internal fun FanboxCreatorDetailEntity.Body.translate(): FanboxCreatorDetail {
     return FanboxCreatorDetail(
-        creatorId = FanboxCreatorId(body.creatorId),
-        coverImageUrl = body.coverImageUrl,
-        description = body.description,
-        hasAdultContent = body.hasAdultContent,
-        hasBoothShop = body.hasBoothShop,
-        isAcceptingRequest = body.isAcceptingRequest,
-        isFollowed = body.isFollowed,
-        isStopped = body.isStopped,
-        isSupported = body.isSupported,
-        profileItems = body.profileItems.map { profileItem ->
+        creatorId = FanboxCreatorId(creatorId),
+        coverImageUrl = coverImageUrl,
+        description = description,
+        hasAdultContent = hasAdultContent,
+        hasBoothShop = hasBoothShop,
+        isAcceptingRequest = isAcceptingRequest,
+        isFollowed = isFollowed,
+        isStopped = isStopped,
+        isSupported = isSupported,
+        profileItems = profileItems.map { profileItem ->
             FanboxCreatorDetail.ProfileItem(
                 id = profileItem.id,
                 imageUrl = profileItem.imageUrl,
@@ -34,13 +34,13 @@ internal fun FanboxCreatorDetailEntity.translate(): FanboxCreatorDetail {
                 type = profileItem.type,
             )
         },
-        profileLinks = body.profileLinks.map { profileLink ->
+        profileLinks = profileLinks.map { profileLink ->
             FanboxCreatorDetail.ProfileLink(
                 url = profileLink,
                 link = FanboxCreatorDetail.Platform.fromUrl(profileLink),
             )
         },
-        user = body.user?.translate(),
+        user = user?.translate(),
     )
 }
 
