@@ -13,6 +13,6 @@ data class FanboxCreatorPlanDetail(
         val paidAmount: Int,
         val transactionDatetime: Instant,
         val targetMonth: String,
-        val user: FanboxUser,
+        val user: FanboxUser?,
     )
 }

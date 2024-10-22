@@ -5,6 +5,7 @@ import de.jensklingenberg.ktorfit.http.GET
 import de.jensklingenberg.ktorfit.http.POST
 import de.jensklingenberg.ktorfit.http.Query
 import kotlinx.serialization.json.JsonObject
+import me.matsumo.fankt.domain.entity.FanboxCreatorPostListEntity
 import me.matsumo.fankt.domain.entity.FanboxPostCommentListEntity
 import me.matsumo.fankt.domain.entity.FanboxPostDetailEntity
 import me.matsumo.fankt.domain.entity.FanboxPostListEntity
@@ -32,7 +33,7 @@ internal interface FanboxPostApi {
         @Query("limit") loadSize: String,
         @Query("maxPublishedDatetime") maxPublishedDatetime: String?,
         @Query("maxId") maxId: String?
-    ): FanboxPostListEntity
+    ): FanboxCreatorPostListEntity
 
     @GET("post.info")
     suspend fun getPostDetail(

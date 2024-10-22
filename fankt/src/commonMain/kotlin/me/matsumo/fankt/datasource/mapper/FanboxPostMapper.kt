@@ -3,11 +3,13 @@ package me.matsumo.fankt.datasource.mapper
 import io.github.aakira.napier.Napier
 import io.ktor.http.Url
 import kotlinx.datetime.Instant
+import me.matsumo.fankt.domain.FanboxCursor
 import me.matsumo.fankt.domain.PageCursorInfo
 import me.matsumo.fankt.domain.PageNumberInfo
 import me.matsumo.fankt.domain.PageOffsetInfo
 import me.matsumo.fankt.domain.entity.FanboxCommentListEntity
 import me.matsumo.fankt.domain.entity.FanboxCoverEntity
+import me.matsumo.fankt.domain.entity.FanboxCreatorPostListEntity
 import me.matsumo.fankt.domain.entity.FanboxPostCommentListEntity
 import me.matsumo.fankt.domain.entity.FanboxPostDetailEntity
 import me.matsumo.fankt.domain.entity.FanboxPostEntity
@@ -27,6 +29,13 @@ internal fun FanboxPostListEntity.translate(): PageCursorInfo<FanboxPost> {
     return PageCursorInfo(
         contents = body.items.map { it.translate() },
         cursor = body.nextUrl?.translateToCursor(),
+    )
+}
+
+internal fun FanboxCreatorPostListEntity.translate(nextCursor: FanboxCursor?): PageCursorInfo<FanboxPost> {
+    return PageCursorInfo(
+        contents = body.map { it.translate() },
+        cursor = nextCursor,
     )
 }
 

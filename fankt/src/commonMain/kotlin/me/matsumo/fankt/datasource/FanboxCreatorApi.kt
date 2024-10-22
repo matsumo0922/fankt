@@ -14,7 +14,7 @@ import me.matsumo.fankt.domain.entity.FanboxCreatorTagListEntity
 internal interface FanboxCreatorApi {
 
     @GET("creator.get")
-    suspend fun getCreator(
+    suspend fun getCreatorDetail(
         @Query("creatorId") creatorId: String
     ): FanboxCreatorDetailEntity
 
