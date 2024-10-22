@@ -175,6 +175,7 @@ internal fun FanboxPostDetailEntity.translate(): FanboxPostDetail {
     return FanboxPostDetail(
         id = FanboxPostId(body.id),
         title = body.title,
+        creatorId = FanboxCreatorId(body.creatorId),
         publishedDatetime = Instant.parse(body.publishedDatetime),
         updatedDatetime = Instant.parse(body.updatedDatetime),
         isLiked = body.isLiked,

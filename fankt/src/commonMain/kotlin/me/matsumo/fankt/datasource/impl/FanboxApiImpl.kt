@@ -1,7 +1,8 @@
-package me.matsumo.fankt.repository
+package me.matsumo.fankt.datasource.impl
 
 import me.matsumo.fankt.common.toInt
 import me.matsumo.fankt.common.toJsonObject
+import me.matsumo.fankt.datasource.FanboxApi
 import me.matsumo.fankt.datasource.FanboxCreatorApi
 import me.matsumo.fankt.datasource.FanboxPostApi
 import me.matsumo.fankt.datasource.FanboxSearchApi
@@ -26,15 +27,16 @@ import me.matsumo.fankt.domain.model.id.FanboxCommentId
 import me.matsumo.fankt.domain.model.id.FanboxCreatorId
 import me.matsumo.fankt.domain.model.id.FanboxPostId
 
-internal class FanboxRepository(
+internal class FanboxApiImpl(
     private val postApi: FanboxPostApi,
     private val creatorApi: FanboxCreatorApi,
     private val userApi: FanboxUserApi,
     private val searchApi: FanboxSearchApi,
-) {
-    suspend fun getHomePosts(
+): FanboxApi {
+
+    override suspend fun getHomePosts(
         cursor: FanboxCursor?,
-        loadSize: Int = cursor?.limit ?: DEFAULT_LOAD_SIZE,
+        loadSize: Int,
     ): PageCursorInfo<FanboxPost> {
         return postApi.getHomePosts(
             loadSize = loadSize.toString(),
@@ -43,9 +45,9 @@ internal class FanboxRepository(
         ).translate()
     }
 
-    suspend fun getSupportedPosts(
+    override suspend fun getSupportedPosts(
         cursor: FanboxCursor,
-        loadSize: Int = cursor.limit ?: DEFAULT_LOAD_SIZE,
+        loadSize: Int,
     ): PageCursorInfo<FanboxPost> {
         return postApi.getSupportedPosts(
             loadSize = loadSize.toString(),
@@ -54,11 +56,11 @@ internal class FanboxRepository(
         ).translate()
     }
 
-    suspend fun getCreatorPosts(
+    override suspend fun getCreatorPosts(
         creatorId: FanboxCreatorId,
         currentCursor: FanboxCursor,
         nextCursor: FanboxCursor?,
-        loadSize: Int = currentCursor.limit ?: DEFAULT_LOAD_SIZE,
+        loadSize: Int,
     ): PageCursorInfo<FanboxPost> {
         return postApi.getCreatorPosts(
             creatorId = creatorId.value,
@@ -68,25 +70,25 @@ internal class FanboxRepository(
         ).translate(nextCursor)
     }
 
-    suspend fun getPostDetail(postId: FanboxPostId): FanboxPostDetail {
+    override suspend fun getPostDetail(postId: FanboxPostId): FanboxPostDetail {
         return postApi.getPostDetail(postId.value).translate()
     }
 
-    suspend fun getPostComments(
+    override suspend fun getPostComments(
         postId: FanboxPostId,
-        offset: Int = 0,
+        offset: Int,
     ): PageOffsetInfo<FanboxComment> {
         return postApi.getPostComment(
             postId = postId.value,
             offset = offset,
-            loadSize = DEFAULT_LOAD_SIZE.toString(),
+            loadSize = FanboxApi.DEFAULT_LOAD_SIZE.toString(),
         ).translate()
     }
 
-    suspend fun getPostFromQuery(
+    override suspend fun getPostFromQuery(
         query: String,
-        creatorId: FanboxCreatorId? = null,
-        page: Int = 0,
+        creatorId: FanboxCreatorId?,
+        page: Int,
     ): PageNumberInfo<FanboxPost> {
         return postApi.getPostFromQuery(
             query = query,
@@ -95,21 +97,21 @@ internal class FanboxRepository(
         ).translate()
     }
 
-    suspend fun likePost(postId: FanboxPostId) {
+    override suspend fun likePost(postId: FanboxPostId) {
         val body = mapOf("postId" to postId.value).toJsonObject()
         return postApi.likePost(body)
     }
 
-    suspend fun likeComment(commentId: FanboxCommentId) {
+    override suspend fun likeComment(commentId: FanboxCommentId) {
         val body = mapOf("commentId" to commentId.value).toJsonObject()
         return postApi.likeComment(body)
     }
 
-    suspend fun addComment(
+    override suspend fun addComment(
         postId: FanboxPostId,
         comment: String,
-        rootCommentId: FanboxCommentId? = null,
-        parentCommentId: FanboxCommentId? = null,
+        rootCommentId: FanboxCommentId?,
+        parentCommentId: FanboxCommentId?,
     ) {
         val body = mapOf(
             "postId" to postId.value,
@@ -120,71 +122,69 @@ internal class FanboxRepository(
         return postApi.addComment(body)
     }
 
-    suspend fun deleteComment(commentId: FanboxCommentId) {
+    override suspend fun deleteComment(commentId: FanboxCommentId) {
         val body = mapOf("commentId" to commentId.value).toJsonObject()
         return postApi.deleteComment(body)
     }
 
-    suspend fun getCreatorDetail(creatorId: FanboxCreatorId): FanboxCreatorDetail {
+    override suspend fun getCreatorDetail(creatorId: FanboxCreatorId): FanboxCreatorDetail {
         return creatorApi.getCreatorDetail(creatorId.value).translate()
     }
 
-    suspend fun getFollowingCreators(): List<FanboxCreatorDetail> {
+    override suspend fun getFollowingCreators(): List<FanboxCreatorDetail> {
         return creatorApi.getFollowingCreators().translate()
     }
 
-    suspend fun getFollowingPixivCreators(): List<FanboxCreatorDetail> {
+    override suspend fun getFollowingPixivCreators(): List<FanboxCreatorDetail> {
         return creatorApi.getFollowingPixivCreators().translate()
     }
 
-    suspend fun getRecommendedCreators(
-        loadSize: Int = DEFAULT_LOAD_SIZE,
-    ): List<FanboxCreatorDetail> {
+    override suspend fun getRecommendedCreators(loadSize: Int): List<FanboxCreatorDetail> {
         return creatorApi.getRecommendedCreators(loadSize.toString()).translate()
     }
 
-    suspend fun getCreatorPlans(creatorId: FanboxCreatorId): List<FanboxCreatorPlan> {
+    override suspend fun getCreatorPlans(creatorId: FanboxCreatorId): List<FanboxCreatorPlan> {
         return creatorApi.getCreatorPlans(creatorId.value).translate()
     }
 
-    suspend fun getCreatorPlanDetail(creatorId: FanboxCreatorId): FanboxCreatorPlanDetail {
+    override suspend fun getCreatorPlanDetail(creatorId: FanboxCreatorId): FanboxCreatorPlanDetail {
         return creatorApi.getCreatorPlanDetail(creatorId.value).translate()
     }
 
-    suspend fun getCreatorTags(creatorId: FanboxCreatorId): List<FanboxCreatorTag> {
+    override suspend fun getCreatorTags(creatorId: FanboxCreatorId): List<FanboxCreatorTag> {
         return creatorApi.getCreatorTags(creatorId.value).translate()
     }
 
-    suspend fun followCreator(creatorId: FanboxCreatorId) {
+    override suspend fun followCreator(creatorId: FanboxCreatorId) {
         val body = mapOf("creatorId" to creatorId.value).toJsonObject()
         return creatorApi.followCreator(body)
     }
 
-    suspend fun unfollowCreator(creatorId: FanboxCreatorId) {
+    override suspend fun unfollowCreator(creatorId: FanboxCreatorId) {
         val body = mapOf("creatorId" to creatorId.value).toJsonObject()
         return creatorApi.unfollowCreator(body)
     }
 
-    suspend fun getSupportedPlans(): List<FanboxCreatorPlan> {
+    override suspend fun getSupportedPlans(): List<FanboxCreatorPlan> {
         return userApi.getSupportedPlans().translate()
     }
 
-    suspend fun getPaidRecords(): List<FanboxPaidRecord> {
+    override suspend fun getPaidRecords(): List<FanboxPaidRecord> {
         return userApi.getPaidRecords().translate()
     }
 
-    suspend fun getUnpaidRecords(): List<FanboxPaidRecord> {
+    override suspend fun getUnpaidRecords(): List<FanboxPaidRecord> {
         return userApi.getUnpaidRecords().translate()
     }
 
-    suspend fun getNewsLetters(): List<FanboxNewsLetter> {
+    override suspend fun getNewsLetters(): List<FanboxNewsLetter> {
         return userApi.getNewsLetters().translate()
     }
 
-    suspend fun getBells(
-        page: Int = 0,
-        skipConvertUnreadNotification: Boolean = false,
-        commentOnly: Boolean = false,
+    override suspend fun getBells(
+        page: Int,
+        skipConvertUnreadNotification: Boolean,
+        commentOnly: Boolean,
     ): PageNumberInfo<FanboxBell> {
         return userApi.getBells(
             page = page,
@@ -193,9 +193,9 @@ internal class FanboxRepository(
         ).translate()
     }
 
-    suspend fun getCreatorFromQuery(
+    override suspend fun getCreatorFromQuery(
         query: String,
-        page: Int = 0,
+        page: Int,
     ): PageNumberInfo<FanboxCreatorDetail> {
         return searchApi.getCreatorFromQuery(
             query = query,
@@ -203,11 +203,7 @@ internal class FanboxRepository(
         ).translate()
     }
 
-    suspend fun getTagFromQuery(query: String): List<FanboxTag> {
+    override suspend fun getTagFromQuery(query: String): List<FanboxTag> {
         return searchApi.getTagFromQuery(query).translate()
-    }
-
-    companion object {
-        private const val DEFAULT_LOAD_SIZE = 10
     }
 }

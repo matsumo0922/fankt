@@ -1,12 +1,14 @@
 package me.matsumo.fankt.domain.model
 
 import kotlinx.datetime.Instant
+import me.matsumo.fankt.domain.model.id.FanboxCreatorId
 import me.matsumo.fankt.domain.model.id.FanboxPostId
 
 data class FanboxPostDetail(
     val id: FanboxPostId,
     val title: String,
     val body: Body,
+    val creatorId: FanboxCreatorId,
     val coverImageUrl: String?,
     val commentCount: Int,
     val excerpt: String,
@@ -23,7 +25,7 @@ data class FanboxPostDetail(
     val prevPost: OtherPost?,
     val user: FanboxUser?,
 ) {
-    val browserUrl get() = user?.creatorId?.let { "https://www.fanbox.cc/@$it/posts/$id" }
+    val browserUrl get() = creatorId.let { "https://www.fanbox.cc/@$it/posts/$id" }
 
     sealed interface Body {
         val imageItems

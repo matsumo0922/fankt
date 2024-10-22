@@ -20,11 +20,8 @@ kotlin {
 dependencies {
     implementation(libs.android.gradlePlugin)
     implementation(libs.kotlin.gradlePlugin)
-    implementation(libs.secret.gradlePlugin)
+    implementation(libs.ktorfit.gradlePlugin)
     implementation(libs.detekt.gradlePlugin)
-    implementation(libs.build.konfig.gradlePlugin)
-    implementation(libs.gms.services)
-    implementation(libs.gms.oss)
 }
 
 gradlePlugin {
@@ -56,6 +53,10 @@ gradlePlugin {
         register("DetektPlugin") {
             id = "matsumo.primitive.detekt"
             implementationClass = "primitive.DetektPlugin"
+        }
+        register("KtorfitPlugin") {
+            id = "matsumo.primitive.ktorfit"
+            implementationClass = "primitive.KtorfitPlugin"
         }
     }
 }
