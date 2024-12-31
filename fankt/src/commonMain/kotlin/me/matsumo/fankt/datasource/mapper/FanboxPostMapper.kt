@@ -1,50 +1,248 @@
 package me.matsumo.fankt.datasource.mapper
 
+import io.github.aakira.napier.Napier
 import kotlinx.datetime.Instant
 import me.matsumo.fankt.domain.PageCursorInfo
+import me.matsumo.fankt.domain.entity.FanboxCommentListEntity
+import me.matsumo.fankt.domain.entity.FanboxPostCommentListEntity
+import me.matsumo.fankt.domain.entity.FanboxPostDetailEntity
 import me.matsumo.fankt.domain.entity.FanboxPostEntity
 import me.matsumo.fankt.domain.entity.FanboxPostListEntity
+import me.matsumo.fankt.domain.entity.FanboxPostSearchEntity
+import me.matsumo.fankt.domain.model.FanboxComment
 import me.matsumo.fankt.domain.model.FanboxCover
 import me.matsumo.fankt.domain.model.FanboxPost
+import me.matsumo.fankt.domain.model.FanboxPostDetail
 import me.matsumo.fankt.domain.model.FanboxUser
+import me.matsumo.fankt.domain.model.id.FanboxCommentId
 import me.matsumo.fankt.domain.model.id.FanboxCreatorId
 import me.matsumo.fankt.domain.model.id.FanboxPostId
 import me.matsumo.fankt.domain.translateToCursor
 
-internal fun FanboxPostListEntity.translate(): PageCursorInfo<FanboxPost> {
-    return PageCursorInfo(
-        contents = body.items.map { it.translate() },
-        cursor = body.nextUrl?.translateToCursor(),
-    )
-}
+internal class FanboxPostMapper {
 
-internal fun FanboxPostEntity.translate(): FanboxPost {
-    return FanboxPost(
-        id = FanboxPostId(id),
-        title = title,
-        excerpt = excerpt,
-        publishedDatetime = Instant.parse(publishedDatetime),
-        updatedDatetime = Instant.parse(updatedDatetime),
-        isLiked = isLiked,
-        likeCount = likeCount,
-        commentCount = commentCount,
-        feeRequired = feeRequired,
-        isRestricted = isRestricted,
-        hasAdultContent = hasAdultContent,
-        tags = tags,
-        cover = cover?.let { cover ->
-            FanboxCover(
-                type = cover.type,
-                url = cover.url,
-            )
-        },
-        user = user?.let {
-            FanboxUser(
-                userId = it.userId,
-                creatorId = FanboxCreatorId(creatorId),
-                name = it.name,
-                iconUrl = it.iconUrl,
+    fun map(entity: FanboxPostListEntity): PageCursorInfo<FanboxPost> {
+        return PageCursorInfo(
+            contents = entity.body.items.map { map(it) },
+            cursor = entity.body.nextUrl?.translateToCursor(),
+        )
+    }
+
+    fun map(entity: FanboxPostEntity): FanboxPost {
+        return FanboxPost(
+            id = FanboxPostId(entity.id),
+            title = entity.title,
+            excerpt = entity.excerpt,
+            publishedDatetime = Instant.parse(entity.publishedDatetime),
+            updatedDatetime = Instant.parse(entity.updatedDatetime),
+            isLiked = entity.isLiked,
+            likeCount = entity.likeCount,
+            commentCount = entity.commentCount,
+            feeRequired = entity.feeRequired,
+            isRestricted = entity.isRestricted,
+            hasAdultContent = entity.hasAdultContent,
+            tags = entity.tags,
+            cover = entity.cover?.let { cover ->
+                FanboxCover(
+                    type = cover.type,
+                    url = cover.url,
+                )
+            },
+            user = entity.user?.let {
+                FanboxUser(
+                    userId = it.userId,
+                    creatorId = FanboxCreatorId(entity.creatorId),
+                    name = it.name,
+                    iconUrl = it.iconUrl,
+                )
+            }
+        )
+    }
+
+    fun map(entity: FanboxPostDetailEntity): FanboxPostDetail {
+        var bodyBlock: FanboxPostDetail.Body = FanboxPostDetail.Body.Unknown
+
+        if (!entity.body.body?.blocks.isNullOrEmpty()) {
+            entity.body.body?.blocks?.let { blocks ->
+                // 文字列や画像、ファイルなどのブロックが混在している場合
+
+                val images = entity.body.body.imageMap
+                val files = entity.body.body.fileMap
+                val urls = entity.body.body.urlEmbedMap
+
+                bodyBlock = FanboxPostDetail.Body.Article(
+                    blocks = blocks.mapNotNull { block ->
+                        when {
+                            block.text != null -> {
+                                if (block.text.isEmpty()) null else FanboxPostDetail.Body.Article.Block.Text(block.text)
+                            }
+
+                            block.imageId != null -> {
+                                images[block.imageId]?.let { image ->
+                                    FanboxPostDetail.Body.Article.Block.Image(
+                                        FanboxPostDetail.ImageItem(
+                                            id = image.id,
+                                            postId = FanboxPostId(entity.body.id),
+                                            extension = image.extension,
+                                            originalUrl = image.originalUrl,
+                                            thumbnailUrl = image.thumbnailUrl,
+                                            aspectRatio = image.width.toFloat() / image.height.toFloat(),
+                                        ),
+                                    )
+                                }
+                            }
+
+                            block.fileId != null -> {
+                                files[block.fileId]?.let { file ->
+                                    FanboxPostDetail.Body.Article.Block.File(
+                                        FanboxPostDetail.FileItem(
+                                            id = file.id,
+                                            postId = FanboxPostId(entity.body.id),
+                                            extension = file.extension,
+                                            name = file.name,
+                                            size = file.size,
+                                            url = file.url,
+                                        ),
+                                    )
+                                }
+                            }
+
+                            block.urlEmbedId != null -> {
+                                urls[block.urlEmbedId]?.let { url ->
+                                    FanboxPostDetail.Body.Article.Block.Link(
+                                        html = url.html,
+                                        post = url.postInfo?.let { map(it) },
+                                    )
+                                }
+                            }
+
+                            else -> {
+                                Napier.w { "FanboxPostDetailEntity translate error: Unknown block type. $block" }
+                                null
+                            }
+                        }
+                    },
+                )
+            }
+        }
+
+        if (!entity.body.body?.images.isNullOrEmpty()) {
+            entity.body.body?.images?.let { blocks ->
+                // 画像のみのブロックの場合
+
+                bodyBlock = FanboxPostDetail.Body.Image(
+                    text = entity.body.body.text.orEmpty(),
+                    images = blocks.map {
+                        FanboxPostDetail.ImageItem(
+                            id = it.id,
+                            postId = FanboxPostId(entity.body.id),
+                            extension = it.extension,
+                            originalUrl = it.originalUrl,
+                            thumbnailUrl = it.thumbnailUrl,
+                            aspectRatio = it.width.toFloat() / it.height.toFloat(),
+                        )
+                    },
+                )
+            }
+        }
+
+        if (!entity.body.body?.files.isNullOrEmpty()) {
+            entity.body.body?.files?.let { blocks ->
+                // ファイルのみのブロックの場合
+
+                bodyBlock = FanboxPostDetail.Body.File(
+                    text = entity.body.body.text.orEmpty(),
+                    files = blocks.map {
+                        FanboxPostDetail.FileItem(
+                            id = it.id,
+                            postId = FanboxPostId(entity.body.id),
+                            name = it.name,
+                            extension = it.extension,
+                            size = it.size,
+                            url = it.url,
+                        )
+                    },
+                )
+            }
+        }
+
+        return FanboxPostDetail(
+            id = FanboxPostId(entity.body.id),
+            title = entity.body.title,
+            publishedDatetime = Instant.parse(entity.body.publishedDatetime),
+            updatedDatetime = Instant.parse(entity.body.updatedDatetime),
+            isLiked = entity.body.isLiked,
+            isBookmarked = false,
+            likeCount = entity.body.likeCount,
+            coverImageUrl = entity.body.coverImageUrl,
+            commentCount = entity.body.commentCount,
+            feeRequired = entity.body.feeRequired,
+            isRestricted = entity.body.isRestricted,
+            hasAdultContent = entity.body.hasAdultContent,
+            tags = entity.body.tags,
+            user = entity.body.user?.let {
+                FanboxUser(
+                    userId = it.userId,
+                    creatorId = FanboxCreatorId(entity.body.creatorId),
+                    name = it.name,
+                    iconUrl = it.iconUrl,
+                )
+            },
+            body = bodyBlock,
+            excerpt = entity.body.excerpt,
+            nextPost = entity.body.nextPost?.let {
+                FanboxPostDetail.OtherPost(
+                    id = FanboxPostId(it.id),
+                    title = it.title,
+                    publishedDatetime = Instant.parse(it.publishedDatetime),
+                )
+            },
+            prevPost = entity.body.prevPost?.let {
+                FanboxPostDetail.OtherPost(
+                    id = FanboxPostId(it.id),
+                    title = it.title,
+                    publishedDatetime = Instant.parse(it.publishedDatetime),
+                )
+            },
+            imageForShare = entity.body.imageForShare,
+        )
+    }
+
+    fun map(entity: FanboxPostCommentListEntity): PageCursorInfo<FanboxComment> {
+        return PageCursorInfo(
+            contents = entity.body.items.map { map(it) },
+            cursor = entity.body.nextUrl?.translateToCursor(),
+        )
+    }
+
+    fun map(entity: FanboxCommentListEntity.Item): FanboxComment {
+        return with(entity) {
+            FanboxComment(
+                body = body,
+                createdDatetime = Instant.parse(createdDatetime),
+                id = FanboxCommentId(id),
+                isLiked = isLiked,
+                isOwn = isOwn,
+                likeCount = likeCount,
+                parentCommentId = FanboxCommentId(parentCommentId),
+                rootCommentId = FanboxCommentId(rootCommentId),
+                replies = replies.map { map(it) }.sortedBy { it.createdDatetime },
+                user = user?.let {
+                    FanboxUser(
+                        userId = it.userId,
+                        creatorId = FanboxCreatorId.EMPTY,
+                        name = it.name,
+                        iconUrl = it.iconUrl,
+                    )
+                },
             )
         }
-    )
+    }
+
+    fun map(entity: FanboxPostSearchEntity) : PageCursorInfo<FanboxPost> {
+        return PageCursorInfo(
+            contents = entity.body.items.map { map(it) },
+            cursor = entity.body.nextUrl?.translateToCursor(),
+        )
+    }
 }

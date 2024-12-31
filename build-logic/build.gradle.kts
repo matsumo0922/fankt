@@ -57,5 +57,9 @@ gradlePlugin {
             id = "matsumo.primitive.detekt"
             implementationClass = "primitive.DetektPlugin"
         }
+        register("KtorfitPlugin") {
+            id = "matsumo.primitive.ktorfit"
+            implementationClass = "primitive.KtrofitPlugin"
+        }
     }
 }

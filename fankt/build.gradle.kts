@@ -3,6 +3,7 @@ plugins {
     id("matsumo.primitive.kmp.android.library")
     id("matsumo.primitive.kmp.android")
     id("matsumo.primitive.kmp.ios")
+    id("matsumo.primitive.ktorfit")
     id("matsumo.primitive.detekt")
 }
 

@@ -22,9 +22,9 @@ data class FanboxPostDetail(
     val publishedDatetime: Instant,
     val nextPost: OtherPost?,
     val prevPost: OtherPost?,
-    val user: FanboxUser,
+    val user: FanboxUser?,
 ) {
-    val browserUrl get() = "https://www.fanbox.cc/@${user.creatorId}/posts/$id"
+    val browserUrl get() = "https://www.fanbox.cc/@${user?.creatorId}/posts/$id"
 
     sealed interface Body {
         val imageItems

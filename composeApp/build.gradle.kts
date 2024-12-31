@@ -17,6 +17,8 @@ android {
 kotlin {
     sourceSets {
         commonMain.dependencies {
+            implementation(project(":fankt"))
+
             implementation(compose.runtime)
             implementation(compose.foundation)
             implementation(compose.material3)
@@ -25,7 +27,8 @@ kotlin {
         }
 
         androidMain.dependencies {
-            implementation(libs.androidx.activity.compose)
+            implementation(libs.bundles.ui.android.api)
+            implementation(libs.androidx.core.splashscreen)
         }
     }
 }

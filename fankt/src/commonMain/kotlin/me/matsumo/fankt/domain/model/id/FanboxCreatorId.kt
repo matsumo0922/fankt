@@ -5,4 +5,8 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class FanboxCreatorId(val value: String) {
     override fun toString(): String = value
+
+    companion object {
+        val EMPTY = FanboxCreatorId("")
+    }
 }

@@ -15,9 +15,9 @@ data class FanboxCreatorDetail(
     val isSupported: Boolean,
     val profileItems: List<ProfileItem>,
     val profileLinks: List<ProfileLink>,
-    val user: FanboxUser,
+    val user: FanboxUser?,
 ) {
-    val supportingBrowserUrl get() = "https://www.fanbox.cc/creators/supporting/@${user.creatorId}"
+    val supportingBrowserUrl get() = "https://www.fanbox.cc/creators/supporting/@${user?.creatorId}"
 
     data class ProfileItem(
         val id: String,

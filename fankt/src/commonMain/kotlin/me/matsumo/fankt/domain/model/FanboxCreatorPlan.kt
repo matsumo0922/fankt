@@ -10,8 +10,8 @@ data class FanboxCreatorPlan(
     val coverImageUrl: String?,
     val hasAdultContent: Boolean,
     val paymentMethod: FanboxPaymentMethod,
-    val user: FanboxUser,
+    val user: FanboxUser?,
 ) {
-    val planBrowserUrl get() = "https://www.fanbox.cc/@${user.creatorId}/plans/$id"
-    val supportingBrowserUrl get() = "https://www.fanbox.cc/creators/supporting/@${user.creatorId}"
+    val planBrowserUrl get() = "https://www.fanbox.cc/@${user?.creatorId}/plans/$id"
+    val supportingBrowserUrl get() = "https://www.fanbox.cc/creators/supporting/@${user?.creatorId}"
 }

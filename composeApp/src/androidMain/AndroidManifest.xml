@@ -4,9 +4,9 @@
     <application
         android:icon="@mipmap/ic_launcher"
         android:label="fankt"
-        android:theme="@android:style/Theme.Material.NoActionBar">
+        android:theme="@style/Theme.Fankt.Splash">
         <activity
-            android:name=".MainActivity"
+            android:name="me.matsumo.fankt.MainActivity"
             android:configChanges="orientation|screenSize|screenLayout|keyboardHidden"
             android:launchMode="singleInstance"
             android:windowSoftInputMode="adjustPan"

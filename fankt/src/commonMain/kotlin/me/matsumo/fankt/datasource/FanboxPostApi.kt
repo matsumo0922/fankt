@@ -15,8 +15,8 @@ internal interface FanboxPostApi {
     @GET("post.listHome")
     suspend fun getHomePosts(
         @Query("limit") loadSize: String,
-        @Query("maxPublishedDatetime") maxPublishedDatetime: String,
-        @Query("maxId") maxId: String,
+        @Query("maxPublishedDatetime") maxPublishedDatetime: String?,
+        @Query("maxId") maxId: String?,
     ): FanboxPostListEntity
 
     @GET("post.listSupporting")

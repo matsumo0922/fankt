@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:tools="http://schemas.android.com/tools">
+
+    <style name="NightAdjusted.Theme.Fankt" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:windowLightNavigationBar" tools:targetApi="27">true</item>
+    </style>
+
+    <style name="PlatformAdjusted.Theme.Fankt" parent="NightAdjusted.Theme.Fankt">
+        <item name="android:statusBarColor">#000</item>
+    </style>
+
+    <!-- The final theme we use -->
+    <style name="Theme.Fankt" parent="PlatformAdjusted.Theme.Fankt" />
+
+    <style name="NightAdjusted.Theme.Splash" parent="Theme.SplashScreen">
+        <item name="android:windowLightNavigationBar" tools:targetApi="27">true</item>
+    </style>
+
+    <style name="Theme.Fankt.Splash" parent="NightAdjusted.Theme.Splash">
+        <item name="postSplashScreenTheme">@style/Theme.Fankt</item>
+    </style>
+
+</resources>

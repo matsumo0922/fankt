@@ -9,6 +9,8 @@ import androidx.compose.ui.Modifier
 
 @Composable
 internal fun FanktApp() {
+    val fanbox = Fanbox()
+
     Box(
         modifier = Modifier.fillMaxSize(),
         contentAlignment = Alignment.Center,
