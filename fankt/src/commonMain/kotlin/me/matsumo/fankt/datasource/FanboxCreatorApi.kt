@@ -2,6 +2,7 @@ package me.matsumo.fankt.datasource
 
 import de.jensklingenberg.ktorfit.http.Body
 import de.jensklingenberg.ktorfit.http.GET
+import de.jensklingenberg.ktorfit.http.Headers
 import de.jensklingenberg.ktorfit.http.POST
 import de.jensklingenberg.ktorfit.http.Query
 import kotlinx.serialization.json.JsonObject
@@ -44,11 +45,13 @@ internal interface FanboxCreatorApi {
         @Query("creatorId") creatorId: String
     ): FanboxCreatorTagListEntity
 
+    @Headers("Content-Type: application/json")
     @POST("follow.create")
     suspend fun followCreator(
         @Body body: JsonObject
     )
 
+    @Headers("Content-Type: application/json")
     @POST("follow.delete")
     suspend fun unfollowCreator(
         @Body body: JsonObject

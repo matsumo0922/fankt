@@ -20,6 +20,7 @@ kotlin {
 dependencies {
     implementation(libs.android.gradlePlugin)
     implementation(libs.kotlin.gradlePlugin)
+    implementation(libs.room.gradlePlugin)
     implementation(libs.secret.gradlePlugin)
     implementation(libs.detekt.gradlePlugin)
     implementation(libs.build.konfig.gradlePlugin)
@@ -60,6 +61,10 @@ gradlePlugin {
         register("KtorfitPlugin") {
             id = "matsumo.primitive.ktorfit"
             implementationClass = "primitive.KtrofitPlugin"
+        }
+        register("RoomPlugin") {
+            id = "matsumo.primitive.room"
+            implementationClass = "primitive.RoomPlugin"
         }
     }
 }

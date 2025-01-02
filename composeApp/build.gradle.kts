@@ -19,6 +19,8 @@ kotlin {
         commonMain.dependencies {
             implementation(project(":fankt"))
 
+            implementation(libs.bundles.infra.api)
+
             implementation(compose.runtime)
             implementation(compose.foundation)
             implementation(compose.material3)

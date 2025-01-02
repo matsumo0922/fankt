@@ -35,6 +35,9 @@ androidxAppCompat = "1.7.0"
 androidxActivity = "1.9.3"
 androidxFragment = "1.8.5"
 androidxAnnotation = "1.9.1"
+androidxStartup = "1.2.0"
+androidxRoom = "2.7.0-alpha12"
+androidxSqlite = "2.5"
 androidxCompose = "2024.12.01"
 
 # Google
@@ -66,6 +69,7 @@ ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
 gms = { id = "com.google.gms.google-services", version.ref = "gms" }
 detekt = { id = "io.gitlab.arturbosch.detekt", version.ref = "detekt" }
 ktorfit = { id = "de.jensklingenberg.ktorfit", version.ref = "ktorfit" }
+room = { id = "androidx.room", version.ref = "androidxRoom"}
 firebase-crashlytics = { id = "com.google.firebase.crashlytics", version = "3.0.2" }
 libraries = { id = "com.mikepenz.aboutlibraries.plugin", version.ref = "libraries" }
 kmp = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
@@ -78,6 +82,7 @@ kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 ## Dependency of the include build-logic
 android-gradlePlugin = { group = "com.android.tools.build", name = "gradle", version.ref = "gradle" }
 kotlin-gradlePlugin = { group = "org.jetbrains.kotlin", name = "kotlin-gradle-plugin", version.ref = "kotlin" }
+room-gradlePlugin = { group = "androidx.room", name = "room-gradle-plugin", version.ref = "androidxRoom" }
 gms-services = { group = "com.google.gms", name = "google-services", version.ref = "gms" }
 gms-oss = { group = "com.google.android.gms", name = "oss-licenses-plugin", version = "0.10.6" }
 build-konfig-gradlePlugin = { group = "com.codingfeline.buildkonfig", name = "buildkonfig-gradle-plugin", version.ref = "buildKonfig" }
@@ -103,6 +108,7 @@ androidx-appcompat = { module = "androidx.appcompat:appcompat", version.ref = "a
 androidx-activity = { module = "androidx.activity:activity-ktx", version.ref = "androidxActivity" }
 androidx-activity-compose = { module = "androidx.activity:activity-compose", version.ref = "androidxActivity" }
 androidx-fragment = { module = "androidx.fragment:fragment-ktx", version.ref = "androidxFragment" }
+androidx-startup = { module = "androidx.startup:startup-runtime", version.ref = "androidxStartup" }
 
 # Compose
 androidx-compose-bom = { module = "androidx.compose:compose-bom", version.ref = "androidxCompose" }
@@ -118,10 +124,12 @@ kmp-lifecycle-viewmodel-compose = { module = "org.jetbrains.androidx.lifecycle:l
 kmp-navigation-compose = { module = "org.jetbrains.androidx.navigation:navigation-compose", version.ref = "kmpNavigation" }
 kmp-paging-common = { module = "app.cash.paging:paging-common", version.ref = "kmpPaging" }
 kmp-paging-compose = { module = "app.cash.paging:paging-compose-common", version.ref = "kmpPaging" }
+kmp-room = { module = "androidx.room:room-runtime", version.ref = "androidxRoom" }
+kmp-room-compiler = { module = "androidx.room:room-compiler", version.ref = "androidxRoom" }
+kmp-sqlite = { module = "androidx.sqlite:sqlite-bundled", version.ref = "androidxSqlite" }
 
 # Ktorfit
 ktorfit = { module = "de.jensklingenberg.ktorfit:ktorfit-lib", version.ref = "ktorfit" }
-
 
 # Google
 google-material = { module = "com.google.android.material:material", version.ref = "material" }
@@ -194,4 +202,9 @@ koin = [
     "koin-core",
     "koin-compose",
     "koin-compose-viewmodel",
+]
+
+database = [
+    "kmp-room",
+    "kmp-sqlite",
 ]

@@ -2,6 +2,7 @@ package me.matsumo.fankt.datasource
 
 import de.jensklingenberg.ktorfit.http.Body
 import de.jensklingenberg.ktorfit.http.GET
+import de.jensklingenberg.ktorfit.http.Headers
 import de.jensklingenberg.ktorfit.http.POST
 import de.jensklingenberg.ktorfit.http.Query
 import kotlinx.serialization.json.JsonObject
@@ -53,16 +54,19 @@ internal interface FanboxPostApi {
         @Query("page") page: Int = 0
     ): FanboxPostSearchEntity
 
+    @Headers("Content-Type: application/json")
     @POST("post.likePost")
     suspend fun likePost(
         @Body body: JsonObject
     )
 
+    @Headers("Content-Type: application/json")
     @POST("post.addComment")
     suspend fun addComment(
         @Body body: JsonObject
     )
 
+    @Headers("Content-Type: application/json")
     @POST("post.deleteComment")
     suspend fun deleteComment(
         @Body body: JsonObject

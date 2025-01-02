@@ -4,6 +4,7 @@ plugins {
     id("matsumo.primitive.kmp.android")
     id("matsumo.primitive.kmp.ios")
     id("matsumo.primitive.ktorfit")
+    id("matsumo.primitive.room")
     id("matsumo.primitive.detekt")
 }
 
@@ -21,11 +22,12 @@ kotlin {
         }
 
         androidMain.dependencies {
-            api(libs.ktor.okhttp)
+            implementation(libs.androidx.startup)
+            implementation(libs.ktor.okhttp)
         }
 
         iosMain.dependencies {
-            api(libs.ktor.darwin)
+            implementation(libs.ktor.darwin)
         }
     }
 }
