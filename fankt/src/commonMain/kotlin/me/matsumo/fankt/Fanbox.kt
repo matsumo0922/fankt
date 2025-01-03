@@ -1,15 +1,6 @@
 package me.matsumo.fankt
 
 import de.jensklingenberg.ktorfit.Ktorfit
-import io.github.aakira.napier.Napier
-import io.ktor.client.HttpClient
-import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
-import io.ktor.client.plugins.cookies.HttpCookies
-import io.ktor.client.plugins.logging.LogLevel
-import io.ktor.client.plugins.logging.Logger
-import io.ktor.client.plugins.logging.Logging
-import io.ktor.serialization.kotlinx.json.json
-import kotlinx.serialization.json.Json
 import me.matsumo.fankt.datasource.createFanboxCreatorApi
 import me.matsumo.fankt.datasource.createFanboxPostApi
 import me.matsumo.fankt.datasource.createFanboxSearchApi
@@ -42,37 +33,10 @@ import me.matsumo.fankt.repository.FanboxUserRepository
 
 class Fanbox {
 
-    private val client = HttpClient {
-        install(Logging) {
-            level = LogLevel.INFO
-            logger = object : Logger {
-                override fun log(message: String) {
-                    Napier.d(message)
-                }
-            }
-        }
-
-        install(ContentNegotiation) {
-            json(
-                Json {
-                    isLenient = true
-                    prettyPrint = true
-                    ignoreUnknownKeys = true
-                    coerceInputValues = true
-                    encodeDefaults = true
-                    explicitNulls = false
-                }
-            )
-        }
-
-        install(HttpCookies) {
-            storage = PersistentCookieStorage(getCookieDatabase().cookieDao())
-        }
-    }
-
+    private val cookieStorage = PersistentCookieStorage(getCookieDatabase().cookieDao())
     private val ktorfit = Ktorfit.Builder()
         .baseUrl("https://api.fanbox.cc/")
-        .httpClient(client)
+        .httpClient(buildHttpClient(cookieStorage))
         .build()
 
     private val postApi = ktorfit.createFanboxPostApi()
@@ -89,6 +53,10 @@ class Fanbox {
     private val creator = FanboxCreatorRepository(creatorApi, creatorMapper)
     private val search = FanboxSearchRepository(searchApi, searchMapper)
     private val user = FanboxUserRepository(userApi, userMapper)
+
+    suspend fun setFanboxSessionId(sessionId: String) {
+        cookieStorage.overrideFanboxSessionId(sessionId)
+    }
 
     suspend fun getHomePosts(cursor: FanboxCursor?): PageCursorInfo<FanboxPost> {
         return post.getHomePosts(cursor)
@@ -138,8 +106,8 @@ class Fanbox {
         return creator.getFollowingPixivCreators()
     }
 
-    suspend fun getRecommendedCreators(loadSize: String): List<FanboxCreatorDetail> {
-        return creator.getRecommendedCreators(loadSize)
+    suspend fun getRecommendedCreators(): List<FanboxCreatorDetail> {
+        return creator.getRecommendedCreators()
     }
 
     suspend fun getCreatorPlans(creatorId: FanboxCreatorId): List<FanboxCreatorPlan> {

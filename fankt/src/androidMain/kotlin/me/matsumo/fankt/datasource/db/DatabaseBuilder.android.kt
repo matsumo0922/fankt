@@ -2,13 +2,13 @@ package me.matsumo.fankt.datasource.db
 
 import androidx.room.Room
 import androidx.room.RoomDatabase
-import me.matsumo.fankt.applicationContext
 import me.matsumo.fankt.domain.model.db.CookieDatabase
+import me.matsumo.fankt.fanktApplicationContext
 
 internal actual fun getCookieDatabaseBuilder(): RoomDatabase.Builder<CookieDatabase> {
-    val dbFile = applicationContext.getDatabasePath("fankt_cookies.db")
+    val dbFile = fanktApplicationContext.getDatabasePath("fankt_cookies.db")
     val databaseBuilder = Room.databaseBuilder<CookieDatabase>(
-        context = applicationContext,
+        context = fanktApplicationContext,
         name = dbFile.absolutePath,
     )
 

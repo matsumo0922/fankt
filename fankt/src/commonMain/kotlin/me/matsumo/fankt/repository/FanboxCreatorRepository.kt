@@ -33,8 +33,8 @@ internal class FanboxCreatorRepository(
         }
     }
 
-    suspend fun getRecommendedCreators(loadSize: String) = withContext(ioDispatcher) {
-        fanboxCreatorApi.getRecommendedCreators(loadSize).let {
+    suspend fun getRecommendedCreators() = withContext(ioDispatcher) {
+        fanboxCreatorApi.getRecommendedCreators(LOAD_SIZE).let {
             fanboxCreatorMapper.map(it)
         }
     }
@@ -67,5 +67,9 @@ internal class FanboxCreatorRepository(
         fanboxCreatorApi.unfollowCreator(
             body = JsonObject(mapOf("creatorId" to JsonPrimitive(creatorId.value)))
         )
+    }
+
+    companion object {
+        private const val LOAD_SIZE = "20"
     }
 }

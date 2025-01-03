@@ -1,5 +1,6 @@
 package me.matsumo.fankt.datasource.db
 
+import io.github.aakira.napier.Napier
 import io.ktor.client.plugins.cookies.CookiesStorage
 import io.ktor.http.Cookie
 import io.ktor.http.Url
@@ -17,6 +18,7 @@ internal class PersistentCookieStorage(
 
     override suspend fun addCookie(requestUrl: Url, cookie: Cookie) {
         withContext(Dispatchers.IO) {
+            Napier.d { "add cookie: ${cookie.name}=${cookie.value}" }
             cookieDao.insert(
                 CookieEntity(
                     id = "${cookie.domain}-${cookie.name}-${cookie.path}",
@@ -33,6 +35,7 @@ internal class PersistentCookieStorage(
     override suspend fun get(requestUrl: Url): List<Cookie> {
         return withContext(ioDispatcher) {
             cookieDao.getAllCookies().map { entity ->
+                Napier.d { "get cookie: ${entity.name}=${entity.value}" }
                 Cookie(
                     name = entity.name,
                     value = entity.value,
@@ -46,5 +49,17 @@ internal class PersistentCookieStorage(
 
     override fun close() {
         // do nothing
+    }
+
+    suspend fun overrideFanboxSessionId(sessionId: String) {
+        val cookie = Cookie(
+            name = "FANBOXSESSID",
+            value = sessionId,
+            domain = ".fanbox.cc",
+            path = "/",
+            expires = null
+        )
+
+        addCookie(Url("https://www.fanbox.cc"), cookie)
     }
 }

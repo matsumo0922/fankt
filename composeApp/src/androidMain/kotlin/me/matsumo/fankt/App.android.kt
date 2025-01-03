@@ -7,6 +7,7 @@ import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.fragment.app.FragmentActivity
 import io.github.aakira.napier.DebugAntilog
 import io.github.aakira.napier.Napier
+import me.matsumo.fankt.theme.FanktTheme
 
 class MainActivity : FragmentActivity() {
 
@@ -18,7 +19,9 @@ class MainActivity : FragmentActivity() {
 
         enableEdgeToEdge()
         setContent {
-            FanktApp()
+            FanktTheme {
+                FanktApp()
+            }
         }
 
         splashScreen.setKeepOnScreenCondition { false }
