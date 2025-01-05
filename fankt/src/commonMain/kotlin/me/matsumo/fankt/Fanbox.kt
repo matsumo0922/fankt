@@ -36,7 +36,12 @@ class Fanbox {
     private val cookieStorage = PersistentCookieStorage(getCookieDatabase().cookieDao())
     private val ktorfit = Ktorfit.Builder()
         .baseUrl("https://api.fanbox.cc/")
-        .httpClient(buildHttpClient(cookieStorage))
+        .httpClient(buildHttpClient(true, cookieStorage))
+        .build()
+
+    private val disabledContentNegotiationKtorfit = Ktorfit.Builder()
+        .baseUrl("https://api.fanbox.cc/")
+        .httpClient(buildHttpClient(false, cookieStorage))
         .build()
 
     private val postApi = ktorfit.createFanboxPostApi()
@@ -44,13 +49,16 @@ class Fanbox {
     private val searchApi = ktorfit.createFanboxSearchApi()
     private val userApi = ktorfit.createFanboxUserApi()
 
+    private val postWithoutContentNegotiation = disabledContentNegotiationKtorfit.createFanboxPostApi()
+    private val creatorWithoutContentNegotiation = disabledContentNegotiationKtorfit.createFanboxCreatorApi()
+
     private val postMapper = FanboxPostMapper()
     private val creatorMapper = FanboxCreatorMapper()
     private val searchMapper = FanboxSearchMapper(creatorMapper)
     private val userMapper = FanboxUserMapper(postMapper, creatorMapper)
 
-    private val post = FanboxPostRepository(postApi, postMapper)
-    private val creator = FanboxCreatorRepository(creatorApi, creatorMapper)
+    private val post = FanboxPostRepository(postApi, postWithoutContentNegotiation, postMapper)
+    private val creator = FanboxCreatorRepository(creatorApi, creatorWithoutContentNegotiation, creatorMapper)
     private val search = FanboxSearchRepository(searchApi, searchMapper)
     private val user = FanboxUserRepository(userApi, userMapper)
 

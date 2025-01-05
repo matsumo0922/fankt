@@ -85,32 +85,37 @@ private fun RequestItem(
     val scope = rememberCoroutineScope()
     val params = rememberSaveable { mutableMapOf<String, String>() }
 
-    var requestResult by remember { mutableStateOf<String?>(null) }
+    var requestResult by remember { mutableStateOf<Any?>(null) }
     var isExpanded by rememberSaveable { mutableStateOf(false) }
     val isPost = (function.returnType.jvmErasure == Unit::class)
 
     suspend fun request() {
-        val typedParams = params.mapNotNull { param ->
-            when (function.parameters.find { it.name == param.key }?.type?.jvmErasure) {
-                Int::class -> param.value.toIntOrNull()
-                Long::class -> param.value.toLongOrNull()
-                Boolean::class -> param.value.toBooleanStrictOrNull()
-                FanboxPostId::class -> FanboxPostId(param.value)
-                FanboxCreatorId::class -> FanboxCreatorId(param.value)
-                FanboxPlanId::class -> FanboxPlanId(param.value)
-                FanboxCommentId::class -> FanboxCommentId(param.value)
-                FanboxNewsLetterId::class -> FanboxNewsLetterId(param.value)
-                else -> params.values
+        val typedParams = function.parameters
+            .mapNotNull { it.name }
+            .map {
+                val type = function.parameters.first { param -> param.name == it }.type.jvmErasure
+                val param = params[it] ?: getDefaultValue(it) ?: return@map null
+
+                when (type) {
+                    Int::class -> param.toIntOrNull()
+                    Long::class -> param.toLongOrNull()
+                    Boolean::class -> param.toBooleanStrictOrNull()
+                    FanboxPostId::class -> FanboxPostId(param)
+                    FanboxCreatorId::class -> FanboxCreatorId(param)
+                    FanboxPlanId::class -> FanboxPlanId(param)
+                    FanboxCommentId::class -> FanboxCommentId(param)
+                    FanboxNewsLetterId::class -> FanboxNewsLetterId(param)
+                    else -> params.values
+                }
             }
-        }
 
         Napier.d { "Call: ${function.name}(${typedParams.joinToString(separator = ", ")})" }
 
         requestResult = try {
-            function.callSuspend(classInstance, *typedParams.toTypedArray()).toString()
+            function.callSuspend(classInstance, *typedParams.toTypedArray())
         } catch (e: Throwable) {
             Napier.d { e.toString() }
-            e.toString()
+            e
         }
     }
 
@@ -120,7 +125,7 @@ private fun RequestItem(
     ) {
         Row(
             modifier = Modifier
-                .clickable(!isExpanded) { isExpanded = true }
+                .clickable { isExpanded = !isExpanded }
                 .fillMaxWidth()
                 .padding(16.dp, 8.dp),
             horizontalArrangement = Arrangement.spacedBy(16.dp),
@@ -163,14 +168,20 @@ private fun RequestItem(
                         .fillMaxWidth()
                         .heightIn(max = 200.dp),
                     shape = RoundedCornerShape(6.dp),
-                    colors = CardDefaults.cardColors(MaterialTheme.colorScheme.surfaceContainer)
+                    colors = CardDefaults.cardColors(
+                        if (requestResult !is Throwable) {
+                            MaterialTheme.colorScheme.surfaceContainer
+                        } else {
+                            MaterialTheme.colorScheme.errorContainer
+                        },
+                    )
                 ) {
                     Box(
                         modifier = Modifier.verticalScroll(rememberScrollState()),
                     ) {
                         Text(
                             modifier = Modifier.padding(16.dp),
-                            text = requestResult!!,
+                            text = requestResult!!.toString(),
                             style = MaterialTheme.typography.bodySmall,
                         )
                     }
@@ -218,7 +229,7 @@ private fun ParameterItem(
             )
 
             Text(
-                text = type,
+                text = type + "",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -238,6 +249,7 @@ private fun ParameterItem(
                 onDone = { onValueChanged.invoke(value) },
             ),
             singleLine = true,
+            placeholder = getDefaultValue(name)?.let { { Text(it) } },
         )
     }
 }
@@ -271,5 +283,14 @@ private fun RequestTypeBadge(
             text = text,
             style = MaterialTheme.typography.bodyMedium.bold(),
         )
+    }
+}
+
+private fun getDefaultValue(paramName: String): String? {
+    return when (paramName) {
+        "page" -> "1"
+        "creatorId" -> "rosumerii"
+        "postId" -> "8909488"
+        else -> null
     }
 }

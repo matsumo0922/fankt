@@ -2,7 +2,6 @@ package me.matsumo.fankt
 
 import io.github.aakira.napier.Napier
 import io.ktor.client.HttpClient
-import io.ktor.client.call.body
 import io.ktor.client.plugins.HttpResponseValidator
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.plugins.cookies.HttpCookies
@@ -11,15 +10,19 @@ import io.ktor.client.plugins.logging.LogLevel
 import io.ktor.client.plugins.logging.Logger
 import io.ktor.client.plugins.logging.Logging
 import io.ktor.client.request.header
+import io.ktor.client.statement.bodyAsText
 import io.ktor.http.ContentType
+import io.ktor.http.HttpStatusCode
 import io.ktor.http.contentType
 import io.ktor.http.isSuccess
 import io.ktor.serialization.kotlinx.json.json
 import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.JsonElement
 import me.matsumo.fankt.datasource.db.PersistentCookieStorage
 
-internal fun buildHttpClient(cookieStorage: PersistentCookieStorage): HttpClient {
+internal fun buildHttpClient(
+    isEnableContentNegotiation: Boolean,
+    cookieStorage: PersistentCookieStorage,
+): HttpClient {
 
     val json = Json {
         isLenient = true
@@ -42,8 +45,10 @@ internal fun buildHttpClient(cookieStorage: PersistentCookieStorage): HttpClient
             logger = customLogger
         }
 
-        install(ContentNegotiation) {
-            json(json)
+        if (isEnableContentNegotiation) {
+            install(ContentNegotiation) {
+                json(json)
+            }
         }
 
         install(HttpCookies) {
@@ -60,10 +65,14 @@ internal fun buildHttpClient(cookieStorage: PersistentCookieStorage): HttpClient
             validateResponse {
                 val isError = !it.status.isSuccess()
                 val isJson = it.contentType()?.match(ContentType.Application.Json) == true
+                val response = it.bodyAsText()
 
                 if (isError && isJson) {
-                    val response = it.body<JsonElement>()
-                    Napier.d { "JSON: $response"}
+                    Napier.d { "JSON: $response" }
+                }
+
+                if (it.status == HttpStatusCode.NotFound || it.status.value >= 400) {
+                    error("HTTP ${it.status.value}: $response")
                 }
             }
         }

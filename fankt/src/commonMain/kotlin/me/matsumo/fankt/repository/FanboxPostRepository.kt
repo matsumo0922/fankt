@@ -14,6 +14,7 @@ import me.matsumo.fankt.domain.model.id.FanboxPostId
 
 internal class FanboxPostRepository(
     private val fanboxPostApi: FanboxPostApi,
+    private val fanboxPostApiWithoutContentNegotiation: FanboxPostApi,
     private val fanboxPostMapper: FanboxPostMapper,
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
 ) {
@@ -76,13 +77,13 @@ internal class FanboxPostRepository(
     }
 
     suspend fun likePost(postId: FanboxPostId) = withContext(ioDispatcher) {
-        fanboxPostApi.likePost(
+        fanboxPostApiWithoutContentNegotiation.likePost(
             body = JsonObject(mapOf("postId" to JsonPrimitive(postId.value)))
         )
     }
 
     suspend fun addComment(postId: FanboxPostId, comment: String) = withContext(ioDispatcher) {
-        fanboxPostApi.addComment(
+        fanboxPostApiWithoutContentNegotiation.addComment(
             body = JsonObject(
                 mapOf(
                     "postId" to JsonPrimitive(postId.value),
@@ -93,7 +94,7 @@ internal class FanboxPostRepository(
     }
 
     suspend fun deleteComment(postId: FanboxPostId, commentId: String) = withContext(ioDispatcher) {
-        fanboxPostApi.deleteComment(
+        fanboxPostApiWithoutContentNegotiation.deleteComment(
             body = JsonObject(
                 mapOf(
                     "postId" to JsonPrimitive(postId.value),

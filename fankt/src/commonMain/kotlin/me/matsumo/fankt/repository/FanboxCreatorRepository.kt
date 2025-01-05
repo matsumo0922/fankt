@@ -4,14 +4,13 @@ import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.withContext
-import kotlinx.serialization.json.JsonObject
-import kotlinx.serialization.json.JsonPrimitive
 import me.matsumo.fankt.datasource.FanboxCreatorApi
 import me.matsumo.fankt.datasource.mapper.FanboxCreatorMapper
 import me.matsumo.fankt.domain.model.id.FanboxCreatorId
 
 internal class FanboxCreatorRepository(
     private val fanboxCreatorApi: FanboxCreatorApi,
+    private val fanboxCreatorApiWithoutContentNegotiation: FanboxCreatorApi,
     private val fanboxCreatorMapper: FanboxCreatorMapper,
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
 ) {
@@ -58,15 +57,11 @@ internal class FanboxCreatorRepository(
     }
 
     suspend fun followCreator(creatorId: FanboxCreatorId) = withContext(ioDispatcher) {
-        fanboxCreatorApi.followCreator(
-            body = JsonObject(mapOf("creatorId" to JsonPrimitive(creatorId.value)))
-        )
+        fanboxCreatorApiWithoutContentNegotiation.followCreator(creatorId.value)
     }
 
     suspend fun unfollowCreator(creatorId: FanboxCreatorId) = withContext(ioDispatcher) {
-        fanboxCreatorApi.unfollowCreator(
-            body = JsonObject(mapOf("creatorId" to JsonPrimitive(creatorId.value)))
-        )
+        fanboxCreatorApiWithoutContentNegotiation.unfollowCreator(creatorId.value)
     }
 
     companion object {
