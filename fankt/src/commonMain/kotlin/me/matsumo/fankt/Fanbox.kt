@@ -48,7 +48,7 @@ import me.matsumo.fankt.repository.FanboxSearchRepository
 import me.matsumo.fankt.repository.FanboxUserRepository
 
 class Fanbox(
-    private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO
+    private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
 ) {
     private val scope = CoroutineScope(ioDispatcher + SupervisorJob())
     private val cookieDao = getFanktDatabase().cookieDao()
@@ -124,8 +124,8 @@ class Fanbox(
             tokenDao.insert(
                 CSRFToken(
                     value = getMetadata().csrfToken,
-                    createdAt = Clock.System.now().toEpochMilliseconds()
-                )
+                    createdAt = Clock.System.now().toEpochMilliseconds(),
+                ),
             )
         }
     }

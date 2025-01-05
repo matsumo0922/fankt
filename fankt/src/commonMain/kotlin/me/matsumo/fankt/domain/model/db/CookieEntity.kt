@@ -13,7 +13,7 @@ internal data class CookieEntity(
     val path: String,
     val name: String,
     val value: String,
-    val expiresAt: Long
+    val expiresAt: Long,
 )
 
 internal fun CookieEntity.toCookie(): Cookie {
@@ -22,17 +22,17 @@ internal fun CookieEntity.toCookie(): Cookie {
         value = value,
         expires = expiresAt.takeIf { it > 0 }?.let { GMTDate(it) },
         domain = domain,
-        path = path
+        path = path,
     )
 }
 
 internal fun Cookie.toEntity(host: String): CookieEntity {
     return CookieEntity(
-        id = "${domain}-${name}-${path}",
+        id = "$domain-$name-$path",
         domain = domain ?: host,
         path = path ?: "/",
         name = name,
         value = value,
-        expiresAt = expires?.timestamp ?: -1
+        expiresAt = expires?.timestamp ?: -1,
     )
 }

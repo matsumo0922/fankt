@@ -9,7 +9,7 @@ import me.matsumo.fankt.datasource.db.TokenDao
 
 @Database(entities = [CookieEntity::class, CSRFToken::class], version = 1)
 @ConstructedBy(CookieDatabaseConstructor::class)
-internal abstract class FanktDatabase: RoomDatabase() {
+internal abstract class FanktDatabase : RoomDatabase() {
     abstract fun cookieDao(): CookieDao
     abstract fun tokenDao(): TokenDao
 }

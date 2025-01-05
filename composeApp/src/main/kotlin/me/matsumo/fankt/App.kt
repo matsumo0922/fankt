@@ -7,21 +7,17 @@ import androidx.compose.animation.core.CubicBezierEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.animation.scaleIn
 import androidx.compose.animation.slideIn
 import androidx.compose.animation.slideOut
 import androidx.compose.foundation.background
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.unit.IntOffset
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.fragment.app.FragmentActivity
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.rememberNavController
-import io.github.aakira.napier.DebugAntilog
-import io.github.aakira.napier.Napier
 import me.matsumo.fankt.fanbox.fanboxScreen
 import me.matsumo.fankt.fanbox.navigateToFanbox
 import me.matsumo.fankt.theme.FanktTheme
@@ -60,11 +56,11 @@ internal fun FanktApp(
     ) {
         navHostScreen(
             navigateToFanbox = navController::navigateToFanbox,
-            navigateToFantia = { /* TODO */ }
+            navigateToFantia = { /* TODO */ },
         )
 
         fanboxScreen(
-            terminate = navController::popBackStack
+            terminate = navController::popBackStack,
         )
     }
 }

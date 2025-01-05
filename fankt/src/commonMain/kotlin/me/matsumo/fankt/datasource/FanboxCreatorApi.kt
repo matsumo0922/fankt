@@ -1,8 +1,6 @@
 package me.matsumo.fankt.datasource
 
 import de.jensklingenberg.ktorfit.http.Body
-import de.jensklingenberg.ktorfit.http.Field
-import de.jensklingenberg.ktorfit.http.FormUrlEncoded
 import de.jensklingenberg.ktorfit.http.GET
 import de.jensklingenberg.ktorfit.http.Headers
 import de.jensklingenberg.ktorfit.http.POST
@@ -18,7 +16,7 @@ internal interface FanboxCreatorApi {
 
     @GET("creator.get")
     suspend fun getCreatorDetail(
-        @Query("creatorId") creatorId: String
+        @Query("creatorId") creatorId: String,
     ): FanboxCreatorDetailEntity
 
     @GET("creator.listFollowing")
@@ -29,22 +27,22 @@ internal interface FanboxCreatorApi {
 
     @GET("creator.listRecommended")
     suspend fun getRecommendedCreators(
-        @Query("limit") loadSize: String
+        @Query("limit") loadSize: String,
     ): FanboxCreatorListEntity
 
     @GET("plan.listCreator")
     suspend fun getCreatorPlans(
-        @Query("creatorId") creatorId: String
+        @Query("creatorId") creatorId: String,
     ): FanboxCreatorPlanListEntity
 
     @GET("legacy/support/creator")
     suspend fun getCreatorPlanDetail(
-        @Query("creatorId") creatorId: String
+        @Query("creatorId") creatorId: String,
     ): FanboxCreatorPlanDetailEntity
 
     @GET("tag.getFeatured")
     suspend fun getCreatorTags(
-        @Query("creatorId") creatorId: String
+        @Query("creatorId") creatorId: String,
     ): FanboxCreatorTagListEntity
 
     @Headers("Content-Type: application/json")

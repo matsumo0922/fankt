@@ -65,8 +65,8 @@ internal class FanboxCreatorRepository(
         fanboxCreatorApiWithoutContentNegotiation.followCreator(
             TextContent(
                 text = buildJsonObject { put("creatorUserId", userId.toString()) }.toString(),
-                contentType = ContentType.Application.Json
-            )
+                contentType = ContentType.Application.Json,
+            ),
         )
     }
 
@@ -74,8 +74,8 @@ internal class FanboxCreatorRepository(
         fanboxCreatorApiWithoutContentNegotiation.unfollowCreator(
             TextContent(
                 text = buildJsonObject { put("creatorUserId", userId.toString()) }.toString(),
-                contentType = ContentType.Application.Json
-            )
+                contentType = ContentType.Application.Json,
+            ),
         )
     }
 

@@ -3,21 +3,18 @@ package me.matsumo.fankt.datasource.db
 import io.ktor.client.plugins.cookies.CookiesStorage
 import io.ktor.http.Cookie
 import io.ktor.http.Url
-import io.ktor.util.date.GMTDate
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.withContext
-import me.matsumo.fankt.domain.model.db.CookieEntity
 import me.matsumo.fankt.domain.model.db.toCookie
 import me.matsumo.fankt.domain.model.db.toEntity
 
 internal class PersistentCookieStorage(
     private val cookieDao: CookieDao,
-    private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO
-): CookiesStorage {
+    private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
+) : CookiesStorage {
 
     override suspend fun addCookie(requestUrl: Url, cookie: Cookie) {
         withContext(Dispatchers.IO) {
@@ -41,7 +38,7 @@ internal class PersistentCookieStorage(
             value = sessionId,
             domain = ".fanbox.cc",
             path = "/",
-            expires = null
+            expires = null,
         )
 
         addCookie(Url("https://www.fanbox.cc"), cookie)

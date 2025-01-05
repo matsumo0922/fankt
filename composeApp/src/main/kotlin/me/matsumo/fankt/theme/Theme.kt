@@ -1,3 +1,5 @@
+@file:Suppress("UnusedPrivateProperty")
+
 package me.matsumo.fankt.theme
 
 import androidx.compose.foundation.isSystemInDarkTheme

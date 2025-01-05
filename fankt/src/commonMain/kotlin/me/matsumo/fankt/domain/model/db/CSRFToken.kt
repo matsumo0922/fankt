@@ -8,5 +8,5 @@ internal data class CSRFToken(
     @PrimaryKey(autoGenerate = true)
     val id: Long = 0,
     val value: String,
-    val createdAt: Long
+    val createdAt: Long,
 )

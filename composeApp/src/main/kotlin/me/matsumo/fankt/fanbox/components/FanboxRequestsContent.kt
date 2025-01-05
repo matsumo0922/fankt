@@ -63,7 +63,7 @@ private val excludeMethod = setOf(
 @Composable
 fun FanboxRequestsContent(
     classInstance: Fanbox,
-    modifier: Modifier,
+    modifier: Modifier = Modifier,
 ) {
     val functions = remember {
         classInstance::class.memberFunctions
@@ -182,7 +182,7 @@ private fun RequestItem(
                         } else {
                             MaterialTheme.colorScheme.errorContainer
                         },
-                    )
+                    ),
                 ) {
                     Box(
                         modifier = Modifier.verticalScroll(rememberScrollState()),

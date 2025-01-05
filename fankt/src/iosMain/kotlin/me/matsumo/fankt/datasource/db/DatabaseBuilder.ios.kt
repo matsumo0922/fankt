@@ -2,9 +2,7 @@ package me.matsumo.fankt.datasource.db
 
 import androidx.room.Room
 import androidx.room.RoomDatabase
-import androidx.sqlite.SQLiteDriver
 import androidx.sqlite.driver.NativeSQLiteDriver
-import androidx.sqlite.driver.bundled.BundledSQLiteDriver
 import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO

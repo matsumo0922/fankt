@@ -30,7 +30,7 @@ internal class FanboxCreatorMapper {
                     name = it.name,
                     iconUrl = it.iconUrl,
                 )
-            }
+            },
         )
     }
 
@@ -98,7 +98,7 @@ internal class FanboxCreatorMapper {
                             name = user.name,
                             iconUrl = user.iconUrl,
                         )
-                    }
+                    },
                 )
             }
         }
@@ -122,7 +122,7 @@ internal class FanboxCreatorMapper {
                             name = it.name,
                             iconUrl = it.iconUrl,
                         )
-                    }
+                    },
                 ),
                 supportStartDatetime = supportStartDatetime,
                 supportTransactions = supportTransactions.map {

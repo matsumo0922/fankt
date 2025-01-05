@@ -26,7 +26,7 @@ internal interface FanboxPostApi {
     suspend fun getSupportedPosts(
         @Query("limit") loadSize: String,
         @Query("maxPublishedDatetime") maxPublishedDatetime: String?,
-        @Query("maxId") maxId: String?
+        @Query("maxId") maxId: String?,
     ): FanboxPostListEntity
 
     @GET("post.listCreator")
@@ -34,7 +34,7 @@ internal interface FanboxPostApi {
         @Query("creatorId") creatorId: String,
         @Query("limit") loadSize: String,
         @Query("maxPublishedDatetime") maxPublishedDatetime: String?,
-        @Query("maxId") maxId: String?
+        @Query("maxId") maxId: String?,
     ): FanboxCreatorPostItemsEntity
 
     @GET("post.paginateCreator")
@@ -44,7 +44,7 @@ internal interface FanboxPostApi {
 
     @GET("post.info")
     suspend fun getPostDetail(
-        @Query("postId") postId: String
+        @Query("postId") postId: String,
     ): FanboxPostDetailEntity
 
     @GET("post.listComments")
@@ -58,24 +58,24 @@ internal interface FanboxPostApi {
     suspend fun getPostFromQuery(
         @Query("tag") query: String,
         @Query("creatorId") creatorId: String?,
-        @Query("page") page: Int = 0
+        @Query("page") page: Int = 0,
     ): FanboxPostSearchEntity
 
     @Headers("Content-Type: application/json")
     @POST("post.likePost")
     suspend fun likePost(
-        @Body body: TextContent
+        @Body body: TextContent,
     )
 
     @Headers("Content-Type: application/json")
     @POST("post.addComment")
     suspend fun addComment(
-        @Body body: TextContent
+        @Body body: TextContent,
     )
 
     @Headers("Content-Type: application/json")
     @POST("post.deleteComment")
     suspend fun deleteComment(
-        @Body body: TextContent
+        @Body body: TextContent,
     )
 }

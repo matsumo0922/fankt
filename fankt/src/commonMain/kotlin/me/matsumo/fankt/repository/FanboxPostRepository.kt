@@ -96,8 +96,8 @@ internal class FanboxPostRepository(
         fanboxPostApiWithoutContentNegotiation.likePost(
             TextContent(
                 text = buildJsonObject { put("postId", postId.toString()) }.toString(),
-                contentType = ContentType.Application.Json
-            )
+                contentType = ContentType.Application.Json,
+            ),
         )
     }
 
@@ -115,8 +115,8 @@ internal class FanboxPostRepository(
                     put("parentCommentId", parentCommentId.toString())
                     put("body", comment)
                 }.toString(),
-                contentType = ContentType.Application.Json
-            )
+                contentType = ContentType.Application.Json,
+            ),
         )
     }
 
@@ -124,8 +124,8 @@ internal class FanboxPostRepository(
         fanboxPostApiWithoutContentNegotiation.deleteComment(
             TextContent(
                 text = buildJsonObject { put("commentId", commentId.toString()) }.toString(),
-                contentType = ContentType.Application.Json
-            )
+                contentType = ContentType.Application.Json,
+            ),
         )
     }
 

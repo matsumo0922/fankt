@@ -69,7 +69,7 @@ internal class FanboxPostMapper {
                     name = it.name,
                     iconUrl = it.iconUrl,
                 )
-            }
+            },
         )
     }
 
@@ -225,7 +225,7 @@ internal class FanboxPostMapper {
     fun map(entity: FanboxPostCommentListEntity): PageOffsetInfo<FanboxComment> {
         return PageOffsetInfo(
             contents = entity.body.items.map { map(it) },
-            offset = entity.body.nextUrl?.let { Url(it).parameters["offset"]?.toIntOrNull() }
+            offset = entity.body.nextUrl?.let { Url(it).parameters["offset"]?.toIntOrNull() },
         )
     }
 
@@ -253,7 +253,7 @@ internal class FanboxPostMapper {
         }
     }
 
-    fun map(entity: FanboxPostSearchEntity) : PageNumberInfo<FanboxPost> {
+    fun map(entity: FanboxPostSearchEntity): PageNumberInfo<FanboxPost> {
         return PageNumberInfo(
             contents = entity.body.items.map { map(it) },
             nextPage = entity.body.nextUrl?.let { Url(it).parameters["page"]?.toIntOrNull() },

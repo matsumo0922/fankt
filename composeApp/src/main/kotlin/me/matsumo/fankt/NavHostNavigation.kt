@@ -9,7 +9,7 @@ const val NavHostRoute = "navHost"
 
 fun NavGraphBuilder.navHostScreen(
     navigateToFanbox: () -> Unit,
-    navigateToFantia: () -> Unit
+    navigateToFantia: () -> Unit,
 ) {
     composable(NavHostRoute) {
         NavHostScreen(

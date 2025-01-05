@@ -16,7 +16,6 @@ import io.ktor.http.HttpStatusCode
 import io.ktor.http.contentType
 import io.ktor.http.isSuccess
 import io.ktor.serialization.kotlinx.json.json
-import kotlinx.coroutines.flow.first
 import kotlinx.serialization.json.Json
 import me.matsumo.fankt.datasource.db.PersistentCookieStorage
 import me.matsumo.fankt.domain.model.db.CSRFToken

@@ -8,7 +8,7 @@ lateinit var fanktApplicationContext: Context
 
 internal object FanktContext
 
-internal class FanktInitializer: Initializer<FanktContext> {
+internal class FanktInitializer : Initializer<FanktContext> {
     override fun create(context: Context): FanktContext {
         fanktApplicationContext = context.applicationContext
         return FanktContext

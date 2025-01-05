@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
@@ -34,7 +33,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import kotlinx.coroutines.launch
 import me.matsumo.fankt.fanbox.components.FanboxRequestsContent
-import me.matsumo.fankt.fanbox.components.getFanboxSessionId
 import me.matsumo.fankt.fanbox.components.setFanboxSessionId
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -80,7 +78,7 @@ internal fun FanboxScreen(
                     }
                 },
             )
-        }
+        },
     ) {
         FanboxRequestsContent(
             modifier = Modifier

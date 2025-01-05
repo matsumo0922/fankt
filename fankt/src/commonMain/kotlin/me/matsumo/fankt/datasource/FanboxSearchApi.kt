@@ -10,11 +10,11 @@ internal interface FanboxSearchApi {
     @GET("creator.search")
     suspend fun getCreatorFromQuery(
         @Query("q") query: String,
-        @Query("page") page: Int = 0
+        @Query("page") page: Int = 0,
     ): FanboxCreatorSearchListEntity
 
     @GET("tag.search")
     suspend fun getTagFromQuery(
-        @Query("q") query: String
+        @Query("q") query: String,
     ): FanboxTagListEntity
 }
