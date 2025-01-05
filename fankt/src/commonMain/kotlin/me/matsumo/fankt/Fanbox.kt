@@ -1,12 +1,22 @@
 package me.matsumo.fankt
 
 import de.jensklingenberg.ktorfit.Ktorfit
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.IO
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import kotlinx.datetime.Clock
+import kotlinx.serialization.json.Json
 import me.matsumo.fankt.datasource.createFanboxCreatorApi
 import me.matsumo.fankt.datasource.createFanboxPostApi
 import me.matsumo.fankt.datasource.createFanboxSearchApi
 import me.matsumo.fankt.datasource.createFanboxUserApi
 import me.matsumo.fankt.datasource.db.PersistentCookieStorage
-import me.matsumo.fankt.datasource.db.getCookieDatabase
+import me.matsumo.fankt.datasource.db.getFanktDatabase
 import me.matsumo.fankt.datasource.mapper.FanboxCreatorMapper
 import me.matsumo.fankt.datasource.mapper.FanboxPostMapper
 import me.matsumo.fankt.datasource.mapper.FanboxSearchMapper
@@ -19,51 +29,104 @@ import me.matsumo.fankt.domain.model.FanboxComment
 import me.matsumo.fankt.domain.model.FanboxCreatorDetail
 import me.matsumo.fankt.domain.model.FanboxCreatorPlan
 import me.matsumo.fankt.domain.model.FanboxCreatorPlanDetail
+import me.matsumo.fankt.domain.model.FanboxMetaData
 import me.matsumo.fankt.domain.model.FanboxNewsLetter
 import me.matsumo.fankt.domain.model.FanboxPaidRecord
 import me.matsumo.fankt.domain.model.FanboxPost
 import me.matsumo.fankt.domain.model.FanboxPostDetail
 import me.matsumo.fankt.domain.model.FanboxTag
+import me.matsumo.fankt.domain.model.db.CSRFToken
+import me.matsumo.fankt.domain.model.db.toCookie
+import me.matsumo.fankt.domain.model.id.FanboxCommentId
 import me.matsumo.fankt.domain.model.id.FanboxCreatorId
 import me.matsumo.fankt.domain.model.id.FanboxPostId
+import me.matsumo.fankt.domain.model.id.FanboxUserId
 import me.matsumo.fankt.repository.FanboxCreatorRepository
 import me.matsumo.fankt.repository.FanboxPostRepository
 import me.matsumo.fankt.repository.FanboxSearchRepository
 import me.matsumo.fankt.repository.FanboxUserRepository
 
-class Fanbox {
+class Fanbox(
+    private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO
+) {
+    private val scope = CoroutineScope(ioDispatcher + SupervisorJob())
+    private val cookieDao = getFanktDatabase().cookieDao()
+    private val tokenDao = getFanktDatabase().tokenDao()
 
-    private val cookieStorage = PersistentCookieStorage(getCookieDatabase().cookieDao())
-    private val ktorfit = Ktorfit.Builder()
-        .baseUrl("https://api.fanbox.cc/")
-        .httpClient(buildHttpClient(true, cookieStorage))
-        .build()
+    private val cookieStorage = PersistentCookieStorage(cookieDao)
+    private val formatter = Json {
+        isLenient = true
+        prettyPrint = true
+        ignoreUnknownKeys = true
+        coerceInputValues = true
+        encodeDefaults = true
+        explicitNulls = false
+    }
 
-    private val disabledContentNegotiationKtorfit = Ktorfit.Builder()
-        .baseUrl("https://api.fanbox.cc/")
-        .httpClient(buildHttpClient(false, cookieStorage))
-        .build()
+    private lateinit var ktorfit: Ktorfit
+    private lateinit var ktorfitWithoutContentNegotiation: Ktorfit
 
-    private val postApi = ktorfit.createFanboxPostApi()
-    private val creatorApi = ktorfit.createFanboxCreatorApi()
-    private val searchApi = ktorfit.createFanboxSearchApi()
-    private val userApi = ktorfit.createFanboxUserApi()
+    private lateinit var post: FanboxPostRepository
+    private lateinit var creator: FanboxCreatorRepository
+    private lateinit var search: FanboxSearchRepository
+    private lateinit var user: FanboxUserRepository
 
-    private val postWithoutContentNegotiation = disabledContentNegotiationKtorfit.createFanboxPostApi()
-    private val creatorWithoutContentNegotiation = disabledContentNegotiationKtorfit.createFanboxCreatorApi()
+    init {
+        buildKtorfit(null)
 
-    private val postMapper = FanboxPostMapper()
-    private val creatorMapper = FanboxCreatorMapper()
-    private val searchMapper = FanboxSearchMapper(creatorMapper)
-    private val userMapper = FanboxUserMapper(postMapper, creatorMapper)
+        scope.launch {
+            tokenDao.getLatestToken().collect {
+                buildKtorfit(it)
+            }
+        }
+    }
 
-    private val post = FanboxPostRepository(postApi, postWithoutContentNegotiation, postMapper)
-    private val creator = FanboxCreatorRepository(creatorApi, creatorWithoutContentNegotiation, creatorMapper)
-    private val search = FanboxSearchRepository(searchApi, searchMapper)
-    private val user = FanboxUserRepository(userApi, userMapper)
+    val cookies = cookieDao.getAllCookies().map { it.map { cookieEntity -> cookieEntity.toCookie() } }
+    val csrfToken = tokenDao.getLatestToken().map { it?.value }
+
+    private fun buildKtorfit(csrfToken: CSRFToken?) {
+        ktorfit = Ktorfit.Builder()
+            .baseUrl("https://api.fanbox.cc/")
+            .httpClient(buildHttpClient(formatter, cookieStorage, csrfToken, true))
+            .build()
+
+        ktorfitWithoutContentNegotiation = Ktorfit.Builder()
+            .baseUrl("https://api.fanbox.cc/")
+            .httpClient(buildHttpClient(formatter, cookieStorage, csrfToken, false))
+            .build()
+
+        val postApi = ktorfit.createFanboxPostApi()
+        val creatorApi = ktorfit.createFanboxCreatorApi()
+        val searchApi = ktorfit.createFanboxSearchApi()
+        val userApi = ktorfit.createFanboxUserApi()
+
+        val postWithoutContentNegotiation = ktorfitWithoutContentNegotiation.createFanboxPostApi()
+        val creatorWithoutContentNegotiation = ktorfitWithoutContentNegotiation.createFanboxCreatorApi()
+
+        val postMapper = FanboxPostMapper()
+        val creatorMapper = FanboxCreatorMapper()
+        val searchMapper = FanboxSearchMapper(creatorMapper)
+        val userMapper = FanboxUserMapper(postMapper, creatorMapper)
+
+        post = FanboxPostRepository(postApi, postWithoutContentNegotiation, postMapper)
+        creator = FanboxCreatorRepository(creatorApi, creatorWithoutContentNegotiation, creatorMapper)
+        search = FanboxSearchRepository(searchApi, searchMapper)
+        user = FanboxUserRepository(userApi, userMapper)
+    }
 
     suspend fun setFanboxSessionId(sessionId: String) {
         cookieStorage.overrideFanboxSessionId(sessionId)
+    }
+
+    suspend fun updateCsrfToken() {
+        withContext(ioDispatcher) {
+            tokenDao.insert(
+                CSRFToken(
+                    value = getMetadata().csrfToken,
+                    createdAt = Clock.System.now().toEpochMilliseconds()
+                )
+            )
+        }
     }
 
     suspend fun getHomePosts(cursor: FanboxCursor?): PageCursorInfo<FanboxPost> {
@@ -94,12 +157,12 @@ class Fanbox {
         post.likePost(postId)
     }
 
-    suspend fun addComment(postId: FanboxPostId, text: String) {
-        post.addComment(postId, text)
+    suspend fun addComment(postId: FanboxPostId, rootCommentId: FanboxCommentId, parentCommentId: FanboxCommentId, body: String) {
+        post.addComment(postId, rootCommentId, parentCommentId, body)
     }
 
-    suspend fun deleteComment(postId: FanboxPostId, commentId: String) {
-        post.deleteComment(postId, commentId)
+    suspend fun deleteComment(commentId: FanboxCommentId) {
+        post.deleteComment(commentId)
     }
 
     suspend fun getCreatorDetail(creatorId: FanboxCreatorId): FanboxCreatorDetail {
@@ -130,12 +193,12 @@ class Fanbox {
         return creator.getCreatorTags(creatorId)
     }
 
-    suspend fun followCreator(creatorId: FanboxCreatorId) {
-        creator.followCreator(creatorId)
+    suspend fun followCreator(userId: FanboxUserId) {
+        creator.followCreator(userId)
     }
 
-    suspend fun unfollowCreator(creatorId: FanboxCreatorId) {
-        creator.unfollowCreator(creatorId)
+    suspend fun unfollowCreator(userId: FanboxUserId) {
+        creator.unfollowCreator(userId)
     }
 
     suspend fun searchCreators(query: String): PageNumberInfo<FanboxCreatorDetail> {
@@ -164,5 +227,9 @@ class Fanbox {
 
     suspend fun getBells(page: Int): PageNumberInfo<FanboxBell> {
         return user.getBells(page)
+    }
+
+    suspend fun getMetadata(): FanboxMetaData {
+        return user.getMetadata(formatter)
     }
 }

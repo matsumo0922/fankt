@@ -17,6 +17,7 @@ import me.matsumo.fankt.domain.model.FanboxUser
 import me.matsumo.fankt.domain.model.id.FanboxCommentId
 import me.matsumo.fankt.domain.model.id.FanboxCreatorId
 import me.matsumo.fankt.domain.model.id.FanboxPostId
+import me.matsumo.fankt.domain.model.id.FanboxUserId
 import me.matsumo.fankt.domain.translateToCursor
 
 internal class FanboxPostMapper {
@@ -50,7 +51,7 @@ internal class FanboxPostMapper {
             },
             user = entity.user?.let {
                 FanboxUser(
-                    userId = it.userId,
+                    userId = FanboxUserId(it.userId.toLong()),
                     creatorId = FanboxCreatorId(entity.creatorId),
                     name = it.name,
                     iconUrl = it.iconUrl,
@@ -182,7 +183,7 @@ internal class FanboxPostMapper {
             tags = entity.body.tags,
             user = entity.body.user?.let {
                 FanboxUser(
-                    userId = it.userId,
+                    userId = FanboxUserId(it.userId.toLong()),
                     creatorId = FanboxCreatorId(entity.body.creatorId),
                     name = it.name,
                     iconUrl = it.iconUrl,
@@ -229,8 +230,8 @@ internal class FanboxPostMapper {
                 replies = replies.map { map(it) }.sortedBy { it.createdDatetime },
                 user = user?.let {
                     FanboxUser(
-                        userId = it.userId,
-                        creatorId = FanboxCreatorId.EMPTY,
+                        userId = FanboxUserId(it.userId.toLong()),
+                        creatorId = null,
                         name = it.name,
                         iconUrl = it.iconUrl,
                     )

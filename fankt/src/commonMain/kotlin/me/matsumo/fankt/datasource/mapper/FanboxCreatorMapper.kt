@@ -16,6 +16,7 @@ import me.matsumo.fankt.domain.model.FanboxTag
 import me.matsumo.fankt.domain.model.FanboxUser
 import me.matsumo.fankt.domain.model.id.FanboxCreatorId
 import me.matsumo.fankt.domain.model.id.FanboxPlanId
+import me.matsumo.fankt.domain.model.id.FanboxUserId
 
 internal class FanboxCreatorMapper {
 
@@ -24,8 +25,8 @@ internal class FanboxCreatorMapper {
             creatorId = FanboxCreatorId(entity.creatorId.orEmpty()),
             user = entity.user?.let {
                 FanboxUser(
-                    userId = it.userId,
-                    creatorId = FanboxCreatorId(entity.creatorId.orEmpty()),
+                    userId = FanboxUserId(it.userId.toLong()),
+                    creatorId = entity.creatorId?.let { id -> FanboxCreatorId(id) },
                     name = it.name,
                     iconUrl = it.iconUrl,
                 )
@@ -69,7 +70,7 @@ internal class FanboxCreatorMapper {
                 },
                 user = user?.let {
                     FanboxUser(
-                        userId = it.userId,
+                        userId = FanboxUserId(it.userId.toLong()),
                         creatorId = FanboxCreatorId(creatorId),
                         name = it.name,
                         iconUrl = it.iconUrl,
@@ -92,8 +93,8 @@ internal class FanboxCreatorMapper {
                     title = it.title,
                     user = it.user?.let { user ->
                         FanboxUser(
-                            userId = user.userId,
-                            creatorId = FanboxCreatorId(it.creatorId.orEmpty()),
+                            userId = FanboxUserId(user.userId.toLong()),
+                            creatorId = it.creatorId?.let { id -> FanboxCreatorId(id) },
                             name = user.name,
                             iconUrl = user.iconUrl,
                         )
@@ -116,8 +117,8 @@ internal class FanboxCreatorMapper {
                     paymentMethod = FanboxPaymentMethod.fromString(plan.paymentMethod),
                     user = plan.user?.let {
                         FanboxUser(
-                            userId = it.userId,
-                            creatorId = FanboxCreatorId(plan.creatorId.orEmpty()),
+                            userId = FanboxUserId(it.userId.toLong()),
+                            creatorId = plan.creatorId?.let { id -> FanboxCreatorId(id) },
                             name = it.name,
                             iconUrl = it.iconUrl,
                         )
@@ -131,8 +132,8 @@ internal class FanboxCreatorMapper {
                         transactionDatetime = Instant.parse(it.transactionDatetime),
                         targetMonth = it.targetMonth,
                         user = FanboxUser(
-                            userId = it.supporter.userId,
-                            creatorId = FanboxCreatorId(plan.creatorId.orEmpty()),
+                            userId = FanboxUserId(it.supporter.userId.toLong()),
+                            creatorId = plan.creatorId?.let { id -> FanboxCreatorId(id) },
                             name = it.supporter.name,
                             iconUrl = it.supporter.iconUrl,
                         ),

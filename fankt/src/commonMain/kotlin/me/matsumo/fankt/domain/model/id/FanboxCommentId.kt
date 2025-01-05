@@ -9,4 +9,8 @@ data class FanboxCommentId(val value: String) {
     val uniqueValue: String = "comment-$value-${Uuid.random()}"
 
     override fun toString(): String = value
+
+    companion object {
+        val EMPTY = FanboxCommentId("0")
+    }
 }

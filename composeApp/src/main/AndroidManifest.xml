@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <application
+            android:name="me.matsumo.fankt.FanktApplication"
+            android:icon="@mipmap/ic_launcher"
+            android:label="fankt"
+            android:theme="@style/Theme.Fankt.Splash">
+        <activity
+                android:name="me.matsumo.fankt.MainActivity"
+                android:configChanges="orientation|screenSize|screenLayout|keyboardHidden"
+                android:launchMode="singleInstance"
+                android:windowSoftInputMode="adjustPan"
+                android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+    </application>
+
+</manifest>

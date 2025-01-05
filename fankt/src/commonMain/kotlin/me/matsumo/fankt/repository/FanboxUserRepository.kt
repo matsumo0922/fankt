@@ -1,11 +1,14 @@
 package me.matsumo.fankt.repository
 
+import com.fleeksoft.ksoup.Ksoup
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.withContext
+import kotlinx.serialization.json.Json
 import me.matsumo.fankt.datasource.FanboxUserApi
 import me.matsumo.fankt.datasource.mapper.FanboxUserMapper
+import me.matsumo.fankt.domain.entity.FanboxMetaDataEntity
 
 internal class FanboxUserRepository(
     private val fanboxUserApi: FanboxUserApi,
@@ -39,6 +42,16 @@ internal class FanboxUserRepository(
     suspend fun getBells(page: Int) = withContext(ioDispatcher) {
         fanboxUserApi.getBells(page).let {
             fanboxUserMapper.map(it)
+        }
+    }
+
+    suspend fun getMetadata(formatter: Json) = withContext(ioDispatcher) {
+        fanboxUserApi.getHomePage().let {
+            val doc = Ksoup.parse(it)
+            val meta = doc.select("meta[name=metadata]").first()?.attr("content")
+            val data = formatter.decodeFromString(FanboxMetaDataEntity.serializer(), meta!!)
+
+            fanboxUserMapper.map(data)
         }
     }
 }

@@ -4,13 +4,14 @@ import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
+import kotlinx.coroutines.flow.Flow
 import me.matsumo.fankt.domain.model.db.CookieEntity
 
 @Dao
 internal interface CookieDao {
 
     @Query("SELECT * FROM fankt_cookies")
-    suspend fun getAllCookies(): List<CookieEntity>
+    fun getAllCookies(): Flow<List<CookieEntity>>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insert(cookie: CookieEntity)

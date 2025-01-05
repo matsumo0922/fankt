@@ -30,30 +30,43 @@ dependencies {
 
 gradlePlugin {
     plugins {
+        // KMP
         register("KmpPlugin") {
             id = "matsumo.primitive.kmp.common"
-            implementationClass = "primitive.KmpCommonPlugin"
+            implementationClass = "primitive.kmp.KmpCommonPlugin"
         }
         register("KmpAndroidPlugin") {
             id = "matsumo.primitive.kmp.android"
-            implementationClass = "primitive.KmpAndroidPlugin"
-        }
-        register("KmpAndroidApplication") {
-            id = "matsumo.primitive.kmp.android.application"
-            implementationClass = "primitive.KmpAndroidApplication"
-        }
-        register("KmpAndroidLibrary") {
-            id = "matsumo.primitive.kmp.android.library"
-            implementationClass = "primitive.KmpAndroidLibrary"
-        }
-        register("KmpAndroidCompose") {
-            id = "matsumo.primitive.kmp.android.compose"
-            implementationClass = "primitive.KmpAndroidCompose"
+            implementationClass = "primitive.kmp.KmpAndroidPlugin"
         }
         register("KmpIosPlugin") {
             id = "matsumo.primitive.kmp.ios"
-            implementationClass = "primitive.KmpIosPlugin"
+            implementationClass = "primitive.kmp.KmpIosPlugin"
         }
+        register("KmpAndroidCompose") {
+            id = "matsumo.primitive.kmp.compose"
+            implementationClass = "primitive.kmp.KmpComposePlugin"
+        }
+
+        // Android
+        register("AndroidCommonPlugin") {
+            id = "matsumo.primitive.android.common"
+            implementationClass = "primitive.android.AndroidCommonPlugin"
+        }
+        register("KmpAndroidApplication") {
+            id = "matsumo.primitive.android.application"
+            implementationClass = "primitive.android.AndroidApplicationPlugin"
+        }
+        register("KmpAndroidLibrary") {
+            id = "matsumo.primitive.android.library"
+            implementationClass = "primitive.android.AndroidLibraryPlugin"
+        }
+        register("AndroidComposePlugin") {
+            id = "matsumo.primitive.android.compose"
+            implementationClass = "primitive.android.AndroidComposePlugin"
+        }
+
+        // Libraries
         register("DetektPlugin") {
             id = "matsumo.primitive.detekt"
             implementationClass = "primitive.DetektPlugin"

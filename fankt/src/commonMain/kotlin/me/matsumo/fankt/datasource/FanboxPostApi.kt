@@ -5,6 +5,7 @@ import de.jensklingenberg.ktorfit.http.GET
 import de.jensklingenberg.ktorfit.http.Headers
 import de.jensklingenberg.ktorfit.http.POST
 import de.jensklingenberg.ktorfit.http.Query
+import io.ktor.content.TextContent
 import kotlinx.serialization.json.JsonObject
 import me.matsumo.fankt.domain.entity.FanboxPostCommentListEntity
 import me.matsumo.fankt.domain.entity.FanboxPostDetailEntity
@@ -57,18 +58,18 @@ internal interface FanboxPostApi {
     @Headers("Content-Type: application/json")
     @POST("post.likePost")
     suspend fun likePost(
-        @Body body: JsonObject
+        @Body body: TextContent
     )
 
     @Headers("Content-Type: application/json")
     @POST("post.addComment")
     suspend fun addComment(
-        @Body body: JsonObject
+        @Body body: TextContent
     )
 
     @Headers("Content-Type: application/json")
     @POST("post.deleteComment")
     suspend fun deleteComment(
-        @Body body: JsonObject
+        @Body body: TextContent
     )
 }

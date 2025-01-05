@@ -1,12 +1,17 @@
 package me.matsumo.fankt.repository
 
+import io.ktor.http.ContentType
+import io.ktor.http.content.TextContent
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.withContext
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.put
 import me.matsumo.fankt.datasource.FanboxCreatorApi
 import me.matsumo.fankt.datasource.mapper.FanboxCreatorMapper
 import me.matsumo.fankt.domain.model.id.FanboxCreatorId
+import me.matsumo.fankt.domain.model.id.FanboxUserId
 
 internal class FanboxCreatorRepository(
     private val fanboxCreatorApi: FanboxCreatorApi,
@@ -56,12 +61,22 @@ internal class FanboxCreatorRepository(
         }
     }
 
-    suspend fun followCreator(creatorId: FanboxCreatorId) = withContext(ioDispatcher) {
-        fanboxCreatorApiWithoutContentNegotiation.followCreator(creatorId.value)
+    suspend fun followCreator(userId: FanboxUserId) = withContext(ioDispatcher) {
+        fanboxCreatorApiWithoutContentNegotiation.followCreator(
+            TextContent(
+                text = buildJsonObject { put("creatorUserId", userId.toString()) }.toString(),
+                contentType = ContentType.Application.Json
+            )
+        )
     }
 
-    suspend fun unfollowCreator(creatorId: FanboxCreatorId) = withContext(ioDispatcher) {
-        fanboxCreatorApiWithoutContentNegotiation.unfollowCreator(creatorId.value)
+    suspend fun unfollowCreator(userId: FanboxUserId) = withContext(ioDispatcher) {
+        fanboxCreatorApiWithoutContentNegotiation.unfollowCreator(
+            TextContent(
+                text = buildJsonObject { put("creatorUserId", userId.toString()) }.toString(),
+                contentType = ContentType.Application.Json
+            )
+        )
     }
 
     companion object {

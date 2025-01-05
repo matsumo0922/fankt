@@ -27,4 +27,7 @@ internal interface FanboxUserApi {
         @Query("skipConvertUnreadNotification") skipConvertUnreadNotification: Int = 0,
         @Query("commentOnly") commentOnly: Int = 0
     ): FanboxBellListEntity
+
+    @GET("https://www.fanbox.cc/")
+    suspend fun getHomePage(): String
 }

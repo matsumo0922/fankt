@@ -1,14 +1,17 @@
 package me.matsumo.fankt.repository
 
+import io.ktor.http.ContentType
+import io.ktor.http.content.TextContent
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.withContext
-import kotlinx.serialization.json.JsonObject
-import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.put
 import me.matsumo.fankt.datasource.FanboxPostApi
 import me.matsumo.fankt.datasource.mapper.FanboxPostMapper
 import me.matsumo.fankt.domain.FanboxCursor
+import me.matsumo.fankt.domain.model.id.FanboxCommentId
 import me.matsumo.fankt.domain.model.id.FanboxCreatorId
 import me.matsumo.fankt.domain.model.id.FanboxPostId
 
@@ -78,29 +81,38 @@ internal class FanboxPostRepository(
 
     suspend fun likePost(postId: FanboxPostId) = withContext(ioDispatcher) {
         fanboxPostApiWithoutContentNegotiation.likePost(
-            body = JsonObject(mapOf("postId" to JsonPrimitive(postId.value)))
+            TextContent(
+                text = buildJsonObject { put("postId", postId.toString()) }.toString(),
+                contentType = ContentType.Application.Json
+            )
         )
     }
 
-    suspend fun addComment(postId: FanboxPostId, comment: String) = withContext(ioDispatcher) {
+    suspend fun addComment(
+        postId: FanboxPostId,
+        rootCommentId: FanboxCommentId,
+        parentCommentId: FanboxCommentId,
+        comment: String,
+    ) = withContext(ioDispatcher) {
         fanboxPostApiWithoutContentNegotiation.addComment(
-            body = JsonObject(
-                mapOf(
-                    "postId" to JsonPrimitive(postId.value),
-                    "comment" to JsonPrimitive(comment),
-                ),
-            ),
+            TextContent(
+                text = buildJsonObject {
+                    put("postId", postId.toString())
+                    put("rootCommentId", rootCommentId.toString())
+                    put("parentCommentId", parentCommentId.toString())
+                    put("body", comment)
+                }.toString(),
+                contentType = ContentType.Application.Json
+            )
         )
     }
 
-    suspend fun deleteComment(postId: FanboxPostId, commentId: String) = withContext(ioDispatcher) {
+    suspend fun deleteComment(commentId: FanboxCommentId) = withContext(ioDispatcher) {
         fanboxPostApiWithoutContentNegotiation.deleteComment(
-            body = JsonObject(
-                mapOf(
-                    "postId" to JsonPrimitive(postId.value),
-                    "commentId" to JsonPrimitive(commentId),
-                ),
-            ),
+            TextContent(
+                text = buildJsonObject { put("commentId", commentId.toString()) }.toString(),
+                contentType = ContentType.Application.Json
+            )
         )
     }
 

@@ -16,23 +16,17 @@ import io.ktor.http.HttpStatusCode
 import io.ktor.http.contentType
 import io.ktor.http.isSuccess
 import io.ktor.serialization.kotlinx.json.json
+import kotlinx.coroutines.flow.first
 import kotlinx.serialization.json.Json
 import me.matsumo.fankt.datasource.db.PersistentCookieStorage
+import me.matsumo.fankt.domain.model.db.CSRFToken
 
 internal fun buildHttpClient(
-    isEnableContentNegotiation: Boolean,
+    formatter: Json,
     cookieStorage: PersistentCookieStorage,
+    csrfToken: CSRFToken? = null,
+    isEnableContentNegotiation: Boolean = true,
 ): HttpClient {
-
-    val json = Json {
-        isLenient = true
-        prettyPrint = true
-        ignoreUnknownKeys = true
-        coerceInputValues = true
-        encodeDefaults = true
-        explicitNulls = false
-    }
-
     val customLogger = object : Logger {
         override fun log(message: String) {
             Napier.d(message)
@@ -47,7 +41,7 @@ internal fun buildHttpClient(
 
         if (isEnableContentNegotiation) {
             install(ContentNegotiation) {
-                json(json)
+                json(formatter)
             }
         }
 
@@ -59,6 +53,7 @@ internal fun buildHttpClient(
             header("origin", "https://www.fanbox.cc")
             header("referer", "https://www.fanbox.cc/")
             header("user-agent", "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Mobile Safari/537.36")
+            header("x-csrf-token", csrfToken?.value.orEmpty())
         }
 
         HttpResponseValidator {

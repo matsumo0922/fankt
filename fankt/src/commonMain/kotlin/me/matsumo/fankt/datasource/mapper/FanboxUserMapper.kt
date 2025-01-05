@@ -6,10 +6,12 @@ import kotlinx.datetime.Instant
 import me.matsumo.fankt.domain.PageNumberInfo
 import me.matsumo.fankt.domain.entity.FanboxBellListEntity
 import me.matsumo.fankt.domain.entity.FanboxCreatorPlanListEntity
+import me.matsumo.fankt.domain.entity.FanboxMetaDataEntity
 import me.matsumo.fankt.domain.entity.FanboxNewsLettersEntity
 import me.matsumo.fankt.domain.entity.FanboxPaidRecordListEntity
 import me.matsumo.fankt.domain.model.FanboxBell
 import me.matsumo.fankt.domain.model.FanboxCreatorPlan
+import me.matsumo.fankt.domain.model.FanboxMetaData
 import me.matsumo.fankt.domain.model.FanboxNewsLetter
 import me.matsumo.fankt.domain.model.FanboxPaidRecord
 import me.matsumo.fankt.domain.model.FanboxPaymentMethod
@@ -17,6 +19,7 @@ import me.matsumo.fankt.domain.model.id.FanboxCommentId
 import me.matsumo.fankt.domain.model.id.FanboxCreatorId
 import me.matsumo.fankt.domain.model.id.FanboxNewsLetterId
 import me.matsumo.fankt.domain.model.id.FanboxPostId
+import me.matsumo.fankt.domain.model.id.FanboxUserId
 
 internal class FanboxUserMapper(
     private val postMapper: FanboxPostMapper,
@@ -95,5 +98,37 @@ internal class FanboxUserMapper(
             },
             nextPage = entity.body.nextUrl?.let { Url(it).parameters["page"]?.toIntOrNull() },
         )
+    }
+
+    fun map(entity: FanboxMetaDataEntity): FanboxMetaData {
+        return with(entity) {
+            FanboxMetaData(
+                apiUrl = apiUrl,
+                csrfToken = csrfToken,
+                context = FanboxMetaData.Context(
+                    privacyPolicy = FanboxMetaData.Context.PrivacyPolicy(
+                        policyUrl = context.privacyPolicy.policyUrl,
+                        revisionHistoryUrl = context.privacyPolicy.revisionHistoryUrl,
+                        shouldShowNotice = context.privacyPolicy.shouldShowNotice,
+                        updateDate = context.privacyPolicy.updateDate,
+                    ),
+                    user = FanboxMetaData.Context.User(
+                        creatorId = context.user.creatorId?.let { id -> FanboxCreatorId(id) },
+                        fanboxUserStatus = context.user.fanboxUserStatus,
+                        hasAdultContent = context.user.hasAdultContent ?: false,
+                        hasUnpaidPayments = context.user.hasUnpaidPayments,
+                        iconUrl = context.user.iconUrl,
+                        isCreator = context.user.isCreator,
+                        isMailAddressOutdated = context.user.isMailAddressOutdated,
+                        isSupporter = context.user.isSupporter,
+                        lang = context.user.lang,
+                        name = context.user.name,
+                        planCount = context.user.planCount,
+                        showAdultContent = context.user.showAdultContent,
+                        userId = context.user.userId?.let { id -> FanboxUserId(id.toLong()) },
+                    ),
+                ),
+            )
+        }
     }
 }

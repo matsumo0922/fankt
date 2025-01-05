@@ -1,9 +1,7 @@
 plugins {
-    id("matsumo.primitive.kmp.common")
-    id("matsumo.primitive.kmp.android.application")
-    id("matsumo.primitive.kmp.android.compose")
-    id("matsumo.primitive.kmp.android")
-    id("matsumo.primitive.kmp.ios")
+    id("matsumo.primitive.android.application")
+    id("matsumo.primitive.android.common")
+    id("matsumo.primitive.android.compose")
     id("matsumo.primitive.detekt")
 }
 
@@ -14,23 +12,13 @@ android {
     tasks.findByName("checkSandboxAndWriteProtection")?.dependsOn("syncComposeResourcesForIos")
 }
 
-kotlin {
-    sourceSets {
-        commonMain.dependencies {
-            implementation(project(":fankt"))
+dependencies {
+    implementation(project(":fankt"))
 
-            implementation(libs.bundles.infra.api)
+    implementation(libs.bundles.ui.common.api)
+    implementation(libs.bundles.ui.android.api)
+    implementation(libs.bundles.infra.api)
+    implementation(libs.bundles.ktor)
 
-            implementation(compose.runtime)
-            implementation(compose.foundation)
-            implementation(compose.material3)
-            implementation(compose.components.resources)
-            implementation(compose.components.uiToolingPreview)
-        }
-
-        androidMain.dependencies {
-            implementation(libs.bundles.ui.android.api)
-            implementation(libs.androidx.core.splashscreen)
-        }
-    }
+    implementation(libs.androidx.core.splashscreen)
 }
