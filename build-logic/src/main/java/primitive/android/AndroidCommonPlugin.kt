@@ -7,6 +7,7 @@ import org.gradle.api.JavaVersion
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+import primitive.kmp.kotlin
 
 class AndroidCommonPlugin : Plugin<Project> {
     override fun apply(target: Project) {
@@ -14,9 +15,9 @@ class AndroidCommonPlugin : Plugin<Project> {
             with(pluginManager) {
                 if (!isMultiplatformProject()) {
                     apply("kotlin-android")
-                    apply("kotlin-parcelize")
                 }
 
+                apply("kotlin-parcelize")
                 apply("kotlinx-serialization")
                 apply("project-report")
                 apply("com.google.devtools.ksp")

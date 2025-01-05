@@ -42,13 +42,26 @@ internal class FanboxPostRepository(
         }
     }
 
-    suspend fun getCreatorPosts(creatorId: FanboxCreatorId, cursor: FanboxCursor?) = withContext(ioDispatcher) {
+    suspend fun getCreatorPosts(creatorId: FanboxCreatorId, cursor: FanboxCursor?, nextCursor: FanboxCursor?) = withContext(ioDispatcher) {
+        val cursors = if (cursor == null) {
+            val pagination = getCreatorPostsPagination(creatorId)
+            pagination.first() to pagination.elementAtOrNull(1)
+        } else {
+            cursor to nextCursor
+        }
+
         fanboxPostApi.getCreatorPosts(
             creatorId = creatorId.value,
             loadSize = LOAD_SIZE,
-            maxPublishedDatetime = cursor?.maxPublishedDatetime,
-            maxId = cursor?.maxId,
+            maxPublishedDatetime = cursors.first.maxPublishedDatetime,
+            maxId = cursors.first.maxId,
         ).let {
+            fanboxPostMapper.map(it, cursors.second)
+        }
+    }
+
+    suspend fun getCreatorPostsPagination(creatorId: FanboxCreatorId) = withContext(ioDispatcher) {
+        fanboxPostApi.getCreatorPostsPagination(creatorId.toString()).let {
             fanboxPostMapper.map(it)
         }
     }

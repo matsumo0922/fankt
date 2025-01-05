@@ -14,6 +14,12 @@ class KmpAndroidPlugin : Plugin<Project> {
                         kotlinOptions {
                             jvmTarget = JavaVersion.VERSION_17.toString()
                         }
+
+                        compileTaskProvider.configure {
+                            compilerOptions {
+                                freeCompilerArgs.addAll("-P", "plugin:org.jetbrains.kotlin.parcelize:additionalAnnotation=me.matsumo.fankt.domain.Parcelize")
+                            }
+                        }
                     }
                 }
             }

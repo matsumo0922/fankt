@@ -24,6 +24,7 @@ import me.matsumo.fankt.datasource.mapper.FanboxUserMapper
 import me.matsumo.fankt.domain.FanboxCursor
 import me.matsumo.fankt.domain.PageCursorInfo
 import me.matsumo.fankt.domain.PageNumberInfo
+import me.matsumo.fankt.domain.PageOffsetInfo
 import me.matsumo.fankt.domain.model.FanboxBell
 import me.matsumo.fankt.domain.model.FanboxComment
 import me.matsumo.fankt.domain.model.FanboxCreatorDetail
@@ -137,19 +138,19 @@ class Fanbox(
         return post.getSupportedPosts(cursor)
     }
 
-    suspend fun getCreatorPosts(creatorId: FanboxCreatorId, cursor: FanboxCursor?): PageCursorInfo<FanboxPost> {
-        return post.getCreatorPosts(creatorId, cursor)
+    suspend fun getCreatorPosts(creatorId: FanboxCreatorId, cursor: FanboxCursor?, nextCursor: FanboxCursor?): PageCursorInfo<FanboxPost> {
+        return post.getCreatorPosts(creatorId, cursor, nextCursor)
     }
 
     suspend fun getPostDetail(postId: FanboxPostId): FanboxPostDetail {
         return post.getPostDetail(postId)
     }
 
-    suspend fun getPostComment(postId: FanboxPostId, offset: Int): PageCursorInfo<FanboxComment> {
+    suspend fun getPostComment(postId: FanboxPostId, offset: Int): PageOffsetInfo<FanboxComment> {
         return post.getPostComment(postId, offset)
     }
 
-    suspend fun getPostFromQuery(query: String, creatorId: FanboxCreatorId?, page: Int): PageCursorInfo<FanboxPost> {
+    suspend fun getPostFromQuery(query: String, creatorId: FanboxCreatorId?, page: Int): PageNumberInfo<FanboxPost> {
         return post.getPostFromQuery(query, creatorId, page)
     }
 

@@ -6,7 +6,8 @@ import de.jensklingenberg.ktorfit.http.Headers
 import de.jensklingenberg.ktorfit.http.POST
 import de.jensklingenberg.ktorfit.http.Query
 import io.ktor.content.TextContent
-import kotlinx.serialization.json.JsonObject
+import me.matsumo.fankt.domain.entity.FanboxCreatorPostItemsEntity
+import me.matsumo.fankt.domain.entity.FanboxCreatorPostsPaginateEntity
 import me.matsumo.fankt.domain.entity.FanboxPostCommentListEntity
 import me.matsumo.fankt.domain.entity.FanboxPostDetailEntity
 import me.matsumo.fankt.domain.entity.FanboxPostListEntity
@@ -34,7 +35,12 @@ internal interface FanboxPostApi {
         @Query("limit") loadSize: String,
         @Query("maxPublishedDatetime") maxPublishedDatetime: String?,
         @Query("maxId") maxId: String?
-    ): FanboxPostListEntity
+    ): FanboxCreatorPostItemsEntity
+
+    @GET("post.paginateCreator")
+    suspend fun getCreatorPostsPagination(
+        @Query("creatorId") creatorId: String,
+    ): FanboxCreatorPostsPaginateEntity
 
     @GET("post.info")
     suspend fun getPostDetail(

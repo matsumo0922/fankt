@@ -297,6 +297,7 @@ private fun RequestTypeBadge(
 private fun getDefaultValue(paramName: String): String? {
     return when (paramName) {
         "page" -> "1"
+        "offset" -> "1"
         "creatorId" -> "rosumerii"
         "userId" -> "67345848"
         "postId" -> "8909488"

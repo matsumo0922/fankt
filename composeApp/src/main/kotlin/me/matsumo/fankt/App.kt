@@ -32,8 +32,6 @@ class MainActivity : FragmentActivity() {
         val splashScreen = installSplashScreen()
         super.onCreate(savedInstanceState)
 
-        Napier.base(DebugAntilog())
-
         enableEdgeToEdge()
         setContent {
             FanktTheme {

@@ -1,7 +1,7 @@
 plugins {
     id("matsumo.primitive.kmp.common")
-    id("matsumo.primitive.android.common")
     id("matsumo.primitive.android.library")
+    id("matsumo.primitive.android.common")
     id("matsumo.primitive.kmp.android")
     id("matsumo.primitive.kmp.ios")
     id("matsumo.primitive.ktorfit")

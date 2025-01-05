@@ -1,9 +1,15 @@
 package me.matsumo.fankt.datasource.mapper
 
 import io.github.aakira.napier.Napier
+import io.ktor.http.Url
 import kotlinx.datetime.Instant
+import me.matsumo.fankt.domain.FanboxCursor
 import me.matsumo.fankt.domain.PageCursorInfo
+import me.matsumo.fankt.domain.PageNumberInfo
+import me.matsumo.fankt.domain.PageOffsetInfo
 import me.matsumo.fankt.domain.entity.FanboxCommentListEntity
+import me.matsumo.fankt.domain.entity.FanboxCreatorPostItemsEntity
+import me.matsumo.fankt.domain.entity.FanboxCreatorPostsPaginateEntity
 import me.matsumo.fankt.domain.entity.FanboxPostCommentListEntity
 import me.matsumo.fankt.domain.entity.FanboxPostDetailEntity
 import me.matsumo.fankt.domain.entity.FanboxPostEntity
@@ -26,6 +32,13 @@ internal class FanboxPostMapper {
         return PageCursorInfo(
             contents = entity.body.items.map { map(it) },
             cursor = entity.body.nextUrl?.translateToCursor(),
+        )
+    }
+
+    fun map(entity: FanboxCreatorPostItemsEntity, nextCursor: FanboxCursor?): PageCursorInfo<FanboxPost> {
+        return PageCursorInfo(
+            contents = entity.body.map { map(it) },
+            cursor = nextCursor,
         )
     }
 
@@ -209,10 +222,10 @@ internal class FanboxPostMapper {
         )
     }
 
-    fun map(entity: FanboxPostCommentListEntity): PageCursorInfo<FanboxComment> {
-        return PageCursorInfo(
+    fun map(entity: FanboxPostCommentListEntity): PageOffsetInfo<FanboxComment> {
+        return PageOffsetInfo(
             contents = entity.body.items.map { map(it) },
-            cursor = entity.body.nextUrl?.translateToCursor(),
+            offset = entity.body.nextUrl?.let { Url(it).parameters["offset"]?.toIntOrNull() }
         )
     }
 
@@ -240,10 +253,14 @@ internal class FanboxPostMapper {
         }
     }
 
-    fun map(entity: FanboxPostSearchEntity) : PageCursorInfo<FanboxPost> {
-        return PageCursorInfo(
+    fun map(entity: FanboxPostSearchEntity) : PageNumberInfo<FanboxPost> {
+        return PageNumberInfo(
             contents = entity.body.items.map { map(it) },
-            cursor = entity.body.nextUrl?.translateToCursor(),
+            nextPage = entity.body.nextUrl?.let { Url(it).parameters["page"]?.toIntOrNull() },
         )
+    }
+
+    fun map(entity: FanboxCreatorPostsPaginateEntity): List<FanboxCursor> {
+        return entity.body.map { it.translateToCursor() }
     }
 }

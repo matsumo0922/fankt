@@ -1,5 +1,8 @@
 package me.matsumo.fankt.domain
 
+import kotlinx.serialization.Serializable
+
+@Serializable
 data class FanboxCursor(
     val maxPublishedDatetime: String,
     val maxId: String,
