@@ -19,7 +19,7 @@ permissions:
 
 jobs:
   build:
-    runs-on: ${{ matrix.os }}
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
 
@@ -40,3 +40,6 @@ jobs:
 
       - name: Build
         run: ./gradlew :composeApp:assembleDebug
+
+      - name: Detekt
+        run: ./gradlew detekt reportMerge --continue
