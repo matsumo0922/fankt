@@ -26,6 +26,7 @@ dependencies {
     implementation(libs.build.konfig.gradlePlugin)
     implementation(libs.gms.services)
     implementation(libs.gms.oss)
+    implementation(libs.nexus.publish)
 }
 
 gradlePlugin {
@@ -78,6 +79,16 @@ gradlePlugin {
         register("RoomPlugin") {
             id = "matsumo.primitive.room"
             implementationClass = "primitive.RoomPlugin"
+        }
+
+        // Publishing
+        register("NexusPublishPlugin") {
+            id = "matsumo.primitive.nexus.publish"
+            implementationClass = "primitive.publish.NexusPublishPlugin"
+        }
+        register("MavenPublishPlugin") {
+            id = "matsumo.primitive.maven.publish"
+            implementationClass = "primitive.publish.MavenPublishPlugin"
         }
     }
 }

@@ -7,6 +7,7 @@ plugins {
     id("matsumo.primitive.ktorfit")
     id("matsumo.primitive.room")
     id("matsumo.primitive.detekt")
+    id("matsumo.primitive.maven.publish")
 }
 
 android {
