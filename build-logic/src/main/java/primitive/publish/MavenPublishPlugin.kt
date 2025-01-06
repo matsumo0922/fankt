@@ -29,6 +29,11 @@ class MavenPublishPlugin : Plugin<Project> {
                 apply("org.jetbrains.dokka-javadoc")
             }
 
+            allprojects {
+                group = "me.matsumo"
+                version = libs.version("versionName")
+            }
+
             afterEvaluate {
                 tasks.filter { task ->
                     task.name.contains("SourcesJar", true)
@@ -70,7 +75,7 @@ class MavenPublishPlugin : Plugin<Project> {
     private fun Project.configureMavenPublish() {
         extensions.configure<MavenPublishBaseExtension> {
             configure(KotlinMultiplatform(javadocJar = JavadocJar.Dokka("dokkaGeneratePublicationHtml")))
-            publishToMavenCentral(SonatypeHost.CENTRAL_PORTAL)
+            publishToMavenCentral(SonatypeHost.CENTRAL_PORTAL, true)
 
             val hasUserNameFromProject = project.hasProperty("mavenCentralUsername")
             val hasUserNameFromEnv = System.getenv("ORG_GRADLE_PROJECT_mavenCentralUsername") != null

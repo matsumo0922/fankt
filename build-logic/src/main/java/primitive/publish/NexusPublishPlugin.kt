@@ -2,6 +2,8 @@ package primitive.publish
 
 import io.github.gradlenexus.publishplugin.NexusPublishExtension
 import io.github.gradlenexus.publishplugin.NexusPublishPlugin
+import me.matsumo.fankt.libs
+import me.matsumo.fankt.version
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.kotlin.dsl.apply
@@ -11,11 +13,6 @@ class NexusPublishPlugin : Plugin<Project> {
     override fun apply(target: Project) {
         with(target) {
             apply<NexusPublishPlugin>()
-
-            allprojects {
-                group = "me.matsumo"
-                version = "0.0.1"
-            }
 
             extensions.getByType<NexusPublishExtension>().apply {
                 // Configure maven central repository
