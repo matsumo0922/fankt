@@ -1,16 +1,17 @@
 package primitive.publish
 
+import com.vanniktech.maven.publish.JavadocJar
+import com.vanniktech.maven.publish.KotlinMultiplatform
+import com.vanniktech.maven.publish.MavenPublishBaseExtension
+import com.vanniktech.maven.publish.SonatypeHost
 import me.matsumo.fankt.androidLibrary
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.publish.PublishingExtension
 import org.gradle.api.publish.maven.MavenPublication
-import org.gradle.kotlin.dsl.apply
 import org.gradle.kotlin.dsl.assign
 import org.gradle.kotlin.dsl.configure
-import org.gradle.kotlin.dsl.create
-import org.gradle.kotlin.dsl.get
-import org.gradle.kotlin.dsl.getByType
+import org.gradle.kotlin.dsl.withType
 import org.gradle.plugins.signing.SigningExtension
 
 class MavenPublishPlugin : Plugin<Project> {
@@ -19,6 +20,8 @@ class MavenPublishPlugin : Plugin<Project> {
             with(pluginManager) {
                 apply("maven-publish")
                 apply("signing")
+                apply("com.vanniktech.maven.publish")
+                apply("org.jetbrains.dokka")
             }
 
             androidLibrary {
@@ -30,6 +33,18 @@ class MavenPublishPlugin : Plugin<Project> {
                 }
             }
 
+            extensions.configure<MavenPublishBaseExtension> {
+                configure(KotlinMultiplatform(javadocJar = JavadocJar.Dokka("dokkaHtml")))
+                publishToMavenCentral(SonatypeHost.CENTRAL_PORTAL)
+
+                val hasUserNameFromProject = project.hasProperty("mavenCentralUsername")
+                val hasUserNameFromEnv = System.getenv("ORG_GRADLE_PROJECT_mavenCentralUsername") != null
+
+                if (hasUserNameFromProject || hasUserNameFromEnv) {
+                    signAllPublications()
+                }
+            }
+
             configurePublishing()
             configureSigning()
         }
@@ -38,11 +53,7 @@ class MavenPublishPlugin : Plugin<Project> {
     private fun Project.configurePublishing() {
         extensions.configure<PublishingExtension> {
             publications {
-                create<MavenPublication>("aar") {
-                    afterEvaluate {
-                        from(components["release"])
-                    }
-
+                publications.withType<MavenPublication> {
                     pom {
                         name = project.name
                         description = "Unofficial API wrapper for pixivFANBOX and Fantia"
@@ -75,8 +86,12 @@ class MavenPublishPlugin : Plugin<Project> {
 
     private fun Project.configureSigning() {
         extensions.configure<SigningExtension> {
-            useGpgCmd()
-            sign(extensions.getByType<PublishingExtension>().publications["aar"])
+            val hasUserNameFromProject = project.hasProperty("mavenCentralUsername")
+            val hasUserNameFromEnv = System.getenv("ORG_GRADLE_PROJECT_mavenCentralUsername") != null
+
+            if (hasUserNameFromProject || hasUserNameFromEnv) {
+                useGpgCmd()
+            }
         }
     }
 }

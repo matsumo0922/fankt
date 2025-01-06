@@ -26,7 +26,8 @@ dependencies {
     implementation(libs.build.konfig.gradlePlugin)
     implementation(libs.gms.services)
     implementation(libs.gms.oss)
-    implementation(libs.nexus.publish)
+    implementation(libs.maven.publish.gradlePlugin)
+    implementation(libs.nexus.publish.gradlePlugin)
 }
 
 gradlePlugin {
