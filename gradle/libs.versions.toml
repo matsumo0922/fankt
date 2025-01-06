@@ -64,6 +64,9 @@ twitterComposeRule = "0.0.26"
 
 # Debugs
 napier = "2.7.1"
+junit = "4.13.2"
+junitVersion = "1.2.1"
+espressoCore = "3.6.1"
 
 [plugins]
 # Android
@@ -184,6 +187,9 @@ desugar = { module = "com.android.tools:desugar_jdk_libs", version = "2.1.4" }
 # Debugs
 napier = { module = "io.github.aakira:napier", version.ref = "napier" }
 twitter-compose-rule = { module = "com.twitter.compose.rules:detekt", version.ref = "twitterComposeRule" }
+junit = { group = "junit", name = "junit", version.ref = "junit" }
+androidx-junit = { group = "androidx.test.ext", name = "junit", version.ref = "junitVersion" }
+androidx-espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espressoCore" }
 
 [bundles]
 infra-api = [

@@ -25,4 +25,5 @@ dependencyResolutionManagement {
 }
 
 include(":composeApp")
-include(":fankt")
+include(":fankt:fanbox")
+include(":fankt:fantia")

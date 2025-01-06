@@ -13,8 +13,8 @@ android {
 }
 
 dependencies {
-    implementation(project(":fankt"))
 
+    implementation(project(":fankt:fanbox"))
     implementation(libs.bundles.ui.common.api)
     implementation(libs.bundles.ui.android.api)
     implementation(libs.bundles.infra.api)
