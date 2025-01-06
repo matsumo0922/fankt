@@ -28,6 +28,12 @@ jobs:
             ~/.konan
           key: ${{ runner.os }}-${{ hashFiles('**/.lock') }}
 
+      - name: Import GPG key
+        uses: crazy-max/ghaction-import-gpg@v5
+        with:
+          gpg_private_key: ${{ secrets.MAVEN_SIGNING_KEY_ID }}
+          passphrase: ${{ secrets.MAVEN_SIGNING_PASSWORD }}
+
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
