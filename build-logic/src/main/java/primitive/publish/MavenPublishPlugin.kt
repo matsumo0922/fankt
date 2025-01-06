@@ -4,7 +4,6 @@ import com.vanniktech.maven.publish.JavadocJar
 import com.vanniktech.maven.publish.KotlinMultiplatform
 import com.vanniktech.maven.publish.MavenPublishBaseExtension
 import com.vanniktech.maven.publish.SonatypeHost
-import me.matsumo.fankt.androidLibrary
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.kotlin.dsl.assign
@@ -20,15 +19,6 @@ class MavenPublishPlugin : Plugin<Project> {
                 apply("com.vanniktech.maven.publish")
                 apply("org.jetbrains.dokka")
                 apply("org.jetbrains.dokka-javadoc")
-            }
-
-            androidLibrary {
-                publishing {
-                    singleVariant("release") {
-                        withSourcesJar()
-                        withJavadocJar()
-                    }
-                }
             }
 
             configureMavenPublish()
