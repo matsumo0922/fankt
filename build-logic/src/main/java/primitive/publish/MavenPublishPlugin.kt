@@ -4,11 +4,19 @@ import com.vanniktech.maven.publish.JavadocJar
 import com.vanniktech.maven.publish.KotlinMultiplatform
 import com.vanniktech.maven.publish.MavenPublishBaseExtension
 import com.vanniktech.maven.publish.SonatypeHost
+import me.matsumo.fankt.libs
+import me.matsumo.fankt.version
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.kotlin.dsl.assign
 import org.gradle.kotlin.dsl.configure
+import org.gradle.kotlin.dsl.withType
 import org.gradle.plugins.signing.SigningExtension
+import org.jetbrains.dokka.DokkaConfiguration
+import org.jetbrains.dokka.gradle.DokkaExtension
+import org.jetbrains.dokka.gradle.DokkaTask
+import org.jetbrains.dokka.gradle.engine.parameters.VisibilityModifier
+import kotlin.reflect.KVisibility
 
 class MavenPublishPlugin : Plugin<Project> {
     override fun apply(target: Project) {
@@ -21,6 +29,11 @@ class MavenPublishPlugin : Plugin<Project> {
                 apply("org.jetbrains.dokka-javadoc")
             }
 
+            allprojects {
+                group = "me.matsumo"
+                version = libs.version("versionName")
+            }
+
             afterEvaluate {
                 tasks.filter { task ->
                     task.name.contains("SourcesJar", true)
@@ -29,15 +42,40 @@ class MavenPublishPlugin : Plugin<Project> {
                 }
             }
 
+            configureDokka()
             configureMavenPublish()
             configureSigning()
+        }
+    }
+
+    private fun Project.configureDokka() {
+        extensions.configure<DokkaExtension> {
+            dokkaSourceSets.getByName("commonMain") {
+                enableAndroidDocumentationLink = true
+                enableKotlinStdLibDocumentationLink = true
+
+                documentedVisibilities.set(
+                    setOf(
+                        VisibilityModifier.Public,
+                        // VisibilityModifier.Internal,
+                    )
+                )
+            }
+
+            pluginsConfiguration.getByName("html") {
+                moduleVersion = libs.version("versionName")
+            }
+
+            dokkaPublications.getByName("html") {
+                outputDirectory = file("$rootDir/docs")
+            }
         }
     }
 
     private fun Project.configureMavenPublish() {
         extensions.configure<MavenPublishBaseExtension> {
             configure(KotlinMultiplatform(javadocJar = JavadocJar.Dokka("dokkaGeneratePublicationHtml")))
-            publishToMavenCentral(SonatypeHost.CENTRAL_PORTAL)
+            publishToMavenCentral(SonatypeHost.CENTRAL_PORTAL, true)
 
             val hasUserNameFromProject = project.hasProperty("mavenCentralUsername")
             val hasUserNameFromEnv = System.getenv("ORG_GRADLE_PROJECT_mavenCentralUsername") != null
