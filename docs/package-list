@@ -1,0 +1,10 @@
+$dokka.format:html-v1
+$dokka.linkExtension:html
+
+module:fanbox
+me.matsumo.fankt.fanbox
+me.matsumo.fankt.fanbox.domain
+me.matsumo.fankt.fanbox.domain.model
+me.matsumo.fankt.fanbox.domain.model.id
+module:fantia
+me.matsumo.fankt.fantia
