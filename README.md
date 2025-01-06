@@ -4,9 +4,9 @@ An unofficial API wrapper for pixivFANBOX and Fantia.
 Compatible with Kotlin Multiplatform (KMP) and usable on Android and iOS.
 
 ## Status
-- :white_check_mark: pixivFANBOX
+#### :white_check_mark: pixivFANBOX
   - All features are fully functional.
-- :construction: Fantia
+#### :construction: Fantia
   - Currently under development.
   - Please wait for the official release.
 
