@@ -28,6 +28,7 @@ dependencies {
     implementation(libs.gms.oss)
     implementation(libs.maven.publish.gradlePlugin)
     implementation(libs.nexus.publish.gradlePlugin)
+    implementation(libs.dokka.gradlePlugin)
 }
 
 gradlePlugin {

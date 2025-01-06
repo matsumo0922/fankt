@@ -29,7 +29,7 @@ jobs:
             os: ubuntu-latest
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Validate Gradle Wrapper
         uses: gradle/wrapper-validation-action@v1
@@ -40,24 +40,17 @@ jobs:
             ~/.konan
           key: ${{ runner.os }}-${{ hashFiles('**/.lock') }}
 
-      - name: Import GPG key
-        uses: crazy-max/ghaction-import-gpg@v5
-        with:
-          gpg_private_key: ${{ secrets.OSSRH_GPG_SECRET_KEY }}
-          passphrase: ${{ secrets.OSSRH_GPG_SECRET_KEY_PASSWORD }}
-
       - name: Set up JDK 17
-        uses: actions/setup-java@v3
+        uses: actions/setup-java@v4
         with:
           java-version: '17'
           distribution: 'temurin'
 
-      - name: Gradle publish
-        uses: gradle/gradle-build-action@ce999babab2de1c4b649dc15f0ee67e6246c994f
-        with:
-          arguments: |
-            -PmavenCentralUsername=${{secrets.OSSRH_USERNAME}}
-            -PmavenCentralPassword=${{secrets.OSSRH_PASSWORD}}
-            -PsigningInMemoryKeyId=${{secrets.OSSRH_GPG_SECRET_KEY_ID}}
-            -PsigningInMemoryPassword=${{secrets.OSSRH_GPG_SECRET_KEY_PASSWORD}}
-            ${{ matrix.target }}
+      - name: Publish to MavenCentral
+        run: ./gradlew publishToMavenCentral --no-configuration-cache
+        env:
+          ORG_GRADLE_PROJECT_mavenCentralUsername: ${{ secrets.MAVEN_CENTRAL_USERNAME }}
+          ORG_GRADLE_PROJECT_mavenCentralPassword: ${{ secrets.MAVEN_CENTRAL_PASSWORD }}
+          ORG_GRADLE_PROJECT_signingInMemoryKeyId: ${{ secrets.MAVEN_SIGNING_KEY_ID }}
+          ORG_GRADLE_PROJECT_signingInMemoryKeyPassword: ${{ secrets.MAVEN_SIGNING_PASSWORD }}
+          ORG_GRADLE_PROJECT_signingInMemoryKey: ${{ secrets.MAVEN_GPG_KEY_CONTENTS }}
