@@ -33,20 +33,23 @@ class MavenPublishPlugin : Plugin<Project> {
                 }
             }
 
-            extensions.configure<MavenPublishBaseExtension> {
-                configure(KotlinMultiplatform(javadocJar = JavadocJar.Dokka("dokkaHtml")))
-                publishToMavenCentral(SonatypeHost.CENTRAL_PORTAL)
-
-                val hasUserNameFromProject = project.hasProperty("mavenCentralUsername")
-                val hasUserNameFromEnv = System.getenv("ORG_GRADLE_PROJECT_mavenCentralUsername") != null
-
-                if (hasUserNameFromProject || hasUserNameFromEnv) {
-                    signAllPublications()
-                }
-            }
-
+            configureMavenPublish()
             configurePublishing()
             configureSigning()
+        }
+    }
+
+    private fun Project.configureMavenPublish() {
+        extensions.configure<MavenPublishBaseExtension> {
+            configure(KotlinMultiplatform(javadocJar = JavadocJar.Dokka("dokkaHtml")))
+            publishToMavenCentral(SonatypeHost.CENTRAL_PORTAL)
+
+            val hasUserNameFromProject = project.hasProperty("mavenCentralUsername")
+            val hasUserNameFromEnv = System.getenv("ORG_GRADLE_PROJECT_mavenCentralUsername") != null
+
+            if (hasUserNameFromProject || hasUserNameFromEnv) {
+                signAllPublications()
+            }
         }
     }
 
