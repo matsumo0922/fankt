@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html class="no-js">
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1" charset="UTF-8">
+    <title>FanboxPostRepository</title>
+    <link href="../../../images/logo-icon.svg" rel="icon" type="image/svg">
+    <script>var pathToRoot = "../../../";</script>
+    <script>document.documentElement.classList.replace("no-js","js");</script>
+    <script>const storage = localStorage.getItem("dokka-dark-mode")
+    if (storage == null) {
+        const osDarkSchemePreferred = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
+        if (osDarkSchemePreferred === true) {
+            document.getElementsByTagName("html")[0].classList.add("theme-dark")
+        }
+    } else {
+        const savedDarkMode = JSON.parse(storage)
+        if(savedDarkMode === true) {
+            document.getElementsByTagName("html")[0].classList.add("theme-dark")
+        }
+    }
+    </script>
+<script type="text/javascript" src="https://unpkg.com/kotlin-playground@1/dist/playground.min.js" async="async"></script>
+<script type="text/javascript" src="../../../scripts/sourceset_dependencies.js" async="async"></script>
+<link href="../../../styles/style.css" rel="Stylesheet">
+<link href="../../../styles/main.css" rel="Stylesheet">
+<link href="../../../styles/prism.css" rel="Stylesheet">
+<link href="../../../styles/logo-styles.css" rel="Stylesheet">
+<link href="../../../styles/font-jb-sans-auto.css" rel="Stylesheet">
+<link href="../../../ui-kit/ui-kit.min.css" rel="Stylesheet">
+<script type="text/javascript" src="../../../scripts/clipboard.js" async="async"></script>
+<script type="text/javascript" src="../../../scripts/navigation-loader.js" async="async"></script>
+<script type="text/javascript" src="../../../scripts/platform-content-handler.js" async="async"></script>
+<script type="text/javascript" src="../../../scripts/main.js" defer="defer"></script>
+<script type="text/javascript" src="../../../scripts/prism.js" async="async"></script>
+<script type="text/javascript" src="../../../ui-kit/ui-kit.min.js" defer="defer"></script>
+<script type="text/javascript" src="../../../scripts/symbol-parameters-wrapper_deferred.js" defer="defer"></script>
+</head>
+<body>
+    <div class="root">
+    <nav class="navigation theme-dark" id="navigation-wrapper">
+            <a class="library-name--link" href="../../../index.html">
+                    fankt
+            </a>
+        <button class="navigation-controls--btn navigation-controls--btn_toc ui-kit_mobile-only" id="toc-toggle"
+                type="button">Toggle table of contents
+        </button>
+        <div class="navigation-controls--break ui-kit_mobile-only"></div>
+        <div class="library-version" id="library-version">
+0.3.3        </div>
+        <div class="navigation-controls">
+        <div class="filter-section filter-section_loading" id="filter-section">
+                <button class="platform-tag platform-selector common-like" data-active=""
+                        data-filter=":fankt/commonMain">common</button>
+            <div class="dropdown filter-section--dropdown" data-role="dropdown" id="filter-section-dropdown">
+                <button class="button button_dropdown filter-section--dropdown-toggle" role="combobox"
+                        data-role="dropdown-toggle"
+                        aria-controls="platform-tags-listbox"
+                        aria-haspopup="listbox"
+                        aria-expanded="false"
+                        aria-label="Toggle source sets"
+                ></button>
+                <ul role="listbox" id="platform-tags-listbox" class="dropdown--list" data-role="dropdown-listbox">
+                    <div class="dropdown--header"><span>Platform filter</span>
+                        <button class="button" data-role="dropdown-toggle" aria-label="Close platform filter">
+                            <i class="ui-kit-icon ui-kit-icon_cross"></i>
+                        </button>
+                    </div>
+                        <li role="option" class="dropdown--option platform-selector-option common-like" tabindex="0">
+                            <label class="checkbox">
+                                <input type="checkbox" class="checkbox--input" id=":fankt/commonMain"
+                                       data-filter=":fankt/commonMain"/>
+                                <span class="checkbox--icon"></span>
+                                common
+                            </label>
+                        </li>
+                </ul>
+                <div class="dropdown--overlay"></div>
+            </div>
+        </div>
+            <button class="navigation-controls--btn navigation-controls--btn_theme" id="theme-toggle-button"
+                    type="button">Switch theme
+            </button>
+            <div class="navigation-controls--btn navigation-controls--btn_search" id="searchBar" role="button">Search in
+                API
+            </div>
+        </div>
+    </nav>
+        <div id="container">
+            <div class="sidebar" id="leftColumn">
+                <div class="dropdown theme-dark_mobile" data-role="dropdown" id="toc-dropdown">
+                    <ul role="listbox" id="toc-listbox" class="dropdown--list dropdown--list_toc-list"
+                        data-role="dropdown-listbox">
+                        <div class="dropdown--header">
+                            <span>
+                                    fankt
+                            </span>
+                            <button class="button" data-role="dropdown-toggle" aria-label="Close table of contents">
+                                <i class="ui-kit-icon ui-kit-icon_cross"></i>
+                            </button>
+                        </div>
+                        <div class="sidebar--inner" id="sideMenu"></div>
+                    </ul>
+                    <div class="dropdown--overlay"></div>
+                </div>
+            </div>
+            <div id="main">
+<div class="main-content" data-page-type="classlike" id="content" pageIds="fankt::me.matsumo.fankt.repository/FanboxPostRepository///PointingToDeclaration//725313909">
+  <div class="breadcrumbs"><a href="../../../index.html">fankt</a><span class="delimiter">/</span><a href="../index.html">me.matsumo.fankt.repository</a><span class="delimiter">/</span><span class="current">FanboxPostRepository</span></div>
+  <div class="cover ">
+    <h1 class="cover"><span>Fanbox</span><wbr></wbr><span>Post</span><wbr></wbr><span><span>Repository</span></span></h1>
+    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":fankt/commonMain"><div class="symbol monospace"><span class="token keyword">internal </span><span class="token keyword">class </span><a href="index.html">FanboxPostRepository</a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">fanboxPostApi<span class="token operator">: </span><a href="../../me.matsumo.fankt.datasource/-fanbox-post-api/index.html">FanboxPostApi</a><span class="token punctuation">, </span></span><span class="parameter ">fanboxPostApiWithoutContentNegotiation<span class="token operator">: </span><a href="../../me.matsumo.fankt.datasource/-fanbox-post-api/index.html">FanboxPostApi</a><span class="token punctuation">, </span></span><span class="parameter ">fanboxPostMapper<span class="token operator">: </span><a href="../../me.matsumo.fankt.datasource.mapper/-fanbox-post-mapper/index.html">FanboxPostMapper</a><span class="token punctuation">, </span></span><span class="parameter ">ioDispatcher<span class="token operator">: </span><span data-unresolved-link="kotlinx.coroutines/CoroutineDispatcher///PointingToDeclaration/">CoroutineDispatcher</span><span class="token operator"> = </span>Dispatchers.IO</span></span><span class="token punctuation">)</span></div></div></div>
+  </div>
+  <div class="tabbedcontent">
+    <div class="tabs-section" tabs-section="tabs-section"><button class="section-tab" data-active="" data-togglable="CONSTRUCTOR,TYPE,PROPERTY,FUNCTION">Members</button></div>
+    <div class="tabs-section-body">
+      <div data-togglable="CONSTRUCTOR">
+        <h2 class="">Constructors</h2>
+        <div class="table"><a data-name="-2006092454%2FConstructors%2F725313909" anchor-label="FanboxPostRepository" id="-2006092454%2FConstructors%2F725313909" data-filterable-set=":fankt/commonMain"></a>
+          <div class="table-row" data-togglable="CONSTRUCTOR" data-filterable-current=":fankt/commonMain" data-filterable-set=":fankt/commonMain">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="-fanbox-post-repository.html"><span>Fanbox</span><wbr></wbr><span>Post</span><wbr></wbr><span><span>Repository</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-2006092454%2FConstructors%2F725313909"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":fankt/commonMain"><div class="symbol monospace"><span class="token keyword">constructor</span><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">fanboxPostApi<span class="token operator">: </span><a href="../../me.matsumo.fankt.datasource/-fanbox-post-api/index.html">FanboxPostApi</a><span class="token punctuation">, </span></span><span class="parameter ">fanboxPostApiWithoutContentNegotiation<span class="token operator">: </span><a href="../../me.matsumo.fankt.datasource/-fanbox-post-api/index.html">FanboxPostApi</a><span class="token punctuation">, </span></span><span class="parameter ">fanboxPostMapper<span class="token operator">: </span><a href="../../me.matsumo.fankt.datasource.mapper/-fanbox-post-mapper/index.html">FanboxPostMapper</a><span class="token punctuation">, </span></span><span class="parameter ">ioDispatcher<span class="token operator">: </span><span data-unresolved-link="kotlinx.coroutines/CoroutineDispatcher///PointingToDeclaration/">CoroutineDispatcher</span><span class="token operator"> = </span>Dispatchers.IO</span></span><span class="token punctuation">)</span></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div data-togglable="TYPE">
+        <h2 class="">Types</h2>
+        <div class="table"><a data-name="233647390%2FClasslikes%2F725313909" anchor-label="Companion" id="233647390%2FClasslikes%2F725313909" data-filterable-set=":fankt/commonMain"></a>
+          <div class="table-row" data-filterable-current=":fankt/commonMain" data-filterable-set=":fankt/commonMain">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="-companion/index.html"><span><span>Companion</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="233647390%2FClasslikes%2F725313909"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":fankt/commonMain"><div class="symbol monospace"><span class="token keyword">object </span><a href="-companion/index.html">Companion</a></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div data-togglable="FUNCTION">
+        <h2 class="">Functions</h2>
+        <div class="table"><a data-name="-1614359591%2FFunctions%2F725313909" anchor-label="addComment" id="-1614359591%2FFunctions%2F725313909" data-filterable-set=":fankt/commonMain"></a>
+          <div class="table-row" data-filterable-current=":fankt/commonMain" data-filterable-set=":fankt/commonMain">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="add-comment.html"><span>add</span><wbr></wbr><span><span>Comment</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1614359591%2FFunctions%2F725313909"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":fankt/commonMain"><div class="symbol monospace"><span class="token keyword">suspend </span><span class="token keyword">fun </span><a href="add-comment.html"><span class="token function">addComment</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">postId<span class="token operator">: </span><a href="../../me.matsumo.fankt.domain.model.id/-fanbox-post-id/index.html">FanboxPostId</a><span class="token punctuation">, </span></span><span class="parameter ">rootCommentId<span class="token operator">: </span><a href="../../me.matsumo.fankt.domain.model.id/-fanbox-comment-id/index.html">FanboxCommentId</a><span class="token punctuation">, </span></span><span class="parameter ">parentCommentId<span class="token operator">: </span><a href="../../me.matsumo.fankt.domain.model.id/-fanbox-comment-id/index.html">FanboxCommentId</a><span class="token punctuation">, </span></span><span class="parameter ">comment<span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-string/index.html">String</a></span></span><span class="token punctuation">)</span></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="596293751%2FFunctions%2F725313909" anchor-label="deleteComment" id="596293751%2FFunctions%2F725313909" data-filterable-set=":fankt/commonMain"></a>
+          <div class="table-row" data-filterable-current=":fankt/commonMain" data-filterable-set=":fankt/commonMain">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="delete-comment.html"><span>delete</span><wbr></wbr><span><span>Comment</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="596293751%2FFunctions%2F725313909"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":fankt/commonMain"><div class="symbol monospace"><span class="token keyword">suspend </span><span class="token keyword">fun </span><a href="delete-comment.html"><span class="token function">deleteComment</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">commentId<span class="token operator">: </span><a href="../../me.matsumo.fankt.domain.model.id/-fanbox-comment-id/index.html">FanboxCommentId</a></span></span><span class="token punctuation">)</span></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-93344587%2FFunctions%2F725313909" anchor-label="getCreatorPosts" id="-93344587%2FFunctions%2F725313909" data-filterable-set=":fankt/commonMain"></a>
+          <div class="table-row" data-filterable-current=":fankt/commonMain" data-filterable-set=":fankt/commonMain">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="get-creator-posts.html"><span>get</span><wbr></wbr><span>Creator</span><wbr></wbr><span><span>Posts</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-93344587%2FFunctions%2F725313909"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":fankt/commonMain"><div class="symbol monospace"><span class="token keyword">suspend </span><span class="token keyword">fun </span><a href="get-creator-posts.html"><span class="token function">getCreatorPosts</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">creatorId<span class="token operator">: </span><a href="../../me.matsumo.fankt.domain.model.id/-fanbox-creator-id/index.html">FanboxCreatorId</a><span class="token punctuation">, </span></span><span class="parameter ">cursor<span class="token operator">: </span><a href="../../me.matsumo.fankt.domain/-fanbox-cursor/index.html">FanboxCursor</a><span class="token operator">?</span><span class="token punctuation">, </span></span><span class="parameter ">nextCursor<span class="token operator">: </span><a href="../../me.matsumo.fankt.domain/-fanbox-cursor/index.html">FanboxCursor</a><span class="token operator">?</span></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="../../me.matsumo.fankt.domain/-page-cursor-info/index.html">PageCursorInfo</a><span class="token operator">&lt;</span><a href="../../me.matsumo.fankt.domain.model/-fanbox-post/index.html">FanboxPost</a><span class="token operator">&gt;</span></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="1585670375%2FFunctions%2F725313909" anchor-label="getCreatorPostsPagination" id="1585670375%2FFunctions%2F725313909" data-filterable-set=":fankt/commonMain"></a>
+          <div class="table-row" data-filterable-current=":fankt/commonMain" data-filterable-set=":fankt/commonMain">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="get-creator-posts-pagination.html"><span>get</span><wbr></wbr><span>Creator</span><wbr></wbr><span>Posts</span><wbr></wbr><span><span>Pagination</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1585670375%2FFunctions%2F725313909"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":fankt/commonMain"><div class="symbol monospace"><span class="token keyword">suspend </span><span class="token keyword">fun </span><a href="get-creator-posts-pagination.html"><span class="token function">getCreatorPostsPagination</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">creatorId<span class="token operator">: </span><a href="../../me.matsumo.fankt.domain.model.id/-fanbox-creator-id/index.html">FanboxCreatorId</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin.collections/-list/index.html">List</a><span class="token operator">&lt;</span><a href="../../me.matsumo.fankt.domain/-fanbox-cursor/index.html">FanboxCursor</a><span class="token operator">&gt;</span></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="716370852%2FFunctions%2F725313909" anchor-label="getHomePosts" id="716370852%2FFunctions%2F725313909" data-filterable-set=":fankt/commonMain"></a>
+          <div class="table-row" data-filterable-current=":fankt/commonMain" data-filterable-set=":fankt/commonMain">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="get-home-posts.html"><span>get</span><wbr></wbr><span>Home</span><wbr></wbr><span><span>Posts</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="716370852%2FFunctions%2F725313909"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":fankt/commonMain"><div class="symbol monospace"><span class="token keyword">suspend </span><span class="token keyword">fun </span><a href="get-home-posts.html"><span class="token function">getHomePosts</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">cursor<span class="token operator">: </span><a href="../../me.matsumo.fankt.domain/-fanbox-cursor/index.html">FanboxCursor</a><span class="token operator">?</span></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="../../me.matsumo.fankt.domain/-page-cursor-info/index.html">PageCursorInfo</a><span class="token operator">&lt;</span><a href="../../me.matsumo.fankt.domain.model/-fanbox-post/index.html">FanboxPost</a><span class="token operator">&gt;</span></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-748379970%2FFunctions%2F725313909" anchor-label="getPostComment" id="-748379970%2FFunctions%2F725313909" data-filterable-set=":fankt/commonMain"></a>
+          <div class="table-row" data-filterable-current=":fankt/commonMain" data-filterable-set=":fankt/commonMain">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="get-post-comment.html"><span>get</span><wbr></wbr><span>Post</span><wbr></wbr><span><span>Comment</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-748379970%2FFunctions%2F725313909"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":fankt/commonMain"><div class="symbol monospace"><span class="token keyword">suspend </span><span class="token keyword">fun </span><a href="get-post-comment.html"><span class="token function">getPostComment</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">postId<span class="token operator">: </span><a href="../../me.matsumo.fankt.domain.model.id/-fanbox-post-id/index.html">FanboxPostId</a><span class="token punctuation">, </span></span><span class="parameter ">offset<span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-int/index.html">Int</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="../../me.matsumo.fankt.domain/-page-offset-info/index.html">PageOffsetInfo</a><span class="token operator">&lt;</span><a href="../../me.matsumo.fankt.domain.model/-fanbox-comment/index.html">FanboxComment</a><span class="token operator">&gt;</span></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="1030715113%2FFunctions%2F725313909" anchor-label="getPostDetail" id="1030715113%2FFunctions%2F725313909" data-filterable-set=":fankt/commonMain"></a>
+          <div class="table-row" data-filterable-current=":fankt/commonMain" data-filterable-set=":fankt/commonMain">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="get-post-detail.html"><span>get</span><wbr></wbr><span>Post</span><wbr></wbr><span><span>Detail</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1030715113%2FFunctions%2F725313909"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":fankt/commonMain"><div class="symbol monospace"><span class="token keyword">suspend </span><span class="token keyword">fun </span><a href="get-post-detail.html"><span class="token function">getPostDetail</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">postId<span class="token operator">: </span><a href="../../me.matsumo.fankt.domain.model.id/-fanbox-post-id/index.html">FanboxPostId</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="../../me.matsumo.fankt.domain.model/-fanbox-post-detail/index.html">FanboxPostDetail</a></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-1471915881%2FFunctions%2F725313909" anchor-label="getPostFromQuery" id="-1471915881%2FFunctions%2F725313909" data-filterable-set=":fankt/commonMain"></a>
+          <div class="table-row" data-filterable-current=":fankt/commonMain" data-filterable-set=":fankt/commonMain">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="get-post-from-query.html"><span>get</span><wbr></wbr><span>Post</span><wbr></wbr><span>From</span><wbr></wbr><span><span>Query</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1471915881%2FFunctions%2F725313909"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":fankt/commonMain"><div class="symbol monospace"><span class="token keyword">suspend </span><span class="token keyword">fun </span><a href="get-post-from-query.html"><span class="token function">getPostFromQuery</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">query<span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-string/index.html">String</a><span class="token punctuation">, </span></span><span class="parameter ">creatorId<span class="token operator">: </span><a href="../../me.matsumo.fankt.domain.model.id/-fanbox-creator-id/index.html">FanboxCreatorId</a><span class="token operator">?</span><span class="token punctuation">, </span></span><span class="parameter ">page<span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-int/index.html">Int</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="../../me.matsumo.fankt.domain/-page-number-info/index.html">PageNumberInfo</a><span class="token operator">&lt;</span><a href="../../me.matsumo.fankt.domain.model/-fanbox-post/index.html">FanboxPost</a><span class="token operator">&gt;</span></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="42225709%2FFunctions%2F725313909" anchor-label="getSupportedPosts" id="42225709%2FFunctions%2F725313909" data-filterable-set=":fankt/commonMain"></a>
+          <div class="table-row" data-filterable-current=":fankt/commonMain" data-filterable-set=":fankt/commonMain">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="get-supported-posts.html"><span>get</span><wbr></wbr><span>Supported</span><wbr></wbr><span><span>Posts</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="42225709%2FFunctions%2F725313909"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":fankt/commonMain"><div class="symbol monospace"><span class="token keyword">suspend </span><span class="token keyword">fun </span><a href="get-supported-posts.html"><span class="token function">getSupportedPosts</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">cursor<span class="token operator">: </span><a href="../../me.matsumo.fankt.domain/-fanbox-cursor/index.html">FanboxCursor</a><span class="token operator">?</span></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="../../me.matsumo.fankt.domain/-page-cursor-info/index.html">PageCursorInfo</a><span class="token operator">&lt;</span><a href="../../me.matsumo.fankt.domain.model/-fanbox-post/index.html">FanboxPost</a><span class="token operator">&gt;</span></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-80615251%2FFunctions%2F725313909" anchor-label="likePost" id="-80615251%2FFunctions%2F725313909" data-filterable-set=":fankt/commonMain"></a>
+          <div class="table-row" data-filterable-current=":fankt/commonMain" data-filterable-set=":fankt/commonMain">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="like-post.html"><span>like</span><wbr></wbr><span><span>Post</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-80615251%2FFunctions%2F725313909"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":fankt/commonMain"><div class="symbol monospace"><span class="token keyword">suspend </span><span class="token keyword">fun </span><a href="like-post.html"><span class="token function">likePost</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">postId<span class="token operator">: </span><a href="../../me.matsumo.fankt.domain.model.id/-fanbox-post-id/index.html">FanboxPostId</a></span></span><span class="token punctuation">)</span></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    <div class="footer">
+        <a href="#content" id="go-to-top-link" class="footer--button footer--button_go-to-top"></a>
+        <span>© 2025 Copyright</span>
+        <span class="pull-right">
+            <span>Generated by </span>
+            <a class="footer--link footer--link_external" href="https://github.com/Kotlin/dokka">
+                <span>dokka</span>
+            </a>
+        </span>
+    </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
