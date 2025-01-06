@@ -10,6 +10,7 @@ import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.kotlin.dsl.assign
 import org.gradle.kotlin.dsl.configure
+import org.gradle.kotlin.dsl.dependencies
 import org.gradle.kotlin.dsl.withType
 import org.gradle.plugins.signing.SigningExtension
 import org.jetbrains.dokka.DokkaConfiguration
@@ -30,7 +31,7 @@ class MavenPublishPlugin : Plugin<Project> {
             }
 
             allprojects {
-                group = "me.matsumo"
+                group = "me.matsumo.fankt"
                 version = libs.version("versionName")
             }
 
@@ -69,6 +70,11 @@ class MavenPublishPlugin : Plugin<Project> {
             dokkaPublications.getByName("html") {
                 outputDirectory = file("$rootDir/docs")
             }
+
+            dependencies {
+                add("dokka", project(":fankt:fanbox"))
+                add("dokka", project(":fankt:fantia"))
+            }
         }
     }
 
@@ -87,7 +93,7 @@ class MavenPublishPlugin : Plugin<Project> {
             coordinates(
                 groupId = group.toString(),
                 version = version.toString(),
-                artifactId = "fankt",
+                artifactId = project.name,
             )
 
             pom {

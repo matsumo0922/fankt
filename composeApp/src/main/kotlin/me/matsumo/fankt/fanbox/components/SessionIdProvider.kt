@@ -1,6 +1,6 @@
 package me.matsumo.fankt.fanbox.components
 
-import me.matsumo.fankt.fanktApplicationContext
+import me.matsumo.fankt.fanbox.fanktApplicationContext
 import java.io.File
 
 private const val FILE_NAME = "fanbox_session_id.txt"
