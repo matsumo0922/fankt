@@ -1,9 +1,12 @@
 # fankt
 
+<img src="https://img.shields.io/maven-metadata/v.svg?label=maven-central&metadataUrl=https%3A%2F%2Frepo1.maven.org%2Fmaven2%2Fme%2Fmatsumo%2Ffankt%2Fmaven-metadata.xml">
+
 An unofficial API wrapper for pixivFANBOX and Fantia.  
 Compatible with Kotlin Multiplatform (KMP) and usable on Android and iOS.
 
 ## Status
+
 #### :white_check_mark: pixivFANBOX
   - All features are fully functional.
 #### :construction: Fantia
@@ -35,6 +38,9 @@ dependencies {
     implementation("me.matsumo:fankt:$version")
 }
 ```
+
+### API Reference
+[API Reference 🔎](https://matsumo0922.github.io/fankt/)
 
 ### pixivFANBOX
 
