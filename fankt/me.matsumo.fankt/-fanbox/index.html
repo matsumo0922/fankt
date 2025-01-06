@@ -1,0 +1,610 @@
+<!DOCTYPE html>
+<html class="no-js">
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1" charset="UTF-8">
+    <title>Fanbox</title>
+    <link href="../../../images/logo-icon.svg" rel="icon" type="image/svg">
+    <script>var pathToRoot = "../../../";</script>
+    <script>document.documentElement.classList.replace("no-js","js");</script>
+    <script>const storage = localStorage.getItem("dokka-dark-mode")
+    if (storage == null) {
+        const osDarkSchemePreferred = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
+        if (osDarkSchemePreferred === true) {
+            document.getElementsByTagName("html")[0].classList.add("theme-dark")
+        }
+    } else {
+        const savedDarkMode = JSON.parse(storage)
+        if(savedDarkMode === true) {
+            document.getElementsByTagName("html")[0].classList.add("theme-dark")
+        }
+    }
+    </script>
+<script type="text/javascript" src="https://unpkg.com/kotlin-playground@1/dist/playground.min.js" async="async"></script>
+<script type="text/javascript" src="../../../scripts/sourceset_dependencies.js" async="async"></script>
+<link href="../../../styles/style.css" rel="Stylesheet">
+<link href="../../../styles/main.css" rel="Stylesheet">
+<link href="../../../styles/prism.css" rel="Stylesheet">
+<link href="../../../styles/logo-styles.css" rel="Stylesheet">
+<link href="../../../styles/font-jb-sans-auto.css" rel="Stylesheet">
+<link href="../../../ui-kit/ui-kit.min.css" rel="Stylesheet">
+<script type="text/javascript" src="../../../scripts/clipboard.js" async="async"></script>
+<script type="text/javascript" src="../../../scripts/navigation-loader.js" async="async"></script>
+<script type="text/javascript" src="../../../scripts/platform-content-handler.js" async="async"></script>
+<script type="text/javascript" src="../../../scripts/main.js" defer="defer"></script>
+<script type="text/javascript" src="../../../scripts/prism.js" async="async"></script>
+<script type="text/javascript" src="../../../ui-kit/ui-kit.min.js" defer="defer"></script>
+<script type="text/javascript" src="../../../scripts/symbol-parameters-wrapper_deferred.js" defer="defer"></script>
+</head>
+<body>
+    <div class="root">
+    <nav class="navigation theme-dark" id="navigation-wrapper">
+            <a class="library-name--link" href="../../../index.html">
+                    fankt
+            </a>
+        <button class="navigation-controls--btn navigation-controls--btn_toc ui-kit_mobile-only" id="toc-toggle"
+                type="button">Toggle table of contents
+        </button>
+        <div class="navigation-controls--break ui-kit_mobile-only"></div>
+        <div class="library-version" id="library-version">
+0.0.2        </div>
+        <div class="navigation-controls">
+        <div class="filter-section filter-section_loading" id="filter-section">
+                <button class="platform-tag platform-selector common-like" data-active=""
+                        data-filter=":fankt/commonMain">common</button>
+            <div class="dropdown filter-section--dropdown" data-role="dropdown" id="filter-section-dropdown">
+                <button class="button button_dropdown filter-section--dropdown-toggle" role="combobox"
+                        data-role="dropdown-toggle"
+                        aria-controls="platform-tags-listbox"
+                        aria-haspopup="listbox"
+                        aria-expanded="false"
+                        aria-label="Toggle source sets"
+                ></button>
+                <ul role="listbox" id="platform-tags-listbox" class="dropdown--list" data-role="dropdown-listbox">
+                    <div class="dropdown--header"><span>Platform filter</span>
+                        <button class="button" data-role="dropdown-toggle" aria-label="Close platform filter">
+                            <i class="ui-kit-icon ui-kit-icon_cross"></i>
+                        </button>
+                    </div>
+                        <li role="option" class="dropdown--option platform-selector-option common-like" tabindex="0">
+                            <label class="checkbox">
+                                <input type="checkbox" class="checkbox--input" id=":fankt/commonMain"
+                                       data-filter=":fankt/commonMain"/>
+                                <span class="checkbox--icon"></span>
+                                common
+                            </label>
+                        </li>
+                </ul>
+                <div class="dropdown--overlay"></div>
+            </div>
+        </div>
+            <button class="navigation-controls--btn navigation-controls--btn_theme" id="theme-toggle-button"
+                    type="button">Switch theme
+            </button>
+            <div class="navigation-controls--btn navigation-controls--btn_search" id="searchBar" role="button">Search in
+                API
+            </div>
+        </div>
+    </nav>
+        <div id="container">
+            <div class="sidebar" id="leftColumn">
+                <div class="dropdown theme-dark_mobile" data-role="dropdown" id="toc-dropdown">
+                    <ul role="listbox" id="toc-listbox" class="dropdown--list dropdown--list_toc-list"
+                        data-role="dropdown-listbox">
+                        <div class="dropdown--header">
+                            <span>
+                                    fankt
+                            </span>
+                            <button class="button" data-role="dropdown-toggle" aria-label="Close table of contents">
+                                <i class="ui-kit-icon ui-kit-icon_cross"></i>
+                            </button>
+                        </div>
+                        <div class="sidebar--inner" id="sideMenu"></div>
+                    </ul>
+                    <div class="dropdown--overlay"></div>
+                </div>
+            </div>
+            <div id="main">
+<div class="main-content" data-page-type="classlike" id="content" pageIds="fankt::me.matsumo.fankt/Fanbox///PointingToDeclaration//725313909">
+  <div class="breadcrumbs"><a href="../../../index.html">fankt</a><span class="delimiter">/</span><a href="../index.html">me.matsumo.fankt</a><span class="delimiter">/</span><span class="current">Fanbox</span></div>
+  <div class="cover ">
+    <h1 class="cover"><span><span>Fanbox</span></span></h1>
+    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":fankt/commonMain"><div class="symbol monospace"><span class="token keyword">class </span><a href="index.html">Fanbox</a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">ioDispatcher<span class="token operator">: </span><span data-unresolved-link="kotlinx.coroutines/CoroutineDispatcher///PointingToDeclaration/">CoroutineDispatcher</span><span class="token operator"> = </span>Dispatchers.IO</span></span><span class="token punctuation">)</span></div></div></div>
+  </div>
+  <div class="tabbedcontent">
+    <div class="tabs-section" tabs-section="tabs-section"><button class="section-tab" data-active="" data-togglable="CONSTRUCTOR,TYPE,PROPERTY,FUNCTION">Members</button></div>
+    <div class="tabs-section-body">
+      <div data-togglable="CONSTRUCTOR">
+        <h2 class="">Constructors</h2>
+        <div class="table"><a data-name="-1249804418%2FConstructors%2F725313909" anchor-label="Fanbox" id="-1249804418%2FConstructors%2F725313909" data-filterable-set=":fankt/commonMain"></a>
+          <div class="table-row" data-togglable="CONSTRUCTOR" data-filterable-current=":fankt/commonMain" data-filterable-set=":fankt/commonMain">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="-fanbox.html"><span><span>Fanbox</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1249804418%2FConstructors%2F725313909"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":fankt/commonMain"><div class="symbol monospace"><span class="token keyword">constructor</span><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">ioDispatcher<span class="token operator">: </span><span data-unresolved-link="kotlinx.coroutines/CoroutineDispatcher///PointingToDeclaration/">CoroutineDispatcher</span><span class="token operator"> = </span>Dispatchers.IO</span></span><span class="token punctuation">)</span></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div data-togglable="PROPERTY">
+        <h2 class="">Properties</h2>
+        <div class="table"><a data-name="-1513607534%2FProperties%2F725313909" anchor-label="cookies" id="-1513607534%2FProperties%2F725313909" data-filterable-set=":fankt/commonMain"></a>
+          <div class="table-row" data-filterable-current=":fankt/commonMain" data-filterable-set=":fankt/commonMain">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="cookies.html"><span><span>cookies</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1513607534%2FProperties%2F725313909"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":fankt/commonMain"><div class="symbol monospace"><span class="token keyword">val </span><a href="cookies.html">cookies</a><span class="token operator">: </span><span data-unresolved-link="kotlinx.coroutines.flow/Flow///PointingToDeclaration/">Flow</span><span class="token operator">&lt;</span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin.collections/-list/index.html">List</a><span class="token operator">&lt;</span><span data-unresolved-link="io.ktor.http/Cookie///PointingToDeclaration/">Cookie</span><span class="token operator">&gt;</span><span class="token operator">&gt;</span></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="67011884%2FProperties%2F725313909" anchor-label="csrfToken" id="67011884%2FProperties%2F725313909" data-filterable-set=":fankt/commonMain"></a>
+          <div class="table-row" data-filterable-current=":fankt/commonMain" data-filterable-set=":fankt/commonMain">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="csrf-token.html"><span>csrf</span><wbr></wbr><span><span>Token</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="67011884%2FProperties%2F725313909"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":fankt/commonMain"><div class="symbol monospace"><span class="token keyword">val </span><a href="csrf-token.html">csrfToken</a><span class="token operator">: </span><span data-unresolved-link="kotlinx.coroutines.flow/Flow///PointingToDeclaration/">Flow</span><span class="token operator">&lt;</span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-string/index.html">String</a><span class="token operator">?</span><span class="token operator">&gt;</span></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div data-togglable="FUNCTION">
+        <h2 class="">Functions</h2>
+        <div class="table"><a data-name="-919194685%2FFunctions%2F725313909" anchor-label="addComment" id="-919194685%2FFunctions%2F725313909" data-filterable-set=":fankt/commonMain"></a>
+          <div class="table-row" data-filterable-current=":fankt/commonMain" data-filterable-set=":fankt/commonMain">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="add-comment.html"><span>add</span><wbr></wbr><span><span>Comment</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-919194685%2FFunctions%2F725313909"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":fankt/commonMain"><div class="symbol monospace"><span class="token keyword">suspend </span><span class="token keyword">fun </span><a href="add-comment.html"><span class="token function">addComment</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">postId<span class="token operator">: </span><a href="../../me.matsumo.fankt.domain.model.id/-fanbox-post-id/index.html">FanboxPostId</a><span class="token punctuation">, </span></span><span class="parameter ">rootCommentId<span class="token operator">: </span><a href="../../me.matsumo.fankt.domain.model.id/-fanbox-comment-id/index.html">FanboxCommentId</a><span class="token punctuation">, </span></span><span class="parameter ">parentCommentId<span class="token operator">: </span><a href="../../me.matsumo.fankt.domain.model.id/-fanbox-comment-id/index.html">FanboxCommentId</a><span class="token punctuation">, </span></span><span class="parameter ">body<span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-string/index.html">String</a></span></span><span class="token punctuation">)</span></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="220171489%2FFunctions%2F725313909" anchor-label="deleteComment" id="220171489%2FFunctions%2F725313909" data-filterable-set=":fankt/commonMain"></a>
+          <div class="table-row" data-filterable-current=":fankt/commonMain" data-filterable-set=":fankt/commonMain">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="delete-comment.html"><span>delete</span><wbr></wbr><span><span>Comment</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="220171489%2FFunctions%2F725313909"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":fankt/commonMain"><div class="symbol monospace"><span class="token keyword">suspend </span><span class="token keyword">fun </span><a href="delete-comment.html"><span class="token function">deleteComment</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">commentId<span class="token operator">: </span><a href="../../me.matsumo.fankt.domain.model.id/-fanbox-comment-id/index.html">FanboxCommentId</a></span></span><span class="token punctuation">)</span></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="1100422440%2FFunctions%2F725313909" anchor-label="followCreator" id="1100422440%2FFunctions%2F725313909" data-filterable-set=":fankt/commonMain"></a>
+          <div class="table-row" data-filterable-current=":fankt/commonMain" data-filterable-set=":fankt/commonMain">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="follow-creator.html"><span>follow</span><wbr></wbr><span><span>Creator</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1100422440%2FFunctions%2F725313909"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":fankt/commonMain"><div class="symbol monospace"><span class="token keyword">suspend </span><span class="token keyword">fun </span><a href="follow-creator.html"><span class="token function">followCreator</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">userId<span class="token operator">: </span><a href="../../me.matsumo.fankt.domain.model.id/-fanbox-user-id/index.html">FanboxUserId</a></span></span><span class="token punctuation">)</span></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-446790723%2FFunctions%2F725313909" anchor-label="getBells" id="-446790723%2FFunctions%2F725313909" data-filterable-set=":fankt/commonMain"></a>
+          <div class="table-row" data-filterable-current=":fankt/commonMain" data-filterable-set=":fankt/commonMain">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="get-bells.html"><span>get</span><wbr></wbr><span><span>Bells</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-446790723%2FFunctions%2F725313909"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":fankt/commonMain"><div class="symbol monospace"><span class="token keyword">suspend </span><span class="token keyword">fun </span><a href="get-bells.html"><span class="token function">getBells</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">page<span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-int/index.html">Int</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="../../me.matsumo.fankt.domain/-page-number-info/index.html">PageNumberInfo</a><span class="token operator">&lt;</span><a href="../../me.matsumo.fankt.domain.model/-fanbox-bell/index.html">FanboxBell</a><span class="token operator">&gt;</span></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="1195598297%2FFunctions%2F725313909" anchor-label="getCreatorDetail" id="1195598297%2FFunctions%2F725313909" data-filterable-set=":fankt/commonMain"></a>
+          <div class="table-row" data-filterable-current=":fankt/commonMain" data-filterable-set=":fankt/commonMain">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="get-creator-detail.html"><span>get</span><wbr></wbr><span>Creator</span><wbr></wbr><span><span>Detail</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1195598297%2FFunctions%2F725313909"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":fankt/commonMain"><div class="symbol monospace"><span class="token keyword">suspend </span><span class="token keyword">fun </span><a href="get-creator-detail.html"><span class="token function">getCreatorDetail</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">creatorId<span class="token operator">: </span><a href="../../me.matsumo.fankt.domain.model.id/-fanbox-creator-id/index.html">FanboxCreatorId</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="../../me.matsumo.fankt.domain.model/-fanbox-creator-detail/index.html">FanboxCreatorDetail</a></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-1774814096%2FFunctions%2F725313909" anchor-label="getCreatorPlanDetail" id="-1774814096%2FFunctions%2F725313909" data-filterable-set=":fankt/commonMain"></a>
+          <div class="table-row" data-filterable-current=":fankt/commonMain" data-filterable-set=":fankt/commonMain">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="get-creator-plan-detail.html"><span>get</span><wbr></wbr><span>Creator</span><wbr></wbr><span>Plan</span><wbr></wbr><span><span>Detail</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1774814096%2FFunctions%2F725313909"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":fankt/commonMain"><div class="symbol monospace"><span class="token keyword">suspend </span><span class="token keyword">fun </span><a href="get-creator-plan-detail.html"><span class="token function">getCreatorPlanDetail</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">creatorId<span class="token operator">: </span><a href="../../me.matsumo.fankt.domain.model.id/-fanbox-creator-id/index.html">FanboxCreatorId</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="../../me.matsumo.fankt.domain.model/-fanbox-creator-plan-detail/index.html">FanboxCreatorPlanDetail</a></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="370514132%2FFunctions%2F725313909" anchor-label="getCreatorPlans" id="370514132%2FFunctions%2F725313909" data-filterable-set=":fankt/commonMain"></a>
+          <div class="table-row" data-filterable-current=":fankt/commonMain" data-filterable-set=":fankt/commonMain">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="get-creator-plans.html"><span>get</span><wbr></wbr><span>Creator</span><wbr></wbr><span><span>Plans</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="370514132%2FFunctions%2F725313909"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":fankt/commonMain"><div class="symbol monospace"><span class="token keyword">suspend </span><span class="token keyword">fun </span><a href="get-creator-plans.html"><span class="token function">getCreatorPlans</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">creatorId<span class="token operator">: </span><a href="../../me.matsumo.fankt.domain.model.id/-fanbox-creator-id/index.html">FanboxCreatorId</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin.collections/-list/index.html">List</a><span class="token operator">&lt;</span><a href="../../me.matsumo.fankt.domain.model/-fanbox-creator-plan/index.html">FanboxCreatorPlan</a><span class="token operator">&gt;</span></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-1018220641%2FFunctions%2F725313909" anchor-label="getCreatorPosts" id="-1018220641%2FFunctions%2F725313909" data-filterable-set=":fankt/commonMain"></a>
+          <div class="table-row" data-filterable-current=":fankt/commonMain" data-filterable-set=":fankt/commonMain">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="get-creator-posts.html"><span>get</span><wbr></wbr><span>Creator</span><wbr></wbr><span><span>Posts</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1018220641%2FFunctions%2F725313909"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":fankt/commonMain"><div class="symbol monospace"><span class="token keyword">suspend </span><span class="token keyword">fun </span><a href="get-creator-posts.html"><span class="token function">getCreatorPosts</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">creatorId<span class="token operator">: </span><a href="../../me.matsumo.fankt.domain.model.id/-fanbox-creator-id/index.html">FanboxCreatorId</a><span class="token punctuation">, </span></span><span class="parameter ">cursor<span class="token operator">: </span><a href="../../me.matsumo.fankt.domain/-fanbox-cursor/index.html">FanboxCursor</a><span class="token operator">?</span><span class="token punctuation">, </span></span><span class="parameter ">nextCursor<span class="token operator">: </span><a href="../../me.matsumo.fankt.domain/-fanbox-cursor/index.html">FanboxCursor</a><span class="token operator">?</span></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="../../me.matsumo.fankt.domain/-page-cursor-info/index.html">PageCursorInfo</a><span class="token operator">&lt;</span><a href="../../me.matsumo.fankt.domain.model/-fanbox-post/index.html">FanboxPost</a><span class="token operator">&gt;</span></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="1709562001%2FFunctions%2F725313909" anchor-label="getCreatorTags" id="1709562001%2FFunctions%2F725313909" data-filterable-set=":fankt/commonMain"></a>
+          <div class="table-row" data-filterable-current=":fankt/commonMain" data-filterable-set=":fankt/commonMain">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="get-creator-tags.html"><span>get</span><wbr></wbr><span>Creator</span><wbr></wbr><span><span>Tags</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1709562001%2FFunctions%2F725313909"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":fankt/commonMain"><div class="symbol monospace"><span class="token keyword">suspend </span><span class="token keyword">fun </span><a href="get-creator-tags.html"><span class="token function">getCreatorTags</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">creatorId<span class="token operator">: </span><a href="../../me.matsumo.fankt.domain.model.id/-fanbox-creator-id/index.html">FanboxCreatorId</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin.collections/-list/index.html">List</a><span class="token operator">&lt;</span><a href="../../me.matsumo.fankt.domain.model/-fanbox-tag/index.html">FanboxTag</a><span class="token operator">&gt;</span></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="1158494007%2FFunctions%2F725313909" anchor-label="getFollowingCreators" id="1158494007%2FFunctions%2F725313909" data-filterable-set=":fankt/commonMain"></a>
+          <div class="table-row" data-filterable-current=":fankt/commonMain" data-filterable-set=":fankt/commonMain">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="get-following-creators.html"><span>get</span><wbr></wbr><span>Following</span><wbr></wbr><span><span>Creators</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1158494007%2FFunctions%2F725313909"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":fankt/commonMain"><div class="symbol monospace"><span class="token keyword">suspend </span><span class="token keyword">fun </span><a href="get-following-creators.html"><span class="token function">getFollowingCreators</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin.collections/-list/index.html">List</a><span class="token operator">&lt;</span><a href="../../me.matsumo.fankt.domain.model/-fanbox-creator-detail/index.html">FanboxCreatorDetail</a><span class="token operator">&gt;</span></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="1803858793%2FFunctions%2F725313909" anchor-label="getFollowingPixivCreators" id="1803858793%2FFunctions%2F725313909" data-filterable-set=":fankt/commonMain"></a>
+          <div class="table-row" data-filterable-current=":fankt/commonMain" data-filterable-set=":fankt/commonMain">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="get-following-pixiv-creators.html"><span>get</span><wbr></wbr><span>Following</span><wbr></wbr><span>Pixiv</span><wbr></wbr><span><span>Creators</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1803858793%2FFunctions%2F725313909"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":fankt/commonMain"><div class="symbol monospace"><span class="token keyword">suspend </span><span class="token keyword">fun </span><a href="get-following-pixiv-creators.html"><span class="token function">getFollowingPixivCreators</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin.collections/-list/index.html">List</a><span class="token operator">&lt;</span><a href="../../me.matsumo.fankt.domain.model/-fanbox-creator-detail/index.html">FanboxCreatorDetail</a><span class="token operator">&gt;</span></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-1394370802%2FFunctions%2F725313909" anchor-label="getHomePosts" id="-1394370802%2FFunctions%2F725313909" data-filterable-set=":fankt/commonMain"></a>
+          <div class="table-row" data-filterable-current=":fankt/commonMain" data-filterable-set=":fankt/commonMain">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="get-home-posts.html"><span>get</span><wbr></wbr><span>Home</span><wbr></wbr><span><span>Posts</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1394370802%2FFunctions%2F725313909"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":fankt/commonMain"><div class="symbol monospace"><span class="token keyword">suspend </span><span class="token keyword">fun </span><a href="get-home-posts.html"><span class="token function">getHomePosts</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">cursor<span class="token operator">: </span><a href="../../me.matsumo.fankt.domain/-fanbox-cursor/index.html">FanboxCursor</a><span class="token operator">?</span></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="../../me.matsumo.fankt.domain/-page-cursor-info/index.html">PageCursorInfo</a><span class="token operator">&lt;</span><a href="../../me.matsumo.fankt.domain.model/-fanbox-post/index.html">FanboxPost</a><span class="token operator">&gt;</span></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="742701884%2FFunctions%2F725313909" anchor-label="getMetadata" id="742701884%2FFunctions%2F725313909" data-filterable-set=":fankt/commonMain"></a>
+          <div class="table-row" data-filterable-current=":fankt/commonMain" data-filterable-set=":fankt/commonMain">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="get-metadata.html"><span>get</span><wbr></wbr><span><span>Metadata</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="742701884%2FFunctions%2F725313909"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":fankt/commonMain"><div class="symbol monospace"><span class="token keyword">suspend </span><span class="token keyword">fun </span><a href="get-metadata.html"><span class="token function">getMetadata</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">: </span><a href="../../me.matsumo.fankt.domain.model/-fanbox-meta-data/index.html">FanboxMetaData</a></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-251694155%2FFunctions%2F725313909" anchor-label="getNewsLetters" id="-251694155%2FFunctions%2F725313909" data-filterable-set=":fankt/commonMain"></a>
+          <div class="table-row" data-filterable-current=":fankt/commonMain" data-filterable-set=":fankt/commonMain">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="get-news-letters.html"><span>get</span><wbr></wbr><span>News</span><wbr></wbr><span><span>Letters</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-251694155%2FFunctions%2F725313909"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":fankt/commonMain"><div class="symbol monospace"><span class="token keyword">suspend </span><span class="token keyword">fun </span><a href="get-news-letters.html"><span class="token function">getNewsLetters</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin.collections/-list/index.html">List</a><span class="token operator">&lt;</span><a href="../../me.matsumo.fankt.domain.model/-fanbox-news-letter/index.html">FanboxNewsLetter</a><span class="token operator">&gt;</span></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-167559143%2FFunctions%2F725313909" anchor-label="getPaidRecords" id="-167559143%2FFunctions%2F725313909" data-filterable-set=":fankt/commonMain"></a>
+          <div class="table-row" data-filterable-current=":fankt/commonMain" data-filterable-set=":fankt/commonMain">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="get-paid-records.html"><span>get</span><wbr></wbr><span>Paid</span><wbr></wbr><span><span>Records</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-167559143%2FFunctions%2F725313909"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":fankt/commonMain"><div class="symbol monospace"><span class="token keyword">suspend </span><span class="token keyword">fun </span><a href="get-paid-records.html"><span class="token function">getPaidRecords</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin.collections/-list/index.html">List</a><span class="token operator">&lt;</span><a href="../../me.matsumo.fankt.domain.model/-fanbox-paid-record/index.html">FanboxPaidRecord</a><span class="token operator">&gt;</span></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="1751589780%2FFunctions%2F725313909" anchor-label="getPostComment" id="1751589780%2FFunctions%2F725313909" data-filterable-set=":fankt/commonMain"></a>
+          <div class="table-row" data-filterable-current=":fankt/commonMain" data-filterable-set=":fankt/commonMain">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="get-post-comment.html"><span>get</span><wbr></wbr><span>Post</span><wbr></wbr><span><span>Comment</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1751589780%2FFunctions%2F725313909"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":fankt/commonMain"><div class="symbol monospace"><span class="token keyword">suspend </span><span class="token keyword">fun </span><a href="get-post-comment.html"><span class="token function">getPostComment</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">postId<span class="token operator">: </span><a href="../../me.matsumo.fankt.domain.model.id/-fanbox-post-id/index.html">FanboxPostId</a><span class="token punctuation">, </span></span><span class="parameter ">offset<span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-int/index.html">Int</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="../../me.matsumo.fankt.domain/-page-offset-info/index.html">PageOffsetInfo</a><span class="token operator">&lt;</span><a href="../../me.matsumo.fankt.domain.model/-fanbox-comment/index.html">FanboxComment</a><span class="token operator">&gt;</span></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="447679167%2FFunctions%2F725313909" anchor-label="getPostDetail" id="447679167%2FFunctions%2F725313909" data-filterable-set=":fankt/commonMain"></a>
+          <div class="table-row" data-filterable-current=":fankt/commonMain" data-filterable-set=":fankt/commonMain">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="get-post-detail.html"><span>get</span><wbr></wbr><span>Post</span><wbr></wbr><span><span>Detail</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="447679167%2FFunctions%2F725313909"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":fankt/commonMain"><div class="symbol monospace"><span class="token keyword">suspend </span><span class="token keyword">fun </span><a href="get-post-detail.html"><span class="token function">getPostDetail</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">postId<span class="token operator">: </span><a href="../../me.matsumo.fankt.domain.model.id/-fanbox-post-id/index.html">FanboxPostId</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="../../me.matsumo.fankt.domain.model/-fanbox-post-detail/index.html">FanboxPostDetail</a></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-590408595%2FFunctions%2F725313909" anchor-label="getPostFromQuery" id="-590408595%2FFunctions%2F725313909" data-filterable-set=":fankt/commonMain"></a>
+          <div class="table-row" data-filterable-current=":fankt/commonMain" data-filterable-set=":fankt/commonMain">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="get-post-from-query.html"><span>get</span><wbr></wbr><span>Post</span><wbr></wbr><span>From</span><wbr></wbr><span><span>Query</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-590408595%2FFunctions%2F725313909"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":fankt/commonMain"><div class="symbol monospace"><span class="token keyword">suspend </span><span class="token keyword">fun </span><a href="get-post-from-query.html"><span class="token function">getPostFromQuery</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">query<span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-string/index.html">String</a><span class="token punctuation">, </span></span><span class="parameter ">creatorId<span class="token operator">: </span><a href="../../me.matsumo.fankt.domain.model.id/-fanbox-creator-id/index.html">FanboxCreatorId</a><span class="token operator">?</span><span class="token punctuation">, </span></span><span class="parameter ">page<span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-int/index.html">Int</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="../../me.matsumo.fankt.domain/-page-number-info/index.html">PageNumberInfo</a><span class="token operator">&lt;</span><a href="../../me.matsumo.fankt.domain.model/-fanbox-post/index.html">FanboxPost</a><span class="token operator">&gt;</span></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-1038403539%2FFunctions%2F725313909" anchor-label="getRecommendedCreators" id="-1038403539%2FFunctions%2F725313909" data-filterable-set=":fankt/commonMain"></a>
+          <div class="table-row" data-filterable-current=":fankt/commonMain" data-filterable-set=":fankt/commonMain">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="get-recommended-creators.html"><span>get</span><wbr></wbr><span>Recommended</span><wbr></wbr><span><span>Creators</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1038403539%2FFunctions%2F725313909"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":fankt/commonMain"><div class="symbol monospace"><span class="token keyword">suspend </span><span class="token keyword">fun </span><a href="get-recommended-creators.html"><span class="token function">getRecommendedCreators</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin.collections/-list/index.html">List</a><span class="token operator">&lt;</span><a href="../../me.matsumo.fankt.domain.model/-fanbox-creator-detail/index.html">FanboxCreatorDetail</a><span class="token operator">&gt;</span></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="1052921391%2FFunctions%2F725313909" anchor-label="getSupportedPlans" id="1052921391%2FFunctions%2F725313909" data-filterable-set=":fankt/commonMain"></a>
+          <div class="table-row" data-filterable-current=":fankt/commonMain" data-filterable-set=":fankt/commonMain">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="get-supported-plans.html"><span>get</span><wbr></wbr><span>Supported</span><wbr></wbr><span><span>Plans</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1052921391%2FFunctions%2F725313909"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":fankt/commonMain"><div class="symbol monospace"><span class="token keyword">suspend </span><span class="token keyword">fun </span><a href="get-supported-plans.html"><span class="token function">getSupportedPlans</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin.collections/-list/index.html">List</a><span class="token operator">&lt;</span><a href="../../me.matsumo.fankt.domain.model/-fanbox-creator-plan/index.html">FanboxCreatorPlan</a><span class="token operator">&gt;</span></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="958611203%2FFunctions%2F725313909" anchor-label="getSupportedPosts" id="958611203%2FFunctions%2F725313909" data-filterable-set=":fankt/commonMain"></a>
+          <div class="table-row" data-filterable-current=":fankt/commonMain" data-filterable-set=":fankt/commonMain">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="get-supported-posts.html"><span>get</span><wbr></wbr><span>Supported</span><wbr></wbr><span><span>Posts</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="958611203%2FFunctions%2F725313909"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":fankt/commonMain"><div class="symbol monospace"><span class="token keyword">suspend </span><span class="token keyword">fun </span><a href="get-supported-posts.html"><span class="token function">getSupportedPosts</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">cursor<span class="token operator">: </span><a href="../../me.matsumo.fankt.domain/-fanbox-cursor/index.html">FanboxCursor</a><span class="token operator">?</span></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="../../me.matsumo.fankt.domain/-page-cursor-info/index.html">PageCursorInfo</a><span class="token operator">&lt;</span><a href="../../me.matsumo.fankt.domain.model/-fanbox-post/index.html">FanboxPost</a><span class="token operator">&gt;</span></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-1604181582%2FFunctions%2F725313909" anchor-label="getUnpaidRecords" id="-1604181582%2FFunctions%2F725313909" data-filterable-set=":fankt/commonMain"></a>
+          <div class="table-row" data-filterable-current=":fankt/commonMain" data-filterable-set=":fankt/commonMain">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="get-unpaid-records.html"><span>get</span><wbr></wbr><span>Unpaid</span><wbr></wbr><span><span>Records</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1604181582%2FFunctions%2F725313909"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":fankt/commonMain"><div class="symbol monospace"><span class="token keyword">suspend </span><span class="token keyword">fun </span><a href="get-unpaid-records.html"><span class="token function">getUnpaidRecords</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin.collections/-list/index.html">List</a><span class="token operator">&lt;</span><a href="../../me.matsumo.fankt.domain.model/-fanbox-paid-record/index.html">FanboxPaidRecord</a><span class="token operator">&gt;</span></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-466696425%2FFunctions%2F725313909" anchor-label="likePost" id="-466696425%2FFunctions%2F725313909" data-filterable-set=":fankt/commonMain"></a>
+          <div class="table-row" data-filterable-current=":fankt/commonMain" data-filterable-set=":fankt/commonMain">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="like-post.html"><span>like</span><wbr></wbr><span><span>Post</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-466696425%2FFunctions%2F725313909"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":fankt/commonMain"><div class="symbol monospace"><span class="token keyword">suspend </span><span class="token keyword">fun </span><a href="like-post.html"><span class="token function">likePost</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">postId<span class="token operator">: </span><a href="../../me.matsumo.fankt.domain.model.id/-fanbox-post-id/index.html">FanboxPostId</a></span></span><span class="token punctuation">)</span></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="1206116666%2FFunctions%2F725313909" anchor-label="searchCreators" id="1206116666%2FFunctions%2F725313909" data-filterable-set=":fankt/commonMain"></a>
+          <div class="table-row" data-filterable-current=":fankt/commonMain" data-filterable-set=":fankt/commonMain">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="search-creators.html"><span>search</span><wbr></wbr><span><span>Creators</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1206116666%2FFunctions%2F725313909"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":fankt/commonMain"><div class="symbol monospace"><span class="token keyword">suspend </span><span class="token keyword">fun </span><a href="search-creators.html"><span class="token function">searchCreators</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">query<span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-string/index.html">String</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="../../me.matsumo.fankt.domain/-page-number-info/index.html">PageNumberInfo</a><span class="token operator">&lt;</span><a href="../../me.matsumo.fankt.domain.model/-fanbox-creator-detail/index.html">FanboxCreatorDetail</a><span class="token operator">&gt;</span></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="731465740%2FFunctions%2F725313909" anchor-label="searchTags" id="731465740%2FFunctions%2F725313909" data-filterable-set=":fankt/commonMain"></a>
+          <div class="table-row" data-filterable-current=":fankt/commonMain" data-filterable-set=":fankt/commonMain">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="search-tags.html"><span>search</span><wbr></wbr><span><span>Tags</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="731465740%2FFunctions%2F725313909"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":fankt/commonMain"><div class="symbol monospace"><span class="token keyword">suspend </span><span class="token keyword">fun </span><a href="search-tags.html"><span class="token function">searchTags</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">query<span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-string/index.html">String</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin.collections/-list/index.html">List</a><span class="token operator">&lt;</span><a href="../../me.matsumo.fankt.domain.model/-fanbox-tag/index.html">FanboxTag</a><span class="token operator">&gt;</span></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="1119057986%2FFunctions%2F725313909" anchor-label="setFanboxSessionId" id="1119057986%2FFunctions%2F725313909" data-filterable-set=":fankt/commonMain"></a>
+          <div class="table-row" data-filterable-current=":fankt/commonMain" data-filterable-set=":fankt/commonMain">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="set-fanbox-session-id.html"><span>set</span><wbr></wbr><span>Fanbox</span><wbr></wbr><span>Session</span><wbr></wbr><span><span>Id</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1119057986%2FFunctions%2F725313909"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":fankt/commonMain"><div class="symbol monospace"><span class="token keyword">suspend </span><span class="token keyword">fun </span><a href="set-fanbox-session-id.html"><span class="token function">setFanboxSessionId</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">sessionId<span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-string/index.html">String</a></span></span><span class="token punctuation">)</span></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-1860376849%2FFunctions%2F725313909" anchor-label="unfollowCreator" id="-1860376849%2FFunctions%2F725313909" data-filterable-set=":fankt/commonMain"></a>
+          <div class="table-row" data-filterable-current=":fankt/commonMain" data-filterable-set=":fankt/commonMain">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="unfollow-creator.html"><span>unfollow</span><wbr></wbr><span><span>Creator</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1860376849%2FFunctions%2F725313909"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":fankt/commonMain"><div class="symbol monospace"><span class="token keyword">suspend </span><span class="token keyword">fun </span><a href="unfollow-creator.html"><span class="token function">unfollowCreator</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">userId<span class="token operator">: </span><a href="../../me.matsumo.fankt.domain.model.id/-fanbox-user-id/index.html">FanboxUserId</a></span></span><span class="token punctuation">)</span></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="696227029%2FFunctions%2F725313909" anchor-label="updateCsrfToken" id="696227029%2FFunctions%2F725313909" data-filterable-set=":fankt/commonMain"></a>
+          <div class="table-row" data-filterable-current=":fankt/commonMain" data-filterable-set=":fankt/commonMain">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="update-csrf-token.html"><span>update</span><wbr></wbr><span>Csrf</span><wbr></wbr><span><span>Token</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="696227029%2FFunctions%2F725313909"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":fankt/commonMain"><div class="symbol monospace"><span class="token keyword">suspend </span><span class="token keyword">fun </span><a href="update-csrf-token.html"><span class="token function">updateCsrfToken</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    <div class="footer">
+        <a href="#content" id="go-to-top-link" class="footer--button footer--button_go-to-top"></a>
+        <span>© 2025 Copyright</span>
+        <span class="pull-right">
+            <span>Generated by </span>
+            <a class="footer--link footer--link_external" href="https://github.com/Kotlin/dokka">
+                <span>dokka</span>
+            </a>
+        </span>
+    </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
