@@ -21,6 +21,14 @@ class MavenPublishPlugin : Plugin<Project> {
                 apply("org.jetbrains.dokka-javadoc")
             }
 
+            afterEvaluate {
+                tasks.filter { task ->
+                    task.name.contains("SourcesJar", true)
+                }.forEach { task ->
+                    task.dependsOn("kspCommonMainKotlinMetadata")
+                }
+            }
+
             configureMavenPublish()
             configureSigning()
         }
