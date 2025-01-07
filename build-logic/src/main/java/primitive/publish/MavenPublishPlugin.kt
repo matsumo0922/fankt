@@ -11,13 +11,9 @@ import org.gradle.api.Project
 import org.gradle.kotlin.dsl.assign
 import org.gradle.kotlin.dsl.configure
 import org.gradle.kotlin.dsl.dependencies
-import org.gradle.kotlin.dsl.withType
 import org.gradle.plugins.signing.SigningExtension
-import org.jetbrains.dokka.DokkaConfiguration
 import org.jetbrains.dokka.gradle.DokkaExtension
-import org.jetbrains.dokka.gradle.DokkaTask
 import org.jetbrains.dokka.gradle.engine.parameters.VisibilityModifier
-import kotlin.reflect.KVisibility
 
 class MavenPublishPlugin : Plugin<Project> {
     override fun apply(target: Project) {
@@ -36,11 +32,11 @@ class MavenPublishPlugin : Plugin<Project> {
             }
 
             afterEvaluate {
-                tasks.filter { task ->
-                    task.name.contains("SourcesJar", true)
-                }.forEach { task ->
-                    task.dependsOn("kspCommonMainKotlinMetadata")
+                tasks.filter { it.name.contains("SourcesJar", true) }.forEach {
+                    it.dependsOn("kspCommonMainKotlinMetadata")
                 }
+
+
             }
 
             configureDokka()
