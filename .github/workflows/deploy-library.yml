@@ -12,6 +12,12 @@ jobs:
   publish:
     name: Release build and publish
     runs-on: macOS-latest
+    env:
+        MAVEN_CENTRAL_USERNAME: ${{ secrets.MAVEN_CENTRAL_USERNAME }}
+        MAVEN_CENTRAL_PASSWORD: ${{ secrets.MAVEN_CENTRAL_PASSWORD }}
+        MAVEN_SIGNING_KEY_ID: ${{ secrets.MAVEN_SIGNING_KEY_ID }}
+        MAVEN_SIGNING_PASSWORD: ${{ secrets.MAVEN_SIGNING_PASSWORD }}
+        MAVEN_GPG_KEY_CONTENTS: ${{ secrets.MAVEN_GPG_KEY_CONTENTS }}
     steps:
       - uses: actions/checkout@v4
 
@@ -36,11 +42,8 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
-      - name: Publish to MavenCentral
-        run: ./gradlew :fankt:fanbox:publishAndReleaseToMavenCentral :fankt:fantia:publishAndReleaseToMavenCentral --no-configuration-cache
-        env:
-          ORG_GRADLE_PROJECT_mavenCentralUsername: ${{ secrets.MAVEN_CENTRAL_USERNAME }}
-          ORG_GRADLE_PROJECT_mavenCentralPassword: ${{ secrets.MAVEN_CENTRAL_PASSWORD }}
-          ORG_GRADLE_PROJECT_signingInMemoryKeyId: ${{ secrets.MAVEN_SIGNING_KEY_ID }}
-          ORG_GRADLE_PROJECT_signingInMemoryKeyPassword: ${{ secrets.MAVEN_SIGNING_PASSWORD }}
-          ORG_GRADLE_PROJECT_signingInMemoryKey: ${{ secrets.MAVEN_GPG_KEY_CONTENTS }}
+      - name: Publish Fanbox library to MavenCentral
+        run: ./gradlew :fankt:fanbox:publishAndReleaseToMavenCentral --no-configuration-cache
+
+      - name: Publish Fantia library to MavenCentral
+        run: ./gradlew :fankt:fantia:publishAndReleaseToMavenCentral --no-configuration-cache
