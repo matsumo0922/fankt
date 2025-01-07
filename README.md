@@ -35,7 +35,8 @@ repositories {
 }
 
 dependencies {
-    implementation("me.matsumo:fankt:$version")
+    implementation("me.matsumo.fankt:fanbox:$version")
+    implementation("me.matsumo.fankt:fantia:$version")
 }
 ```
 
