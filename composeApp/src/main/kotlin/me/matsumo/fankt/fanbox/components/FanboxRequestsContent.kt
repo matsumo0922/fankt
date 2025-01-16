@@ -58,6 +58,8 @@ import kotlin.reflect.jvm.jvmErasure
 private val excludeMethod = setOf(
     "setFanboxSessionId",
     "updateCsrfToken",
+    "downloadPostImage",
+    "downloadPostThumbnailImage",
 )
 
 @Composable

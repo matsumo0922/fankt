@@ -2,11 +2,12 @@ package me.matsumo.fankt.fanbox.domain.model
 
 import kotlinx.datetime.Instant
 import me.matsumo.fankt.fanbox.domain.model.id.FanboxPostId
+import me.matsumo.fankt.fanbox.domain.model.id.FanboxPostItemId
 
 data class FanboxPostDetail(
     val id: FanboxPostId,
     val title: String,
-    val body: me.matsumo.fankt.fanbox.domain.model.FanboxPostDetail.Body,
+    val body: Body,
     val coverImageUrl: String?,
     val commentCount: Int,
     val excerpt: String,
@@ -20,64 +21,68 @@ data class FanboxPostDetail(
     val tags: List<String>,
     val updatedDatetime: Instant,
     val publishedDatetime: Instant,
-    val nextPost: me.matsumo.fankt.fanbox.domain.model.FanboxPostDetail.OtherPost?,
-    val prevPost: me.matsumo.fankt.fanbox.domain.model.FanboxPostDetail.OtherPost?,
-    val user: me.matsumo.fankt.fanbox.domain.model.FanboxUser?,
+    val nextPost: OtherPost?,
+    val prevPost: OtherPost?,
+    val user: FanboxUser?,
 ) {
     val browserUrl get() = "https://www.fanbox.cc/@${user?.creatorId}/posts/$id"
 
     sealed interface Body {
         val imageItems
             get() = when (this) {
-                is me.matsumo.fankt.fanbox.domain.model.FanboxPostDetail.Body.Article -> blocks.filterIsInstance<me.matsumo.fankt.fanbox.domain.model.FanboxPostDetail.Body.Article.Block.Image>().map {
+                is Article -> blocks.filterIsInstance<Article.Block.Image>().map {
                     it.item
                 }
-                is _root_ide_package_.me.matsumo.fankt.fanbox.domain.model.FanboxPostDetail.Body.Image -> images
-                is _root_ide_package_.me.matsumo.fankt.fanbox.domain.model.FanboxPostDetail.Body.File -> files.mapNotNull {
+
+                is Image -> images
+                is File -> files.mapNotNull {
                     it.asImageItem()
                 }
-                is _root_ide_package_.me.matsumo.fankt.fanbox.domain.model.FanboxPostDetail.Body.Unknown -> emptyList()
+
+                is Unknown -> emptyList()
             }
 
         val fileItems
             get() = when (this) {
-                is _root_ide_package_.me.matsumo.fankt.fanbox.domain.model.FanboxPostDetail.Body.Article -> blocks.filterIsInstance<_root_ide_package_.me.matsumo.fankt.fanbox.domain.model.FanboxPostDetail.Body.Article.Block.File>().map {
-                    it.item
-                }
-                is _root_ide_package_.me.matsumo.fankt.fanbox.domain.model.FanboxPostDetail.Body.Image -> emptyList()
-                is _root_ide_package_.me.matsumo.fankt.fanbox.domain.model.FanboxPostDetail.Body.File -> files
-                is _root_ide_package_.me.matsumo.fankt.fanbox.domain.model.FanboxPostDetail.Body.Unknown -> emptyList()
+                is Article -> blocks.filterIsInstance<Article.Block.File>()
+                    .map {
+                        it.item
+                    }
+
+                is Image -> emptyList()
+                is File -> files
+                is Unknown -> emptyList()
             }
 
-        data class Article(val blocks: List<_root_ide_package_.me.matsumo.fankt.fanbox.domain.model.FanboxPostDetail.Body.Article.Block>) :
-            _root_ide_package_.me.matsumo.fankt.fanbox.domain.model.FanboxPostDetail.Body {
+        data class Article(val blocks: List<Block>) :
+            Body {
             sealed interface Block {
-                data class Text(val text: String) : _root_ide_package_.me.matsumo.fankt.fanbox.domain.model.FanboxPostDetail.Body.Article.Block
+                data class Text(val text: String) : Block
 
-                data class Image(val item: _root_ide_package_.me.matsumo.fankt.fanbox.domain.model.FanboxPostDetail.ImageItem) :
-                    _root_ide_package_.me.matsumo.fankt.fanbox.domain.model.FanboxPostDetail.Body.Article.Block
+                data class Image(val item: ImageItem) :
+                    Block
 
-                data class File(val item: _root_ide_package_.me.matsumo.fankt.fanbox.domain.model.FanboxPostDetail.FileItem) :
-                    _root_ide_package_.me.matsumo.fankt.fanbox.domain.model.FanboxPostDetail.Body.Article.Block
+                data class File(val item: FileItem) :
+                    Block
 
                 data class Link(
                     val html: String?,
-                    val post: _root_ide_package_.me.matsumo.fankt.fanbox.domain.model.FanboxPost?,
-                ) : _root_ide_package_.me.matsumo.fankt.fanbox.domain.model.FanboxPostDetail.Body.Article.Block
+                    val post: FanboxPost?,
+                ) : Block
             }
         }
 
         data class Image(
             val text: String,
-            val images: List<_root_ide_package_.me.matsumo.fankt.fanbox.domain.model.FanboxPostDetail.ImageItem>,
-        ) : _root_ide_package_.me.matsumo.fankt.fanbox.domain.model.FanboxPostDetail.Body
+            val images: List<ImageItem>,
+        ) : Body
 
         data class File(
             val text: String,
-            val files: List<_root_ide_package_.me.matsumo.fankt.fanbox.domain.model.FanboxPostDetail.FileItem>,
-        ) : _root_ide_package_.me.matsumo.fankt.fanbox.domain.model.FanboxPostDetail.Body
+            val files: List<FileItem>,
+        ) : Body
 
-        data object Unknown : _root_ide_package_.me.matsumo.fankt.fanbox.domain.model.FanboxPostDetail.Body
+        data object Unknown : Body
     }
 
     data class OtherPost(
@@ -87,7 +92,7 @@ data class FanboxPostDetail(
     )
 
     data class ImageItem(
-        val id: String,
+        val id: FanboxPostItemId,
         val postId: FanboxPostId,
         val extension: String,
         val originalUrl: String,
@@ -96,25 +101,25 @@ data class FanboxPostDetail(
     )
 
     data class VideoItem(
-        val id: String,
+        val id: FanboxPostItemId,
         val postId: FanboxPostId,
         val extension: String,
         val url: String,
     )
 
     data class FileItem(
-        val id: String,
+        val id: FanboxPostItemId,
         val postId: FanboxPostId,
         val name: String,
         val extension: String,
         val size: Long,
         val url: String,
     ) {
-        fun asImageItem(): _root_ide_package_.me.matsumo.fankt.fanbox.domain.model.FanboxPostDetail.ImageItem? {
+        fun asImageItem(): ImageItem? {
             return if (!extension.lowercase().contains(Regex("""(jpg|jpeg|png|gif)"""))) {
                 null
             } else {
-                _root_ide_package_.me.matsumo.fankt.fanbox.domain.model.FanboxPostDetail.ImageItem(
+                ImageItem(
                     id = id,
                     postId = postId,
                     extension = extension,
@@ -125,11 +130,11 @@ data class FanboxPostDetail(
             }
         }
 
-        fun asVideoItem(): _root_ide_package_.me.matsumo.fankt.fanbox.domain.model.FanboxPostDetail.VideoItem? {
+        fun asVideoItem(): VideoItem? {
             return if (!extension.lowercase().contains(Regex("""(mp4|webm)"""))) {
                 null
             } else {
-                _root_ide_package_.me.matsumo.fankt.fanbox.domain.model.FanboxPostDetail.VideoItem(
+                VideoItem(
                     id = id,
                     postId = postId,
                     extension = extension,

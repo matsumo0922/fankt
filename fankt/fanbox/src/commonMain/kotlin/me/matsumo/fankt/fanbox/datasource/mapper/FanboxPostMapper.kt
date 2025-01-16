@@ -23,6 +23,7 @@ import me.matsumo.fankt.fanbox.domain.model.FanboxUser
 import me.matsumo.fankt.fanbox.domain.model.id.FanboxCommentId
 import me.matsumo.fankt.fanbox.domain.model.id.FanboxCreatorId
 import me.matsumo.fankt.fanbox.domain.model.id.FanboxPostId
+import me.matsumo.fankt.fanbox.domain.model.id.FanboxPostItemId
 import me.matsumo.fankt.fanbox.domain.model.id.FanboxUserId
 import me.matsumo.fankt.fanbox.domain.translateToCursor
 
@@ -95,7 +96,7 @@ internal class FanboxPostMapper {
                                 images[block.imageId]?.let { image ->
                                     FanboxPostDetail.Body.Article.Block.Image(
                                         FanboxPostDetail.ImageItem(
-                                            id = image.id,
+                                            id = FanboxPostItemId(image.id),
                                             postId = FanboxPostId(entity.body.id),
                                             extension = image.extension,
                                             originalUrl = image.originalUrl,
@@ -110,7 +111,7 @@ internal class FanboxPostMapper {
                                 files[block.fileId]?.let { file ->
                                     FanboxPostDetail.Body.Article.Block.File(
                                         FanboxPostDetail.FileItem(
-                                            id = file.id,
+                                            id = FanboxPostItemId(file.id),
                                             postId = FanboxPostId(entity.body.id),
                                             extension = file.extension,
                                             name = file.name,
@@ -148,7 +149,7 @@ internal class FanboxPostMapper {
                     text = entity.body.body.text.orEmpty(),
                     images = blocks.map {
                         FanboxPostDetail.ImageItem(
-                            id = it.id,
+                            id = FanboxPostItemId(it.id),
                             postId = FanboxPostId(entity.body.id),
                             extension = it.extension,
                             originalUrl = it.originalUrl,
@@ -168,7 +169,7 @@ internal class FanboxPostMapper {
                     text = entity.body.body.text.orEmpty(),
                     files = blocks.map {
                         FanboxPostDetail.FileItem(
-                            id = it.id,
+                            id = FanboxPostItemId(it.id),
                             postId = FanboxPostId(entity.body.id),
                             name = it.name,
                             extension = it.extension,
