@@ -12,8 +12,8 @@ internal class FanboxSearchRepository(
     private val fanboxSearchMapper: FanboxSearchMapper,
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
 ) {
-    suspend fun searchCreators(query: String) = withContext(ioDispatcher) {
-        fanboxSearchApi.getCreatorFromQuery(query).let {
+    suspend fun searchCreators(query: String, page: Int) = withContext(ioDispatcher) {
+        fanboxSearchApi.getCreatorFromQuery(query, page).let {
             fanboxSearchMapper.map(it)
         }
     }

@@ -101,6 +101,15 @@ internal class FanboxPostRepository(
         )
     }
 
+    suspend fun likeComment(commentId: FanboxCommentId) = withContext(ioDispatcher) {
+        fanboxPostApiWithoutContentNegotiation.likeComment(
+            TextContent(
+                text = buildJsonObject { put("commentId", commentId.toString()) }.toString(),
+                contentType = ContentType.Application.Json,
+            ),
+        )
+    }
+
     suspend fun addComment(
         postId: FanboxPostId,
         rootCommentId: FanboxCommentId,
