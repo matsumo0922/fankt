@@ -150,6 +150,10 @@ class Fanbox(
         return post.getCreatorPosts(creatorId, cursor, nextCursor)
     }
 
+    suspend fun getCreatorPostsPagination(creatorId: FanboxCreatorId): List<FanboxCursor> {
+        return post.getCreatorPostsPagination(creatorId)
+    }
+
     suspend fun getPostDetail(postId: FanboxPostId): FanboxPostDetail {
         return post.getPostDetail(postId)
     }
@@ -164,6 +168,10 @@ class Fanbox(
 
     suspend fun likePost(postId: FanboxPostId) {
         post.likePost(postId)
+    }
+
+    suspend fun likeComment(commentId: FanboxCommentId) {
+        post.likeComment(commentId)
     }
 
     suspend fun addComment(postId: FanboxPostId, rootCommentId: FanboxCommentId, parentCommentId: FanboxCommentId, body: String) {
@@ -210,8 +218,8 @@ class Fanbox(
         creator.unfollowCreator(userId)
     }
 
-    suspend fun searchCreators(query: String): PageNumberInfo<FanboxCreatorDetail> {
-        return search.searchCreators(query)
+    suspend fun searchCreators(query: String, page: Int): PageNumberInfo<FanboxCreatorDetail> {
+        return search.searchCreators(query, page)
     }
 
     suspend fun searchTags(query: String): List<FanboxTag> {

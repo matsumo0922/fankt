@@ -68,6 +68,12 @@ internal interface FanboxPostApi {
     )
 
     @Headers("Content-Type: application/json")
+    @POST("post.likeComment")
+    suspend fun likeComment(
+        @Body body: TextContent,
+    )
+
+    @Headers("Content-Type: application/json")
     @POST("post.addComment")
     suspend fun addComment(
         @Body body: TextContent,
