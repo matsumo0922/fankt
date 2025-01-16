@@ -1,6 +1,7 @@
 package me.matsumo.fankt.fanbox
 
 import de.jensklingenberg.ktorfit.Ktorfit
+import io.ktor.client.statement.HttpStatement
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -12,6 +13,7 @@ import kotlinx.coroutines.withContext
 import kotlinx.datetime.Clock
 import kotlinx.serialization.json.Json
 import me.matsumo.fankt.fanbox.datasource.createFanboxCreatorApi
+import me.matsumo.fankt.fanbox.datasource.createFanboxDownloadApi
 import me.matsumo.fankt.fanbox.datasource.createFanboxPostApi
 import me.matsumo.fankt.fanbox.datasource.createFanboxSearchApi
 import me.matsumo.fankt.fanbox.datasource.createFanboxUserApi
@@ -40,8 +42,10 @@ import me.matsumo.fankt.fanbox.domain.model.db.toCookie
 import me.matsumo.fankt.fanbox.domain.model.id.FanboxCommentId
 import me.matsumo.fankt.fanbox.domain.model.id.FanboxCreatorId
 import me.matsumo.fankt.fanbox.domain.model.id.FanboxPostId
+import me.matsumo.fankt.fanbox.domain.model.id.FanboxPostItemId
 import me.matsumo.fankt.fanbox.domain.model.id.FanboxUserId
 import me.matsumo.fankt.fanbox.repository.FanboxCreatorRepository
+import me.matsumo.fankt.fanbox.repository.FanboxDownloadRepository
 import me.matsumo.fankt.fanbox.repository.FanboxPostRepository
 import me.matsumo.fankt.fanbox.repository.FanboxSearchRepository
 import me.matsumo.fankt.fanbox.repository.FanboxUserRepository
@@ -63,13 +67,11 @@ class Fanbox(
         explicitNulls = false
     }
 
-    private lateinit var ktorfit: Ktorfit
-    private lateinit var ktorfitWithoutContentNegotiation: Ktorfit
-
     private lateinit var post: FanboxPostRepository
     private lateinit var creator: FanboxCreatorRepository
     private lateinit var search: FanboxSearchRepository
     private lateinit var user: FanboxUserRepository
+    private lateinit var download: FanboxDownloadRepository
 
     init {
         buildKtorfit(null)
@@ -85,20 +87,26 @@ class Fanbox(
     val csrfToken = tokenDao.getLatestToken().map { it?.value }
 
     private fun buildKtorfit(csrfToken: CSRFToken?) {
-        ktorfit = Ktorfit.Builder()
+        val ktorfit = Ktorfit.Builder()
             .baseUrl("https://api.fanbox.cc/")
             .httpClient(buildHttpClient(formatter, cookieStorage, csrfToken, true))
             .build()
 
-        ktorfitWithoutContentNegotiation = Ktorfit.Builder()
+        val ktorfitWithoutContentNegotiation = Ktorfit.Builder()
             .baseUrl("https://api.fanbox.cc/")
             .httpClient(buildHttpClient(formatter, cookieStorage, csrfToken, false))
+            .build()
+
+        val ktorfitDownload = Ktorfit.Builder()
+            .baseUrl("https://downloads.fanbox.cc/")
+            .httpClient(buildHttpClient(formatter, cookieStorage, csrfToken, true))
             .build()
 
         val postApi = ktorfit.createFanboxPostApi()
         val creatorApi = ktorfit.createFanboxCreatorApi()
         val searchApi = ktorfit.createFanboxSearchApi()
         val userApi = ktorfit.createFanboxUserApi()
+        val downloadApi = ktorfitDownload.createFanboxDownloadApi()
 
         val postWithoutContentNegotiation = ktorfitWithoutContentNegotiation.createFanboxPostApi()
         val creatorWithoutContentNegotiation = ktorfitWithoutContentNegotiation.createFanboxCreatorApi()
@@ -112,6 +120,7 @@ class Fanbox(
         creator = FanboxCreatorRepository(creatorApi, creatorWithoutContentNegotiation, creatorMapper)
         search = FanboxSearchRepository(searchApi, searchMapper)
         user = FanboxUserRepository(userApi, userMapper)
+        download = FanboxDownloadRepository(downloadApi)
     }
 
     suspend fun setFanboxSessionId(sessionId: String) {
@@ -231,5 +240,21 @@ class Fanbox(
 
     suspend fun getMetadata(): FanboxMetaData {
         return user.getMetadata(formatter)
+    }
+
+    suspend fun downloadPostImage(
+        postId: FanboxPostId,
+        itemId: FanboxPostItemId,
+        onDownload: (Float) -> Unit
+    ): HttpStatement {
+        return download.downloadPostImage(postId, itemId, onDownload)
+    }
+
+    suspend fun downloadPostThumbnailImage(
+        postId: FanboxPostId,
+        itemId: FanboxPostItemId,
+        onDownload: (Float) -> Unit
+    ): HttpStatement {
+        return download.downloadPostThumbnailImage(postId, itemId, onDownload)
     }
 }

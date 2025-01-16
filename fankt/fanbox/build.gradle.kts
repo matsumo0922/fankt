@@ -18,18 +18,19 @@ kotlin {
     sourceSets {
         commonMain.dependencies {
             implementation(libs.bundles.infra.api)
-            implementation(libs.bundles.ktor)
+            api(libs.bundles.ktor)
+
             implementation(libs.ktorfit)
             implementation(libs.ksoup)
         }
 
         androidMain.dependencies {
             implementation(libs.androidx.startup)
-            implementation(libs.ktor.okhttp)
+            api(libs.ktor.okhttp)
         }
 
         iosMain.dependencies {
-            implementation(libs.ktor.darwin)
+            api(libs.ktor.darwin)
         }
     }
 }

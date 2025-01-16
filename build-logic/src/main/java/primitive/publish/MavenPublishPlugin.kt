@@ -35,8 +35,6 @@ class MavenPublishPlugin : Plugin<Project> {
                 tasks.filter { it.name.contains("SourcesJar", true) }.forEach {
                     it.dependsOn("kspCommonMainKotlinMetadata")
                 }
-
-
             }
 
             configureDokka()
@@ -93,7 +91,7 @@ class MavenPublishPlugin : Plugin<Project> {
             )
 
             pom {
-                name = project.name
+                name = "fankt"
                 description = "Unofficial API wrapper for pixivFANBOX and Fantia"
                 url = "https://github.com/matsumo0922/fankt"
 
