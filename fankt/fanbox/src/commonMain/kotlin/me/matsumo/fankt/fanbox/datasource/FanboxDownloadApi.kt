@@ -8,6 +8,13 @@ import io.ktor.client.statement.HttpStatement
 
 internal interface FanboxDownloadApi {
 
+    @GET("files/post/{postId}/{imageId}.jpg")
+    suspend fun downloadPostFile(
+        @Path("postId") postId: String,
+        @Path("imageId") imageId: String,
+        @ReqBuilder builder: HttpRequestBuilder.() -> Unit,
+    ): HttpStatement
+
     @GET("images/post/{postId}/{imageId}.jpg")
     suspend fun downloadPostImage(
         @Path("postId") postId: String,
