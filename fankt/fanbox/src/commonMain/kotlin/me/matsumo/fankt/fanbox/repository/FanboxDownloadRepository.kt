@@ -17,7 +17,7 @@ internal class FanboxDownloadRepository(
     suspend fun downloadPostImage(
         postId: FanboxPostId,
         itemId: FanboxPostItemId,
-        onDownload: (Float) -> Unit
+        onDownload: (Float) -> Unit,
     ): HttpStatement = withContext(ioDispatcher) {
         fanboxDownloadApi.downloadPostImage(postId.value, itemId.value) {
             onDownload { bytesSentTotal, contentLength ->
@@ -29,7 +29,7 @@ internal class FanboxDownloadRepository(
     suspend fun downloadPostThumbnailImage(
         postId: FanboxPostId,
         itemId: FanboxPostItemId,
-        onDownload: (Float) -> Unit
+        onDownload: (Float) -> Unit,
     ): HttpStatement = withContext(ioDispatcher) {
         fanboxDownloadApi.downloadPostThumbnailImage(postId.value, itemId.value) {
             onDownload { bytesSentTotal, contentLength ->

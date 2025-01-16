@@ -12,13 +12,13 @@ internal interface FanboxDownloadApi {
     suspend fun downloadPostImage(
         @Path("postId") postId: String,
         @Path("imageId") imageId: String,
-        @ReqBuilder builder: HttpRequestBuilder.() -> Unit
-    ) : HttpStatement
+        @ReqBuilder builder: HttpRequestBuilder.() -> Unit,
+    ): HttpStatement
 
     @GET("images/post/{postId}/w/1200/{imageId}.jpg")
     suspend fun downloadPostThumbnailImage(
         @Path("postId") postId: String,
         @Path("imageId") imageId: String,
-        @ReqBuilder builder: HttpRequestBuilder.() -> Unit
-    ) : HttpStatement
+        @ReqBuilder builder: HttpRequestBuilder.() -> Unit,
+    ): HttpStatement
 }

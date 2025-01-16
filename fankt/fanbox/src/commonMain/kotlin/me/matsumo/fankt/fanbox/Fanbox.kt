@@ -245,7 +245,7 @@ class Fanbox(
     suspend fun downloadPostImage(
         postId: FanboxPostId,
         itemId: FanboxPostItemId,
-        onDownload: (Float) -> Unit
+        onDownload: (Float) -> Unit,
     ): HttpStatement {
         return download.downloadPostImage(postId, itemId, onDownload)
     }
@@ -253,7 +253,7 @@ class Fanbox(
     suspend fun downloadPostThumbnailImage(
         postId: FanboxPostId,
         itemId: FanboxPostItemId,
-        onDownload: (Float) -> Unit
+        onDownload: (Float) -> Unit,
     ): HttpStatement {
         return download.downloadPostThumbnailImage(postId, itemId, onDownload)
     }
