@@ -1,12 +1,14 @@
 package me.matsumo.fankt.fanbox
 
 import de.jensklingenberg.ktorfit.Ktorfit
+import io.ktor.client.HttpClient
 import io.ktor.client.statement.HttpStatement
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -121,6 +123,10 @@ class Fanbox(
         search = FanboxSearchRepository(searchApi, searchMapper)
         user = FanboxUserRepository(userApi, userMapper)
         download = FanboxDownloadRepository(downloadApi)
+    }
+
+    suspend fun getHttpClient(isEnableContentNegotiation: Boolean = true): HttpClient {
+        return buildHttpClient(formatter, cookieStorage, tokenDao.getLatestToken().first(), isEnableContentNegotiation)
     }
 
     suspend fun setFanboxSessionId(sessionId: String) {
@@ -248,6 +254,14 @@ class Fanbox(
 
     suspend fun getMetadata(): FanboxMetaData {
         return user.getMetadata(formatter)
+    }
+
+    suspend fun downloadPostFile(
+        postId: FanboxPostId,
+        itemId: FanboxPostItemId,
+        onDownload: (Float) -> Unit,
+    ): HttpStatement {
+        return download.downloadPostFile(postId, itemId, onDownload)
     }
 
     suspend fun downloadPostImage(

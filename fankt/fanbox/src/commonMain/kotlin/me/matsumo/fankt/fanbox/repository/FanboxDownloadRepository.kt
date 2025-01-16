@@ -14,6 +14,18 @@ internal class FanboxDownloadRepository(
     private val fanboxDownloadApi: FanboxDownloadApi,
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
 ) {
+    suspend fun downloadPostFile(
+        postId: FanboxPostId,
+        itemId: FanboxPostItemId,
+        onDownload: (Float) -> Unit,
+    ): HttpStatement = withContext(ioDispatcher) {
+        fanboxDownloadApi.downloadPostFile(postId.value, itemId.value) {
+            onDownload { bytesSentTotal, contentLength ->
+                onDownload.invoke(contentLength?.let { bytesSentTotal.toFloat() / it } ?: 0f)
+            }
+        }
+    }
+
     suspend fun downloadPostImage(
         postId: FanboxPostId,
         itemId: FanboxPostItemId,
