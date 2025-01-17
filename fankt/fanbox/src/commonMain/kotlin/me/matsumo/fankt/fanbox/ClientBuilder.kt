@@ -24,6 +24,7 @@ internal fun buildHttpClient(
     formatter: Json,
     cookieStorage: PersistentCookieStorage,
     csrfToken: CSRFToken? = null,
+    logLevel: LogLevel = LogLevel.NONE,
     isEnableContentNegotiation: Boolean = true,
 ): HttpClient {
     val customLogger = object : Logger {
@@ -34,7 +35,7 @@ internal fun buildHttpClient(
 
     val client = HttpClient {
         install(Logging) {
-            level = LogLevel.INFO
+            level = logLevel
             logger = customLogger
         }
 
@@ -59,13 +60,14 @@ internal fun buildHttpClient(
             validateResponse {
                 val isError = !it.status.isSuccess()
                 val isJson = it.contentType()?.match(ContentType.Application.Json) == true
-                val response = it.bodyAsText()
 
-                if (isError && isJson) {
+                if (isError && isJson && logLevel != LogLevel.NONE) {
+                    val response = it.bodyAsText()
                     Napier.d { "JSON: $response" }
                 }
 
                 if (it.status == HttpStatusCode.NotFound || it.status.value >= 400) {
+                    val response = it.bodyAsText()
                     error("HTTP ${it.status.value}: $response")
                 }
             }

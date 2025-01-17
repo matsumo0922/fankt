@@ -2,6 +2,7 @@ package me.matsumo.fankt.fanbox
 
 import de.jensklingenberg.ktorfit.Ktorfit
 import io.ktor.client.HttpClient
+import io.ktor.client.plugins.logging.LogLevel
 import io.ktor.client.statement.HttpStatement
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
@@ -53,6 +54,7 @@ import me.matsumo.fankt.fanbox.repository.FanboxSearchRepository
 import me.matsumo.fankt.fanbox.repository.FanboxUserRepository
 
 class Fanbox(
+    private val logLevel: LogLevel = LogLevel.NONE,
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
 ) {
     private val scope = CoroutineScope(ioDispatcher + SupervisorJob())
@@ -91,17 +93,17 @@ class Fanbox(
     private fun buildKtorfit(csrfToken: CSRFToken?) {
         val ktorfit = Ktorfit.Builder()
             .baseUrl("https://api.fanbox.cc/")
-            .httpClient(buildHttpClient(formatter, cookieStorage, csrfToken, true))
+            .httpClient(buildHttpClient(formatter, cookieStorage, csrfToken, logLevel, true))
             .build()
 
         val ktorfitWithoutContentNegotiation = Ktorfit.Builder()
             .baseUrl("https://api.fanbox.cc/")
-            .httpClient(buildHttpClient(formatter, cookieStorage, csrfToken, false))
+            .httpClient(buildHttpClient(formatter, cookieStorage, csrfToken, logLevel, false))
             .build()
 
         val ktorfitDownload = Ktorfit.Builder()
             .baseUrl("https://downloads.fanbox.cc/")
-            .httpClient(buildHttpClient(formatter, cookieStorage, csrfToken, true))
+            .httpClient(buildHttpClient(formatter, cookieStorage, csrfToken, logLevel, true))
             .build()
 
         val postApi = ktorfit.createFanboxPostApi()
@@ -126,7 +128,7 @@ class Fanbox(
     }
 
     suspend fun getHttpClient(isEnableContentNegotiation: Boolean = true): HttpClient {
-        return buildHttpClient(formatter, cookieStorage, tokenDao.getLatestToken().first(), isEnableContentNegotiation)
+        return buildHttpClient(formatter, cookieStorage, tokenDao.getLatestToken().first(), logLevel, isEnableContentNegotiation)
     }
 
     suspend fun setFanboxSessionId(sessionId: String) {
