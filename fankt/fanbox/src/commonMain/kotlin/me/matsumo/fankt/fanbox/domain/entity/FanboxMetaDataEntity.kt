@@ -6,9 +6,9 @@ import kotlinx.serialization.Serializable
 @Serializable
 internal data class FanboxMetaDataEntity(
     @SerialName("apiUrl")
-    val apiUrl: String,
+    val apiUrl: String?,
     @SerialName("context")
-    val context: Context,
+    val context: Context?,
     @SerialName("csrfToken")
     val csrfToken: String,
 ) {

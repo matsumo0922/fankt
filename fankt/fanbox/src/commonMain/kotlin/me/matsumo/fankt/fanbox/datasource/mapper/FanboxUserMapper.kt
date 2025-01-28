@@ -105,29 +105,31 @@ internal class FanboxUserMapper(
             FanboxMetaData(
                 apiUrl = apiUrl,
                 csrfToken = csrfToken,
-                context = FanboxMetaData.Context(
-                    privacyPolicy = FanboxMetaData.Context.PrivacyPolicy(
-                        policyUrl = context.privacyPolicy.policyUrl,
-                        revisionHistoryUrl = context.privacyPolicy.revisionHistoryUrl,
-                        shouldShowNotice = context.privacyPolicy.shouldShowNotice,
-                        updateDate = context.privacyPolicy.updateDate,
-                    ),
-                    user = FanboxMetaData.Context.User(
-                        creatorId = context.user.creatorId?.let { id -> FanboxCreatorId(id) },
-                        fanboxUserStatus = context.user.fanboxUserStatus,
-                        hasAdultContent = context.user.hasAdultContent ?: false,
-                        hasUnpaidPayments = context.user.hasUnpaidPayments,
-                        iconUrl = context.user.iconUrl,
-                        isCreator = context.user.isCreator,
-                        isMailAddressOutdated = context.user.isMailAddressOutdated,
-                        isSupporter = context.user.isSupporter,
-                        lang = context.user.lang,
-                        name = context.user.name,
-                        planCount = context.user.planCount,
-                        showAdultContent = context.user.showAdultContent,
-                        userId = context.user.userId?.let { id -> FanboxUserId(id.toLong()) },
-                    ),
-                ),
+                context = context?.let {
+                    FanboxMetaData.Context(
+                        privacyPolicy = FanboxMetaData.Context.PrivacyPolicy(
+                            policyUrl = context.privacyPolicy.policyUrl,
+                            revisionHistoryUrl = context.privacyPolicy.revisionHistoryUrl,
+                            shouldShowNotice = context.privacyPolicy.shouldShowNotice,
+                            updateDate = context.privacyPolicy.updateDate,
+                        ),
+                        user = FanboxMetaData.Context.User(
+                            creatorId = context.user.creatorId?.let { id -> FanboxCreatorId(id) },
+                            fanboxUserStatus = context.user.fanboxUserStatus,
+                            hasAdultContent = context.user.hasAdultContent ?: false,
+                            hasUnpaidPayments = context.user.hasUnpaidPayments,
+                            iconUrl = context.user.iconUrl,
+                            isCreator = context.user.isCreator,
+                            isMailAddressOutdated = context.user.isMailAddressOutdated,
+                            isSupporter = context.user.isSupporter,
+                            lang = context.user.lang,
+                            name = context.user.name,
+                            planCount = context.user.planCount,
+                            showAdultContent = context.user.showAdultContent,
+                            userId = context.user.userId?.let { id -> FanboxUserId(id.toLong()) },
+                        ),
+                    )
+                },
             )
         }
     }
