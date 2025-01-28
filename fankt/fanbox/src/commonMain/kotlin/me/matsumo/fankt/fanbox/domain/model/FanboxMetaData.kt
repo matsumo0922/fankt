@@ -4,8 +4,8 @@ import me.matsumo.fankt.fanbox.domain.model.id.FanboxCreatorId
 import me.matsumo.fankt.fanbox.domain.model.id.FanboxUserId
 
 data class FanboxMetaData(
-    val apiUrl: String,
-    val context: Context,
+    val apiUrl: String?,
+    val context: Context?,
     val csrfToken: String,
 ) {
     data class Context(
@@ -33,15 +33,6 @@ data class FanboxMetaData(
             val planCount: Int,
             val showAdultContent: Boolean,
             val userId: FanboxUserId?,
-        ) {
-            companion object {
-                fun User.asFanboxUser() = me.matsumo.fankt.fanbox.domain.model.FanboxUser(
-                    iconUrl = iconUrl,
-                    name = name,
-                    userId = userId,
-                    creatorId = creatorId,
-                )
-            }
-        }
+        )
     }
 }

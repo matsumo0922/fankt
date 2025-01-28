@@ -1,7 +1,7 @@
 [versions]
 # Application
-versionName = "0.0.8"
-versionCode = "8"
+versionName = "0.0.9"
+versionCode = "9"
 
 # SDK
 minSdk = "26"
@@ -21,24 +21,24 @@ kotlinxSerializationJson = "1.7.3"
 kotlinxImmutable = "0.3.7"
 
 # KMP
-kmpCompose = "1.7.0"
+kmpCompose = "1.7.3"
 kmpComplete = "1.1.0"
 kmpSwiftKlib = "0.6.3"
-kmpLifecycle = "2.8.3"
-kmpNavigation = "2.8.0-alpha10"
+kmpLifecycle = "2.8.4"
+kmpNavigation = "2.8.0-alpha11"
 kmpPaging = "3.3.0-alpha02-0.5.1"
 
 # AndroidX
 androidxCore = "1.15.0"
 androidxCoreSplash = "1.0.1"
 androidxAppCompat = "1.7.0"
-androidxActivity = "1.9.3"
+androidxActivity = "1.10.0"
 androidxFragment = "1.8.5"
 androidxAnnotation = "1.9.1"
 androidxStartup = "1.2.0"
 androidxRoom = "2.7.0-alpha12"
 androidxSqlite = "2.5"
-androidxCompose = "2024.12.01"
+androidxCompose = "2025.01.00"
 
 # Google
 material = "1.12.0"
