@@ -80,11 +80,11 @@ You can test API results by inputting the required parameters.
 ```text
 Copyright 2025 daichi-matsumoto
 
-Licensed under the GNU General Public License, Version 3.0 (the "License");
+Licensed under the Creative Commons NonCommercial License (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
 
-https://www.gnu.org/licenses/gpl-3.0.html
+https://creativecommons.org/licenses/by-nc/4.0/
 
 Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,
