@@ -1,8 +1,10 @@
 package me.matsumo.fankt.fanbox.domain.model.id
 
+import kotlinx.serialization.Serializable
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
+@Serializable
 data class FanboxCommentId(val value: String) {
 
     @OptIn(ExperimentalUuidApi::class)

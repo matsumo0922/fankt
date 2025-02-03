@@ -1,7 +1,7 @@
 [versions]
 # Application
-versionName = "0.0.9"
-versionCode = "9"
+versionName = "0.0.10"
+versionCode = "10"
 
 # SDK
 minSdk = "26"
@@ -17,7 +17,7 @@ kotlin = "2.1.0"
 # KotlinX
 kotlinxCoroutines = "1.7.3"
 kotlinxDatetime = "0.6.1"
-kotlinxSerializationJson = "1.7.3"
+kotlinxSerializationJson = "1.8.0"
 kotlinxImmutable = "0.3.7"
 
 # KMP
@@ -36,9 +36,9 @@ androidxActivity = "1.10.0"
 androidxFragment = "1.8.5"
 androidxAnnotation = "1.9.1"
 androidxStartup = "1.2.0"
-androidxRoom = "2.7.0-alpha12"
+androidxRoom = "2.7.0-alpha13"
 androidxSqlite = "2.5"
-androidxCompose = "2025.01.00"
+androidxCompose = "2025.01.01"
 
 # Google
 material = "1.12.0"

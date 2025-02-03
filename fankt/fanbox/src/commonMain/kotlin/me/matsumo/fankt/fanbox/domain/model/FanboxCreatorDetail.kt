@@ -1,8 +1,10 @@
 package me.matsumo.fankt.fanbox.domain.model
 
 import io.ktor.http.Url
+import kotlinx.serialization.Serializable
 import me.matsumo.fankt.fanbox.domain.model.id.FanboxCreatorId
 
+@Serializable
 data class FanboxCreatorDetail(
     val creatorId: FanboxCreatorId,
     val coverImageUrl: String?,
@@ -15,10 +17,11 @@ data class FanboxCreatorDetail(
     val isSupported: Boolean,
     val profileItems: List<ProfileItem>,
     val profileLinks: List<ProfileLink>,
-    val user: me.matsumo.fankt.fanbox.domain.model.FanboxUser?,
+    val user: FanboxUser?,
 ) {
     val supportingBrowserUrl get() = "https://www.fanbox.cc/creators/supporting/@${user?.creatorId}"
 
+    @Serializable
     data class ProfileItem(
         val id: String,
         val imageUrl: String?,
@@ -26,11 +29,13 @@ data class FanboxCreatorDetail(
         val type: String,
     )
 
+    @Serializable
     data class ProfileLink(
         val url: String,
         val link: Platform,
     )
 
+    @Serializable
     enum class Platform {
         BOOTH,
         FACEBOOK,

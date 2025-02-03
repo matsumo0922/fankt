@@ -1,5 +1,8 @@
 package me.matsumo.fankt.fanbox.domain.model
 
+import kotlinx.serialization.Serializable
+
+@Serializable
 enum class FanboxPaymentMethod {
     CARD,
     PAYPAL,
@@ -8,10 +11,10 @@ enum class FanboxPaymentMethod {
     ;
 
     companion object {
-        fun fromString(string: String?) = when (string) {
-            "gmo_card" -> CARD
+        fun fromString(string: String?) = when (string?.lowercase()) {
+            "card" -> CARD
             "paypal" -> PAYPAL
-            "gmo_cvs" -> CVS
+            "cvs" -> CVS
             else -> UNKNOWN
         }
     }

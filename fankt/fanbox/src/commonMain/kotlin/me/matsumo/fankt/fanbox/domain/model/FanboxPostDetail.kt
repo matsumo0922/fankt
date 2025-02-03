@@ -1,9 +1,11 @@
 package me.matsumo.fankt.fanbox.domain.model
 
 import kotlinx.datetime.Instant
+import kotlinx.serialization.Serializable
 import me.matsumo.fankt.fanbox.domain.model.id.FanboxPostId
 import me.matsumo.fankt.fanbox.domain.model.id.FanboxPostItemId
 
+@Serializable
 data class FanboxPostDetail(
     val id: FanboxPostId,
     val title: String,
@@ -27,6 +29,7 @@ data class FanboxPostDetail(
 ) {
     val browserUrl get() = "https://www.fanbox.cc/@${user?.creatorId}/posts/$id"
 
+    @Serializable
     sealed interface Body {
         val imageItems
             get() = when (this) {
@@ -54,17 +57,20 @@ data class FanboxPostDetail(
                 is Unknown -> emptyList()
             }
 
-        data class Article(val blocks: List<Block>) :
-            Body {
+        @Serializable
+        data class Article(val blocks: List<Block>) : Body {
+            @Serializable
             sealed interface Block {
+                @Serializable
                 data class Text(val text: String) : Block
 
-                data class Image(val item: ImageItem) :
-                    Block
+                @Serializable
+                data class Image(val item: ImageItem) : Block
 
-                data class File(val item: FileItem) :
-                    Block
+                @Serializable
+                data class File(val item: FileItem) : Block
 
+                @Serializable
                 data class Link(
                     val html: String?,
                     val post: FanboxPost?,
@@ -72,25 +78,30 @@ data class FanboxPostDetail(
             }
         }
 
+        @Serializable
         data class Image(
             val text: String,
             val images: List<ImageItem>,
         ) : Body
 
+        @Serializable
         data class File(
             val text: String,
             val files: List<FileItem>,
         ) : Body
 
+        @Serializable
         data object Unknown : Body
     }
 
+    @Serializable
     data class OtherPost(
         val id: FanboxPostId,
         val title: String,
         val publishedDatetime: Instant,
     )
 
+    @Serializable
     data class ImageItem(
         val id: FanboxPostItemId,
         val postId: FanboxPostId,
@@ -100,6 +111,7 @@ data class FanboxPostDetail(
         val aspectRatio: Float,
     )
 
+    @Serializable
     data class VideoItem(
         val id: FanboxPostItemId,
         val postId: FanboxPostId,
@@ -107,6 +119,7 @@ data class FanboxPostDetail(
         val url: String,
     )
 
+    @Serializable
     data class FileItem(
         val id: FanboxPostItemId,
         val postId: FanboxPostId,

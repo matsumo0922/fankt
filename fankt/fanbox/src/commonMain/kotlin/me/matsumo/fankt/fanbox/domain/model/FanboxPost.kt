@@ -8,8 +8,8 @@ import me.matsumo.fankt.fanbox.domain.model.id.FanboxPostId
 data class FanboxPost(
     val id: FanboxPostId,
     val title: String,
-    val cover: me.matsumo.fankt.fanbox.domain.model.FanboxCover?,
-    val user: me.matsumo.fankt.fanbox.domain.model.FanboxUser?,
+    val cover: FanboxCover?,
+    val user: FanboxUser?,
     val excerpt: String,
     val feeRequired: Int,
     val hasAdultContent: Boolean,
