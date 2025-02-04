@@ -4,6 +4,8 @@ import de.jensklingenberg.ktorfit.Ktorfit
 import io.ktor.client.HttpClient
 import io.ktor.client.plugins.logging.LogLevel
 import io.ktor.client.statement.HttpStatement
+import io.ktor.http.Cookie
+import io.ktor.http.Url
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -133,6 +135,20 @@ class Fanbox(
 
     suspend fun setFanboxSessionId(sessionId: String) {
         cookieStorage.overrideFanboxSessionId(sessionId)
+    }
+
+    suspend fun setCookies(
+        cookies: List<Cookie>,
+        url: String = "https://www.fanbox.cc",
+        reset: Boolean = false,
+    ) {
+        if (reset) {
+            cookieStorage.clear()
+        }
+
+        for (cookie in cookies) {
+            cookieStorage.addCookie(Url(url), cookie)
+        }
     }
 
     suspend fun updateCsrfToken() {

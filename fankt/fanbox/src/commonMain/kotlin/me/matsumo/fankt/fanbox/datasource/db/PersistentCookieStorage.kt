@@ -32,6 +32,12 @@ internal class PersistentCookieStorage(
         // do nothing
     }
 
+    suspend fun clear() {
+        withContext(ioDispatcher) {
+            cookieDao.clear()
+        }
+    }
+
     suspend fun overrideFanboxSessionId(sessionId: String) {
         val cookie = Cookie(
             name = "FANBOXSESSID",
