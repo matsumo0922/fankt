@@ -1,7 +1,7 @@
 [versions]
 # Application
-versionName = "0.0.11"
-versionCode = "11"
+versionName = "0.0.12"
+versionCode = "12"
 
 # SDK
 minSdk = "26"
@@ -36,7 +36,7 @@ androidxActivity = "1.10.0"
 androidxFragment = "1.8.5"
 androidxAnnotation = "1.9.1"
 androidxStartup = "1.2.0"
-androidxRoom = "2.7.0-alpha13"
+androidxRoom = "2.7.0-rc02"
 androidxSqlite = "2.5"
 androidxCompose = "2025.01.01"
 
