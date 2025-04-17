@@ -2,7 +2,7 @@ name: Deploy Documents
 
 on:
   release:
-    types: [ prereleased ]
+    types: [ released, prereleased ]
   workflow_dispatch:
 
 jobs:

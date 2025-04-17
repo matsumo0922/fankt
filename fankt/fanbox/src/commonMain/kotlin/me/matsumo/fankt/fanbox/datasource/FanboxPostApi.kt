@@ -47,7 +47,7 @@ internal interface FanboxPostApi {
         @Query("postId") postId: String,
     ): FanboxPostDetailEntity
 
-    @GET("post.listComments")
+    @GET("post.getComments")
     suspend fun getPostComment(
         @Query("postId") postId: String,
         @Query("offset") offset: Int,

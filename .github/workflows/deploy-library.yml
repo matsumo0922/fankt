@@ -2,7 +2,7 @@ name: Deploy to central
 
 on:
   release:
-    types: [ prereleased ]
+    types: [ released, prereleased ]
   workflow_dispatch:
 
 permissions:

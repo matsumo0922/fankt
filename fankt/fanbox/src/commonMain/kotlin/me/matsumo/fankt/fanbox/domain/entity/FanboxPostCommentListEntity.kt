@@ -6,5 +6,5 @@ import kotlinx.serialization.Serializable
 @Serializable
 internal data class FanboxPostCommentListEntity(
     @SerialName("body")
-    val body: FanboxCommentListEntity,
+    val body: FanboxCommentBodyEntity,
 )

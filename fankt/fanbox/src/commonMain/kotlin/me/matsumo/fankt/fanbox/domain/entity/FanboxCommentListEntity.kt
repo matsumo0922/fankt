@@ -34,3 +34,11 @@ internal data class FanboxCommentListEntity(
         val replies: List<Item> = emptyList(),
     )
 }
+
+@Serializable
+internal data class FanboxCommentBodyEntity(
+    @SerialName("viewMode")
+    val viewMode: String,
+    @SerialName("commentList")
+    val commentList: FanboxCommentListEntity,
+)

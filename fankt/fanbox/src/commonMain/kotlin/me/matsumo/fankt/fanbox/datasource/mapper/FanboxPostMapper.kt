@@ -225,8 +225,8 @@ internal class FanboxPostMapper {
 
     fun map(entity: FanboxPostCommentListEntity): PageOffsetInfo<FanboxComment> {
         return PageOffsetInfo(
-            contents = entity.body.items.map { map(it) },
-            offset = entity.body.nextUrl?.let { Url(it).parameters["offset"]?.toIntOrNull() },
+            contents = entity.body.commentList.items.map { map(it) },
+            offset = entity.body.commentList.nextUrl?.let { Url(it).parameters["offset"]?.toIntOrNull() },
         )
     }
 
