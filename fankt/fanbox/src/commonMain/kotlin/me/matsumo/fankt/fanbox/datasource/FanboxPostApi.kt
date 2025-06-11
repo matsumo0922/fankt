@@ -18,14 +18,18 @@ internal interface FanboxPostApi {
     @GET("post.listHome")
     suspend fun getHomePosts(
         @Query("limit") loadSize: String,
+        @Query("firstPublishedDatetime") firstPublishedDatetime: String?,
         @Query("maxPublishedDatetime") maxPublishedDatetime: String?,
+        @Query("firstId") firstId: String?,
         @Query("maxId") maxId: String?,
     ): FanboxPostListEntity
 
     @GET("post.listSupporting")
     suspend fun getSupportedPosts(
         @Query("limit") loadSize: String,
+        @Query("firstPublishedDatetime") firstPublishedDatetime: String?,
         @Query("maxPublishedDatetime") maxPublishedDatetime: String?,
+        @Query("firstId") firstId: String?,
         @Query("maxId") maxId: String?,
     ): FanboxPostListEntity
 
@@ -33,7 +37,9 @@ internal interface FanboxPostApi {
     suspend fun getCreatorPosts(
         @Query("creatorId") creatorId: String,
         @Query("limit") loadSize: String,
+        @Query("firstPublishedDatetime") firstPublishedDatetime: String?,
         @Query("maxPublishedDatetime") maxPublishedDatetime: String?,
+        @Query("firstId") firstId: String?,
         @Query("maxId") maxId: String?,
     ): FanboxCreatorPostItemsEntity
 

@@ -14,6 +14,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.KeyboardArrowDown
@@ -124,7 +125,7 @@ private fun RequestItem(
         requestResult = try {
             function.callSuspend(classInstance, *typedParams.toTypedArray())
         } catch (e: Throwable) {
-            Napier.d { e.toString() }
+            Napier.e(e) { "Error calling function: ${function.name}" }
             e
         }
     }
@@ -189,11 +190,13 @@ private fun RequestItem(
                     Box(
                         modifier = Modifier.verticalScroll(rememberScrollState()),
                     ) {
-                        Text(
-                            modifier = Modifier.padding(16.dp),
-                            text = requestResult!!.toString(),
-                            style = MaterialTheme.typography.bodySmall,
-                        )
+                        SelectionContainer {
+                            Text(
+                                modifier = Modifier.padding(16.dp),
+                                text = requestResult!!.toString(),
+                                style = MaterialTheme.typography.bodySmall,
+                            )
+                        }
                     }
                 }
             }

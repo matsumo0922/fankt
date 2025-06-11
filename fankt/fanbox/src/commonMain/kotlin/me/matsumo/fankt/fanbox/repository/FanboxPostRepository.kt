@@ -25,7 +25,9 @@ internal class FanboxPostRepository(
     suspend fun getHomePosts(cursor: FanboxCursor?) = withContext(ioDispatcher) {
         fanboxPostApi.getHomePosts(
             loadSize = cursor?.limit?.toString() ?: LOAD_SIZE,
+            firstPublishedDatetime = cursor?.firstPublishedDatetime,
             maxPublishedDatetime = cursor?.maxPublishedDatetime,
+            firstId = cursor?.firstId,
             maxId = cursor?.maxId,
         ).let {
             fanboxPostMapper.map(it)
@@ -35,7 +37,9 @@ internal class FanboxPostRepository(
     suspend fun getSupportedPosts(cursor: FanboxCursor?) = withContext(ioDispatcher) {
         fanboxPostApi.getSupportedPosts(
             loadSize = cursor?.limit?.toString() ?: LOAD_SIZE,
+            firstPublishedDatetime = cursor?.firstPublishedDatetime,
             maxPublishedDatetime = cursor?.maxPublishedDatetime,
+            firstId = cursor?.firstId,
             maxId = cursor?.maxId,
         ).let {
             fanboxPostMapper.map(it)
@@ -53,7 +57,9 @@ internal class FanboxPostRepository(
         fanboxPostApi.getCreatorPosts(
             creatorId = creatorId.value,
             loadSize = cursor?.limit?.toString() ?: LOAD_SIZE,
+            firstPublishedDatetime = cursors.first.firstPublishedDatetime,
             maxPublishedDatetime = cursors.first.maxPublishedDatetime,
+            firstId = cursors.first.firstId,
             maxId = cursors.first.maxId,
         ).let {
             fanboxPostMapper.map(it, cursors.second)

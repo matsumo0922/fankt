@@ -4,8 +4,10 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class FanboxCursor(
-    val maxPublishedDatetime: String,
-    val maxId: String,
+    val firstPublishedDatetime: String?,
+    val maxPublishedDatetime: String?,
+    val firstId: String?,
+    val maxId: String?,
     val limit: Int?,
 )
 
@@ -18,8 +20,10 @@ internal fun String.translateToCursor(): FanboxCursor {
         }
 
     return FanboxCursor(
-        maxPublishedDatetime = parameters["maxPublishedDatetime"]!!,
-        maxId = parameters["maxId"]!!,
+        firstPublishedDatetime = parameters["firstPublishedDatetime"],
+        maxPublishedDatetime = parameters["maxPublishedDatetime"],
+        firstId = parameters["firstId"],
+        maxId = parameters["maxId"],
         limit = parameters["limit"]?.toInt(),
     )
 }
