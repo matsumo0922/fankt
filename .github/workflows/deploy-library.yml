@@ -36,10 +36,10 @@ jobs:
           gpg_private_key: ${{ secrets.MAVEN_GPG_KEY_CONTENTS }}
           passphrase: ${{ secrets.MAVEN_SIGNING_PASSWORD }}
 
-      - name: Set up JDK 17
+      - name: Set up JDK 21
         uses: actions/setup-java@v4
         with:
-          java-version: '17'
+          java-version: '21'
           distribution: 'temurin'
 
       - name: Publish Fanbox library to MavenCentral

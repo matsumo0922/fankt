@@ -5,68 +5,63 @@ versionCode = "14"
 
 # SDK
 minSdk = "26"
-targetSdk = "35"
-compileSdk = "35"
+targetSdk = "36"
+compileSdk = "36"
 
 # Gradle
-gradle = "8.7.3"
+gradle = "8.12.0"
 
 # Kotlin
-kotlin = "2.1.0"
+kotlin = "2.2.10"
 
 # KotlinX
 kotlinxCoroutines = "1.7.3"
-kotlinxDatetime = "0.6.1"
-kotlinxSerializationJson = "1.8.0"
-kotlinxImmutable = "0.3.7"
+kotlinxDatetime = "0.7.1-0.6.x-compat"
+kotlinxSerializationJson = "1.9.0"
+kotlinxImmutable = "0.4.0"
 
 # KMP
-kmpCompose = "1.7.3"
+kmpCompose = "1.8.2"
 kmpComplete = "1.1.0"
-kmpSwiftKlib = "0.6.3"
-kmpLifecycle = "2.8.4"
-kmpNavigation = "2.8.0-alpha11"
+kmpLifecycle = "2.9.2"
+kmpNavigation = "2.9.0-beta05"
 kmpPaging = "3.3.0-alpha02-0.5.1"
 
 # AndroidX
-androidxCore = "1.15.0"
+androidxCore = "1.17.0"
 androidxCoreSplash = "1.0.1"
-androidxAppCompat = "1.7.0"
-androidxActivity = "1.10.0"
-androidxFragment = "1.8.5"
+androidxAppCompat = "1.7.1"
+androidxActivity = "1.10.1"
+androidxFragment = "1.8.9"
 androidxAnnotation = "1.9.1"
 androidxStartup = "1.2.0"
-androidxRoom = "2.7.0-alpha13"
-androidxSqlite = "2.5"
-androidxCompose = "2025.01.01"
+androidxRoom = "2.7.2"
+androidxSqlite = "2.5.2"
+androidxCompose = "2025.08.00"
 
 # Google
 material = "1.12.0"
-ksp = "2.1.0-1.0.29"
-gms = "4.4.2"
+ksp = "2.2.10-2.0.2"
+gms = "4.4.3"
 
 # koin
-koin = "4.0.0"
+koin = "4.1.0"
 
 # Publishing
 dokka = "2.0.0"
 nexus-publish = "2.0.0"
-maven-publish = "0.30.0"
+maven-publish = "0.34.0"
 
 # Others
-ktor = "3.0.1"
-ksoup = "0.1.2"
-detekt = "1.23.7"
-ktorfit = "2.2.0"
-libraries = "11.2.3"
-buildKonfig = "0.15.1"
+ktor = "3.2.3"
+ksoup = "0.2.5"
+detekt = "1.23.8"
+ktorfit = "2.6.4"
+buildKonfig = "0.17.1"
 twitterComposeRule = "0.0.26"
 
 # Debugs
 napier = "2.7.1"
-junit = "4.13.2"
-junitVersion = "1.2.1"
-espressoCore = "3.6.1"
 
 [plugins]
 # Android
@@ -84,7 +79,6 @@ ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
 kmp = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
 kmpCompose = { id = "org.jetbrains.compose", version.ref = "kmpCompose" }
 kmpComplete = { id = "com.louiscad.complete-kotlin", version.ref = "kmpComplete" }
-kmpSwiftKlib = { id = "io.github.ttypic.swiftklib", version.ref = "kmpSwiftKlib" }
 
 # Publishing
 maven-publish = { id = "com.vanniktech.maven.publish", version.ref = "maven-publish" }
@@ -92,10 +86,8 @@ dokka = { id = "org.jetbrains.dokka", version.ref = "dokka" }
 
 # Others
 detekt = { id = "io.gitlab.arturbosch.detekt", version.ref = "detekt" }
-libraries = { id = "com.mikepenz.aboutlibraries.plugin", version.ref = "libraries" }
 ktorfit = { id = "de.jensklingenberg.ktorfit", version.ref = "ktorfit" }
 room = { id = "androidx.room", version.ref = "androidxRoom"}
-firebase-crashlytics = { id = "com.google.firebase.crashlytics", version = "3.0.2" }
 
 [libraries]
 ## Dependency of the include build-logic
@@ -151,8 +143,6 @@ androidx-compose-ui-tooling-preview = { module = "androidx.compose.ui:ui-tooling
 kmp-lifecycle-runtime-compose = { module = "org.jetbrains.androidx.lifecycle:lifecycle-runtime-compose", version.ref = "kmpLifecycle" }
 kmp-lifecycle-viewmodel-compose = { module = "org.jetbrains.androidx.lifecycle:lifecycle-viewmodel-compose", version.ref = "kmpLifecycle" }
 kmp-navigation-compose = { module = "org.jetbrains.androidx.navigation:navigation-compose", version.ref = "kmpNavigation" }
-kmp-paging-common = { module = "app.cash.paging:paging-common", version.ref = "kmpPaging" }
-kmp-paging-compose = { module = "app.cash.paging:paging-compose-common", version.ref = "kmpPaging" }
 kmp-room = { module = "androidx.room:room-runtime", version.ref = "androidxRoom" }
 kmp-room-compiler = { module = "androidx.room:room-compiler", version.ref = "androidxRoom" }
 kmp-sqlite = { module = "androidx.sqlite:sqlite-bundled", version.ref = "androidxSqlite" }
@@ -187,9 +177,6 @@ desugar = { module = "com.android.tools:desugar_jdk_libs", version = "2.1.4" }
 # Debugs
 napier = { module = "io.github.aakira:napier", version.ref = "napier" }
 twitter-compose-rule = { module = "com.twitter.compose.rules:detekt", version.ref = "twitterComposeRule" }
-junit = { group = "junit", name = "junit", version.ref = "junit" }
-androidx-junit = { group = "androidx.test.ext", name = "junit", version.ref = "junitVersion" }
-androidx-espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espressoCore" }
 
 [bundles]
 infra-api = [
@@ -205,8 +192,6 @@ ui-common-api = [
     "kmp-lifecycle-runtime-compose",
     "kmp-lifecycle-viewmodel-compose",
     "kmp-navigation-compose",
-    "kmp-paging-common",
-    "kmp-paging-compose",
 ]
 
 ui-android-api = [

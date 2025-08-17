@@ -3,7 +3,6 @@ package primitive.publish
 import com.vanniktech.maven.publish.JavadocJar
 import com.vanniktech.maven.publish.KotlinMultiplatform
 import com.vanniktech.maven.publish.MavenPublishBaseExtension
-import com.vanniktech.maven.publish.SonatypeHost
 import me.matsumo.fankt.libs
 import me.matsumo.fankt.version
 import org.gradle.api.Plugin
@@ -75,7 +74,7 @@ class MavenPublishPlugin : Plugin<Project> {
     private fun Project.configureMavenPublish() {
         extensions.configure<MavenPublishBaseExtension> {
             configure(KotlinMultiplatform(javadocJar = JavadocJar.Dokka("dokkaGeneratePublicationHtml")))
-            publishToMavenCentral(SonatypeHost.CENTRAL_PORTAL, true)
+            //publishToMavenCentral(SonatypeHost.CENTRAL_PORTAL, true)
 
             val hasUserNameFromProject = project.hasProperty("mavenCentralUsername")
             val hasUserNameFromEnv = System.getenv("ORG_GRADLE_PROJECT_mavenCentralUsername") != null
