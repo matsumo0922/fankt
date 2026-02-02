@@ -145,7 +145,7 @@ internal class FanboxCreatorMapper {
     }
 
     fun map(entity: FanboxCreatorTagListEntity): List<FanboxTag> {
-        return entity.body.map {
+        return entity.body.featuredTags.map {
             FanboxTag(
                 name = it.tag,
                 count = it.count,

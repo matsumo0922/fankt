@@ -6,10 +6,16 @@ import kotlinx.serialization.Serializable
 @Serializable
 internal data class FanboxCreatorTagListEntity(
     @SerialName("body")
-    val body: List<Body>,
+    val body: Body,
 ) {
     @Serializable
     data class Body(
+        @SerialName("featuredTags")
+        val featuredTags: List<FeaturedTags>,
+    )
+
+    @Serializable
+    data class FeaturedTags(
         @SerialName("count")
         val count: Int,
         @SerialName("coverImageUrl")
