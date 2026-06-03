@@ -39,7 +39,7 @@ internal class FanboxCreatorMapper {
     }
 
     fun map(entity: FanboxCreatorListEntity): List<FanboxCreatorDetail> {
-        return entity.body.map { map(it) }
+        return entity.body.creators.map { map(it) }
     }
 
     fun map(entity: FanboxCreatorDetailEntity.Body): FanboxCreatorDetail {
