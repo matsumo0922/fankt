@@ -75,15 +75,16 @@ internal class FanboxPostMapper {
     }
 
     fun map(entity: FanboxPostDetailEntity): FanboxPostDetail {
+        val post = entity.body.post
         var bodyBlock: FanboxPostDetail.Body = FanboxPostDetail.Body.Unknown
 
-        if (!entity.body.body?.blocks.isNullOrEmpty()) {
-            entity.body.body?.blocks?.let { blocks ->
+        if (!post.body?.blocks.isNullOrEmpty()) {
+            post.body?.blocks?.let { blocks ->
                 // 文字列や画像、ファイルなどのブロックが混在している場合
 
-                val images = entity.body.body.imageMap
-                val files = entity.body.body.fileMap
-                val urls = entity.body.body.urlEmbedMap
+                val images = post.body.imageMap
+                val files = post.body.fileMap
+                val urls = post.body.urlEmbedMap
 
                 bodyBlock = FanboxPostDetail.Body.Article(
                     blocks = blocks.mapNotNull { block ->
@@ -97,7 +98,7 @@ internal class FanboxPostMapper {
                                     FanboxPostDetail.Body.Article.Block.Image(
                                         FanboxPostDetail.ImageItem(
                                             id = FanboxPostItemId(image.id),
-                                            postId = FanboxPostId(entity.body.id),
+                                            postId = FanboxPostId(post.id),
                                             extension = image.extension,
                                             originalUrl = image.originalUrl,
                                             thumbnailUrl = image.thumbnailUrl,
@@ -112,7 +113,7 @@ internal class FanboxPostMapper {
                                     FanboxPostDetail.Body.Article.Block.File(
                                         FanboxPostDetail.FileItem(
                                             id = FanboxPostItemId(file.id),
-                                            postId = FanboxPostId(entity.body.id),
+                                            postId = FanboxPostId(post.id),
                                             extension = file.extension,
                                             name = file.name,
                                             size = file.size,
@@ -141,16 +142,16 @@ internal class FanboxPostMapper {
             }
         }
 
-        if (!entity.body.body?.images.isNullOrEmpty()) {
-            entity.body.body?.images?.let { blocks ->
+        if (!post.body?.images.isNullOrEmpty()) {
+            post.body?.images?.let { blocks ->
                 // 画像のみのブロックの場合
 
                 bodyBlock = FanboxPostDetail.Body.Image(
-                    text = entity.body.body.text.orEmpty(),
+                    text = post.body.text.orEmpty(),
                     images = blocks.map {
                         FanboxPostDetail.ImageItem(
                             id = FanboxPostItemId(it.id),
-                            postId = FanboxPostId(entity.body.id),
+                            postId = FanboxPostId(post.id),
                             extension = it.extension,
                             originalUrl = it.originalUrl,
                             thumbnailUrl = it.thumbnailUrl,
@@ -161,16 +162,16 @@ internal class FanboxPostMapper {
             }
         }
 
-        if (!entity.body.body?.files.isNullOrEmpty()) {
-            entity.body.body?.files?.let { blocks ->
+        if (!post.body?.files.isNullOrEmpty()) {
+            post.body?.files?.let { blocks ->
                 // ファイルのみのブロックの場合
 
                 bodyBlock = FanboxPostDetail.Body.File(
-                    text = entity.body.body.text.orEmpty(),
+                    text = post.body.text.orEmpty(),
                     files = blocks.map {
                         FanboxPostDetail.FileItem(
                             id = FanboxPostItemId(it.id),
-                            postId = FanboxPostId(entity.body.id),
+                            postId = FanboxPostId(post.id),
                             name = it.name,
                             extension = it.extension,
                             size = it.size,
@@ -182,44 +183,44 @@ internal class FanboxPostMapper {
         }
 
         return FanboxPostDetail(
-            id = FanboxPostId(entity.body.id),
-            title = entity.body.title,
-            publishedDatetime = Instant.parse(entity.body.publishedDatetime),
-            updatedDatetime = Instant.parse(entity.body.updatedDatetime),
-            isLiked = entity.body.isLiked,
+            id = FanboxPostId(post.id),
+            title = post.title,
+            publishedDatetime = Instant.parse(post.publishedDatetime),
+            updatedDatetime = Instant.parse(post.updatedDatetime),
+            isLiked = post.isLiked,
             isBookmarked = false,
-            likeCount = entity.body.likeCount,
-            coverImageUrl = entity.body.coverImageUrl,
-            commentCount = entity.body.commentCount,
-            feeRequired = entity.body.feeRequired,
-            isRestricted = entity.body.isRestricted,
-            hasAdultContent = entity.body.hasAdultContent,
-            tags = entity.body.tags,
-            user = entity.body.user?.let {
+            likeCount = post.likeCount,
+            coverImageUrl = post.coverImageUrl,
+            commentCount = post.commentCount,
+            feeRequired = post.feeRequired,
+            isRestricted = post.isRestricted,
+            hasAdultContent = post.hasAdultContent,
+            tags = post.tags,
+            user = post.user?.let {
                 FanboxUser(
                     userId = FanboxUserId(it.userId.toLong()),
-                    creatorId = FanboxCreatorId(entity.body.creatorId),
+                    creatorId = FanboxCreatorId(post.creatorId),
                     name = it.name,
                     iconUrl = it.iconUrl,
                 )
             },
             body = bodyBlock,
-            excerpt = entity.body.excerpt,
-            nextPost = entity.body.nextPost?.let {
+            excerpt = post.excerpt,
+            nextPost = post.nextPost?.let {
                 FanboxPostDetail.OtherPost(
                     id = FanboxPostId(it.id),
                     title = it.title,
                     publishedDatetime = Instant.parse(it.publishedDatetime),
                 )
             },
-            prevPost = entity.body.prevPost?.let {
+            prevPost = post.prevPost?.let {
                 FanboxPostDetail.OtherPost(
                     id = FanboxPostId(it.id),
                     title = it.title,
                     publishedDatetime = Instant.parse(it.publishedDatetime),
                 )
             },
-            imageForShare = entity.body.imageForShare,
+            imageForShare = post.imageForShare,
         )
     }
 

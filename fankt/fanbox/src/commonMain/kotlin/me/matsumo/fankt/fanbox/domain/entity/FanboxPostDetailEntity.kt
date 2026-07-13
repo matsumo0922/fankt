@@ -6,8 +6,14 @@ import kotlinx.serialization.Serializable
 @Serializable
 internal data class FanboxPostDetailEntity(
     @SerialName("body")
-    val body: Body,
+    val body: ResponseBody,
 ) {
+    @Serializable
+    data class ResponseBody(
+        @SerialName("post")
+        val post: Body,
+    )
+
     @Serializable
     data class Body(
         @SerialName("body")

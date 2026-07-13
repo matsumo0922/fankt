@@ -24,6 +24,10 @@ kotlin {
             implementation(libs.ksoup)
         }
 
+        commonTest.dependencies {
+            implementation(kotlin("test"))
+        }
+
         androidMain.dependencies {
             implementation(libs.androidx.startup)
             api(libs.ktor.okhttp)
