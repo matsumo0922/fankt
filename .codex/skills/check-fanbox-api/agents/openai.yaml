@@ -1,4 +1,4 @@
 interface:
-  display_name: "Check FANBOX API"
-  short_description: "FANBOX API connectivity checks with browser fingerprints"
-  default_prompt: "Use $check-fanbox-api to safely check a FANBOX endpoint without printing credentials or response bodies."
+  display_name: "FANBOX API 疎通確認"
+  short_description: "ブラウザ相当の fingerprint で FANBOX API を安全に確認"
+  default_prompt: "$check-fanbox-api を使い、認証情報や response body を表示せず FANBOX endpoint の疎通を確認してください。"
