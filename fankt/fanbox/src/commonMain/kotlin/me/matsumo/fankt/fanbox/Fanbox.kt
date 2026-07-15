@@ -16,7 +16,6 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.datetime.Clock
-import kotlinx.serialization.json.Json
 import me.matsumo.fankt.fanbox.datasource.createFanboxCreatorApi
 import me.matsumo.fankt.fanbox.datasource.createFanboxDownloadApi
 import me.matsumo.fankt.fanbox.datasource.createFanboxPostApi
@@ -27,6 +26,7 @@ import me.matsumo.fankt.fanbox.datasource.db.getFanktDatabase
 import me.matsumo.fankt.fanbox.datasource.mapper.FanboxCreatorMapper
 import me.matsumo.fankt.fanbox.datasource.mapper.FanboxPostMapper
 import me.matsumo.fankt.fanbox.datasource.mapper.FanboxUserMapper
+import me.matsumo.fankt.fanbox.datasource.parser.FanboxMetadataParser
 import me.matsumo.fankt.fanbox.domain.FanboxCursor
 import me.matsumo.fankt.fanbox.domain.PageCursorInfo
 import me.matsumo.fankt.fanbox.domain.PageNumberInfo
@@ -64,14 +64,7 @@ class Fanbox(
     private val tokenDao = getFanktDatabase().tokenDao()
 
     private val cookieStorage = PersistentCookieStorage(cookieDao)
-    private val formatter = Json {
-        isLenient = true
-        prettyPrint = true
-        ignoreUnknownKeys = true
-        coerceInputValues = true
-        encodeDefaults = true
-        explicitNulls = false
-    }
+    private val formatter = createFanboxJson()
 
     private lateinit var post: FanboxPostRepository
     private lateinit var creator: FanboxCreatorRepository
@@ -121,11 +114,12 @@ class Fanbox(
         val creatorMapper = FanboxCreatorMapper()
         val searchMapper = me.matsumo.fankt.fanbox.datasource.mapper.FanboxSearchMapper(creatorMapper)
         val userMapper = FanboxUserMapper(postMapper, creatorMapper)
+        val metadataParser = FanboxMetadataParser(formatter)
 
         post = FanboxPostRepository(postApi, postWithoutContentNegotiation, postMapper)
         creator = FanboxCreatorRepository(creatorApi, creatorWithoutContentNegotiation, creatorMapper)
         search = FanboxSearchRepository(searchApi, searchMapper)
-        user = FanboxUserRepository(userApi, userMapper)
+        user = FanboxUserRepository(userApi, userMapper, metadataParser)
         download = FanboxDownloadRepository(downloadApi)
     }
 
@@ -271,7 +265,7 @@ class Fanbox(
     }
 
     suspend fun getMetadata(): FanboxMetaData {
-        return user.getMetadata(formatter)
+        return user.getMetadata()
     }
 
     suspend fun downloadPostFile(
