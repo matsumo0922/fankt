@@ -1,11 +1,20 @@
 package me.matsumo.fankt.fanbox.datasource.mapper
 
 import kotlinx.datetime.Instant
+import me.matsumo.fankt.fanbox.domain.FanboxCursor
+import me.matsumo.fankt.fanbox.domain.PageCursorInfo
+import me.matsumo.fankt.fanbox.domain.PageOffsetInfo
+import me.matsumo.fankt.fanbox.domain.entity.FanboxCreatorPostItemsEntity
+import me.matsumo.fankt.fanbox.domain.entity.FanboxCreatorPostsPaginateEntity
+import me.matsumo.fankt.fanbox.domain.entity.FanboxPostCommentListEntity
 import me.matsumo.fankt.fanbox.domain.entity.FanboxPostDetailEntity
+import me.matsumo.fankt.fanbox.domain.entity.FanboxPostListEntity
+import me.matsumo.fankt.fanbox.domain.model.FanboxComment
 import me.matsumo.fankt.fanbox.domain.model.FanboxCover
 import me.matsumo.fankt.fanbox.domain.model.FanboxPost
 import me.matsumo.fankt.fanbox.domain.model.FanboxPostDetail
 import me.matsumo.fankt.fanbox.domain.model.FanboxUser
+import me.matsumo.fankt.fanbox.domain.model.id.FanboxCommentId
 import me.matsumo.fankt.fanbox.domain.model.id.FanboxCreatorId
 import me.matsumo.fankt.fanbox.domain.model.id.FanboxPostId
 import me.matsumo.fankt.fanbox.domain.model.id.FanboxPostItemId
@@ -224,4 +233,373 @@ class FanboxPostMapperGoldenTest {
 
         assertEquals(expected, actual)
     }
+
+    @Test
+    fun postInfoImageMapsFullObject() {
+        val actual = FanboxPostMapper().map(
+            decodeFixture<FanboxPostDetailEntity>(FanboxPostJsonFixtures.postInfoImage),
+        )
+
+        val expected = FanboxPostDetail(
+            id = FanboxPostId("10000001"),
+            title = "Fixture Post Title 3",
+            body = FanboxPostDetail.Body.Image(
+                text = "",
+                images = listOf(
+                    FanboxPostDetail.ImageItem(
+                        id = FanboxPostItemId("fixture-image-1"),
+                        postId = FanboxPostId("10000001"),
+                        extension = "jpeg",
+                        originalUrl = "https://example.invalid/resource-1",
+                        thumbnailUrl = "https://example.invalid/resource-2",
+                        aspectRatio = 3687.toFloat() / 2720.toFloat(),
+                    ),
+                ),
+            ),
+            coverImageUrl = "https://example.invalid/resource-3",
+            commentCount = 0,
+            excerpt = "",
+            feeRequired = 0,
+            hasAdultContent = true,
+            imageForShare = "https://example.invalid/resource-3",
+            isLiked = false,
+            isBookmarked = false,
+            isRestricted = false,
+            likeCount = 16,
+            tags = listOf("Fixture Tag 1"),
+            updatedDatetime = Instant.parse("2000-01-01T00:03:00+00:00"),
+            publishedDatetime = Instant.parse("2000-01-01T00:01:00+00:00"),
+            nextPost = FanboxPostDetail.OtherPost(
+                id = FanboxPostId("10000002"),
+                title = "Fixture Post Title 1",
+                publishedDatetime = Instant.parse("2000-01-01T00:02:00+00:00"),
+            ),
+            prevPost = FanboxPostDetail.OtherPost(
+                id = FanboxPostId("10000003"),
+                title = "Fixture Post Title 2",
+                publishedDatetime = Instant.parse("2000-01-01T00:00:00+00:00"),
+            ),
+            user = FanboxUser(
+                userId = FanboxUserId(90000001),
+                creatorId = FanboxCreatorId("fixture-creator-1"),
+                name = "Fixture User Name 1",
+                iconUrl = "https://example.invalid/resource-4",
+            ),
+        )
+
+        assertEquals(expected, actual)
+    }
+
+    @Test
+    fun postInfoFileMapsFullObject() {
+        val actual = FanboxPostMapper().map(
+            decodeFixture<FanboxPostDetailEntity>(FanboxPostJsonFixtures.postInfoFile),
+        )
+
+        val expected = FanboxPostDetail(
+            id = FanboxPostId("10000001"),
+            title = "Fixture Post Title 3",
+            body = FanboxPostDetail.Body.File(
+                text = "Fixture Post Text 1",
+                files = listOf(
+                    FanboxPostDetail.FileItem(
+                        id = FanboxPostItemId("fixture-file-1"),
+                        postId = FanboxPostId("10000001"),
+                        name = "fixture-file-name-1.mp3",
+                        extension = "mp3",
+                        size = 2193140,
+                        url = "https://example.invalid/resource-1",
+                    ),
+                    FanboxPostDetail.FileItem(
+                        id = FanboxPostItemId("fixture-file-2"),
+                        postId = FanboxPostId("10000001"),
+                        name = "fixture-file-name-2.mp3",
+                        extension = "mp3",
+                        size = 1921049,
+                        url = "https://example.invalid/resource-2",
+                    ),
+                ),
+            ),
+            coverImageUrl = null,
+            commentCount = 0,
+            excerpt = "Fixture Excerpt 1",
+            feeRequired = 0,
+            hasAdultContent = false,
+            imageForShare = "https://example.invalid/resource-3",
+            isLiked = false,
+            isBookmarked = false,
+            isRestricted = false,
+            likeCount = 1,
+            tags = listOf(
+                "Fixture Tag 1",
+                "Fixture Tag 2",
+                "Fixture Tag 3",
+                "Fixture Tag 4",
+                "Fixture Tag 5",
+            ),
+            updatedDatetime = Instant.parse("2000-01-01T00:01:00+00:00"),
+            publishedDatetime = Instant.parse("2000-01-01T00:01:00+00:00"),
+            nextPost = FanboxPostDetail.OtherPost(
+                id = FanboxPostId("10000002"),
+                title = "Fixture Post Title 1",
+                publishedDatetime = Instant.parse("2000-01-01T00:02:00+00:00"),
+            ),
+            prevPost = FanboxPostDetail.OtherPost(
+                id = FanboxPostId("10000003"),
+                title = "Fixture Post Title 2",
+                publishedDatetime = Instant.parse("2000-01-01T00:00:00+00:00"),
+            ),
+            user = FanboxUser(
+                userId = FanboxUserId(90000001),
+                creatorId = FanboxCreatorId("fixture-creator-1"),
+                name = "Fixture User Name 1",
+                iconUrl = "https://example.invalid/resource-4",
+            ),
+        )
+
+        assertEquals(expected, actual)
+    }
+
+    @Test
+    fun postListHomeNormalMapsFullPage() {
+        val actual = FanboxPostMapper().map(
+            decodeFixture<FanboxPostListEntity>(FanboxPostJsonFixtures.postListHomeNormal),
+        )
+
+        val expected = PageCursorInfo(
+            contents = listOf(
+                expectedPost(
+                    id = "10000001",
+                    title = "Fixture Post Title 1",
+                    cover = FanboxCover(
+                        url = "https://example.invalid/resource-1",
+                        type = "cover_image",
+                    ),
+                    excerpt = "",
+                    feeRequired = 500,
+                    isRestricted = true,
+                    likeCount = 0,
+                    commentCount = 1,
+                    tags = listOf("Fixture Tag 1", "Fixture Tag 2", "Fixture Tag 3"),
+                    datetime = "2000-01-01T00:01:00+00:00",
+                    userIconUrl = "https://example.invalid/resource-2",
+                ),
+                expectedPost(
+                    id = "10000002",
+                    title = "Fixture Post Title 2",
+                    cover = null,
+                    excerpt = "Fixture Excerpt 1",
+                    feeRequired = 0,
+                    isRestricted = false,
+                    likeCount = 3,
+                    commentCount = 0,
+                    tags = emptyList(),
+                    datetime = "2000-01-01T00:00:00+00:00",
+                    userIconUrl = "https://example.invalid/resource-2",
+                ),
+            ),
+            cursor = FanboxCursor(
+                firstPublishedDatetime = null,
+                maxPublishedDatetime = "2000-01-01T00:00:00+00:00",
+                firstId = null,
+                maxId = "10000003",
+                limit = 2,
+            ),
+        )
+
+        assertEquals(expected, actual)
+    }
+
+    @Test
+    fun postListHomeEmptyMapsEmptyPage() {
+        val actual = FanboxPostMapper().map(
+            decodeFixture<FanboxPostListEntity>(FanboxPostJsonFixtures.postListHomeEmpty),
+        )
+
+        assertEquals(PageCursorInfo<FanboxPost>(emptyList(), null), actual)
+    }
+
+    @Test
+    fun postListCreatorNormalMapsFullPageWithRuntimeNextCursor() {
+        val runtimeNextCursor = FanboxCursor(
+            firstPublishedDatetime = "2000-02-01T00:00:00+00:00",
+            maxPublishedDatetime = null,
+            firstId = "19000001",
+            maxId = null,
+            limit = 20,
+        )
+        val actual = FanboxPostMapper().map(
+            decodeFixture<FanboxCreatorPostItemsEntity>(FanboxPostJsonFixtures.postListCreatorNormal),
+            runtimeNextCursor,
+        )
+
+        val expected = PageCursorInfo(
+            contents = listOf(
+                expectedPost(
+                    id = "10000001",
+                    title = "Fixture Post Title 1",
+                    cover = null,
+                    excerpt = "Fixture Excerpt 1",
+                    feeRequired = 0,
+                    isRestricted = false,
+                    likeCount = 0,
+                    commentCount = 0,
+                    tags = listOf(
+                        "Fixture Tag 1",
+                        "Fixture Tag 2",
+                        "Fixture Tag 3",
+                        "Fixture Tag 4",
+                        "Fixture Tag 5",
+                    ),
+                    datetime = "2000-01-01T00:01:00+00:00",
+                    userIconUrl = "https://example.invalid/resource-1",
+                ),
+                expectedPost(
+                    id = "10000002",
+                    title = "Fixture Post Title 2",
+                    cover = null,
+                    excerpt = "Fixture Excerpt 2",
+                    feeRequired = 0,
+                    isRestricted = false,
+                    likeCount = 1,
+                    commentCount = 0,
+                    tags = listOf(
+                        "Fixture Tag 5",
+                        "Fixture Tag 4",
+                        "Fixture Tag 3",
+                        "Fixture Tag 2",
+                        "Fixture Tag 1",
+                    ),
+                    datetime = "2000-01-01T00:00:00+00:00",
+                    userIconUrl = "https://example.invalid/resource-1",
+                ),
+            ),
+            cursor = runtimeNextCursor,
+        )
+
+        assertEquals(expected, actual)
+    }
+
+    @Test
+    fun postListCreatorEmptyMapsEmptyPageWithExplicitNullRuntimeCursor() {
+        val actual = FanboxPostMapper().map(
+            decodeFixture<FanboxCreatorPostItemsEntity>(FanboxPostJsonFixtures.postListCreatorEmpty),
+            nextCursor = null,
+        )
+
+        assertEquals(PageCursorInfo<FanboxPost>(emptyList(), null), actual)
+    }
+
+    @Test
+    fun paginateCreatorNormalMapsEveryCursor() {
+        val actual = FanboxPostMapper().map(
+            decodeFixture<FanboxCreatorPostsPaginateEntity>(FanboxPostJsonFixtures.paginateCreatorNormal),
+        )
+
+        val expected = listOf(
+            expectedCursor(0, "10000001"),
+            expectedCursor(1, "10000002"),
+            expectedCursor(2, "10000003"),
+            expectedCursor(3, "10000004"),
+            expectedCursor(4, "10000005"),
+            expectedCursor(5, "10000006"),
+            expectedCursor(6, "10000007"),
+            expectedCursor(7, "10000008"),
+            expectedCursor(8, "10000009"),
+            expectedCursor(9, "10000010"),
+            expectedCursor(10, "10000011"),
+            expectedCursor(11, "10000012"),
+            expectedCursor(12, "10000013"),
+            expectedCursor(13, "10000014"),
+            expectedCursor(14, "10000015"),
+            expectedCursor(15, "10000016"),
+            expectedCursor(16, "10000017"),
+            expectedCursor(17, "10000018"),
+        )
+
+        assertEquals(expected, actual)
+    }
+
+    @Test
+    fun paginateCreatorEmptyMapsEmptyCursorList() {
+        val actual = FanboxPostMapper().map(
+            decodeFixture<FanboxCreatorPostsPaginateEntity>(FanboxPostJsonFixtures.paginateCreatorEmpty),
+        )
+
+        assertEquals(emptyList(), actual)
+    }
+
+    @Test
+    fun postCommentsFlatMapsBasicCommentWithoutRepliesOrNextOffset() {
+        val actual = FanboxPostMapper().map(
+            decodeFixture<FanboxPostCommentListEntity>(FanboxPostJsonFixtures.postCommentsFlat),
+        )
+
+        val expected = PageOffsetInfo(
+            contents = listOf(
+                FanboxComment(
+                    body = "Fixture Comment Body 1",
+                    createdDatetime = Instant.parse("2000-01-01T00:00:00+00:00"),
+                    id = FanboxCommentId("20000001"),
+                    isLiked = false,
+                    isOwn = false,
+                    likeCount = 1,
+                    parentCommentId = FanboxCommentId("0"),
+                    rootCommentId = FanboxCommentId("0"),
+                    replies = emptyList(),
+                    user = FanboxUser(
+                        userId = FanboxUserId(90000001),
+                        creatorId = null,
+                        name = "Fixture Comment User 1",
+                        iconUrl = "https://example.invalid/user-1.png",
+                    ),
+                ),
+            ),
+            offset = null,
+        )
+
+        assertEquals(expected, actual)
+    }
+
+    private fun expectedPost(
+        id: String,
+        title: String,
+        cover: FanboxCover?,
+        excerpt: String,
+        feeRequired: Int,
+        isRestricted: Boolean,
+        likeCount: Int,
+        commentCount: Int,
+        tags: List<String>,
+        datetime: String,
+        userIconUrl: String,
+    ) = FanboxPost(
+        id = FanboxPostId(id),
+        title = title,
+        cover = cover,
+        user = FanboxUser(
+            userId = FanboxUserId(90000001),
+            creatorId = FanboxCreatorId("fixture-creator-1"),
+            name = "Fixture User Name 1",
+            iconUrl = userIconUrl,
+        ),
+        excerpt = excerpt,
+        feeRequired = feeRequired,
+        hasAdultContent = false,
+        isLiked = false,
+        isRestricted = isRestricted,
+        likeCount = likeCount,
+        commentCount = commentCount,
+        tags = tags,
+        publishedDatetime = Instant.parse(datetime),
+        updatedDatetime = Instant.parse(datetime),
+    )
+
+    private fun expectedCursor(minute: Int, firstId: String) = FanboxCursor(
+        firstPublishedDatetime = "2000-01-01T00:${minute.toString().padStart(2, '0')}:00+00:00",
+        maxPublishedDatetime = null,
+        firstId = firstId,
+        maxId = null,
+        limit = 10,
+    )
 }

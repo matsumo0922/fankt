@@ -281,4 +281,328 @@ internal object FanboxPostJsonFixtures {
           }
         }
         """.trimIndent()
+
+    val postInfoImage =
+        """
+        {
+          "body": {
+            "post": {
+              "body": {
+                "text": "",
+                "images": [
+                  {
+                    "extension": "jpeg",
+                    "height": 2720,
+                    "id": "fixture-image-1",
+                    "originalUrl": "https://example.invalid/resource-1",
+                    "thumbnailUrl": "https://example.invalid/resource-2",
+                    "width": 3687
+                  }
+                ]
+              },
+              "commentCount": 0,
+              "creatorId": "fixture-creator-1",
+              "excerpt": "",
+              "feeRequired": 0,
+              "hasAdultContent": true,
+              "id": "10000001",
+              "imageForShare": "https://example.invalid/resource-3",
+              "isLiked": false,
+              "isRestricted": false,
+              "likeCount": 16,
+              "nextPost": {
+                "id": "10000002",
+                "publishedDatetime": "2000-01-01T00:02:00+00:00",
+                "title": "Fixture Post Title 1"
+              },
+              "prevPost": {
+                "id": "10000003",
+                "publishedDatetime": "2000-01-01T00:00:00+00:00",
+                "title": "Fixture Post Title 2"
+              },
+              "publishedDatetime": "2000-01-01T00:01:00+00:00",
+              "tags": [
+                "Fixture Tag 1"
+              ],
+              "title": "Fixture Post Title 3",
+              "type": "image",
+              "updatedDatetime": "2000-01-01T00:03:00+00:00",
+              "coverImageUrl": "https://example.invalid/resource-3",
+              "user": {
+                "iconUrl": "https://example.invalid/resource-4",
+                "name": "Fixture User Name 1",
+                "userId": "90000001"
+              }
+            }
+          }
+        }
+        """.trimIndent()
+
+    val postInfoFile =
+        """
+        {
+          "body": {
+            "post": {
+              "body": {
+                "text": "Fixture Post Text 1",
+                "files": [
+                  {
+                    "extension": "mp3",
+                    "id": "fixture-file-1",
+                    "name": "fixture-file-name-1.mp3",
+                    "size": 2193140,
+                    "url": "https://example.invalid/resource-1"
+                  },
+                  {
+                    "extension": "mp3",
+                    "id": "fixture-file-2",
+                    "name": "fixture-file-name-2.mp3",
+                    "size": 1921049,
+                    "url": "https://example.invalid/resource-2"
+                  }
+                ]
+              },
+              "commentCount": 0,
+              "creatorId": "fixture-creator-1",
+              "excerpt": "Fixture Excerpt 1",
+              "feeRequired": 0,
+              "hasAdultContent": false,
+              "id": "10000001",
+              "imageForShare": "https://example.invalid/resource-3",
+              "isLiked": false,
+              "isRestricted": false,
+              "likeCount": 1,
+              "nextPost": {
+                "id": "10000002",
+                "publishedDatetime": "2000-01-01T00:02:00+00:00",
+                "title": "Fixture Post Title 1"
+              },
+              "prevPost": {
+                "id": "10000003",
+                "publishedDatetime": "2000-01-01T00:00:00+00:00",
+                "title": "Fixture Post Title 2"
+              },
+              "publishedDatetime": "2000-01-01T00:01:00+00:00",
+              "tags": [
+                "Fixture Tag 1",
+                "Fixture Tag 2",
+                "Fixture Tag 3",
+                "Fixture Tag 4",
+                "Fixture Tag 5"
+              ],
+              "title": "Fixture Post Title 3",
+              "type": "file",
+              "updatedDatetime": "2000-01-01T00:01:00+00:00",
+              "coverImageUrl": null,
+              "user": {
+                "iconUrl": "https://example.invalid/resource-4",
+                "name": "Fixture User Name 1",
+                "userId": "90000001"
+              }
+            }
+          }
+        }
+        """.trimIndent()
+
+    val postListHomeNormal =
+        """
+        {
+          "body": {
+            "items": [
+              {
+                "commentCount": 1,
+                "cover": {
+                  "type": "cover_image",
+                  "url": "https://example.invalid/resource-1"
+                },
+                "creatorId": "fixture-creator-1",
+                "excerpt": "",
+                "feeRequired": 500,
+                "hasAdultContent": false,
+                "id": "10000001",
+                "isLiked": false,
+                "isRestricted": true,
+                "likeCount": 0,
+                "publishedDatetime": "2000-01-01T00:01:00+00:00",
+                "tags": [
+                  "Fixture Tag 1",
+                  "Fixture Tag 2",
+                  "Fixture Tag 3"
+                ],
+                "title": "Fixture Post Title 1",
+                "updatedDatetime": "2000-01-01T00:01:00+00:00",
+                "user": {
+                  "iconUrl": "https://example.invalid/resource-2",
+                  "name": "Fixture User Name 1",
+                  "userId": "90000001"
+                }
+              },
+              {
+                "commentCount": 0,
+                "cover": null,
+                "creatorId": "fixture-creator-1",
+                "excerpt": "Fixture Excerpt 1",
+                "feeRequired": 0,
+                "hasAdultContent": false,
+                "id": "10000002",
+                "isLiked": false,
+                "isRestricted": false,
+                "likeCount": 3,
+                "publishedDatetime": "2000-01-01T00:00:00+00:00",
+                "tags": [],
+                "title": "Fixture Post Title 2",
+                "updatedDatetime": "2000-01-01T00:00:00+00:00",
+                "user": {
+                  "iconUrl": "https://example.invalid/resource-2",
+                  "name": "Fixture User Name 1",
+                  "userId": "90000001"
+                }
+              }
+            ],
+            "nextUrl": "https://example.invalid/endpoint?maxPublishedDatetime=2000-01-01T00%3A00%3A00%2B00%3A00&maxId=10000003&limit=2"
+          }
+        }
+        """.trimIndent()
+
+    val postListHomeEmpty =
+        """
+        {
+          "body": {
+            "items": [],
+            "nextUrl": null
+          }
+        }
+        """.trimIndent()
+
+    val postListCreatorNormal =
+        """
+        {
+          "body": [
+            {
+              "commentCount": 0,
+              "cover": null,
+              "creatorId": "fixture-creator-1",
+              "excerpt": "Fixture Excerpt 1",
+              "feeRequired": 0,
+              "hasAdultContent": false,
+              "id": "10000001",
+              "isLiked": false,
+              "isRestricted": false,
+              "likeCount": 0,
+              "publishedDatetime": "2000-01-01T00:01:00+00:00",
+              "tags": [
+                "Fixture Tag 1",
+                "Fixture Tag 2",
+                "Fixture Tag 3",
+                "Fixture Tag 4",
+                "Fixture Tag 5"
+              ],
+              "title": "Fixture Post Title 1",
+              "updatedDatetime": "2000-01-01T00:01:00+00:00",
+              "user": {
+                "iconUrl": "https://example.invalid/resource-1",
+                "name": "Fixture User Name 1",
+                "userId": "90000001"
+              }
+            },
+            {
+              "commentCount": 0,
+              "cover": null,
+              "creatorId": "fixture-creator-1",
+              "excerpt": "Fixture Excerpt 2",
+              "feeRequired": 0,
+              "hasAdultContent": false,
+              "id": "10000002",
+              "isLiked": false,
+              "isRestricted": false,
+              "likeCount": 1,
+              "publishedDatetime": "2000-01-01T00:00:00+00:00",
+              "tags": [
+                "Fixture Tag 5",
+                "Fixture Tag 4",
+                "Fixture Tag 3",
+                "Fixture Tag 2",
+                "Fixture Tag 1"
+              ],
+              "title": "Fixture Post Title 2",
+              "updatedDatetime": "2000-01-01T00:00:00+00:00",
+              "user": {
+                "iconUrl": "https://example.invalid/resource-1",
+                "name": "Fixture User Name 1",
+                "userId": "90000001"
+              }
+            }
+          ]
+        }
+        """.trimIndent()
+
+    val postListCreatorEmpty =
+        """
+        {
+          "body": []
+        }
+        """.trimIndent()
+
+    val paginateCreatorNormal =
+        """
+        {
+          "body": [
+            "https://example.invalid/endpoint?creatorId=fixture-creator-1&firstPublishedDatetime=2000-01-01T00%3A00%3A00%2B00%3A00&firstId=10000001&sort=fixture-token&limit=10",
+            "https://example.invalid/endpoint?creatorId=fixture-creator-1&firstPublishedDatetime=2000-01-01T00%3A01%3A00%2B00%3A00&firstId=10000002&sort=fixture-token&limit=10",
+            "https://example.invalid/endpoint?creatorId=fixture-creator-1&firstPublishedDatetime=2000-01-01T00%3A02%3A00%2B00%3A00&firstId=10000003&sort=fixture-token&limit=10",
+            "https://example.invalid/endpoint?creatorId=fixture-creator-1&firstPublishedDatetime=2000-01-01T00%3A03%3A00%2B00%3A00&firstId=10000004&sort=fixture-token&limit=10",
+            "https://example.invalid/endpoint?creatorId=fixture-creator-1&firstPublishedDatetime=2000-01-01T00%3A04%3A00%2B00%3A00&firstId=10000005&sort=fixture-token&limit=10",
+            "https://example.invalid/endpoint?creatorId=fixture-creator-1&firstPublishedDatetime=2000-01-01T00%3A05%3A00%2B00%3A00&firstId=10000006&sort=fixture-token&limit=10",
+            "https://example.invalid/endpoint?creatorId=fixture-creator-1&firstPublishedDatetime=2000-01-01T00%3A06%3A00%2B00%3A00&firstId=10000007&sort=fixture-token&limit=10",
+            "https://example.invalid/endpoint?creatorId=fixture-creator-1&firstPublishedDatetime=2000-01-01T00%3A07%3A00%2B00%3A00&firstId=10000008&sort=fixture-token&limit=10",
+            "https://example.invalid/endpoint?creatorId=fixture-creator-1&firstPublishedDatetime=2000-01-01T00%3A08%3A00%2B00%3A00&firstId=10000009&sort=fixture-token&limit=10",
+            "https://example.invalid/endpoint?creatorId=fixture-creator-1&firstPublishedDatetime=2000-01-01T00%3A09%3A00%2B00%3A00&firstId=10000010&sort=fixture-token&limit=10",
+            "https://example.invalid/endpoint?creatorId=fixture-creator-1&firstPublishedDatetime=2000-01-01T00%3A10%3A00%2B00%3A00&firstId=10000011&sort=fixture-token&limit=10",
+            "https://example.invalid/endpoint?creatorId=fixture-creator-1&firstPublishedDatetime=2000-01-01T00%3A11%3A00%2B00%3A00&firstId=10000012&sort=fixture-token&limit=10",
+            "https://example.invalid/endpoint?creatorId=fixture-creator-1&firstPublishedDatetime=2000-01-01T00%3A12%3A00%2B00%3A00&firstId=10000013&sort=fixture-token&limit=10",
+            "https://example.invalid/endpoint?creatorId=fixture-creator-1&firstPublishedDatetime=2000-01-01T00%3A13%3A00%2B00%3A00&firstId=10000014&sort=fixture-token&limit=10",
+            "https://example.invalid/endpoint?creatorId=fixture-creator-1&firstPublishedDatetime=2000-01-01T00%3A14%3A00%2B00%3A00&firstId=10000015&sort=fixture-token&limit=10",
+            "https://example.invalid/endpoint?creatorId=fixture-creator-1&firstPublishedDatetime=2000-01-01T00%3A15%3A00%2B00%3A00&firstId=10000016&sort=fixture-token&limit=10",
+            "https://example.invalid/endpoint?creatorId=fixture-creator-1&firstPublishedDatetime=2000-01-01T00%3A16%3A00%2B00%3A00&firstId=10000017&sort=fixture-token&limit=10",
+            "https://example.invalid/endpoint?creatorId=fixture-creator-1&firstPublishedDatetime=2000-01-01T00%3A17%3A00%2B00%3A00&firstId=10000018&sort=fixture-token&limit=10"
+          ]
+        }
+        """.trimIndent()
+
+    val paginateCreatorEmpty =
+        """
+        {
+          "body": []
+        }
+        """.trimIndent()
+
+    val postCommentsFlat =
+        """
+        {
+          "body": {
+            "viewMode": "OPEN",
+            "commentList": {
+              "items": [
+                {
+                  "body": "Fixture Comment Body 1",
+                  "createdDatetime": "2000-01-01T00:00:00+00:00",
+                  "id": "20000001",
+                  "isLiked": false,
+                  "isOwn": false,
+                  "likeCount": 1,
+                  "parentCommentId": "0",
+                  "rootCommentId": "0",
+                  "user": {
+                    "iconUrl": "https://example.invalid/user-1.png",
+                    "name": "Fixture Comment User 1",
+                    "userId": "90000001"
+                  },
+                  "replies": []
+                }
+              ],
+              "nextUrl": null
+            }
+          }
+        }
+        """.trimIndent()
 }
