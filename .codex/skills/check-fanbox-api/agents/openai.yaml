@@ -1,0 +1,4 @@
+interface:
+  display_name: "Check FANBOX API"
+  short_description: "FANBOX API connectivity checks with browser fingerprints"
+  default_prompt: "Use $check-fanbox-api to safely check a FANBOX endpoint without printing credentials or response bodies."

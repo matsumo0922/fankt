@@ -1,0 +1,1 @@
+../../../.codex/skills/check-fanbox-api/SKILL.md
