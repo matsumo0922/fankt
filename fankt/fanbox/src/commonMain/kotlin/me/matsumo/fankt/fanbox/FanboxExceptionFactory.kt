@@ -169,12 +169,19 @@ internal object FanboxExceptionFactory {
 
         value.trim().toLongOrNull()?.let { seconds ->
             if (seconds < 0) return null
-            return seconds.seconds
+            return seconds.seconds.takeIf { it.isFinite() }
         }
 
         val targetEpochMilliseconds = runCatching { value.fromHttpToGmtDate().timestamp }.getOrNull()
             ?: return null
-        return (targetEpochMilliseconds - nowEpochMilliseconds).coerceAtLeast(0).milliseconds
+        val deltaMilliseconds = targetEpochMilliseconds - nowEpochMilliseconds
+        if ((targetEpochMilliseconds > nowEpochMilliseconds && deltaMilliseconds < 0) ||
+            (targetEpochMilliseconds < nowEpochMilliseconds && deltaMilliseconds > 0)
+        ) {
+            return null
+        }
+        if (targetEpochMilliseconds <= nowEpochMilliseconds) return Duration.ZERO
+        return deltaMilliseconds.milliseconds.takeIf { it.isFinite() }
     }
 
     private suspend fun responseFragment(

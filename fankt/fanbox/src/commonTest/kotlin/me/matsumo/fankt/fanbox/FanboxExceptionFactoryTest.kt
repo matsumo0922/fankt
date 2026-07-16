@@ -99,6 +99,11 @@ class FanboxExceptionFactoryTest {
     }
 
     @Test
+    fun retryAfterRejectsNonFiniteDeltaSeconds() {
+        assertNull(FanboxExceptionFactory.parseRetryAfter(Long.MAX_VALUE.toString(), 0))
+    }
+
+    @Test
     fun retryAfterParsesFutureAndPastHttpDates() {
         val now = 1_600_000_000_000L
         val future = GMTDate(now + 10_000).toHttpDate()
@@ -106,5 +111,14 @@ class FanboxExceptionFactoryTest {
 
         assertEquals(10.seconds, FanboxExceptionFactory.parseRetryAfter(future, now))
         assertEquals(Duration.ZERO, FanboxExceptionFactory.parseRetryAfter(past, now))
+    }
+
+    @Test
+    fun retryAfterRejectsFarFutureAndOverflowingHttpDates() {
+        val farFuture = "Fri, 31 Dec 9999 23:59:59 GMT"
+        val farPast = "Mon, 01 Jan 0001 00:00:00 GMT"
+
+        assertNull(FanboxExceptionFactory.parseRetryAfter(farFuture, Long.MIN_VALUE))
+        assertNull(FanboxExceptionFactory.parseRetryAfter(farPast, Long.MAX_VALUE))
     }
 }
