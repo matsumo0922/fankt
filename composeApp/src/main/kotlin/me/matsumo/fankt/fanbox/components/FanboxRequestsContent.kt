@@ -125,12 +125,11 @@ private fun RequestItem(
 
         requestResult = try {
             function.callSuspend(classInstance, *typedParams.toTypedArray())
+        } catch (e: FanboxException) {
+            Napier.e { "Error calling function: ${function.name}: ${e.message}" }
+            e
         } catch (e: Throwable) {
-            if (e is FanboxException) {
-                Napier.e { "Error calling function: ${function.name}: ${e.message}" }
-            } else {
-                Napier.e(e) { "Error calling function: ${function.name}" }
-            }
+            Napier.e(e) { "Error calling function: ${function.name}" }
             e
         }
     }
