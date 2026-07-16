@@ -98,6 +98,28 @@ The `Fanbox` constructor treats `LogLevel.BODY` as effective `INFO` and `LogLeve
 errors use a separate path for a sanitized, control-normalized fragment bounded to 2,048 Kotlin
 characters; custom requests and unknown routes retain no response fragment.
 
+#### Tolerant list responses
+
+List endpoints decode and map each item independently. When one item no longer matches the FANBOX
+schema, the library skips that item, preserves the other items and pagination value, and writes a
+Napier warning with the endpoint and zero-based `indexPath`. Raw item fragments are included only
+when `Fanbox` logging is enabled; they are structurally credential-redacted and limited to 2,048
+characters.
+
+Callback overloads report every skipped item on the caller's coroutine context before returning the
+partial result:
+
+```kotlin
+val posts = fanbox.getHomePosts(cursor = null) { mismatch ->
+    reportSkippedItem(mismatch.endpoint, mismatch.indexPath)
+}
+```
+
+The callback is call-local, so concurrent calls do not share events. If the callback throws, its
+exception is propagated to the caller. The no-callback `getSupportedPlans()` remains strict because
+a missing active support plan must not look like an ordinary partial list. Use its callback overload
+to opt into per-item tolerant results explicitly.
+
 ### Fantia
 
 WIP (Work in Progress)

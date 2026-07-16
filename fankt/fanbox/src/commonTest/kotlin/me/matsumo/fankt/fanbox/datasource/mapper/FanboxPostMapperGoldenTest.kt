@@ -364,7 +364,8 @@ class FanboxPostMapperGoldenTest {
     fun postListHomeNormalMapsFullPage() {
         val actual = FanboxPostMapper().map(
             decodeFixture<FanboxPostListEntity>(FanboxPostJsonFixtures.postListHomeNormal),
-        )
+            endpoint = "post.listHome",
+        ).value
 
         val expected = PageCursorInfo(
             contents = listOf(
@@ -414,7 +415,8 @@ class FanboxPostMapperGoldenTest {
     fun postListHomeEmptyMapsEmptyPage() {
         val actual = FanboxPostMapper().map(
             decodeFixture<FanboxPostListEntity>(FanboxPostJsonFixtures.postListHomeEmpty),
-        )
+            endpoint = "post.listHome",
+        ).value
 
         assertEquals(PageCursorInfo<FanboxPost>(emptyList(), null), actual)
     }
@@ -431,7 +433,8 @@ class FanboxPostMapperGoldenTest {
         val actual = FanboxPostMapper().map(
             decodeFixture<FanboxCreatorPostItemsEntity>(FanboxPostJsonFixtures.postListCreatorNormal),
             runtimeNextCursor,
-        )
+            endpoint = "post.listCreator",
+        ).value
 
         val expected = PageCursorInfo(
             contents = listOf(
@@ -485,7 +488,8 @@ class FanboxPostMapperGoldenTest {
         val actual = FanboxPostMapper().map(
             decodeFixture<FanboxCreatorPostItemsEntity>(FanboxPostJsonFixtures.postListCreatorEmpty),
             nextCursor = null,
-        )
+            endpoint = "post.listCreator",
+        ).value
 
         assertEquals(PageCursorInfo<FanboxPost>(emptyList(), null), actual)
     }
@@ -533,7 +537,8 @@ class FanboxPostMapperGoldenTest {
     fun postCommentsFlatMapsBasicCommentWithoutRepliesOrNextOffset() {
         val actual = FanboxPostMapper().map(
             decodeFixture<FanboxPostCommentListEntity>(FanboxPostJsonFixtures.postCommentsFlat),
-        )
+            endpoint = "post.getComments",
+        ).value
 
         val expected = PageOffsetInfo(
             contents = listOf(
@@ -565,7 +570,8 @@ class FanboxPostMapperGoldenTest {
     fun handcraftedPostCommentsNestedRepliesMapInCreatedDatetimeOrderWithFullEquality() {
         val actual = FanboxPostMapper().map(
             decodeFixture<FanboxPostCommentListEntity>(FanboxPostJsonFixtures.handcraftedPostCommentsNestedReplies),
-        )
+            endpoint = "post.getComments",
+        ).value
 
         val expected = PageOffsetInfo(
             contents = listOf(
@@ -617,7 +623,8 @@ class FanboxPostMapperGoldenTest {
     fun handcraftedPostCommentsNextUrlMapsOffsetWithFullEquality() {
         val actual = FanboxPostMapper().map(
             decodeFixture<FanboxPostCommentListEntity>(FanboxPostJsonFixtures.handcraftedPostCommentsNextUrlOffset),
-        )
+            endpoint = "post.getComments",
+        ).value
 
         val expected = PageOffsetInfo<FanboxComment>(
             contents = emptyList(),

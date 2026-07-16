@@ -1,11 +1,13 @@
 package me.matsumo.fankt.fanbox.datasource.mapper
 
-import io.github.aakira.napier.Napier
 import io.ktor.http.Url
 import kotlinx.datetime.Instant
+import me.matsumo.fankt.fanbox.FanboxListItemDecoder
+import me.matsumo.fankt.fanbox.FanboxTolerantResult
 import me.matsumo.fankt.fanbox.domain.PageNumberInfo
 import me.matsumo.fankt.fanbox.domain.entity.FanboxBellListEntity
 import me.matsumo.fankt.fanbox.domain.entity.FanboxCreatorPlanListEntity
+import me.matsumo.fankt.fanbox.domain.entity.FanboxCreatorPlanListStrictEntity
 import me.matsumo.fankt.fanbox.domain.entity.FanboxMetaDataEntity
 import me.matsumo.fankt.fanbox.domain.entity.FanboxNewsLettersEntity
 import me.matsumo.fankt.fanbox.domain.entity.FanboxPaidRecordListEntity
@@ -24,9 +26,14 @@ import me.matsumo.fankt.fanbox.domain.model.id.FanboxUserId
 internal class FanboxUserMapper(
     private val postMapper: FanboxPostMapper,
     private val creatorMapper: FanboxCreatorMapper,
+    private val listItemDecoder: FanboxListItemDecoder = FanboxListItemDecoder(),
 ) {
-    fun map(entity: FanboxCreatorPlanListEntity): List<FanboxCreatorPlan> {
-        return creatorMapper.map(entity)
+    fun map(entity: FanboxCreatorPlanListEntity, endpoint: String): FanboxTolerantResult<List<FanboxCreatorPlan>> {
+        return creatorMapper.map(entity, endpoint)
+    }
+
+    fun map(entity: FanboxCreatorPlanListStrictEntity): List<FanboxCreatorPlan> {
+        return entity.body.map(creatorMapper::map)
     }
 
     fun map(entity: FanboxPaidRecordListEntity): List<FanboxPaidRecord> {
@@ -53,50 +60,57 @@ internal class FanboxUserMapper(
         }
     }
 
-    fun map(entity: FanboxBellListEntity): PageNumberInfo<FanboxBell> {
-        return PageNumberInfo(
-            contents = entity.body.items.mapNotNull {
-                when (it.type) {
-                    "on_post_published" -> {
-                        FanboxBell.PostPublished(
-                            id = FanboxPostId(it.post!!.id),
-                            notifiedDatetime = Instant.parse(it.notifiedDatetime),
-                            post = postMapper.map(it.post),
-                        )
-                    }
-
-                    "post_comment" -> {
-                        FanboxBell.Comment(
-                            id = FanboxCommentId(it.id),
-                            notifiedDatetime = Instant.parse(it.notifiedDatetime),
-                            comment = it.postCommentBody!!,
-                            isRootComment = it.isRootComment!!,
-                            creatorId = FanboxCreatorId(it.creatorId!!),
-                            postId = FanboxPostId(it.postId!!),
-                            postTitle = it.postTitle!!,
-                            userName = it.userName!!,
-                            userProfileIconUrl = it.userProfileImg!!,
-                        )
-                    }
-
-                    "post_comment_like" -> {
-                        FanboxBell.Like(
-                            id = it.id,
-                            notifiedDatetime = Instant.parse(it.notifiedDatetime),
-                            comment = it.postCommentBody!!,
-                            creatorId = FanboxCreatorId(it.creatorId!!),
-                            postId = FanboxPostId(it.postId!!),
-                            count = it.count!!,
-                        )
-                    }
-
-                    else -> {
-                        Napier.w { "FanboxBellItemsEntity translate error: Unknown bell type. $it" }
-                        null
-                    }
+    fun map(entity: FanboxBellListEntity, endpoint: String): FanboxTolerantResult<PageNumberInfo<FanboxBell>> {
+        val decoded = listItemDecoder.decodeAndMap(
+            endpoint = endpoint,
+            items = entity.body.items,
+            deserializer = FanboxBellListEntity.Body.Item.serializer(),
+        ) { item, _ ->
+            val bell: FanboxBell = when (item.type) {
+                "on_post_published" -> {
+                    val post = requireNotNull(item.post) { "post is required for on_post_published" }
+                    FanboxBell.PostPublished(
+                        id = FanboxPostId(post.id),
+                        notifiedDatetime = Instant.parse(item.notifiedDatetime),
+                        post = postMapper.map(post),
+                    )
                 }
-            },
-            nextPage = entity.body.nextUrl?.let { Url(it).parameters["page"]?.toIntOrNull() },
+
+                "post_comment" -> {
+                    FanboxBell.Comment(
+                        id = FanboxCommentId(item.id),
+                        notifiedDatetime = Instant.parse(item.notifiedDatetime),
+                        comment = requireNotNull(item.postCommentBody) { "postCommentBody is required for post_comment" },
+                        isRootComment = requireNotNull(item.isRootComment) { "isRootComment is required for post_comment" },
+                        creatorId = FanboxCreatorId(requireNotNull(item.creatorId) { "creatorId is required for post_comment" }),
+                        postId = FanboxPostId(requireNotNull(item.postId) { "postId is required for post_comment" }),
+                        postTitle = requireNotNull(item.postTitle) { "postTitle is required for post_comment" },
+                        userName = requireNotNull(item.userName) { "userName is required for post_comment" },
+                        userProfileIconUrl = requireNotNull(item.userProfileImg) { "userProfileImg is required for post_comment" },
+                    )
+                }
+
+                "post_comment_like" -> {
+                    FanboxBell.Like(
+                        id = item.id,
+                        notifiedDatetime = Instant.parse(item.notifiedDatetime),
+                        comment = requireNotNull(item.postCommentBody) { "postCommentBody is required for post_comment_like" },
+                        creatorId = FanboxCreatorId(requireNotNull(item.creatorId) { "creatorId is required for post_comment_like" }),
+                        postId = FanboxPostId(requireNotNull(item.postId) { "postId is required for post_comment_like" }),
+                        count = requireNotNull(item.count) { "count is required for post_comment_like" },
+                    )
+                }
+
+                else -> throw IllegalArgumentException("Unknown bell type")
+            }
+            FanboxTolerantResult(bell, emptyList())
+        }
+        return FanboxTolerantResult(
+            value = PageNumberInfo(
+                contents = decoded.value,
+                nextPage = entity.body.nextUrl?.let { Url(it).parameters["page"]?.toIntOrNull() },
+            ),
+            mismatches = decoded.mismatches,
         )
     }
 

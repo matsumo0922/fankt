@@ -3,6 +3,8 @@ package me.matsumo.fankt.fanbox.datasource.mapper
 import io.github.aakira.napier.Napier
 import io.ktor.http.Url
 import kotlinx.datetime.Instant
+import me.matsumo.fankt.fanbox.FanboxListItemDecoder
+import me.matsumo.fankt.fanbox.FanboxTolerantResult
 import me.matsumo.fankt.fanbox.domain.FanboxCursor
 import me.matsumo.fankt.fanbox.domain.PageCursorInfo
 import me.matsumo.fankt.fanbox.domain.PageNumberInfo
@@ -27,19 +29,41 @@ import me.matsumo.fankt.fanbox.domain.model.id.FanboxPostItemId
 import me.matsumo.fankt.fanbox.domain.model.id.FanboxUserId
 import me.matsumo.fankt.fanbox.domain.translateToCursor
 
-internal class FanboxPostMapper {
+internal class FanboxPostMapper(
+    private val listItemDecoder: FanboxListItemDecoder = FanboxListItemDecoder(),
+) {
 
-    fun map(entity: FanboxPostListEntity): PageCursorInfo<FanboxPost> {
-        return PageCursorInfo(
-            contents = entity.body.items.map { map(it) },
-            cursor = entity.body.nextUrl?.translateToCursor(),
+    fun map(entity: FanboxPostListEntity, endpoint: String): FanboxTolerantResult<PageCursorInfo<FanboxPost>> {
+        val decoded = listItemDecoder.decodeAndMap(
+            endpoint = endpoint,
+            items = entity.body.items,
+            deserializer = FanboxPostEntity.serializer(),
+        ) { item, _ -> FanboxTolerantResult(map(item), emptyList()) }
+        return FanboxTolerantResult(
+            value = PageCursorInfo(
+                contents = decoded.value,
+                cursor = entity.body.nextUrl?.translateToCursor(),
+            ),
+            mismatches = decoded.mismatches,
         )
     }
 
-    fun map(entity: FanboxCreatorPostItemsEntity, nextCursor: FanboxCursor?): PageCursorInfo<FanboxPost> {
-        return PageCursorInfo(
-            contents = entity.body.map { map(it) },
-            cursor = nextCursor,
+    fun map(
+        entity: FanboxCreatorPostItemsEntity,
+        nextCursor: FanboxCursor?,
+        endpoint: String,
+    ): FanboxTolerantResult<PageCursorInfo<FanboxPost>> {
+        val decoded = listItemDecoder.decodeAndMap(
+            endpoint = endpoint,
+            items = entity.body,
+            deserializer = FanboxPostEntity.serializer(),
+        ) { item, _ -> FanboxTolerantResult(map(item), emptyList()) }
+        return FanboxTolerantResult(
+            value = PageCursorInfo(
+                contents = decoded.value,
+                cursor = nextCursor,
+            ),
+            mismatches = decoded.mismatches,
         )
     }
 
@@ -224,33 +248,57 @@ internal class FanboxPostMapper {
         )
     }
 
-    fun map(entity: FanboxPostCommentListEntity): PageOffsetInfo<FanboxComment> {
-        return PageOffsetInfo(
-            contents = entity.body.commentList.items.map { map(it) },
-            offset = entity.body.commentList.nextUrl?.let { Url(it).parameters["offset"]?.toIntOrNull() },
+    fun map(
+        entity: FanboxPostCommentListEntity,
+        endpoint: String,
+    ): FanboxTolerantResult<PageOffsetInfo<FanboxComment>> {
+        val decoded = listItemDecoder.decodeAndMap(
+            endpoint = endpoint,
+            items = entity.body.commentList.items,
+            deserializer = FanboxCommentListEntity.Item.serializer(),
+        ) { item, indexPath -> mapComment(item, endpoint, indexPath) }
+        return FanboxTolerantResult(
+            value = PageOffsetInfo(
+                contents = decoded.value,
+                offset = entity.body.commentList.nextUrl?.let { Url(it).parameters["offset"]?.toIntOrNull() },
+            ),
+            mismatches = decoded.mismatches,
         )
     }
 
-    fun map(entity: FanboxCommentListEntity.Item): FanboxComment {
+    private fun mapComment(
+        entity: FanboxCommentListEntity.Item,
+        endpoint: String,
+        indexPath: List<Int>,
+    ): FanboxTolerantResult<FanboxComment> {
+        val decodedReplies = listItemDecoder.decodeAndMap(
+            endpoint = endpoint,
+            items = entity.replies,
+            deserializer = FanboxCommentListEntity.Item.serializer(),
+            indexPrefix = indexPath,
+        ) { reply, replyPath -> mapComment(reply, endpoint, replyPath) }
         return with(entity) {
-            FanboxComment(
-                body = body,
-                createdDatetime = Instant.parse(createdDatetime),
-                id = FanboxCommentId(id),
-                isLiked = isLiked,
-                isOwn = isOwn,
-                likeCount = likeCount,
-                parentCommentId = FanboxCommentId(parentCommentId),
-                rootCommentId = FanboxCommentId(rootCommentId),
-                replies = replies.map { map(it) }.sortedBy { it.createdDatetime },
-                user = user?.let {
-                    FanboxUser(
-                        userId = FanboxUserId(it.userId.toLong()),
-                        creatorId = null,
-                        name = it.name,
-                        iconUrl = it.iconUrl,
-                    )
-                },
+            FanboxTolerantResult(
+                value = FanboxComment(
+                    body = body,
+                    createdDatetime = Instant.parse(createdDatetime),
+                    id = FanboxCommentId(id),
+                    isLiked = isLiked,
+                    isOwn = isOwn,
+                    likeCount = likeCount,
+                    parentCommentId = FanboxCommentId(parentCommentId),
+                    rootCommentId = FanboxCommentId(rootCommentId),
+                    replies = decodedReplies.value.sortedBy { it.createdDatetime },
+                    user = user?.let {
+                        FanboxUser(
+                            userId = FanboxUserId(it.userId.toLong()),
+                            creatorId = null,
+                            name = it.name,
+                            iconUrl = it.iconUrl,
+                        )
+                    },
+                ),
+                mismatches = decodedReplies.mismatches,
             )
         }
     }

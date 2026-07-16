@@ -2,11 +2,12 @@ package me.matsumo.fankt.fanbox.domain.entity
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.JsonElement
 
 @Serializable
 internal data class FanboxCommentListEntity(
     @SerialName("items")
-    val items: List<Item>,
+    val items: List<JsonElement>,
     @SerialName("nextUrl")
     val nextUrl: String?,
 ) {
@@ -31,7 +32,7 @@ internal data class FanboxCommentListEntity(
         @SerialName("user")
         val user: FanboxUserEntity?,
         @SerialName("replies")
-        val replies: List<Item> = emptyList(),
+        val replies: List<JsonElement> = emptyList(),
     )
 }
 

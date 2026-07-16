@@ -30,7 +30,7 @@ internal class FanboxPostRepository(
             firstId = cursor?.firstId,
             maxId = cursor?.maxId,
         ).let {
-            fanboxPostMapper.map(it)
+            fanboxPostMapper.map(it, "post.listHome")
         }
     }
 
@@ -42,7 +42,7 @@ internal class FanboxPostRepository(
             firstId = cursor?.firstId,
             maxId = cursor?.maxId,
         ).let {
-            fanboxPostMapper.map(it)
+            fanboxPostMapper.map(it, "post.listSupporting")
         }
     }
 
@@ -62,7 +62,7 @@ internal class FanboxPostRepository(
             firstId = cursors.first.firstId,
             maxId = cursors.first.maxId,
         ).let {
-            fanboxPostMapper.map(it, cursors.second)
+            fanboxPostMapper.map(it, cursors.second, "post.listCreator")
         }
     }
 
@@ -84,7 +84,7 @@ internal class FanboxPostRepository(
             offset = offset,
             loadSize = LOAD_SIZE,
         ).let {
-            fanboxPostMapper.map(it)
+            fanboxPostMapper.map(it, "post.getComments")
         }
     }
 

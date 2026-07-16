@@ -2,11 +2,12 @@ package me.matsumo.fankt.fanbox.domain.entity
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.JsonElement
 
 @Serializable
 internal data class FanboxCreatorPlanListEntity(
     @SerialName("body")
-    val body: List<Body>,
+    val body: List<JsonElement>,
 ) {
     @Serializable
     data class Body(
@@ -30,3 +31,9 @@ internal data class FanboxCreatorPlanListEntity(
         val user: FanboxUserEntity?,
     )
 }
+
+@Serializable
+internal data class FanboxCreatorPlanListStrictEntity(
+    @SerialName("body")
+    val body: List<FanboxCreatorPlanListEntity.Body>,
+)

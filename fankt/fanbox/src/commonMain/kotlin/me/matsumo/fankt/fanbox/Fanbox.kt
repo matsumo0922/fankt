@@ -146,10 +146,11 @@ class Fanbox(
         val postWithoutContentNegotiation = ktorfitWithoutContentNegotiation.createFanboxPostApi()
         val creatorWithoutContentNegotiation = ktorfitWithoutContentNegotiation.createFanboxCreatorApi()
 
-        val postMapper = FanboxPostMapper()
-        val creatorMapper = FanboxCreatorMapper()
+        val listItemDecoder = FanboxListItemDecoder(formatter, logLevel != LogLevel.NONE)
+        val postMapper = FanboxPostMapper(listItemDecoder)
+        val creatorMapper = FanboxCreatorMapper(listItemDecoder)
         val searchMapper = me.matsumo.fankt.fanbox.datasource.mapper.FanboxSearchMapper(creatorMapper)
-        val userMapper = FanboxUserMapper(postMapper, creatorMapper)
+        val userMapper = FanboxUserMapper(postMapper, creatorMapper, listItemDecoder)
         val metadataParser = FanboxMetadataParser(formatter)
 
         post = FanboxPostRepository(postApi, postWithoutContentNegotiation, postMapper)
@@ -207,17 +208,48 @@ class Fanbox(
 
     /** @throws FanboxException when the FANBOX request or response decoding fails. */
     suspend fun getHomePosts(cursor: FanboxCursor?): PageCursorInfo<FanboxPost> {
-        return post.getHomePosts(cursor)
+        return post.getHomePosts(cursor).value
+    }
+
+    /**
+     * Returns home posts and reports each skipped item before returning.
+     *
+     * [onItemSchemaMismatch] runs on the caller's coroutine context. An exception from the callback
+     * is propagated to the caller.
+     */
+    suspend fun getHomePosts(
+        cursor: FanboxCursor?,
+        onItemSchemaMismatch: (FanboxListItemSchemaMismatch) -> Unit,
+    ): PageCursorInfo<FanboxPost> {
+        return post.getHomePosts(cursor).notifyMismatches(onItemSchemaMismatch)
     }
 
     /** @throws FanboxException when the FANBOX request or response decoding fails. */
     suspend fun getSupportedPosts(cursor: FanboxCursor?): PageCursorInfo<FanboxPost> {
-        return post.getSupportedPosts(cursor)
+        return post.getSupportedPosts(cursor).value
+    }
+
+    /** Returns supported posts and reports each skipped item on the caller's coroutine context. */
+    suspend fun getSupportedPosts(
+        cursor: FanboxCursor?,
+        onItemSchemaMismatch: (FanboxListItemSchemaMismatch) -> Unit,
+    ): PageCursorInfo<FanboxPost> {
+        return post.getSupportedPosts(cursor).notifyMismatches(onItemSchemaMismatch)
     }
 
     /** @throws FanboxException when the FANBOX request or response decoding fails. */
     suspend fun getCreatorPosts(creatorId: FanboxCreatorId, cursor: FanboxCursor?, nextCursor: FanboxCursor?): PageCursorInfo<FanboxPost> {
-        return post.getCreatorPosts(creatorId, cursor, nextCursor)
+        return post.getCreatorPosts(creatorId, cursor, nextCursor).value
+    }
+
+    /** Returns creator posts and reports each skipped item on the caller's coroutine context. */
+    suspend fun getCreatorPosts(
+        creatorId: FanboxCreatorId,
+        cursor: FanboxCursor?,
+        nextCursor: FanboxCursor?,
+        onItemSchemaMismatch: (FanboxListItemSchemaMismatch) -> Unit,
+    ): PageCursorInfo<FanboxPost> {
+        return post.getCreatorPosts(creatorId, cursor, nextCursor).notifyMismatches(onItemSchemaMismatch)
     }
 
     /** @throws FanboxException when the FANBOX request or response decoding fails. */
@@ -232,7 +264,16 @@ class Fanbox(
 
     /** @throws FanboxException when the FANBOX request or response decoding fails. */
     suspend fun getPostComment(postId: FanboxPostId, offset: Int): PageOffsetInfo<FanboxComment> {
-        return post.getPostComment(postId, offset)
+        return post.getPostComment(postId, offset).value
+    }
+
+    /** Returns comments and reports each skipped comment or reply on the caller's coroutine context. */
+    suspend fun getPostComment(
+        postId: FanboxPostId,
+        offset: Int,
+        onItemSchemaMismatch: (FanboxListItemSchemaMismatch) -> Unit,
+    ): PageOffsetInfo<FanboxComment> {
+        return post.getPostComment(postId, offset).notifyMismatches(onItemSchemaMismatch)
     }
 
     /** @throws FanboxException when the FANBOX request or response decoding fails. */
@@ -267,22 +308,51 @@ class Fanbox(
 
     /** @throws FanboxException when the FANBOX request or response decoding fails. */
     suspend fun getFollowingCreators(): List<FanboxCreatorDetail> {
-        return creator.getFollowingCreators()
+        return creator.getFollowingCreators().value
+    }
+
+    /** Returns followed creators and reports each skipped item on the caller's coroutine context. */
+    suspend fun getFollowingCreators(
+        onItemSchemaMismatch: (FanboxListItemSchemaMismatch) -> Unit,
+    ): List<FanboxCreatorDetail> {
+        return creator.getFollowingCreators().notifyMismatches(onItemSchemaMismatch)
     }
 
     /** @throws FanboxException when the FANBOX request or response decoding fails. */
     suspend fun getFollowingPixivCreators(): List<FanboxCreatorDetail> {
-        return creator.getFollowingPixivCreators()
+        return creator.getFollowingPixivCreators().value
+    }
+
+    /** Returns followed pixiv creators and reports each skipped item on the caller's coroutine context. */
+    suspend fun getFollowingPixivCreators(
+        onItemSchemaMismatch: (FanboxListItemSchemaMismatch) -> Unit,
+    ): List<FanboxCreatorDetail> {
+        return creator.getFollowingPixivCreators().notifyMismatches(onItemSchemaMismatch)
     }
 
     /** @throws FanboxException when the FANBOX request or response decoding fails. */
     suspend fun getRecommendedCreators(): List<FanboxCreatorDetail> {
-        return creator.getRecommendedCreators()
+        return creator.getRecommendedCreators().value
+    }
+
+    /** Returns recommended creators and reports each skipped item on the caller's coroutine context. */
+    suspend fun getRecommendedCreators(
+        onItemSchemaMismatch: (FanboxListItemSchemaMismatch) -> Unit,
+    ): List<FanboxCreatorDetail> {
+        return creator.getRecommendedCreators().notifyMismatches(onItemSchemaMismatch)
     }
 
     /** @throws FanboxException when the FANBOX request or response decoding fails. */
     suspend fun getCreatorPlans(creatorId: FanboxCreatorId): List<FanboxCreatorPlan> {
-        return creator.getCreatorPlans(creatorId)
+        return creator.getCreatorPlans(creatorId).value
+    }
+
+    /** Returns creator plans and reports each skipped item on the caller's coroutine context. */
+    suspend fun getCreatorPlans(
+        creatorId: FanboxCreatorId,
+        onItemSchemaMismatch: (FanboxListItemSchemaMismatch) -> Unit,
+    ): List<FanboxCreatorPlan> {
+        return creator.getCreatorPlans(creatorId).notifyMismatches(onItemSchemaMismatch)
     }
 
     /** @throws FanboxException when the FANBOX request or response decoding fails. */
@@ -320,6 +390,18 @@ class Fanbox(
         return user.getSupportedPlans()
     }
 
+    /**
+     * Returns the decodable supported plans and reports each skipped item before returning.
+     *
+     * The no-callback overload remains strict and fails the whole request when any plan item cannot
+     * be decoded. Use this overload to opt into partial results.
+     */
+    suspend fun getSupportedPlans(
+        onItemSchemaMismatch: (FanboxListItemSchemaMismatch) -> Unit,
+    ): List<FanboxCreatorPlan> {
+        return user.getSupportedPlansTolerant().notifyMismatches(onItemSchemaMismatch)
+    }
+
     /** @throws FanboxException when the FANBOX request or response decoding fails. */
     suspend fun getPaidRecords(): List<FanboxPaidRecord> {
         return user.getPaidRecords()
@@ -337,7 +419,15 @@ class Fanbox(
 
     /** @throws FanboxException when the FANBOX request or response decoding fails. */
     suspend fun getBells(page: Int): PageNumberInfo<FanboxBell> {
-        return user.getBells(page)
+        return user.getBells(page).value
+    }
+
+    /** Returns notifications and reports each skipped item on the caller's coroutine context. */
+    suspend fun getBells(
+        page: Int,
+        onItemSchemaMismatch: (FanboxListItemSchemaMismatch) -> Unit,
+    ): PageNumberInfo<FanboxBell> {
+        return user.getBells(page).notifyMismatches(onItemSchemaMismatch)
     }
 
     /** @throws FanboxException when homepage metadata cannot be fetched or decoded. */
@@ -383,6 +473,13 @@ class Fanbox(
     ): HttpStatement {
         return download.downloadPostThumbnailImage(postId, itemId, onDownload)
     }
+}
+
+internal fun <T> FanboxTolerantResult<T>.notifyMismatches(
+    callback: (FanboxListItemSchemaMismatch) -> Unit,
+): T {
+    mismatches.forEach(callback)
+    return value
 }
 
 internal suspend fun fetchAndStoreCsrfToken(

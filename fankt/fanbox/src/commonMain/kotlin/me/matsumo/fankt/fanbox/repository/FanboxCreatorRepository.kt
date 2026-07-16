@@ -27,25 +27,25 @@ internal class FanboxCreatorRepository(
 
     suspend fun getFollowingCreators() = withContext(ioDispatcher) {
         fanboxCreatorApi.getFollowingCreators().let {
-            fanboxCreatorMapper.map(it)
+            fanboxCreatorMapper.map(it, "creator.listFollowing")
         }
     }
 
     suspend fun getFollowingPixivCreators() = withContext(ioDispatcher) {
         fanboxCreatorApi.getFollowingPixivCreators().let {
-            fanboxCreatorMapper.map(it)
+            fanboxCreatorMapper.map(it, "creator.listPixiv")
         }
     }
 
     suspend fun getRecommendedCreators() = withContext(ioDispatcher) {
         fanboxCreatorApi.getRecommendedCreators(LOAD_SIZE).let {
-            fanboxCreatorMapper.map(it)
+            fanboxCreatorMapper.map(it, "creator.listRecommended")
         }
     }
 
     suspend fun getCreatorPlans(creatorId: FanboxCreatorId) = withContext(ioDispatcher) {
         fanboxCreatorApi.getCreatorPlans(creatorId.value).let {
-            fanboxCreatorMapper.map(it)
+            fanboxCreatorMapper.map(it, "plan.listCreator")
         }
     }
 

@@ -62,7 +62,8 @@ class FanboxUserMapperGoldenTest {
     fun actualBellPostPublishedPageWithPagingMapsFullObjects() {
         val actual = mapper.map(
             decodeFixture<FanboxBellListEntity>(FanboxUserJsonFixtures.actualBellPostPublishedPage),
-        )
+            endpoint = "bell.list",
+        ).value
 
         val expected: PageNumberInfo<FanboxBell> = PageNumberInfo(
             contents = listOf(
@@ -464,7 +465,8 @@ class FanboxUserMapperGoldenTest {
     fun handcraftedBellPostCommentVariationMapsFullObject() {
         val actual = mapper.map(
             decodeFixture<FanboxBellListEntity>(FanboxUserJsonFixtures.handcraftedBellPostComment),
-        )
+            endpoint = "bell.list",
+        ).value
 
         val expected: PageNumberInfo<FanboxBell> = PageNumberInfo(
             contents = listOf(
@@ -490,7 +492,8 @@ class FanboxUserMapperGoldenTest {
     fun handcraftedBellPostCommentLikeVariationMapsFullObject() {
         val actual = mapper.map(
             decodeFixture<FanboxBellListEntity>(FanboxUserJsonFixtures.handcraftedBellPostCommentLike),
-        )
+            endpoint = "bell.list",
+        ).value
 
         val expected: PageNumberInfo<FanboxBell> = PageNumberInfo(
             contents = listOf(
