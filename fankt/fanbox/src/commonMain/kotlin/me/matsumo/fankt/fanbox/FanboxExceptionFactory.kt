@@ -3,6 +3,7 @@ package me.matsumo.fankt.fanbox
 import io.ktor.client.request.HttpRequest
 import io.ktor.client.statement.HttpResponse
 import io.ktor.client.statement.bodyAsText
+import io.ktor.client.statement.request
 import io.ktor.http.HttpHeaders
 import io.ktor.http.Url
 import io.ktor.http.fromHttpToGmtDate
@@ -57,7 +58,7 @@ internal object FanboxExceptionFactory {
         "tag.search",
     )
 
-    private val credentialKey =
+    private const val credentialKey =
         "(?:csrfToken|FANBOXSESSID|x-csrf-token|authorization|cookie)"
     private val jsonCredential = Regex(
         pattern = "(?i)([\\\"']?$credentialKey[\\\"']?\\s*:\\s*[\\\"'])([^\\\"']*)([\\\"'])",
