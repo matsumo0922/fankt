@@ -55,6 +55,15 @@ import me.matsumo.fankt.fanbox.repository.FanboxPostRepository
 import me.matsumo.fankt.fanbox.repository.FanboxSearchRepository
 import me.matsumo.fankt.fanbox.repository.FanboxUserRepository
 
+/**
+ * Provides access to the pixivFANBOX API.
+ *
+ * The public [logLevel] maps [LogLevel.BODY] to an effective [LogLevel.INFO] level and
+ * [LogLevel.ALL] to an effective [LogLevel.HEADERS] level. The Logging plugin never receives a
+ * raw response body. For allowlisted generated-route errors, a sanitized and bounded diagnostic
+ * fragment is retained and logged through a separate path; custom requests and unknown routes
+ * retain no response fragment.
+ */
 class Fanbox(
     private val logLevel: LogLevel = LogLevel.NONE,
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,

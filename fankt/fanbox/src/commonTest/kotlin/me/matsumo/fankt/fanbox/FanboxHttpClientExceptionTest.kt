@@ -97,6 +97,32 @@ class FanboxHttpClientExceptionTest {
     }
 
     @Test
+    fun successfulStringThroughProductionConfigUsesGeneratedClientSource() = runBlocking {
+        val client = mockClient(
+            source = FanboxDiagnosticSource.LibraryGenerated,
+            status = HttpStatusCode.OK,
+            body = "generated-response",
+        )
+
+        val body = client.get("https://api.fanbox.cc/post.info").body<String>()
+
+        assertEquals("generated-response", body)
+    }
+
+    @Test
+    fun successfulStringThroughProductionConfigUsesPublicRawClientSource() = runBlocking {
+        val client = mockClient(
+            source = FanboxDiagnosticSource.PublicRaw,
+            status = HttpStatusCode.OK,
+            body = "raw-response",
+        )
+
+        val body = client.get("https://api.fanbox.cc/post.info").body<String>()
+
+        assertEquals("raw-response", body)
+    }
+
+    @Test
     fun malformedJsonThroughProductionConfigUsesSchemaMismatch() = runBlocking {
         val tail = "full-html-tail-must-not-appear"
         val body = "{\"ok\":" + "x".repeat(3_000) + tail

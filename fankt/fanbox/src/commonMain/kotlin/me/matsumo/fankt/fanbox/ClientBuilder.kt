@@ -16,10 +16,14 @@ import io.ktor.client.request.header
 import io.ktor.client.statement.HttpResponse
 import io.ktor.client.statement.request
 import io.ktor.http.HttpHeaders
+import io.ktor.http.charset
 import io.ktor.http.isSuccess
 import io.ktor.serialization.JsonConvertException
 import io.ktor.serialization.kotlinx.json.json
 import io.ktor.util.AttributeKey
+import io.ktor.utils.io.charsets.Charsets
+import io.ktor.utils.io.charsets.decode
+import io.ktor.utils.io.readRemaining
 import kotlinx.coroutines.CancellationException
 import kotlinx.io.IOException
 import kotlinx.serialization.SerializationException
@@ -39,6 +43,12 @@ private val FanboxSchemaMismatchPlugin = createClientPlugin(
 ) {
     val source = pluginConfig.source
     transformResponseBody { response, content, requestedType ->
+        if (requestedType.type == String::class) {
+            return@transformResponseBody (response.charset() ?: Charsets.UTF_8)
+                .newDecoder()
+                .decode(content.readRemaining())
+        }
+
         val cause = NoTransformationFoundException(response, content::class, requestedType.type)
         throw FanboxExceptionFactory.schemaMismatch(response, response.request, source, cause)
     }

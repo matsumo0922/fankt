@@ -93,6 +93,11 @@ Log only `FanboxException.message` or an explicitly reviewed `rawBody`. The orig
 preserved for debugging, but its messages are not covered by the bounded or redacted diagnostic
 contract and must not be logged automatically.
 
+The `Fanbox` constructor treats `LogLevel.BODY` as effective `INFO` and `LogLevel.ALL` as effective
+`HEADERS`. The Logging plugin never receives a raw response body. Allowlisted generated-route
+errors use a separate path for a sanitized, control-normalized fragment bounded to 2,048 Kotlin
+characters; custom requests and unknown routes retain no response fragment.
+
 ### Fantia
 
 WIP (Work in Progress)
