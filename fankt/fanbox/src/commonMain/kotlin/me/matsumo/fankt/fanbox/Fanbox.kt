@@ -88,17 +88,44 @@ class Fanbox(
     private fun buildKtorfit(csrfToken: CSRFToken?) {
         val ktorfit = Ktorfit.Builder()
             .baseUrl("https://api.fanbox.cc/")
-            .httpClient(buildHttpClient(formatter, cookieStorage, csrfToken, logLevel, true))
+            .httpClient(
+                buildHttpClient(
+                    formatter,
+                    cookieStorage,
+                    FanboxDiagnosticSource.LibraryGenerated,
+                    csrfToken,
+                    logLevel,
+                    true,
+                ),
+            )
             .build()
 
         val ktorfitWithoutContentNegotiation = Ktorfit.Builder()
             .baseUrl("https://api.fanbox.cc/")
-            .httpClient(buildHttpClient(formatter, cookieStorage, csrfToken, logLevel, false))
+            .httpClient(
+                buildHttpClient(
+                    formatter,
+                    cookieStorage,
+                    FanboxDiagnosticSource.LibraryGenerated,
+                    csrfToken,
+                    logLevel,
+                    false,
+                ),
+            )
             .build()
 
         val ktorfitDownload = Ktorfit.Builder()
             .baseUrl("https://downloads.fanbox.cc/")
-            .httpClient(buildHttpClient(formatter, cookieStorage, csrfToken, logLevel, true))
+            .httpClient(
+                buildHttpClient(
+                    formatter,
+                    cookieStorage,
+                    FanboxDiagnosticSource.LibraryGenerated,
+                    csrfToken,
+                    logLevel,
+                    true,
+                ),
+            )
             .build()
 
         val postApi = ktorfit.createFanboxPostApi()
@@ -123,8 +150,21 @@ class Fanbox(
         download = FanboxDownloadRepository(downloadApi)
     }
 
+    /**
+     * Returns a separate client for custom requests.
+     *
+     * Failures from requests made with this client always use endpoint `custom-request` and suppress
+     * response fragments, even when a request targets a library-owned FANBOX path.
+     */
     suspend fun getHttpClient(isEnableContentNegotiation: Boolean = true): HttpClient {
-        return buildHttpClient(formatter, cookieStorage, tokenDao.getLatestToken().first(), logLevel, isEnableContentNegotiation)
+        return buildHttpClient(
+            formatter = formatter,
+            cookieStorage = cookieStorage,
+            source = FanboxDiagnosticSource.PublicRaw,
+            csrfToken = tokenDao.getLatestToken().first(),
+            logLevel = logLevel,
+            isEnableContentNegotiation = isEnableContentNegotiation,
+        )
     }
 
     suspend fun setFanboxSessionId(sessionId: String) {
@@ -145,129 +185,162 @@ class Fanbox(
         }
     }
 
+    /** Fetches metadata and stores its CSRF token. @throws FanboxException when the request fails. */
     suspend fun updateCsrfToken() {
         withContext(ioDispatcher) {
-            tokenDao.insert(
-                CSRFToken(
-                    value = getMetadata().csrfToken,
-                    createdAt = Clock.System.now().toEpochMilliseconds(),
-                ),
+            fetchAndStoreCsrfToken(
+                fetchMetadata = ::getMetadata,
+                storeToken = tokenDao::insert,
+                nowEpochMilliseconds = { Clock.System.now().toEpochMilliseconds() },
             )
         }
     }
 
+    /** @throws FanboxException when the FANBOX request or response decoding fails. */
     suspend fun getHomePosts(cursor: FanboxCursor?): PageCursorInfo<FanboxPost> {
         return post.getHomePosts(cursor)
     }
 
+    /** @throws FanboxException when the FANBOX request or response decoding fails. */
     suspend fun getSupportedPosts(cursor: FanboxCursor?): PageCursorInfo<FanboxPost> {
         return post.getSupportedPosts(cursor)
     }
 
+    /** @throws FanboxException when the FANBOX request or response decoding fails. */
     suspend fun getCreatorPosts(creatorId: FanboxCreatorId, cursor: FanboxCursor?, nextCursor: FanboxCursor?): PageCursorInfo<FanboxPost> {
         return post.getCreatorPosts(creatorId, cursor, nextCursor)
     }
 
+    /** @throws FanboxException when the FANBOX request or response decoding fails. */
     suspend fun getCreatorPostsPagination(creatorId: FanboxCreatorId): List<FanboxCursor> {
         return post.getCreatorPostsPagination(creatorId)
     }
 
+    /** @throws FanboxException when the FANBOX request or response decoding fails. */
     suspend fun getPostDetail(postId: FanboxPostId): FanboxPostDetail {
         return post.getPostDetail(postId)
     }
 
+    /** @throws FanboxException when the FANBOX request or response decoding fails. */
     suspend fun getPostComment(postId: FanboxPostId, offset: Int): PageOffsetInfo<FanboxComment> {
         return post.getPostComment(postId, offset)
     }
 
+    /** @throws FanboxException when the FANBOX request or response decoding fails. */
     suspend fun getPostFromQuery(query: String, creatorId: FanboxCreatorId?, page: Int): PageNumberInfo<FanboxPost> {
         return post.getPostFromQuery(query, creatorId, page)
     }
 
+    /** @throws FanboxException when the FANBOX request fails. */
     suspend fun likePost(postId: FanboxPostId) {
         post.likePost(postId)
     }
 
+    /** @throws FanboxException when the FANBOX request fails. */
     suspend fun likeComment(commentId: FanboxCommentId) {
         post.likeComment(commentId)
     }
 
+    /** @throws FanboxException when the FANBOX request fails. */
     suspend fun addComment(postId: FanboxPostId, rootCommentId: FanboxCommentId, parentCommentId: FanboxCommentId, body: String) {
         post.addComment(postId, rootCommentId, parentCommentId, body)
     }
 
+    /** @throws FanboxException when the FANBOX request fails. */
     suspend fun deleteComment(commentId: FanboxCommentId) {
         post.deleteComment(commentId)
     }
 
+    /** @throws FanboxException when the FANBOX request or response decoding fails. */
     suspend fun getCreatorDetail(creatorId: FanboxCreatorId): FanboxCreatorDetail {
         return creator.getCreatorDetail(creatorId)
     }
 
+    /** @throws FanboxException when the FANBOX request or response decoding fails. */
     suspend fun getFollowingCreators(): List<FanboxCreatorDetail> {
         return creator.getFollowingCreators()
     }
 
+    /** @throws FanboxException when the FANBOX request or response decoding fails. */
     suspend fun getFollowingPixivCreators(): List<FanboxCreatorDetail> {
         return creator.getFollowingPixivCreators()
     }
 
+    /** @throws FanboxException when the FANBOX request or response decoding fails. */
     suspend fun getRecommendedCreators(): List<FanboxCreatorDetail> {
         return creator.getRecommendedCreators()
     }
 
+    /** @throws FanboxException when the FANBOX request or response decoding fails. */
     suspend fun getCreatorPlans(creatorId: FanboxCreatorId): List<FanboxCreatorPlan> {
         return creator.getCreatorPlans(creatorId)
     }
 
+    /** @throws FanboxException when the FANBOX request or response decoding fails. */
     suspend fun getCreatorPlanDetail(creatorId: FanboxCreatorId): FanboxCreatorPlanDetail {
         return creator.getCreatorPlanDetail(creatorId)
     }
 
+    /** @throws FanboxException when the FANBOX request or response decoding fails. */
     suspend fun getCreatorTags(creatorId: FanboxCreatorId): List<FanboxTag> {
         return creator.getCreatorTags(creatorId)
     }
 
+    /** @throws FanboxException when the FANBOX request fails. */
     suspend fun followCreator(userId: FanboxUserId) {
         creator.followCreator(userId)
     }
 
+    /** @throws FanboxException when the FANBOX request fails. */
     suspend fun unfollowCreator(userId: FanboxUserId) {
         creator.unfollowCreator(userId)
     }
 
+    /** @throws FanboxException when the FANBOX request or response decoding fails. */
     suspend fun searchCreators(query: String, page: Int): PageNumberInfo<FanboxCreatorDetail> {
         return search.searchCreators(query, page)
     }
 
+    /** @throws FanboxException when the FANBOX request or response decoding fails. */
     suspend fun searchTags(query: String): List<FanboxTag> {
         return search.searchTags(query)
     }
 
+    /** @throws FanboxException when the FANBOX request or response decoding fails. */
     suspend fun getSupportedPlans(): List<FanboxCreatorPlan> {
         return user.getSupportedPlans()
     }
 
+    /** @throws FanboxException when the FANBOX request or response decoding fails. */
     suspend fun getPaidRecords(): List<FanboxPaidRecord> {
         return user.getPaidRecords()
     }
 
+    /** @throws FanboxException when the FANBOX request or response decoding fails. */
     suspend fun getUnpaidRecords(): List<FanboxPaidRecord> {
         return user.getUnpaidRecords()
     }
 
+    /** @throws FanboxException when the FANBOX request or response decoding fails. */
     suspend fun getNewsLetters(): List<FanboxNewsLetter> {
         return user.getNewsLetters()
     }
 
+    /** @throws FanboxException when the FANBOX request or response decoding fails. */
     suspend fun getBells(page: Int): PageNumberInfo<FanboxBell> {
         return user.getBells(page)
     }
 
+    /** @throws FanboxException when homepage metadata cannot be fetched or decoded. */
     suspend fun getMetadata(): FanboxMetaData {
         return user.getMetadata()
     }
 
+    /**
+     * Creates a deferred file request.
+     *
+     * @throws FanboxException when the returned [HttpStatement] is executed and the request fails.
+     */
     suspend fun downloadPostFile(
         postId: FanboxPostId,
         itemId: FanboxPostItemId,
@@ -276,6 +349,11 @@ class Fanbox(
         return download.downloadPostFile(postId, itemId, onDownload)
     }
 
+    /**
+     * Creates a deferred image request.
+     *
+     * @throws FanboxException when the returned [HttpStatement] is executed and the request fails.
+     */
     suspend fun downloadPostImage(
         postId: FanboxPostId,
         itemId: FanboxPostItemId,
@@ -284,6 +362,11 @@ class Fanbox(
         return download.downloadPostImage(postId, itemId, onDownload)
     }
 
+    /**
+     * Creates a deferred thumbnail request.
+     *
+     * @throws FanboxException when the returned [HttpStatement] is executed and the request fails.
+     */
     suspend fun downloadPostThumbnailImage(
         postId: FanboxPostId,
         itemId: FanboxPostItemId,
@@ -291,4 +374,18 @@ class Fanbox(
     ): HttpStatement {
         return download.downloadPostThumbnailImage(postId, itemId, onDownload)
     }
+}
+
+internal suspend fun fetchAndStoreCsrfToken(
+    fetchMetadata: suspend () -> FanboxMetaData,
+    storeToken: suspend (CSRFToken) -> Unit,
+    nowEpochMilliseconds: () -> Long,
+) {
+    val metadata = fetchMetadata()
+    storeToken(
+        CSRFToken(
+            value = metadata.csrfToken,
+            createdAt = nowEpochMilliseconds(),
+        ),
+    )
 }
