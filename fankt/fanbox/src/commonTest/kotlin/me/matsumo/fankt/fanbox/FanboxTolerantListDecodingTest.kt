@@ -2,7 +2,6 @@ package me.matsumo.fankt.fanbox
 
 import de.jensklingenberg.ktorfit.Ktorfit
 import io.github.aakira.napier.Antilog
-import io.github.aakira.napier.LogLevel as NapierLogLevel
 import io.github.aakira.napier.Napier
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.mock.MockEngine
@@ -22,8 +21,8 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
-import kotlin.test.assertIs
 import kotlin.test.assertTrue
+import io.github.aakira.napier.LogLevel as NapierLogLevel
 
 class FanboxTolerantListDecodingTest {
 

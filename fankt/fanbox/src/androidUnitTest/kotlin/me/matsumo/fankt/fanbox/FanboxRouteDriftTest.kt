@@ -25,8 +25,13 @@ class FanboxRouteDriftTest {
         val apiFiles = allApiFiles.filterNot { it.name == "FanboxDownloadApi.kt" }
 
         val apiRoutes = apiFiles.flatMap(::readDeclaredRoutes)
-        assertEquals(28, apiRoutes.size, "the production API route inventory changed")
-        assertEquals(apiRoutes.size, apiRoutes.toSet().size, "API route declarations must stay unique")
+        assertEquals(29, apiRoutes.size, "the production API route declaration inventory changed")
+        assertEquals(28, apiRoutes.toSet().size, "the production API route inventory changed")
+        assertEquals(
+            mapOf("plan.listSupporting" to 2),
+            apiRoutes.groupingBy { it }.eachCount().filterValues { it > 1 },
+            "only the strict and tolerant plan routes may share an endpoint",
+        )
 
         apiRoutes.forEach { declaration ->
             val url = declaration.toApiUrl()
