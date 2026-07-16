@@ -2,6 +2,7 @@ package me.matsumo.fankt.fanbox.datasource
 
 import de.jensklingenberg.ktorfit.http.GET
 import de.jensklingenberg.ktorfit.http.Query
+import io.ktor.client.statement.HttpResponse
 import me.matsumo.fankt.fanbox.domain.entity.FanboxBellListEntity
 import me.matsumo.fankt.fanbox.domain.entity.FanboxCreatorPlanListEntity
 import me.matsumo.fankt.fanbox.domain.entity.FanboxNewsLettersEntity
@@ -29,5 +30,5 @@ internal interface FanboxUserApi {
     ): FanboxBellListEntity
 
     @GET("https://www.fanbox.cc/")
-    suspend fun getHomePage(): String
+    suspend fun getHomePage(): HttpResponse
 }

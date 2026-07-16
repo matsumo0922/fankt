@@ -42,6 +42,7 @@ import androidx.compose.ui.unit.dp
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.launch
 import me.matsumo.fankt.fanbox.Fanbox
+import me.matsumo.fankt.fanbox.FanboxException
 import me.matsumo.fankt.fanbox.domain.model.id.FanboxCommentId
 import me.matsumo.fankt.fanbox.domain.model.id.FanboxCreatorId
 import me.matsumo.fankt.fanbox.domain.model.id.FanboxNewsLetterId
@@ -124,6 +125,9 @@ private fun RequestItem(
 
         requestResult = try {
             function.callSuspend(classInstance, *typedParams.toTypedArray())
+        } catch (e: FanboxException) {
+            Napier.e { "Error calling function: ${function.name}: ${e.message}" }
+            e
         } catch (e: Throwable) {
             Napier.e(e) { "Error calling function: ${function.name}" }
             e

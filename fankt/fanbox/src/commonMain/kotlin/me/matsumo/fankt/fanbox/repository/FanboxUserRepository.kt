@@ -1,5 +1,6 @@
 package me.matsumo.fankt.fanbox.repository
 
+import io.ktor.client.statement.bodyAsText
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
@@ -45,8 +46,12 @@ internal class FanboxUserRepository(
     }
 
     suspend fun getMetadata() = withContext(ioDispatcher) {
-        fanboxUserApi.getHomePage().let {
-            val data = fanboxMetadataParser.parse(it)
+        fanboxUserApi.getHomePage().let { response ->
+            val data = fanboxMetadataParser.parse(
+                html = response.bodyAsText(),
+                statusCode = response.status.value,
+                endpoint = "homepage",
+            )
 
             fanboxUserMapper.map(data)
         }

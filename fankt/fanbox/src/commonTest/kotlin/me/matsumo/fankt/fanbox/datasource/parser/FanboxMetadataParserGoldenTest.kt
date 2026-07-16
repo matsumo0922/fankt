@@ -1,5 +1,6 @@
 package me.matsumo.fankt.fanbox.datasource.parser
 
+import me.matsumo.fankt.fanbox.FanboxException
 import me.matsumo.fankt.fanbox.createFanboxJson
 import me.matsumo.fankt.fanbox.datasource.mapper.FanboxCreatorMapper
 import me.matsumo.fankt.fanbox.datasource.mapper.FanboxPostMapper
@@ -9,6 +10,8 @@ import me.matsumo.fankt.fanbox.domain.model.id.FanboxUserId
 import me.matsumo.fankt.fanbox.fixture.FanboxMetadataHtmlFixtures
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
+import kotlin.test.assertFalse
 
 class FanboxMetadataParserGoldenTest {
 
@@ -49,5 +52,34 @@ class FanboxMetadataParserGoldenTest {
         )
 
         assertEquals(expected, actual)
+    }
+
+    @Test
+    fun missingMetadataUsesSchemaMismatchWithBoundedContext() {
+        val html = "<html><body>missing metadata fixture-token</body></html>"
+
+        val error = assertFailsWith<FanboxException.SchemaMismatch> {
+            FanboxMetadataParser(createFanboxJson()).parse(html, statusCode = 200)
+        }
+
+        assertEquals(200, error.statusCode)
+        assertEquals("homepage", error.endpoint)
+        assertEquals(html, error.rawBody)
+    }
+
+    @Test
+    fun invalidMetadataUsesSchemaMismatchAndRedactsCsrfToken() {
+        val html =
+            "<meta name=\"metadata\" " +
+                "content=\"{&quot;csrfToken&quot;:&quot;fixture-token&quot;,&quot;broken&quot;:}\">"
+
+        val error = assertFailsWith<FanboxException.SchemaMismatch> {
+            FanboxMetadataParser(createFanboxJson()).parse(html, statusCode = 200)
+        }
+
+        assertEquals(200, error.statusCode)
+        assertEquals("homepage", error.endpoint)
+        assertFalse("fixture-token" in error.rawBody.orEmpty())
+        assertFalse("fixture-token" in error.message.orEmpty())
     }
 }

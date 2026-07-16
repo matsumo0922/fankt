@@ -48,7 +48,7 @@ dependencies {
 To use the pixivFANBOX API, you need a session ID called `FANBOXSESSID`.  
 You can obtain this session ID from the cookies after logging in via a browser.  
 Refer to [PixiView-KMP](https://github.com/matsumo0922/PixiView-KMP) for details about this approach.  
-Set the session ID using `fanbox.setSessionId(sessionId: String)` before using the API.
+Set the session ID using `fanbox.setFanboxSessionId(sessionId: String)` before using the API.
 
 Additionally, you need to obtain a CSRF token (X-CSRF-Token) for operations like POST requests.  
 You can acquire this token by calling `fanbox.updateCsrfToken()`.  
@@ -59,12 +59,44 @@ Since the CSRF token expires after a certain period, it is recommended to update
 val fanbox = Fanbox()
 
 // Set the session ID and CSRF token before using the API
-fanbox.setSessionId("your_session_id")
+fanbox.setFanboxSessionId("your_session_id")
 fanbox.updateCsrfToken()
 
 // Example: Retrieve posts from a creator
 fanbox.getCreatorPosts(creatorId = FanboxCreatorId("creator_id"))
 ```
+
+#### Error handling
+
+FANBOX request failures use the public `FanboxException` hierarchy. Catch a specific subtype when
+the application can recover from it, or catch `FanboxException` for shared reporting:
+
+```kotlin
+try {
+    fanbox.getPostDetail(FanboxPostId("post_id"))
+} catch (error: FanboxException.RateLimited) {
+    scheduleRetry(error.retryAfter)
+} catch (error: FanboxException.Unauthorized) {
+    requestLogin()
+} catch (error: FanboxException) {
+    report(error.message.orEmpty())
+}
+```
+
+`statusCode` is `null` when no response was received. For library-owned routes, `rawBody` contains a
+credential-redacted and control-normalized diagnostic fragment of at most 2,048 Kotlin characters.
+It can still contain FANBOX or user data. Unknown generated routes and every request made with
+`Fanbox.getHttpClient()` use endpoint `custom-request` and intentionally set `rawBody` to `null`,
+including requests to a known FANBOX path.
+
+Log only `FanboxException.message` or an explicitly reviewed `rawBody`. The original `cause` is
+preserved for debugging, but its messages are not covered by the bounded or redacted diagnostic
+contract and must not be logged automatically.
+
+The `Fanbox` constructor treats `LogLevel.BODY` as effective `INFO` and `LogLevel.ALL` as effective
+`HEADERS`. The Logging plugin never receives a raw response body. Allowlisted generated-route
+errors use a separate path for a sanitized, control-normalized fragment bounded to 2,048 Kotlin
+characters; custom requests and unknown routes retain no response fragment.
 
 ### Fantia
 
