@@ -50,6 +50,8 @@ instance-wide `SharedFlow` は bounded buffer の event loss と request correla
 
 `plan.listSupporting` は active support と未加入の誤認を避けるため、既存 no-callback `getSupportedPlans()` を strict に保つ。同じ `plan.listSupporting` route に concrete item list を返す legacy-strict Ktorfit method と raw item list を返す tolerant Ktorfit method を内部で用意する。既存 public method は strict method を使い、ContentNegotiation / #17 exception pipeline に actual response metadata 付き `SchemaMismatch` を生成させる。callback overload だけが tolerant method を使い、正常 item と callback event を返す。他の list method の既存 overload は issue の主目的どおり tolerant behavior と Napier warning を使い、callback overload は機械的な観測が必要な caller に提供する。
 
+strict entity は domain mapper が要求する numeric user ID も constructor で検証する。これにより JSON 型としては string でも domain mapping できない item を ContentNegotiation 境界で失敗させ、actual response metadata を持つ `SchemaMismatch` へ変換する。
+
 ### 6. raw fragment は既存 sanitizer 契約を再利用する
 
 （ユーザー確認済み: issue の raw JSON 断片要件）Napier warning は endpoint と index path を常に含め、raw fragment は `logLevel != NONE` の場合だけ追加する。（agent 仮決め）`JsonElement.toString()` と既存の full-string sanitizer は使用せず、JSON tree を辿って credential key の値を構造的に `[REDACTED]` へ置換し、character を上限まで append する bounded renderer を使う。既存 sanitizer は bounded output に対する defense-in-depth としてだけ適用する。warning と public event に exception message / throwable は含めない。

@@ -99,6 +99,32 @@ class FanboxTolerantListDecodingTest {
     }
 
     @Test
+    fun strictSupportingPlansConvertsDomainMappingDriftToSchemaMismatch() = runBlocking {
+        val formatter = createFanboxJson()
+        val client = mockClient(
+            body = FanboxTolerantListJsonFixtures.supportingPlanInvalidUserId,
+            status = HttpStatusCode.PartialContent,
+        )
+        try {
+            val api = ktorfit(client).createFanboxUserApi()
+
+            val failure = assertFailsWith<FanboxException.SchemaMismatch> { api.getSupportedPlans() }
+
+            assertEquals(HttpStatusCode.PartialContent.value, failure.statusCode)
+            assertEquals("plan.listSupporting", failure.endpoint)
+
+            val tolerant = FanboxCreatorMapper(FanboxListItemDecoder(formatter)).map(
+                api.getSupportedPlansTolerant(),
+                "plan.listSupporting",
+            )
+            assertTrue(tolerant.value.isEmpty())
+            assertEquals(listOf(FanboxListItemSchemaMismatch("plan.listSupporting", listOf(0))), tolerant.mismatches)
+        } finally {
+            client.close()
+        }
+    }
+
+    @Test
     fun creatorSharedEntityUsesTheProvidedEndpointLabel() {
         val formatter = createFanboxJson()
         val entity = formatter.decodeFromString<me.matsumo.fankt.fanbox.domain.entity.FanboxCreatorListEntity>(

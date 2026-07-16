@@ -85,6 +85,29 @@ internal object FanboxTolerantListJsonFixtures {
         }
         """.trimIndent()
 
+    val supportingPlanInvalidUserId =
+        """
+        {
+          "body": [
+            {
+              "coverImageUrl": null,
+              "creatorId": "fixture-creator",
+              "description": "fixture plan",
+              "fee": 500,
+              "hasAdultContent": false,
+              "id": "invalid-user-plan",
+              "paymentMethod": null,
+              "title": "Invalid user plan",
+              "user": {
+                "iconUrl": null,
+                "name": "Fixture user",
+                "userId": "not-a-number"
+              }
+            }
+          ]
+        }
+        """.trimIndent()
+
     val creatorsMixed =
         """
         {

@@ -18,4 +18,4 @@
 - [x] 3.1 timeline と bell の「正常 2 件 + 壊れた 1 件」を production API decode 経由で検証する
 - [x] 3.2 nested reply、全対象 endpoint label、diagnostic privacy・redaction・bound、callback correlation/context/exception、supporting-plan strict route、pagination、outer-envelope failure の targeted tests を追加する
 - [x] 3.3 README、docs、KDoc の影響を確認し、必要な現在形ドキュメントを更新する
-- [ ] 3.4 isolated validation lease で full test・lint・build を実行し、結果と HEAD SHA を記録する
+- [x] 3.4 isolated validation lease で unit tests・detekt・Android release assemble・common metadata compile を実行し、iOS Room KSP blocker が `origin/main` でも再現することを記録する

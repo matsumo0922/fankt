@@ -100,11 +100,12 @@ characters; custom requests and unknown routes retain no response fragment.
 
 #### Tolerant list responses
 
-List endpoints decode and map each item independently. When one item no longer matches the FANBOX
-schema, the library skips that item, preserves the other items and pagination value, and writes a
-Napier warning with the endpoint and zero-based `indexPath`. Raw item fragments are included only
-when `Fanbox` logging is enabled; they are structurally credential-redacted and limited to 2,048
-characters.
+Home, supporting, and creator post lists, comments, bells, followed/recommended creator lists, and
+creator/supporting plan lists decode and map each item independently. When one item no longer
+matches the FANBOX schema, the library skips that item, preserves the other items and pagination
+value, and writes a Napier warning with the endpoint and zero-based `indexPath`. Raw item fragments
+are included only when `Fanbox` logging is enabled; they are structurally credential-redacted and
+limited to 2,048 characters.
 
 Callback overloads report every skipped item on the caller's coroutine context before returning the
 partial result:

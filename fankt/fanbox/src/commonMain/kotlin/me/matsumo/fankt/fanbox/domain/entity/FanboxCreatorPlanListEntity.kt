@@ -36,4 +36,11 @@ internal data class FanboxCreatorPlanListEntity(
 internal data class FanboxCreatorPlanListStrictEntity(
     @SerialName("body")
     val body: List<FanboxCreatorPlanListEntity.Body>,
-)
+) {
+    init {
+        body.forEachIndexed { index, plan ->
+            val userId = plan.user?.userId ?: return@forEachIndexed
+            require(userId.toLongOrNull() != null) { "body[$index].user.userId must be a Long" }
+        }
+    }
+}
