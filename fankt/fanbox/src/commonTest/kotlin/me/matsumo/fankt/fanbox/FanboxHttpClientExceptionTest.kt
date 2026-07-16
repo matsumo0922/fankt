@@ -1,6 +1,8 @@
 package me.matsumo.fankt.fanbox
 
 import de.jensklingenberg.ktorfit.Ktorfit
+import io.github.aakira.napier.Antilog
+import io.github.aakira.napier.Napier
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.engine.mock.MockEngine
@@ -24,10 +26,12 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertIs
+import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertSame
 import kotlin.test.assertTrue
 import kotlin.time.Duration.Companion.seconds
+import io.github.aakira.napier.LogLevel as NapierLogLevel
 
 class FanboxHttpClientExceptionTest {
 
@@ -196,6 +200,47 @@ class FanboxHttpClientExceptionTest {
         assertNull(raw.rawBody)
         assertFalse("query-secret" in raw.message.orEmpty())
         assertFalse(reflectedSecret in raw.message.orEmpty())
+    }
+
+    @Test
+    fun loggingEnabledGeneratedErrorSharesSanitizedFragmentWithException() = runBlocking {
+        val credential = "generated-credential-secret"
+        val tail = "full-generated-response-tail"
+        val logs = mutableListOf<String>()
+        val antilog = object : Antilog() {
+            override fun performLog(
+                priority: NapierLogLevel,
+                tag: String?,
+                throwable: Throwable?,
+                message: String?,
+            ) {
+                message?.let(logs::add)
+            }
+        }
+        Napier.base(antilog)
+
+        try {
+            val client = mockClient(
+                source = FanboxDiagnosticSource.LibraryGenerated,
+                status = HttpStatusCode.Forbidden,
+                body = "{\"csrfToken\":\"$credential\",\"error\":\"${"x".repeat(3_000)}$tail\"}",
+                logLevel = LogLevel.ALL,
+            )
+            val error = assertIs<FanboxException.Forbidden>(
+                captureFailure { client.get("https://api.fanbox.cc/post.info").bodyAsText() },
+            )
+            val responseLog = assertNotNull(logs.firstOrNull { it.startsWith("FANBOX response: ") })
+            val loggedFragment = responseLog.removePrefix("FANBOX response: ")
+
+            assertEquals(error.rawBody, loggedFragment)
+            assertTrue(loggedFragment.length <= FanboxExceptionFactory.MAX_RAW_BODY_LENGTH)
+            assertFalse(credential in loggedFragment)
+            assertFalse(tail in loggedFragment)
+            assertFalse(credential in error.rawBody.orEmpty())
+            assertFalse(tail in error.rawBody.orEmpty())
+        } finally {
+            Napier.takeLogarithm(antilog)
+        }
     }
 
     @Test

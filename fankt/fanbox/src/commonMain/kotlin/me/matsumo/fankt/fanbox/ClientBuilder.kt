@@ -14,7 +14,6 @@ import io.ktor.client.plugins.logging.Logger
 import io.ktor.client.plugins.logging.Logging
 import io.ktor.client.request.header
 import io.ktor.client.statement.HttpResponse
-import io.ktor.client.statement.bodyAsText
 import io.ktor.client.statement.request
 import io.ktor.http.HttpHeaders
 import io.ktor.http.isSuccess
@@ -115,12 +114,12 @@ internal fun HttpClientConfig<*>.configureFanboxClient(
             if (response.status.isSuccess()) return@validateResponse
 
             val target = FanboxExceptionFactory.target(source, response.request.url)
+            val failure = FanboxExceptionFactory.fromHttpResponse(response, source)
             if (logLevel != LogLevel.NONE && target.retainResponseFragment) {
-                val body = runCatching { response.bodyAsText() }.getOrNull()
-                body?.let { Napier.d { "FANBOX response: ${FanboxExceptionFactory.sanitizeFragment(it)}" } }
+                failure.rawBody?.let { body -> Napier.d { "FANBOX response: $body" } }
             }
 
-            throw FanboxExceptionFactory.fromHttpResponse(response, source)
+            throw failure
         }
 
         handleResponseExceptionWithRequest { cause, request ->
