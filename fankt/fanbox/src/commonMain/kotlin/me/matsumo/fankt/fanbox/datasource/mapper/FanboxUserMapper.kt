@@ -30,7 +30,7 @@ internal class FanboxUserMapper(
     }
 
     fun map(entity: FanboxPaidRecordListEntity): List<FanboxPaidRecord> {
-        return entity.body.map {
+        return entity.body.payments.map {
             FanboxPaidRecord(
                 id = it.id,
                 paidAmount = it.paidAmount,
