@@ -561,6 +561,72 @@ class FanboxPostMapperGoldenTest {
         assertEquals(expected, actual)
     }
 
+    @Test
+    fun handcraftedPostCommentsNestedRepliesMapInCreatedDatetimeOrderWithFullEquality() {
+        val actual = FanboxPostMapper().map(
+            decodeFixture<FanboxPostCommentListEntity>(FanboxPostJsonFixtures.handcraftedPostCommentsNestedReplies),
+        )
+
+        val expected = PageOffsetInfo(
+            contents = listOf(
+                FanboxComment(
+                    body = "Handcrafted fixture root comment content",
+                    createdDatetime = Instant.parse("2000-01-01T00:00:00+00:00"),
+                    id = FanboxCommentId("handcrafted-root-comment"),
+                    isLiked = false,
+                    isOwn = false,
+                    likeCount = 0,
+                    parentCommentId = FanboxCommentId("0"),
+                    rootCommentId = FanboxCommentId("0"),
+                    replies = listOf(
+                        FanboxComment(
+                            body = "Handcrafted fixture earlier reply content",
+                            createdDatetime = Instant.parse("2000-01-01T00:01:00+00:00"),
+                            id = FanboxCommentId("handcrafted-earlier-reply"),
+                            isLiked = false,
+                            isOwn = true,
+                            likeCount = 1,
+                            parentCommentId = FanboxCommentId("handcrafted-root-comment"),
+                            rootCommentId = FanboxCommentId("handcrafted-root-comment"),
+                            replies = emptyList(),
+                            user = null,
+                        ),
+                        FanboxComment(
+                            body = "Handcrafted fixture later reply content",
+                            createdDatetime = Instant.parse("2000-01-01T00:02:00+00:00"),
+                            id = FanboxCommentId("handcrafted-later-reply"),
+                            isLiked = true,
+                            isOwn = false,
+                            likeCount = 2,
+                            parentCommentId = FanboxCommentId("handcrafted-root-comment"),
+                            rootCommentId = FanboxCommentId("handcrafted-root-comment"),
+                            replies = emptyList(),
+                            user = null,
+                        ),
+                    ),
+                    user = null,
+                ),
+            ),
+            offset = null,
+        )
+
+        assertEquals(expected, actual)
+    }
+
+    @Test
+    fun handcraftedPostCommentsNextUrlMapsOffsetWithFullEquality() {
+        val actual = FanboxPostMapper().map(
+            decodeFixture<FanboxPostCommentListEntity>(FanboxPostJsonFixtures.handcraftedPostCommentsNextUrlOffset),
+        )
+
+        val expected = PageOffsetInfo<FanboxComment>(
+            contents = emptyList(),
+            offset = 23,
+        )
+
+        assertEquals(expected, actual)
+    }
+
     private fun expectedPost(
         id: String,
         title: String,

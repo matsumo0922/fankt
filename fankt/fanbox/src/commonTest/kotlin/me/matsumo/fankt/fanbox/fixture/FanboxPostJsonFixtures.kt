@@ -605,4 +605,70 @@ internal object FanboxPostJsonFixtures {
           }
         }
         """.trimIndent()
+
+    /** Handcrafted synthetic fixture for nested reply ordering; it is not derived from an actual response. */
+    val handcraftedPostCommentsNestedReplies =
+        """
+        {
+          "body": {
+            "viewMode": "OPEN",
+            "commentList": {
+              "items": [
+                {
+                  "body": "Handcrafted fixture root comment content",
+                  "createdDatetime": "2000-01-01T00:00:00+00:00",
+                  "id": "handcrafted-root-comment",
+                  "isLiked": false,
+                  "isOwn": false,
+                  "likeCount": 0,
+                  "parentCommentId": "0",
+                  "rootCommentId": "0",
+                  "user": null,
+                  "replies": [
+                    {
+                      "body": "Handcrafted fixture later reply content",
+                      "createdDatetime": "2000-01-01T00:02:00+00:00",
+                      "id": "handcrafted-later-reply",
+                      "isLiked": true,
+                      "isOwn": false,
+                      "likeCount": 2,
+                      "parentCommentId": "handcrafted-root-comment",
+                      "rootCommentId": "handcrafted-root-comment",
+                      "user": null,
+                      "replies": []
+                    },
+                    {
+                      "body": "Handcrafted fixture earlier reply content",
+                      "createdDatetime": "2000-01-01T00:01:00+00:00",
+                      "id": "handcrafted-earlier-reply",
+                      "isLiked": false,
+                      "isOwn": true,
+                      "likeCount": 1,
+                      "parentCommentId": "handcrafted-root-comment",
+                      "rootCommentId": "handcrafted-root-comment",
+                      "user": null,
+                      "replies": []
+                    }
+                  ]
+                }
+              ],
+              "nextUrl": null
+            }
+          }
+        }
+        """.trimIndent()
+
+    /** Handcrafted synthetic fixture for nextUrl offset extraction; it is not derived from an actual response. */
+    val handcraftedPostCommentsNextUrlOffset =
+        """
+        {
+          "body": {
+            "viewMode": "OPEN",
+            "commentList": {
+              "items": [],
+              "nextUrl": "https://example.invalid/comments?offset=23"
+            }
+          }
+        }
+        """.trimIndent()
 }
