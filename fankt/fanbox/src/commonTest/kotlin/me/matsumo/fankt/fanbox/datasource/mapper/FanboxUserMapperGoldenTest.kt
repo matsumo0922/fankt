@@ -29,7 +29,7 @@ class FanboxUserMapperGoldenTest {
                 id = "fixture-paid-record-1",
                 paidAmount = 987654321,
                 paymentDateTime = Instant.parse("2000-01-01T00:00:00+00:00"),
-                paymentMethod = FanboxPaymentMethod.UNKNOWN,
+                paymentMethod = FanboxPaymentMethod.CARD,
                 creator = FanboxCreator(
                     creatorId = FanboxCreatorId("fixture-paid-creator-1"),
                     user = FanboxUser(

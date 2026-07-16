@@ -18,7 +18,7 @@ internal object FanboxPaymentJsonFixtures {
                 "id": "fixture-paid-record-1",
                 "paidAmount": 987654321,
                 "paymentDatetime": "2000-01-01T00:00:00+00:00",
-                "paymentMethod": "fixture-payment-method"
+                "paymentMethod": "card"
               }
             ]
           }
