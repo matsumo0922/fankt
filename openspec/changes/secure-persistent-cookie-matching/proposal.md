@@ -31,4 +31,4 @@
 
 - （ユーザー確認済み）domain / path / secure / expiry のマッチング、expired row の削除、`ioDispatcher` の統一、Cookie identity の見直しは Issue #20 の契約である。
 - （agent 仮決め）synthetic ID を composite primary key に置き換える。
-- （agent 仮決め）既存 v1 Cookie は値を保持し、漏えいを防ぐ fail-safe として `secure=true` で v2 へ移行する。
+- （ユーザー確認済み）既存ユーザーをログアウトさせず漏えいを防ぐため、v1 Cookie は値を保持し `secure=true` で v2 へ移行する。

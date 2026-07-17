@@ -1,13 +1,13 @@
 ## 1. Persistence model and migration
 
 - [ ] 1.1 Replace synthetic Cookie IDs with a domain/path/name composite key and persist the secure attribute
-- [ ] 1.2 Add and register the v1-to-v2 Room migration while preserving Cookie and CSRF values
+- [ ] 1.2 Add and register the v1-to-v2 Room migration, expiry index, and HTTPS-only retention while preserving Cookie and CSRF values
 - [ ] 1.3 Verify the generated v2 schema and migration behavior
 
 ## 2. Cookie storage behavior
 
 - [ ] 2.1 Normalize Cookies and persist absolute expiry on the injected IO dispatcher
-- [ ] 2.2 Conditionally delete expired rows before reads and filter snapshots with Ktor `Cookie.matches(requestUrl)`
+- [ ] 2.2 Filter snapshots, best-effort delete currently expired rows, and apply Ktor `Cookie.matches(requestUrl)`
 - [ ] 2.3 Handle immediate expiry, max-age precedence, and overflow safely
 
 ## 3. Verification and documentation
