@@ -25,11 +25,15 @@ internal actual fun getCookieDatabaseBuilder(): RoomDatabase.Builder<FanktDataba
     return Room.databaseBuilder<FanktDatabase>(dbFilePath)
 }
 
-internal actual fun getFanktDatabase(): FanktDatabase {
-    return getCookieDatabaseBuilder()
+private val databaseInstance by lazy(LazyThreadSafetyMode.SYNCHRONIZED) {
+    getCookieDatabaseBuilder()
         .addMigrations(COOKIE_MIGRATION_1_2)
         .fallbackToDestructiveMigrationOnDowngrade(false)
         .setDriver(NativeSQLiteDriver())
         .setQueryCoroutineContext(Dispatchers.IO)
         .build()
+}
+
+internal actual fun getFanktDatabase(): FanktDatabase {
+    return databaseInstance
 }

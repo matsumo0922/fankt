@@ -38,6 +38,7 @@ androidxStartup = "1.2.0"
 androidxRoom = "2.7.2"
 androidxSqlite = "2.5.2"
 androidxCompose = "2025.08.00"
+androidxTestCore = "1.7.0"
 
 # Google
 material = "1.12.0"
@@ -60,6 +61,7 @@ ktorfit = "2.6.4"
 buildKonfig = "0.17.1"
 twitterComposeRule = "0.0.26"
 sqliteJdbc = "3.53.2.0"
+robolectric = "4.16.1"
 
 # Debugs
 napier = "2.7.1"
@@ -126,6 +128,7 @@ androidx-activity = { module = "androidx.activity:activity-ktx", version.ref = "
 androidx-activity-compose = { module = "androidx.activity:activity-compose", version.ref = "androidxActivity" }
 androidx-fragment = { module = "androidx.fragment:fragment-ktx", version.ref = "androidxFragment" }
 androidx-startup = { module = "androidx.startup:startup-runtime", version.ref = "androidxStartup" }
+androidx-test-core = { module = "androidx.test:core", version.ref = "androidxTestCore" }
 
 # Compose
 androidx-compose-bom = { module = "androidx.compose:compose-bom", version.ref = "androidxCompose" }
@@ -176,6 +179,7 @@ ktot-logging = { module = "io.ktor:ktor-client-logging", version.ref = "ktor" }
 ksoup = { module = "com.fleeksoft.ksoup:ksoup", version.ref = "ksoup" }
 desugar = { module = "com.android.tools:desugar_jdk_libs", version = "2.1.4" }
 sqlite-jdbc = { module = "org.xerial:sqlite-jdbc", version.ref = "sqliteJdbc" }
+robolectric = { module = "org.robolectric:robolectric", version.ref = "robolectric" }
 
 # Debugs
 napier = { module = "io.github.aakira:napier", version.ref = "napier" }
