@@ -8,6 +8,7 @@ import io.ktor.client.engine.HttpClientEngine
 import io.ktor.client.plugins.HttpResponseValidator
 import io.ktor.client.plugins.api.createClientPlugin
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
+import io.ktor.client.plugins.cookies.CookiesStorage
 import io.ktor.client.plugins.cookies.HttpCookies
 import io.ktor.client.plugins.defaultRequest
 import io.ktor.client.plugins.logging.LogLevel
@@ -29,10 +30,31 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.io.IOException
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.Json
-import me.matsumo.fankt.fanbox.datasource.db.PersistentCookieStorage
 import me.matsumo.fankt.fanbox.domain.model.db.CSRFToken
 
 private val FanboxResponseAttributeKey = AttributeKey<HttpResponse>("FanboxResponse")
+
+internal fun interface FanboxHttpClientFactory {
+    fun create(block: HttpClientConfig<*>.() -> Unit): HttpClient
+}
+
+internal val DefaultFanboxHttpClientFactory = FanboxHttpClientFactory { block -> HttpClient(block) }
+
+private class FanboxCsrfTokenConfig {
+    lateinit var provider: suspend () -> CSRFToken?
+}
+
+private val FanboxCsrfTokenPlugin = createClientPlugin(
+    name = "FanboxCsrfToken",
+    createConfiguration = ::FanboxCsrfTokenConfig,
+) {
+    val provider = pluginConfig.provider
+    onRequest { request, _ ->
+        if (!request.headers.contains("x-csrf-token")) {
+            request.header("x-csrf-token", provider()?.value.orEmpty())
+        }
+    }
+}
 
 private class FanboxSchemaMismatchConfig {
     lateinit var source: FanboxDiagnosticSource
@@ -57,20 +79,21 @@ private val FanboxSchemaMismatchPlugin = createClientPlugin(
 
 internal fun buildHttpClient(
     formatter: Json,
-    cookieStorage: PersistentCookieStorage,
+    cookieStorage: CookiesStorage,
     source: FanboxDiagnosticSource,
-    csrfToken: CSRFToken? = null,
+    csrfTokenProvider: suspend () -> CSRFToken? = { null },
     logLevel: LogLevel = LogLevel.NONE,
     isEnableContentNegotiation: Boolean = true,
+    clientFactory: FanboxHttpClientFactory = DefaultFanboxHttpClientFactory,
     engine: HttpClientEngine? = null,
 ): HttpClient {
     return if (engine == null) {
-        HttpClient {
+        clientFactory.create {
             configureFanboxHttpClient(
                 formatter,
                 cookieStorage,
                 source,
-                csrfToken,
+                csrfTokenProvider,
                 logLevel,
                 isEnableContentNegotiation,
             )
@@ -81,7 +104,7 @@ internal fun buildHttpClient(
                 formatter,
                 cookieStorage,
                 source,
-                csrfToken,
+                csrfTokenProvider,
                 logLevel,
                 isEnableContentNegotiation,
             )
@@ -91,9 +114,9 @@ internal fun buildHttpClient(
 
 private fun HttpClientConfig<*>.configureFanboxHttpClient(
     formatter: Json,
-    cookieStorage: PersistentCookieStorage,
+    cookieStorage: CookiesStorage,
     source: FanboxDiagnosticSource,
-    csrfToken: CSRFToken?,
+    csrfTokenProvider: suspend () -> CSRFToken?,
     logLevel: LogLevel,
     isEnableContentNegotiation: Boolean,
 ) {
@@ -116,7 +139,10 @@ private fun HttpClientConfig<*>.configureFanboxHttpClient(
             "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 " +
                 "(KHTML, like Gecko) Chrome/124.0.0.0 Mobile Safari/537.36",
         )
-        header("x-csrf-token", csrfToken?.value.orEmpty())
+    }
+
+    install(FanboxCsrfTokenPlugin) {
+        provider = csrfTokenProvider
     }
 }
 

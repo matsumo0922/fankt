@@ -13,7 +13,7 @@ internal interface TokenDao {
     @Query("SELECT * FROM fankt_csrf_tokens")
     suspend fun getAllTokens(): List<CSRFToken>
 
-    @Query("SELECT * FROM fankt_csrf_tokens ORDER BY createdAt DESC LIMIT 1")
+    @Query("SELECT * FROM fankt_csrf_tokens ORDER BY id DESC LIMIT 1")
     fun getLatestToken(): Flow<CSRFToken?>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)

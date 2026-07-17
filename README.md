@@ -52,8 +52,9 @@ Set the session ID using `fanbox.setFanboxSessionId(sessionId: String)` before u
 
 Additionally, you need to obtain a CSRF token (X-CSRF-Token) for operations like POST requests.  
 You can acquire this token by calling `fanbox.updateCsrfToken()`.  
-Make sure to retrieve the token before using the API.  
-Since the CSRF token expires after a certain period, it is recommended to update it as needed before API calls.
+Make sure to retrieve the token before using the API. When `updateCsrfToken()` returns, requests
+started afterward use the latest persisted token without recreating the `Fanbox` instance. Since the
+CSRF token expires after a certain period, update it as needed before API calls.
 
 ```kotlin
 val fanbox = Fanbox()

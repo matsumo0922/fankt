@@ -7,13 +7,8 @@ import io.ktor.client.statement.HttpStatement
 import io.ktor.http.Cookie
 import io.ktor.http.Url
 import kotlinx.coroutines.CoroutineDispatcher
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
-import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.datetime.Clock
 import me.matsumo.fankt.fanbox.datasource.createFanboxCreatorApi
@@ -21,8 +16,6 @@ import me.matsumo.fankt.fanbox.datasource.createFanboxDownloadApi
 import me.matsumo.fankt.fanbox.datasource.createFanboxPostApi
 import me.matsumo.fankt.fanbox.datasource.createFanboxSearchApi
 import me.matsumo.fankt.fanbox.datasource.createFanboxUserApi
-import me.matsumo.fankt.fanbox.datasource.db.PersistentCookieStorage
-import me.matsumo.fankt.fanbox.datasource.db.getFanktDatabase
 import me.matsumo.fankt.fanbox.datasource.mapper.FanboxCreatorMapper
 import me.matsumo.fankt.fanbox.datasource.mapper.FanboxPostMapper
 import me.matsumo.fankt.fanbox.datasource.mapper.FanboxUserMapper
@@ -43,7 +36,6 @@ import me.matsumo.fankt.fanbox.domain.model.FanboxPost
 import me.matsumo.fankt.fanbox.domain.model.FanboxPostDetail
 import me.matsumo.fankt.fanbox.domain.model.FanboxTag
 import me.matsumo.fankt.fanbox.domain.model.db.CSRFToken
-import me.matsumo.fankt.fanbox.domain.model.db.toCookie
 import me.matsumo.fankt.fanbox.domain.model.id.FanboxCommentId
 import me.matsumo.fankt.fanbox.domain.model.id.FanboxCreatorId
 import me.matsumo.fankt.fanbox.domain.model.id.FanboxPostId
@@ -64,47 +56,46 @@ import me.matsumo.fankt.fanbox.repository.FanboxUserRepository
  * fragment is retained and logged through a separate path; custom requests and unknown routes
  * retain no response fragment.
  */
-class Fanbox(
+class Fanbox internal constructor(
+    private val dependencies: FanboxDependencies,
+    private val clientFactory: FanboxHttpClientFactory,
     private val logLevel: LogLevel = LogLevel.NONE,
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
 ) {
-    private val scope = CoroutineScope(ioDispatcher + SupervisorJob())
-    private val cookieDao = getFanktDatabase().cookieDao()
-    private val tokenDao = getFanktDatabase().tokenDao()
-
-    private val cookieStorage = PersistentCookieStorage(cookieDao, ioDispatcher)
     private val formatter = createFanboxJson()
+    private val repositories = buildRepositories()
 
-    private lateinit var post: FanboxPostRepository
-    private lateinit var creator: FanboxCreatorRepository
-    private lateinit var search: FanboxSearchRepository
-    private lateinit var user: FanboxUserRepository
-    private lateinit var download: FanboxDownloadRepository
+    private val post = repositories.post
+    private val creator = repositories.creator
+    private val search = repositories.search
+    private val user = repositories.user
+    private val download = repositories.download
 
-    init {
-        buildKtorfit(null)
+    val cookies = dependencies.cookies
+    val csrfToken = dependencies.csrfToken
 
-        scope.launch {
-            tokenDao.getLatestToken().collect {
-                buildKtorfit(it)
-            }
-        }
-    }
+    constructor(
+        logLevel: LogLevel = LogLevel.NONE,
+        ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
+    ) : this(
+        dependencies = createFanboxDependencies(ioDispatcher),
+        clientFactory = DefaultFanboxHttpClientFactory,
+        logLevel = logLevel,
+        ioDispatcher = ioDispatcher,
+    )
 
-    val cookies = cookieDao.getAllCookies().map { it.map { cookieEntity -> cookieEntity.toCookie() } }
-    val csrfToken = tokenDao.getLatestToken().map { it?.value }
-
-    private fun buildKtorfit(csrfToken: CSRFToken?) {
+    private fun buildRepositories(): FanboxRepositories {
         val ktorfit = Ktorfit.Builder()
             .baseUrl("https://api.fanbox.cc/")
             .httpClient(
                 buildHttpClient(
                     formatter,
-                    cookieStorage,
+                    dependencies.cookieStorage,
                     FanboxDiagnosticSource.LibraryGenerated,
-                    csrfToken,
+                    dependencies.getLatestToken,
                     logLevel,
                     true,
+                    clientFactory,
                 ),
             )
             .build()
@@ -114,11 +105,12 @@ class Fanbox(
             .httpClient(
                 buildHttpClient(
                     formatter,
-                    cookieStorage,
+                    dependencies.cookieStorage,
                     FanboxDiagnosticSource.LibraryGenerated,
-                    csrfToken,
+                    dependencies.getLatestToken,
                     logLevel,
                     false,
+                    clientFactory,
                 ),
             )
             .build()
@@ -128,11 +120,12 @@ class Fanbox(
             .httpClient(
                 buildHttpClient(
                     formatter,
-                    cookieStorage,
+                    dependencies.cookieStorage,
                     FanboxDiagnosticSource.LibraryGenerated,
-                    csrfToken,
+                    dependencies.getLatestToken,
                     logLevel,
                     true,
+                    clientFactory,
                 ),
             )
             .build()
@@ -153,11 +146,13 @@ class Fanbox(
         val userMapper = FanboxUserMapper(postMapper, creatorMapper, listItemDecoder)
         val metadataParser = FanboxMetadataParser(formatter)
 
-        post = FanboxPostRepository(postApi, postWithoutContentNegotiation, postMapper)
-        creator = FanboxCreatorRepository(creatorApi, creatorWithoutContentNegotiation, creatorMapper)
-        search = FanboxSearchRepository(searchApi, searchMapper)
-        user = FanboxUserRepository(userApi, userMapper, metadataParser)
-        download = FanboxDownloadRepository(downloadApi)
+        return FanboxRepositories(
+            post = FanboxPostRepository(postApi, postWithoutContentNegotiation, postMapper),
+            creator = FanboxCreatorRepository(creatorApi, creatorWithoutContentNegotiation, creatorMapper),
+            search = FanboxSearchRepository(searchApi, searchMapper),
+            user = FanboxUserRepository(userApi, userMapper, metadataParser),
+            download = FanboxDownloadRepository(downloadApi),
+        )
     }
 
     /**
@@ -169,16 +164,17 @@ class Fanbox(
     suspend fun getHttpClient(isEnableContentNegotiation: Boolean = true): HttpClient {
         return buildHttpClient(
             formatter = formatter,
-            cookieStorage = cookieStorage,
+            cookieStorage = dependencies.cookieStorage,
             source = FanboxDiagnosticSource.PublicRaw,
-            csrfToken = tokenDao.getLatestToken().first(),
+            csrfTokenProvider = dependencies.getLatestToken,
             logLevel = logLevel,
             isEnableContentNegotiation = isEnableContentNegotiation,
+            clientFactory = clientFactory,
         )
     }
 
     suspend fun setFanboxSessionId(sessionId: String) {
-        cookieStorage.overrideFanboxSessionId(sessionId)
+        dependencies.overrideFanboxSessionId(sessionId)
     }
 
     suspend fun setCookies(
@@ -187,11 +183,11 @@ class Fanbox(
         reset: Boolean = false,
     ) {
         if (reset) {
-            cookieStorage.clear()
+            dependencies.clearCookies()
         }
 
         for (cookie in cookies) {
-            cookieStorage.addCookie(Url(url), cookie)
+            dependencies.cookieStorage.addCookie(Url(url), cookie)
         }
     }
 
@@ -200,7 +196,7 @@ class Fanbox(
         withContext(ioDispatcher) {
             fetchAndStoreCsrfToken(
                 fetchMetadata = ::getMetadata,
-                storeToken = tokenDao::insert,
+                storeToken = dependencies.insertToken,
                 nowEpochMilliseconds = { Clock.System.now().toEpochMilliseconds() },
             )
         }
@@ -474,6 +470,14 @@ class Fanbox(
         return download.downloadPostThumbnailImage(postId, itemId, onDownload)
     }
 }
+
+private data class FanboxRepositories(
+    val post: FanboxPostRepository,
+    val creator: FanboxCreatorRepository,
+    val search: FanboxSearchRepository,
+    val user: FanboxUserRepository,
+    val download: FanboxDownloadRepository,
+)
 
 internal fun <T> FanboxTolerantResult<T>.notifyMismatches(
     callback: (FanboxListItemSchemaMismatch) -> Unit,
