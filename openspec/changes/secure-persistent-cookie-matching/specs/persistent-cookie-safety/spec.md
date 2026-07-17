@@ -37,12 +37,16 @@ Persistent Cookies SHALL be uniquely identified by their effective domain, path,
 - **WHEN** two Cookies with the same name and effective request host and path are stored
 - **THEN** the later Cookie replaces the earlier Cookie instead of creating a nullable-domain duplicate
 
+#### Scenario: Equivalent domain spellings are replaced
+- **WHEN** Cookies differ only by domain case or a leading domain dot
+- **THEN** storage canonicalizes them to one domain/path/name identity and returns at most one Cookie value
+
 ### Requirement: Safe schema upgrade
-The database SHALL migrate v1 Cookie rows to the new identity without losing their values, and SHALL treat migrated rows as secure-only because v1 did not persist the secure attribute.
+The database SHALL migrate v1 Cookie rows to the canonical identity without losing a value for each identity, and SHALL treat migrated rows as secure-only because v1 did not persist the secure attribute. If v1 contains duplicate canonical identities, the row with the greatest SQLite `rowid` SHALL be retained deterministically because v1 stores no creation timestamp.
 
 #### Scenario: Existing Cookie migration
 - **WHEN** a v1 database is opened by the new library
-- **THEN** each distinct effective domain, path, and name has one retained row and that row is marked secure
+- **THEN** each canonical domain, path, and name has one retained row and that row is marked secure
 
 ### Requirement: Injected IO execution
 Cookie writes SHALL use the `ioDispatcher` supplied to `PersistentCookieStorage`. This requirement traces to Issue #20 task "addCookie dispatcher unification".
