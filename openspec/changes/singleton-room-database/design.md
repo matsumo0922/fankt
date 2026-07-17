@@ -8,7 +8,7 @@ The database is internal, has no public close API, and lives for the application
 
 **Goals:**
 
-- Return one `FanktDatabase` reference from every `getFanktDatabase()` call within a platform process.
+- After successful initialization, return one `FanktDatabase` reference from every successful `getFanktDatabase()` call within a platform process.
 - Serialize first initialization so concurrent first callers cannot construct multiple Room instances.
 - Keep Cookie and token DAOs on the same database instance across all `Fanbox` dependency graphs.
 - Exercise the production accessor itself in platform tests.
@@ -33,15 +33,15 @@ The database is internal, has no public close API, and lives for the application
 
 ### 3. Verify reference identity through production accessors
 
-（agent 仮決め）Android and iOS tests call the real `getFanktDatabase()` twice and assert reference identity. The Android local test initializes the existing `FanktInitializer` with a test context before accessing the database. These tests prove the issue's observable contract through the same accessor used by `createFanboxDependencies()`, rather than testing a hand-built lazy helper.
+（agent 仮決め）Android and iOS tests call the real `getFanktDatabase()` concurrently and repeatedly, then assert reference identity across successful calls. The Android test is a Robolectric local test and uses `androidx.test:core` to initialize the existing `FanktInitializer` with an application context before accessing the database. These test-only dependencies do not enter the published artifact. The iOS test runs on the simulator and uses the production documents-directory path. These tests prove the issue's observable contract through the same accessor used by `createFanboxDependencies()`, rather than testing a hand-built lazy helper.
 
 The current `createFanboxDependencies()` implementation is also kept as an explicit production-path invariant: it assigns `val database = getFanktDatabase()` once and obtains both DAOs from that value.
 
 ## Risks / Trade-offs
 
-- [A failed first build is retried on a later access] → Kotlin `lazy` does not cache exceptions; retry preserves existing failure propagation and avoids retaining a partially initialized database.
+- [A failed first build is observed differently by concurrent callers] → Kotlin `lazy` propagates the initializer exception to that caller and does not cache it; a later caller retries. The contract covers successful calls only, so it does not claim that a failed caller receives a reference, and no partially initialized database is published.
 - [A process-lifetime database cannot be explicitly closed] → The database is internal and already has no close lifecycle exposed. Process lifetime is the intended ownership boundary in Issue #23.
-- [Concurrent first access constructs more than once] → `LazyThreadSafetyMode.SYNCHRONIZED` permits one initializer execution and safely publishes the result.
+- [Concurrent access overlaps database construction] → `LazyThreadSafetyMode.SYNCHRONIZED` permits one initializer execution at a time and publishes only one successful value. If an execution throws, a later caller may retry serially.
 - [Platform behavior drifts] → Keep symmetric Android and iOS implementations and direct platform identity tests; final validation compiles both platform source sets.
 
 ## Migration Plan
@@ -50,4 +50,4 @@ No data migration or rollout sequencing is required. Existing `fankt.db` files o
 
 ## Open Questions
 
-なし。残る agent 仮決めは lazy synchronization mode と platform test setup であり、PR の人間確認事項へ転記する。
+なし。残る agent 仮決めは lazy synchronization mode、successful-call failure semantics、Robolectric / iOS simulator test setup であり、PR の人間確認事項へ転記する。

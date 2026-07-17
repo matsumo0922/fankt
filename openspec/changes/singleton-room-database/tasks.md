@@ -6,7 +6,7 @@
 
 ## 2. Verification
 
-- [ ] 2.1 Add direct production-accessor tests for repeated database identity on Android and iOS
-- [ ] 2.2 Add a concurrent first-access assertion that proves all callers observe one database reference
+- [ ] 2.1 Add Robolectric / `androidx.test:core` test dependencies and direct production-accessor tests for repeated database identity on Android and iOS simulator
+- [ ] 2.2 Add a concurrent first-access assertion that proves all successful callers observe one database reference when initialization succeeds
 - [ ] 2.3 Search README, docs, and KDoc for affected Room lifecycle descriptions and update only stale current-spec documentation
 - [ ] 2.4 Run OpenSpec validation and the initial full test, lint, and build validation, recording Scenario evidence at the tested HEAD
