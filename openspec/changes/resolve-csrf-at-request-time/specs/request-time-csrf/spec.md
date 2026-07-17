@@ -4,8 +4,12 @@
 The FANBOX client SHALL resolve the latest persisted CSRF token when a request is sent. This requirement traces to issue #21 acceptance criterion "`updateCsrfToken()` 直後の POST に新トークンが載ること".
 
 #### Scenario: POST immediately after token update
-- **WHEN** `updateCsrfToken()` completes and a POST request is started
+- **WHEN** `updateCsrfToken()` completes without a concurrent token update and a POST request is started
 - **THEN** the request contains the token persisted by that completed update in its `x-csrf-token` header
+
+#### Scenario: Concurrent token updates
+- **WHEN** multiple token updates overlap and a request starts after one of them completes
+- **THEN** the request contains the token from the row committed last at request time, which is that completed update or a later committed update
 
 #### Scenario: Later token update on an existing client
 - **WHEN** a client has already sent a request and a later token update completes

@@ -8,7 +8,7 @@ The persisted Room token remains the source of truth in this change. Moving the 
 
 **Goals:**
 
-- Make the first request started after `updateCsrfToken()` completes resolve the newly persisted token.
+- Make the first request started after a sequential `updateCsrfToken()` completes resolve that persisted token; concurrent updates use last-committed-wins ordering.
 - Build the internal client/API/repository graph once and keep its identities stable across token updates.
 - Cover request headers with Ktor `MockEngine` and verify the same client instance serves requests before and after a token update.
 - Preserve public API signatures and persisted token behavior.
@@ -22,7 +22,7 @@ The persisted Room token remains the source of truth in this change. Moving the 
 
 ## Decisions
 
-1. **（ユーザー確認済み）Preserve CSRF as a dynamic default header on every request.** A request-time client plugin backed by a suspend token provider resolves `tokenDao.getLatestToken().first()` when a request enters the client pipeline and sets `x-csrf-token` only when that request did not explicitly supply the header. This retains the current `defaultRequest` precedence while making the persisted session token dynamic for all generated and raw-client requests. DAO `insert` completes before `updateCsrfToken()` returns, and the next provider query observes the committed row. A request already in flight is not retroactively changed. A custom plugin is preferred over a token parameter in `defaultRequest`, because the latter captures construction-time state. `HttpSend` was considered, but no retry-specific token refresh behavior is required by the issue.
+1. **（ユーザー確認済み）Preserve CSRF as a dynamic default header on every request.** A request-time client plugin backed by a suspend token provider resolves `tokenDao.getLatestToken().first()` when a request enters the client pipeline and sets `x-csrf-token` only when that request did not explicitly supply the header. This retains the current `defaultRequest` precedence while making the persisted session token dynamic for all generated and raw-client requests. DAO `insert` completes before `updateCsrfToken()` returns, so without a concurrent update the next provider query observes that row. Concurrent updates are last-committed-wins: the next request may observe the completed call's row or a row committed later by another call. A request already in flight is not retroactively changed. A custom plugin is preferred over a token parameter in `defaultRequest`, because the latter captures construction-time state. `HttpSend` was considered, but no retry-specific token refresh behavior is required by the issue.
 
 2. **（agent 仮決め）Construct the internal graph eagerly as immutable properties.** The three Ktorfit clients, generated APIs, mappers, and repositories are constructed in property initialization. The token collector, `CoroutineScope`, and `buildKtorfit` reassignment function are removed. This eliminates rebuild races and abandoned internal clients. The separate raw client returned by `getHttpClient()` also uses the request-time provider, while retaining its documented per-call construction behavior.
 
@@ -36,6 +36,7 @@ The persisted Room token remains the source of truth in this change. Moving the 
 
 - **A Room read occurs for every request** → This is the deliberate boundary of issue #21; ordering by the existing primary-key index bounds the lookup, and the follow-up in-memory change can remove the I/O without changing the client plugin contract.
 - **A request already past the plugin may retain the old token** → The guarantee begins with requests started after `updateCsrfToken()` completes, matching the acceptance criterion; in-flight mutation is not attempted.
+- **Concurrent `updateCsrfToken()` calls can return in a different order from their commits** → Define current token by the latest committed insertion id. A request after either return uses that row or a later committed row; serializing refresh calls is outside this issue and unnecessary for the application's once-per-session flow.
 - **An explicit caller-supplied CSRF header can differ from the persisted token** → Preserve the current `defaultRequest` precedence for the public raw client; generated Fanbox APIs never supply their own CSRF header and therefore always resolve the persisted value.
 - **A missing token produces an empty header** → Preserve current wire behavior until the separate token-policy issue changes it.
 - **A token DAO read failure aborts the request before network I/O** → Fail closed instead of sending an empty or stale security header. This matches the existing persistent cookie storage dependency; local storage exception normalization remains outside this issue.
