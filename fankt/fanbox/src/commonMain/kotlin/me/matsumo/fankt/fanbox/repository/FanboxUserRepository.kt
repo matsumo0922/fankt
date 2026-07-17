@@ -21,6 +21,12 @@ internal class FanboxUserRepository(
         }
     }
 
+    suspend fun getSupportedPlansTolerant() = withContext(ioDispatcher) {
+        fanboxUserApi.getSupportedPlansTolerant().let {
+            fanboxUserMapper.map(it, "plan.listSupporting")
+        }
+    }
+
     suspend fun getPaidRecords() = withContext(ioDispatcher) {
         fanboxUserApi.getPaidRecords().let {
             fanboxUserMapper.map(it)
@@ -41,7 +47,7 @@ internal class FanboxUserRepository(
 
     suspend fun getBells(page: Int) = withContext(ioDispatcher) {
         fanboxUserApi.getBells(page).let {
-            fanboxUserMapper.map(it)
+            fanboxUserMapper.map(it, "bell.list")
         }
     }
 

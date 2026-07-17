@@ -1,6 +1,8 @@
 package me.matsumo.fankt.fanbox.datasource.mapper
 
 import kotlinx.datetime.Instant
+import me.matsumo.fankt.fanbox.FanboxListItemDecoder
+import me.matsumo.fankt.fanbox.FanboxTolerantResult
 import me.matsumo.fankt.fanbox.domain.entity.FanboxCreatorDetailEntity
 import me.matsumo.fankt.fanbox.domain.entity.FanboxCreatorEntity
 import me.matsumo.fankt.fanbox.domain.entity.FanboxCreatorListEntity
@@ -18,7 +20,9 @@ import me.matsumo.fankt.fanbox.domain.model.id.FanboxCreatorId
 import me.matsumo.fankt.fanbox.domain.model.id.FanboxPlanId
 import me.matsumo.fankt.fanbox.domain.model.id.FanboxUserId
 
-internal class FanboxCreatorMapper {
+internal class FanboxCreatorMapper(
+    private val listItemDecoder: FanboxListItemDecoder = FanboxListItemDecoder(),
+) {
 
     fun map(entity: FanboxCreatorEntity): FanboxCreator {
         return FanboxCreator(
@@ -38,8 +42,12 @@ internal class FanboxCreatorMapper {
         return map(entity.body)
     }
 
-    fun map(entity: FanboxCreatorListEntity): List<FanboxCreatorDetail> {
-        return entity.body.creators.map { map(it) }
+    fun map(entity: FanboxCreatorListEntity, endpoint: String): FanboxTolerantResult<List<FanboxCreatorDetail>> {
+        return listItemDecoder.decodeAndMap(
+            endpoint = endpoint,
+            items = entity.body.creators,
+            deserializer = FanboxCreatorDetailEntity.Body.serializer(),
+        ) { item, _ -> FanboxTolerantResult(map(item), emptyList()) }
     }
 
     fun map(entity: FanboxCreatorDetailEntity.Body): FanboxCreatorDetail {
@@ -80,27 +88,33 @@ internal class FanboxCreatorMapper {
         }
     }
 
-    fun map(entity: FanboxCreatorPlanListEntity): List<FanboxCreatorPlan> {
-        return entity.body.map {
-            with(it) {
-                FanboxCreatorPlan(
-                    coverImageUrl = coverImageUrl,
-                    description = description,
-                    fee = fee,
-                    hasAdultContent = it.hasAdultContent,
-                    id = FanboxPlanId(it.id),
-                    paymentMethod = FanboxPaymentMethod.fromString(it.paymentMethod),
-                    title = it.title,
-                    user = it.user?.let { user ->
-                        FanboxUser(
-                            userId = FanboxUserId(user.userId.toLong()),
-                            creatorId = it.creatorId?.let { id -> FanboxCreatorId(id) },
-                            name = user.name,
-                            iconUrl = user.iconUrl,
-                        )
-                    },
-                )
-            }
+    fun map(entity: FanboxCreatorPlanListEntity, endpoint: String): FanboxTolerantResult<List<FanboxCreatorPlan>> {
+        return listItemDecoder.decodeAndMap(
+            endpoint = endpoint,
+            items = entity.body,
+            deserializer = FanboxCreatorPlanListEntity.Body.serializer(),
+        ) { item, _ -> FanboxTolerantResult(map(item), emptyList()) }
+    }
+
+    fun map(entity: FanboxCreatorPlanListEntity.Body): FanboxCreatorPlan {
+        return with(entity) {
+            FanboxCreatorPlan(
+                coverImageUrl = coverImageUrl,
+                description = description,
+                fee = fee,
+                hasAdultContent = hasAdultContent,
+                id = FanboxPlanId(id),
+                paymentMethod = FanboxPaymentMethod.fromString(paymentMethod),
+                title = title,
+                user = user?.let { user ->
+                    FanboxUser(
+                        userId = FanboxUserId(user.userId.toLong()),
+                        creatorId = creatorId?.let { id -> FanboxCreatorId(id) },
+                        name = user.name,
+                        iconUrl = user.iconUrl,
+                    )
+                },
+            )
         }
     }
 

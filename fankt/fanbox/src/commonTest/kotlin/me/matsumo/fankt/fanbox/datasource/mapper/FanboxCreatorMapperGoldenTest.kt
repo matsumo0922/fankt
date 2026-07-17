@@ -77,7 +77,8 @@ class FanboxCreatorMapperGoldenTest {
     fun actualCreatorPlanListWithRealPlansAndNullablePaymentMethodMapsFullObjects() {
         val actual = FanboxCreatorMapper().map(
             decodeFixture<FanboxCreatorPlanListEntity>(FanboxCreatorJsonFixtures.actualCreatorPlanList),
-        )
+            endpoint = "plan.listCreator",
+        ).value
 
         val expected = listOf(
             FanboxCreatorPlan(

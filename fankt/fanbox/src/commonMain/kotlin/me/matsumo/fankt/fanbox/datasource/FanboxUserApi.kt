@@ -5,13 +5,17 @@ import de.jensklingenberg.ktorfit.http.Query
 import io.ktor.client.statement.HttpResponse
 import me.matsumo.fankt.fanbox.domain.entity.FanboxBellListEntity
 import me.matsumo.fankt.fanbox.domain.entity.FanboxCreatorPlanListEntity
+import me.matsumo.fankt.fanbox.domain.entity.FanboxCreatorPlanListStrictEntity
 import me.matsumo.fankt.fanbox.domain.entity.FanboxNewsLettersEntity
 import me.matsumo.fankt.fanbox.domain.entity.FanboxPaidRecordListEntity
 
 internal interface FanboxUserApi {
 
     @GET("plan.listSupporting")
-    suspend fun getSupportedPlans(): FanboxCreatorPlanListEntity
+    suspend fun getSupportedPlans(): FanboxCreatorPlanListStrictEntity
+
+    @GET("plan.listSupporting")
+    suspend fun getSupportedPlansTolerant(): FanboxCreatorPlanListEntity
 
     @GET("payment.listPaid")
     suspend fun getPaidRecords(): FanboxPaidRecordListEntity

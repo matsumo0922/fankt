@@ -2,6 +2,7 @@ package me.matsumo.fankt.fanbox.domain.entity
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.JsonElement
 
 /**
  * クリエイター一覧 API のレスポンスエンティティ
@@ -19,6 +20,6 @@ internal data class FanboxCreatorListEntity(
     @Serializable
     data class Body(
         @SerialName("creators")
-        val creators: List<FanboxCreatorDetailEntity.Body>,
+        val creators: List<JsonElement>,
     )
 }

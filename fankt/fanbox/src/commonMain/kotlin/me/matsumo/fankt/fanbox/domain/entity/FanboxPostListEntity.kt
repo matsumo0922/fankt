@@ -2,6 +2,7 @@ package me.matsumo.fankt.fanbox.domain.entity
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.JsonElement
 
 @Serializable
 internal data class FanboxPostListEntity(
@@ -11,7 +12,7 @@ internal data class FanboxPostListEntity(
     @Serializable
     data class Body(
         @SerialName("items")
-        val items: List<me.matsumo.fankt.fanbox.domain.entity.FanboxPostEntity>,
+        val items: List<JsonElement>,
         @SerialName("nextUrl")
         val nextUrl: String?,
     )

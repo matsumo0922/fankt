@@ -40,6 +40,8 @@ gradle/keystore/release.keystore
 
 # Gradle cache
 .gradle
+.gradle-user-home/
+.konan/
 
 # Kotlin
 .kotlin
