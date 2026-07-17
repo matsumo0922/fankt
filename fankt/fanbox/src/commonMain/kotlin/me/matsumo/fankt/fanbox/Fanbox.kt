@@ -62,16 +62,6 @@ class Fanbox internal constructor(
     private val logLevel: LogLevel = LogLevel.NONE,
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
 ) {
-    constructor(
-        logLevel: LogLevel = LogLevel.NONE,
-        ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
-    ) : this(
-        dependencies = createFanboxDependencies(ioDispatcher),
-        clientFactory = DefaultFanboxHttpClientFactory,
-        logLevel = logLevel,
-        ioDispatcher = ioDispatcher,
-    )
-
     private val formatter = createFanboxJson()
     private val repositories = buildRepositories()
 
@@ -83,6 +73,16 @@ class Fanbox internal constructor(
 
     val cookies = dependencies.cookies
     val csrfToken = dependencies.csrfToken
+
+    constructor(
+        logLevel: LogLevel = LogLevel.NONE,
+        ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
+    ) : this(
+        dependencies = createFanboxDependencies(ioDispatcher),
+        clientFactory = DefaultFanboxHttpClientFactory,
+        logLevel = logLevel,
+        ioDispatcher = ioDispatcher,
+    )
 
     private fun buildRepositories(): FanboxRepositories {
         val ktorfit = Ktorfit.Builder()
