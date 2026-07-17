@@ -306,6 +306,96 @@ internal object FanboxPostJsonFixtures {
         bodyJson = """{"futureField":"fixture-future-value"}""",
     )
 
+    /**
+     * Handcrafted synthetic fixture approved for issue #28. It verifies internal embed decoding,
+     * reference resolution, URL restoration, and raw fallback only. It is not derived from an
+     * actual response and does not prove the production embedMap schema.
+     */
+    val postInfoArticleEmbeds = syntheticUnsupportedPostInfo(
+        type = "article",
+        bodyJson = """
+            {
+              "text": null,
+              "blocks": [
+                {"type":"p","text":"Fixture Before","embedId":"fixture-embed-twitter"},
+                {"type":"embed","embedId":"fixture-embed-twitter"},
+                {"type":"embed","embedId":"fixture-embed-youtube"},
+                {"type":"embed","embedId":"fixture-embed-vimeo"},
+                {"type":"embed","embedId":"fixture-embed-soundcloud"},
+                {"type":"embed","embedId":"fixture-embed-google-forms"},
+                {"type":"embed","embedId":"fixture-embed-fanbox"},
+                {"type":"embed","embedId":"fixture-embed-unknown"},
+                {"type":"future-block","futureField":"fixture-future-block-value"},
+                {"type":"embed","embedId":"fixture-embed-missing"},
+                {"type":"image","imageId":"fixture-image-missing"},
+                {"type":"file","fileId":"fixture-file-missing"},
+                {"type":"url_embed","urlEmbedId":"fixture-url-missing"},
+                {"type":"p","text":"Fixture After"}
+              ],
+              "embedMap": {
+                "fixture-embed-twitter": {
+                  "id":"fixture-embed-twitter",
+                  "serviceProvider":"twitter",
+                  "contentId":"twitter-content"
+                },
+                "fixture-embed-youtube": {
+                  "id":"fixture-embed-youtube",
+                  "serviceProvider":"youtube",
+                  "contentId":"youtube-content-ignored",
+                  "videoId":"youtube-video"
+                },
+                "fixture-embed-vimeo": {
+                  "id":"fixture-embed-vimeo",
+                  "serviceProvider":"vimeo",
+                  "contentId":"vimeo-content"
+                },
+                "fixture-embed-soundcloud": {
+                  "id":"fixture-embed-soundcloud",
+                  "serviceProvider":"soundcloud",
+                  "contentId":"soundcloud-content"
+                },
+                "fixture-embed-google-forms": {
+                  "id":"fixture-embed-google-forms",
+                  "serviceProvider":"google_forms",
+                  "contentId":"google-forms-content"
+                },
+                "fixture-embed-fanbox": {
+                  "id":"fixture-embed-fanbox",
+                  "serviceProvider":"fanbox",
+                  "contentId":"fanbox-content"
+                },
+                "fixture-embed-unknown": {
+                  "id":"fixture-embed-unknown",
+                  "serviceProvider":"future-provider",
+                  "contentId":"future-content"
+                }
+              },
+              "fileMap": {},
+              "imageMap": {},
+              "urlEmbedMap": {},
+              "images": [],
+              "files": []
+            }
+        """.trimIndent(),
+    )
+
+    /** Synthetic issue #28 fixture for the known-block SchemaMismatch production path. */
+    val postInfoMalformedArticleBlock = syntheticUnsupportedPostInfo(
+        type = "article",
+        bodyJson = """
+            {
+              "text": null,
+              "blocks": [{"type":"image","imageId":{"malformed":true}}],
+              "embedMap": {},
+              "fileMap": {},
+              "imageMap": {},
+              "urlEmbedMap": {},
+              "images": [],
+              "files": []
+            }
+        """.trimIndent(),
+    )
+
     val postInfoImage =
         """
         {

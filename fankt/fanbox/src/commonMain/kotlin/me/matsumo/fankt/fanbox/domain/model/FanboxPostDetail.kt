@@ -76,6 +76,41 @@ data class FanboxPostDetail(
                     val html: String?,
                     val post: FanboxPost?,
                 ) : Block
+
+                /**
+                 * A provider-backed article embed.
+                 *
+                 * For fanbox, [url] is the redirect source URL. Resolving the redirect is the
+                 * caller's network responsibility.
+                 */
+                @Serializable
+                data class Embed(
+                    val serviceProvider: String,
+                    val contentId: String,
+                ) : Block {
+                    val url: String?
+                        get() = when (serviceProvider) {
+                            "twitter" -> "https://twitter.com/_/status/$contentId"
+                            "youtube" -> "https://www.youtube.com/watch?v=$contentId"
+                            "vimeo" -> "https://vimeo.com/$contentId"
+                            "soundcloud" -> "https://soundcloud.com/$contentId"
+                            "google_forms" -> {
+                                "https://docs.google.com/forms/d/e/$contentId/viewform?usp=sf_link"
+                            }
+
+                            "fanbox" -> "https://www.pixiv.net/fanbox/$contentId"
+                            else -> null
+                        }
+                }
+
+                /**
+                 * An article block that cannot be represented by a known variant.
+                 *
+                 * [rawJson] contains the source block JSON, or the referenced map entry JSON when
+                 * that entry caused the fallback.
+                 */
+                @Serializable
+                data class Unknown(val rawJson: String) : Block
             }
         }
 

@@ -27,6 +27,46 @@ import kotlin.test.assertEquals
 class FanboxPostMapperGoldenTest {
 
     @Test
+    fun syntheticArticleEmbedsMapProvidersAndFallbacksInOrder() {
+        val actual = FanboxPostMapper().map(
+            decodeFixture<FanboxPostDetailEntity>(FanboxPostJsonFixtures.postInfoArticleEmbeds),
+        ).body
+
+        val expected = FanboxPostDetail.Body.Article(
+            blocks = listOf(
+                FanboxPostDetail.Body.Article.Block.Text("Fixture Before"),
+                FanboxPostDetail.Body.Article.Block.Embed("twitter", "twitter-content"),
+                FanboxPostDetail.Body.Article.Block.Embed("youtube", "youtube-video"),
+                FanboxPostDetail.Body.Article.Block.Embed("vimeo", "vimeo-content"),
+                FanboxPostDetail.Body.Article.Block.Embed("soundcloud", "soundcloud-content"),
+                FanboxPostDetail.Body.Article.Block.Embed("google_forms", "google-forms-content"),
+                FanboxPostDetail.Body.Article.Block.Embed("fanbox", "fanbox-content"),
+                FanboxPostDetail.Body.Article.Block.Unknown(
+                    """{"id":"fixture-embed-unknown","serviceProvider":"future-provider","contentId":"future-content"}""",
+                ),
+                FanboxPostDetail.Body.Article.Block.Unknown(
+                    """{"type":"future-block","futureField":"fixture-future-block-value"}""",
+                ),
+                FanboxPostDetail.Body.Article.Block.Unknown(
+                    """{"type":"embed","embedId":"fixture-embed-missing"}""",
+                ),
+                FanboxPostDetail.Body.Article.Block.Unknown(
+                    """{"type":"image","imageId":"fixture-image-missing"}""",
+                ),
+                FanboxPostDetail.Body.Article.Block.Unknown(
+                    """{"type":"file","fileId":"fixture-file-missing"}""",
+                ),
+                FanboxPostDetail.Body.Article.Block.Unknown(
+                    """{"type":"url_embed","urlEmbedId":"fixture-url-missing"}""",
+                ),
+                FanboxPostDetail.Body.Article.Block.Text("Fixture After"),
+            ),
+        )
+
+        assertEquals(expected, actual)
+    }
+
+    @Test
     fun postInfoArticleAWithTextImageFileReferencesAndUnknownFieldsMapsFullObject() {
         val actual = FanboxPostMapper().map(
             decodeFixture<FanboxPostDetailEntity>(FanboxPostJsonFixtures.postInfoArticleA),
