@@ -72,7 +72,7 @@ class Fanbox(
     private val cookieDao = getFanktDatabase().cookieDao()
     private val tokenDao = getFanktDatabase().tokenDao()
 
-    private val cookieStorage = PersistentCookieStorage(cookieDao)
+    private val cookieStorage = PersistentCookieStorage(cookieDao, ioDispatcher)
     private val formatter = createFanboxJson()
 
     private lateinit var post: FanboxPostRepository

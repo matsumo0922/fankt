@@ -7,7 +7,7 @@ import androidx.room.RoomDatabaseConstructor
 import me.matsumo.fankt.fanbox.datasource.db.CookieDao
 import me.matsumo.fankt.fanbox.datasource.db.TokenDao
 
-@Database(entities = [CookieEntity::class, CSRFToken::class], version = 1)
+@Database(entities = [CookieEntity::class, CSRFToken::class], version = 2)
 @ConstructedBy(CookieDatabaseConstructor::class)
 internal abstract class FanktDatabase : RoomDatabase() {
     abstract fun cookieDao(): CookieDao

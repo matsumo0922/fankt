@@ -34,6 +34,10 @@ kotlin {
             api(libs.ktor.okhttp)
         }
 
+        androidUnitTest.dependencies {
+            implementation(libs.sqlite.jdbc)
+        }
+
         iosMain.dependencies {
             api(libs.ktor.darwin)
         }
