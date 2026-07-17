@@ -9,4 +9,4 @@
 
 - [x] 2.1 Add production-call-path MockEngine tests proving immediate updated-token visibility, last-committed-wins semantics, explicit-header precedence, deterministic latest selection, and stable client identity
 - [x] 2.2 Update README CSRF guidance to state the completed-update postcondition
-- [ ] 2.3 Run focused and full validation and record Scenario evidence at the validated HEAD
+- [x] 2.3 Run focused and full validation and record Scenario evidence at the validated HEAD
