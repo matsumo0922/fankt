@@ -63,3 +63,7 @@
 #### Scenario: image body の必須fieldが欠落する
 - **WHEN** HTTP 200の `post.info` が `type = image` かつ必須fieldを欠くimage bodyを返す
 - **THEN** `Fanbox.getPostDetail` はendpoint `post.info`、status 200の `FanboxException.SchemaMismatch` を返す
+
+#### Scenario: 既知 type の body が null である
+- **WHEN** HTTP 200の `post.info` が `type = article`、`image`、または `file` かつ `post.body = null` を返す
+- **THEN** `Fanbox.getPostDetail` はendpoint `post.info`、status 200の `FanboxException.SchemaMismatch` を返し、`Body.Unknown` へフォールバックしない

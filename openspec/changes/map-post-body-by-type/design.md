@@ -32,7 +32,7 @@ Issue #26 は公開 sealed subtype の破壊的変更を含み、fankt と PixiV
 
 （agent 仮決め）`FanboxPostMapper` は `createFanboxJson()` で得る `Json` を依存として持ち、`article` / `image` / `file` の分岐内だけで `JsonElement` を typed body model へ decode する。variant 選択は単一の `when (post.type)` とし、payload の非空状態を type 選択には使わない。
 
-既知 type の body が null の場合は、従来の「本文を解釈できない」挙動を保ち `Unknown(type, null)` とする。既知 type の非null bodyが必要フィールドを欠く場合、`FanboxPostRepository.getPostDetail` はmapperの `SerializationException` を捕捉し、成功済みresponseのstatus 200、endpoint `post.info`、sanitize・上限処理したbody fragmentを持つ `FanboxException.SchemaMismatch` へ変換する。これにより、decode位置をmapperへ移しても公開例外契約を維持する。
+（agent 仮決め、独立反証 F1 により修正）既知 type の body が null の場合も typed body の schema mismatch として扱い、`Unknown` へフォールバックしない。`text`、`video`、`entry`、および未知 type の body が null の場合だけ `Unknown(type, null)` とする。既知 type の body が null、または非null bodyが必要フィールドを欠く場合、`FanboxPostRepository.getPostDetail` はmapperの `SerializationException` を捕捉し、成功済みresponseのstatus 200、endpoint `post.info`、sanitize・上限処理したbody fragmentを持つ `FanboxException.SchemaMismatch` へ変換する。これにより、decode位置をmapperへ移しても公開例外契約を維持する。
 
 ### 3. rawBodyJson は JsonElement の正規化表現とする
 
@@ -62,6 +62,7 @@ README の一般規約には、issue で明示承認され、schema compatibilit
 - [`Body.Unknown` のobject-to-class変更でconsumer ABIが壊れる] → breaking changeとしてPRへ明記する。serialized dataはfield aliasとdefault値で旧object decodeを維持し、testで固定する。PixiView-KMPのsource追従は別対応とする。
 - [entityでdecodeを遅延すると既知 body のschema error発生箇所がmapperへ移る] → repository境界で `SchemaMismatch` に変換し、失敗production call path testで公開例外契約を固定する。
 - [Article blockの欠落参照や複数payloadは既存mapperが黙って1つを選ぶ] → 本changeはtop-level `post.type` のvariant選択だけを変更し、block-level schema toleranceは既存挙動を維持する。specは整合した参照に対する保証へ限定する。
+- [既知 type の null body が Unknown fallback 契約へ混入する] → `article` / `image` / `file` は null を typed decode failure として `SchemaMismatch` へ変換し、未対応・未知 type だけが `Unknown(type, null)` を返す production call path testで境界を固定する。
 
 ## Migration Plan
 
