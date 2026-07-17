@@ -1,5 +1,9 @@
-## ADDED Requirements
+# in-memory-csrf-token Specification
 
+## Purpose
+Keep the process session's current CSRF token in memory, observable through the public Flow, and separate from persistent cookie storage.
+
+## Requirements
 ### Requirement: CSRF token state is memory-only and observable
 The process SHALL initialize its CSRF token to null, SHALL retain at most one current token in memory, SHALL share that value across `Fanbox` dependency graphs that use the process-local cookie database, and SHALL expose it through the existing `Fanbox.csrfToken: Flow<String?>` API. This requirement traces to Issue #24 tasks "CSRF トークンを in-memory 管理" and "公開 API は維持する".
 

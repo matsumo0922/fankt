@@ -11,7 +11,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.withContext
-import kotlinx.datetime.Clock
 import me.matsumo.fankt.fanbox.datasource.createFanboxCreatorApi
 import me.matsumo.fankt.fanbox.datasource.createFanboxDownloadApi
 import me.matsumo.fankt.fanbox.datasource.createFanboxPostApi
@@ -36,7 +35,6 @@ import me.matsumo.fankt.fanbox.domain.model.FanboxPaidRecord
 import me.matsumo.fankt.fanbox.domain.model.FanboxPost
 import me.matsumo.fankt.fanbox.domain.model.FanboxPostDetail
 import me.matsumo.fankt.fanbox.domain.model.FanboxTag
-import me.matsumo.fankt.fanbox.domain.model.db.CSRFToken
 import me.matsumo.fankt.fanbox.domain.model.id.FanboxCommentId
 import me.matsumo.fankt.fanbox.domain.model.id.FanboxCreatorId
 import me.matsumo.fankt.fanbox.domain.model.id.FanboxPostId
@@ -80,6 +78,13 @@ class Fanbox internal constructor(
     private val download get() = requireOpen(resources.download)
 
     val cookies get() = requireOpen(dependencies.cookies)
+
+    /**
+     * Observes the current process-session CSRF token.
+     *
+     * The value starts as null in a fresh process, is shared by [Fanbox] instances that use the
+     * process-local cookie session, and is not persisted across process recreation.
+     */
     val csrfToken get() = requireOpen(dependencies.csrfToken)
 
     constructor(
@@ -103,7 +108,7 @@ class Fanbox internal constructor(
                 formatter = formatter,
                 cookieStorage = dependencies.cookieStorage,
                 source = source,
-                csrfTokenProvider = dependencies.getLatestToken,
+                csrfTokenProvider = dependencies.getCsrfToken,
                 logLevel = logLevel,
                 isEnableContentNegotiation = isEnableContentNegotiation,
                 clientFactory = clientFactory,
@@ -186,11 +191,17 @@ class Fanbox internal constructor(
         )
     }
 
+    /** Replaces the FANBOX session cookie and clears the process-session CSRF token on success. */
     suspend fun setFanboxSessionId(sessionId: String) {
         ensureOpen()
         dependencies.overrideFanboxSessionId(sessionId)
+        dependencies.clearCsrfToken()
     }
 
+    /**
+     * Stores [cookies]. Resetting cookies or supplying `FANBOXSESSID` clears the process-session
+     * CSRF token before replacement-cookie writes; unrelated additive cookies preserve it.
+     */
     suspend fun setCookies(
         cookies: List<Cookie>,
         url: String = "https://www.fanbox.cc",
@@ -201,19 +212,29 @@ class Fanbox internal constructor(
             dependencies.clearCookies()
         }
 
+        if (reset || cookies.any { cookie -> cookie.name == FANBOX_SESSION_COOKIE_NAME }) {
+            dependencies.clearCsrfToken()
+        }
+
         for (cookie in cookies) {
             dependencies.cookieStorage.addCookie(Url(url), cookie)
         }
     }
 
-    /** Fetches metadata and stores its CSRF token. @throws FanboxException when the request fails. */
+    /**
+     * Fetches metadata and stores its CSRF token in process memory.
+     *
+     * Callers must serialize this operation with session or reset-cookie changes. A fresh process
+     * and a changed session require a successful refresh before protected requests are started.
+     *
+     * @throws FanboxException when the request fails.
+     */
     suspend fun updateCsrfToken() {
         ensureOpen()
         withContext(ioDispatcher) {
             fetchAndStoreCsrfToken(
                 fetchMetadata = ::getMetadata,
-                storeToken = dependencies.insertToken,
-                nowEpochMilliseconds = { Clock.System.now().toEpochMilliseconds() },
+                storeToken = dependencies.setCsrfToken,
             )
         }
     }
@@ -546,14 +567,10 @@ internal fun <T> FanboxTolerantResult<T>.notifyMismatches(
 
 internal suspend fun fetchAndStoreCsrfToken(
     fetchMetadata: suspend () -> FanboxMetaData,
-    storeToken: suspend (CSRFToken) -> Unit,
-    nowEpochMilliseconds: () -> Long,
+    storeToken: suspend (String) -> Unit,
 ) {
     val metadata = fetchMetadata()
-    storeToken(
-        CSRFToken(
-            value = metadata.csrfToken,
-            createdAt = nowEpochMilliseconds(),
-        ),
-    )
+    storeToken(metadata.csrfToken)
 }
+
+private const val FANBOX_SESSION_COOKIE_NAME = "FANBOXSESSID"
