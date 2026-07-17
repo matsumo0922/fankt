@@ -3,8 +3,11 @@ package me.matsumo.fankt.fanbox.datasource.mapper
 import io.github.aakira.napier.Napier
 import io.ktor.http.Url
 import kotlinx.datetime.Instant
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.decodeFromJsonElement
 import me.matsumo.fankt.fanbox.FanboxListItemDecoder
 import me.matsumo.fankt.fanbox.FanboxTolerantResult
+import me.matsumo.fankt.fanbox.createFanboxJson
 import me.matsumo.fankt.fanbox.domain.FanboxCursor
 import me.matsumo.fankt.fanbox.domain.PageCursorInfo
 import me.matsumo.fankt.fanbox.domain.PageNumberInfo
@@ -31,6 +34,7 @@ import me.matsumo.fankt.fanbox.domain.translateToCursor
 
 internal class FanboxPostMapper(
     private val listItemDecoder: FanboxListItemDecoder = FanboxListItemDecoder(),
+    private val formatter: Json = createFanboxJson(),
 ) {
 
     fun map(entity: FanboxPostListEntity, endpoint: String): FanboxTolerantResult<PageCursorInfo<FanboxPost>> {
@@ -100,111 +104,7 @@ internal class FanboxPostMapper(
 
     fun map(entity: FanboxPostDetailEntity): FanboxPostDetail {
         val post = entity.body.post
-        var bodyBlock: FanboxPostDetail.Body = FanboxPostDetail.Body.Unknown
-
-        if (!post.body?.blocks.isNullOrEmpty()) {
-            post.body?.blocks?.let { blocks ->
-                // 文字列や画像、ファイルなどのブロックが混在している場合
-
-                val images = post.body.imageMap
-                val files = post.body.fileMap
-                val urls = post.body.urlEmbedMap
-
-                bodyBlock = FanboxPostDetail.Body.Article(
-                    blocks = blocks.mapNotNull { block ->
-                        when {
-                            block.text != null -> {
-                                if (block.text.isEmpty()) null else FanboxPostDetail.Body.Article.Block.Text(block.text)
-                            }
-
-                            block.imageId != null -> {
-                                images[block.imageId]?.let { image ->
-                                    FanboxPostDetail.Body.Article.Block.Image(
-                                        FanboxPostDetail.ImageItem(
-                                            id = FanboxPostItemId(image.id),
-                                            postId = FanboxPostId(post.id),
-                                            extension = image.extension,
-                                            originalUrl = image.originalUrl,
-                                            thumbnailUrl = image.thumbnailUrl,
-                                            aspectRatio = image.width.toFloat() / image.height.toFloat(),
-                                        ),
-                                    )
-                                }
-                            }
-
-                            block.fileId != null -> {
-                                files[block.fileId]?.let { file ->
-                                    FanboxPostDetail.Body.Article.Block.File(
-                                        FanboxPostDetail.FileItem(
-                                            id = FanboxPostItemId(file.id),
-                                            postId = FanboxPostId(post.id),
-                                            extension = file.extension,
-                                            name = file.name,
-                                            size = file.size,
-                                            url = file.url,
-                                        ),
-                                    )
-                                }
-                            }
-
-                            block.urlEmbedId != null -> {
-                                urls[block.urlEmbedId]?.let { url ->
-                                    FanboxPostDetail.Body.Article.Block.Link(
-                                        html = url.html,
-                                        post = url.postInfo?.let { map(it) },
-                                    )
-                                }
-                            }
-
-                            else -> {
-                                Napier.w { "FanboxPostDetailEntity translate error: Unknown block type. $block" }
-                                null
-                            }
-                        }
-                    },
-                )
-            }
-        }
-
-        if (!post.body?.images.isNullOrEmpty()) {
-            post.body?.images?.let { blocks ->
-                // 画像のみのブロックの場合
-
-                bodyBlock = FanboxPostDetail.Body.Image(
-                    text = post.body.text.orEmpty(),
-                    images = blocks.map {
-                        FanboxPostDetail.ImageItem(
-                            id = FanboxPostItemId(it.id),
-                            postId = FanboxPostId(post.id),
-                            extension = it.extension,
-                            originalUrl = it.originalUrl,
-                            thumbnailUrl = it.thumbnailUrl,
-                            aspectRatio = it.width.toFloat() / it.height.toFloat(),
-                        )
-                    },
-                )
-            }
-        }
-
-        if (!post.body?.files.isNullOrEmpty()) {
-            post.body?.files?.let { blocks ->
-                // ファイルのみのブロックの場合
-
-                bodyBlock = FanboxPostDetail.Body.File(
-                    text = post.body.text.orEmpty(),
-                    files = blocks.map {
-                        FanboxPostDetail.FileItem(
-                            id = FanboxPostItemId(it.id),
-                            postId = FanboxPostId(post.id),
-                            name = it.name,
-                            extension = it.extension,
-                            size = it.size,
-                            url = it.url,
-                        )
-                    },
-                )
-            }
-        }
+        val bodyBlock = mapBody(post)
 
         return FanboxPostDetail(
             id = FanboxPostId(post.id),
@@ -245,6 +145,118 @@ internal class FanboxPostMapper(
                 )
             },
             imageForShare = post.imageForShare,
+        )
+    }
+
+    private fun mapBody(post: FanboxPostDetailEntity.Body): FanboxPostDetail.Body {
+        val rawBody = post.body
+            ?: return FanboxPostDetail.Body.Unknown(type = post.type, rawBodyJson = null)
+
+        return when (post.type) {
+            "article" -> mapArticleBody(post, formatter.decodeFromJsonElement(rawBody))
+            "image" -> mapImageBody(post, formatter.decodeFromJsonElement(rawBody))
+            "file" -> mapFileBody(post, formatter.decodeFromJsonElement(rawBody))
+            else -> FanboxPostDetail.Body.Unknown(
+                type = post.type,
+                rawBodyJson = rawBody.toString(),
+            )
+        }
+    }
+
+    private fun mapArticleBody(
+        post: FanboxPostDetailEntity.Body,
+        body: FanboxPostDetailEntity.Body.PostBody,
+    ): FanboxPostDetail.Body.Article {
+        return FanboxPostDetail.Body.Article(
+            blocks = body.blocks.mapNotNull { block ->
+                when {
+                    block.text != null -> {
+                        if (block.text.isEmpty()) null else FanboxPostDetail.Body.Article.Block.Text(block.text)
+                    }
+
+                    block.imageId != null -> {
+                        body.imageMap[block.imageId]?.let { image ->
+                            FanboxPostDetail.Body.Article.Block.Image(
+                                FanboxPostDetail.ImageItem(
+                                    id = FanboxPostItemId(image.id),
+                                    postId = FanboxPostId(post.id),
+                                    extension = image.extension,
+                                    originalUrl = image.originalUrl,
+                                    thumbnailUrl = image.thumbnailUrl,
+                                    aspectRatio = image.width.toFloat() / image.height.toFloat(),
+                                ),
+                            )
+                        }
+                    }
+
+                    block.fileId != null -> {
+                        body.fileMap[block.fileId]?.let { file ->
+                            FanboxPostDetail.Body.Article.Block.File(
+                                FanboxPostDetail.FileItem(
+                                    id = FanboxPostItemId(file.id),
+                                    postId = FanboxPostId(post.id),
+                                    extension = file.extension,
+                                    name = file.name,
+                                    size = file.size,
+                                    url = file.url,
+                                ),
+                            )
+                        }
+                    }
+
+                    block.urlEmbedId != null -> {
+                        body.urlEmbedMap[block.urlEmbedId]?.let { url ->
+                            FanboxPostDetail.Body.Article.Block.Link(
+                                html = url.html,
+                                post = url.postInfo?.let { map(it) },
+                            )
+                        }
+                    }
+
+                    else -> {
+                        Napier.w { "FanboxPostDetailEntity translate error: Unknown block type. $block" }
+                        null
+                    }
+                }
+            },
+        )
+    }
+
+    private fun mapImageBody(
+        post: FanboxPostDetailEntity.Body,
+        body: FanboxPostDetailEntity.Body.PostBody,
+    ): FanboxPostDetail.Body.Image {
+        return FanboxPostDetail.Body.Image(
+            text = body.text.orEmpty(),
+            images = body.images.map {
+                FanboxPostDetail.ImageItem(
+                    id = FanboxPostItemId(it.id),
+                    postId = FanboxPostId(post.id),
+                    extension = it.extension,
+                    originalUrl = it.originalUrl,
+                    thumbnailUrl = it.thumbnailUrl,
+                    aspectRatio = it.width.toFloat() / it.height.toFloat(),
+                )
+            },
+        )
+    }
+
+    private fun mapFileBody(
+        post: FanboxPostDetailEntity.Body,
+        body: FanboxPostDetailEntity.Body.PostBody,
+    ): FanboxPostDetail.Body.File {
+        return FanboxPostDetail.Body.File(
+            text = body.text.orEmpty(),
+            files = body.files.map {
+                FanboxPostDetail.FileItem(
+                    id = FanboxPostItemId(it.id),
+                    postId = FanboxPostId(post.id),
+                    name = it.name,
+                    extension = it.extension,
+                    size = it.size,
+                    url = it.url,
+                )
+            },
         )
     }
 

@@ -2,6 +2,7 @@ package me.matsumo.fankt.fanbox.domain.entity
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.JsonElement
 
 @Serializable
 internal data class FanboxPostDetailEntity(
@@ -17,7 +18,7 @@ internal data class FanboxPostDetailEntity(
     @Serializable
     data class Body(
         @SerialName("body")
-        val body: Body?,
+        val body: JsonElement?,
         @SerialName("commentCount")
         val commentCount: Int,
         @SerialName("creatorId")
@@ -58,7 +59,7 @@ internal data class FanboxPostDetailEntity(
         val user: FanboxUserEntity?,
     ) {
         @Serializable
-        data class Body(
+        data class PostBody(
             @SerialName("text")
             val text: String?,
             @SerialName("blocks")

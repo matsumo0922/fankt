@@ -1,13 +1,16 @@
 package me.matsumo.fankt.fanbox.repository
 
 import io.ktor.http.ContentType
+import io.ktor.http.HttpStatusCode
 import io.ktor.http.content.TextContent
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.withContext
+import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
+import me.matsumo.fankt.fanbox.FanboxExceptionFactory
 import me.matsumo.fankt.fanbox.FanboxTolerantResult
 import me.matsumo.fankt.fanbox.datasource.FanboxPostApi
 import me.matsumo.fankt.fanbox.datasource.mapper.FanboxPostMapper
@@ -80,8 +83,16 @@ internal class FanboxPostRepository(
     }
 
     suspend fun getPostDetail(postId: FanboxPostId) = withContext(ioDispatcher) {
-        fanboxPostApi.getPostDetail(postId.value).let {
-            fanboxPostMapper.map(it)
+        val entity = fanboxPostApi.getPostDetail(postId.value)
+        try {
+            fanboxPostMapper.map(entity)
+        } catch (failure: SerializationException) {
+            throw FanboxExceptionFactory.schemaMismatch(
+                statusCode = HttpStatusCode.OK.value,
+                html = entity.body.post.body?.toString().orEmpty(),
+                endpoint = "post.info",
+                cause = failure,
+            )
         }
     }
 
