@@ -11,8 +11,13 @@
 
 #### Scenario: videoId を content ID に正規化する
 
-- **WHEN** `embedId` が `contentId` を持たず `videoId` を持つ既知 provider の entry を参照する
+- **WHEN** `embedId` が `videoId` を持つ既知 provider の entry を参照する
 - **THEN** システムは `videoId` の値を `Article.Block.Embed.contentId` として返す
+
+#### Scenario: videoId と contentId が共存する
+
+- **WHEN** referenced embed entry が異なる `videoId` と `contentId` を同時に持つ
+- **THEN** システムは一次資料の precedence に従い `videoId` を `Article.Block.Embed.contentId` として返す
 
 ### Requirement: 既知 provider の URL を復元する
 
@@ -46,6 +51,11 @@
 
 - **WHEN** referenced embed entry が `contentId` と `videoId` のどちらも持たない
 - **THEN** システムは referenced embed entry の raw JSON を持つ `Article.Block.Unknown` を該当位置に返す
+
+#### Scenario: 既知の非 embed block の参照先がない
+
+- **WHEN** image、file、または url_embed block の参照 ID に対応する map entry がない
+- **THEN** システムは block の raw JSON を持つ `Article.Block.Unknown` を該当位置に返す
 
 ### Requirement: synthetic fixture の保証範囲を限定する
 

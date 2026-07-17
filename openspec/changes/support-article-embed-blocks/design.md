@@ -29,15 +29,17 @@ FANBOX home の認証済み探索では article 104 件を含む 109 投稿を�
 
 custom serializer で typed field と raw JSON を同居させる案は、entity 専用 serializer と descriptor を増やす割に公開契約の利点がないため採用しない。従来の nullable field 優先順を維持する案は、type と payload が競合したとき別 variant を選ぶため採用しない。
 
-### 2. embed entity は contentId と videoId を受け、domain では contentId に正規化する
+### 2. embed entity は videoId と contentId を受け、domain では contentId に正規化する
 
-（agent 仮決め）`embedMap` entry は `id`、`serviceProvider`、nullable `contentId`、nullable `videoId` を decode する。mapper は `contentId ?: videoId` を domain `Embed.contentId` に正規化する。Issue 本文は contentId を指定する一方、一次資料の gallery-dl は一部 provider の `videoId` fallback を実装しているためである。両方がない entry は解決不能として `Unknown` にする。
+（agent 仮決め、独立反証 F1 により修正）`embedMap` entry は `id`、`serviceProvider`、nullable `contentId`、nullable `videoId` を decode する。mapper は一次資料の gallery-dl と同じ `videoId ?: contentId` を domain `Embed.contentId` に正規化する。Issue 本文は公開 model を contentId と呼ぶため、provider 固有の videoId もそこで統一する。両方がない entry は解決不能として `Unknown` にする。
 
 ### 3. Unknown は fallback 原因の情報を含む raw JSON を1つ保持する
 
 （agent 仮決め）公開 `Article.Block.Unknown(rawJson: String)` を追加する。未知 block type または map 参照欠落では block の raw JSON、未知 provider または content ID 欠落では referenced embed entry の raw JSONを保持する。JSON を合成せず API 由来の fragment をそのまま正規化して保持するため、呼び出し側は原因に応じた payload を調査できる。
 
 既知 block の空 text は従来どおり出力しない。既知 image / file / url_embed の参照欠落は従来は消えていたが、block 欠落を防ぐ invariant に合わせて `Unknown` へ変換する。
+
+（agent 仮決め、独立反証 F3 により明確化）既知 `block.type` の field が型不一致で nested `Block` entity を decode できない場合は、既知 post body の schema error として投稿全体を `FanboxException.SchemaMismatch` にする。未知 type は raw fallback で継続するが、既知 type の壊れた契約を未知 block として隠さない。
 
 ### 4. URL helper は pure nullable property とする
 
@@ -63,6 +65,7 @@ custom serializer で typed field と raw JSON を同居させる案は、entity
 - [rawJson の意味が fallback 原因で block / embed entry のどちらかになる] → KDoc で選択規則を明記し、合成 JSON を API raw と誤認させない。
 - [fanbox helper は redirect 後 URL ではない] → redirect source URL であることを KDoc と PR に明記し、network I/O は helper の責務外とする。
 - [contentId の path/query 文字を percent-encode しない] → gallery-dl と Issue の復元形式に合わせて opaque fragment として連結する。実 response で reserved character が確認された場合に encoding 契約を再検討する。
+- [既知 block の型不一致で投稿全体が失敗する] → 既知 schema の破損を raw fallback で正常扱いせず、repository boundary の既存 `SchemaMismatch` 契約で endpoint・status・sanitized fragment を返す。
 
 ## Migration Plan
 

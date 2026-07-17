@@ -33,3 +33,8 @@
 
 - **WHEN** article body が未知の `block.type` と任意の field を持つ
 - **THEN** システムは block の raw JSON を持つ `Article.Block.Unknown` を該当位置に返し、後続 block の変換を継続する
+
+#### Scenario: 既知 block の field 型が不正である
+
+- **WHEN** HTTP 200 の article body が既知 `block.type` に対して型不一致の field を持つ
+- **THEN** `Fanbox.getPostDetail` は endpoint `post.info`、status 200 の `FanboxException.SchemaMismatch` を返し、`Article.Block.Unknown` へフォールバックしない
