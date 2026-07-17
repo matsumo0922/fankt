@@ -27,6 +27,7 @@ internal actual fun getCookieDatabaseBuilder(): RoomDatabase.Builder<FanktDataba
 
 internal actual fun getFanktDatabase(): FanktDatabase {
     return getCookieDatabaseBuilder()
+        .addMigrations(COOKIE_MIGRATION_1_2)
         .fallbackToDestructiveMigrationOnDowngrade(false)
         .setDriver(NativeSQLiteDriver())
         .setQueryCoroutineContext(Dispatchers.IO)
