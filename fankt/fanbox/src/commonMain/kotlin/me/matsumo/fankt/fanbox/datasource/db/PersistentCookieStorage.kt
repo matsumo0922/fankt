@@ -70,6 +70,7 @@ internal class PersistentCookieStorage(
             domain = ".fanbox.cc",
             path = "/",
             expires = null,
+            secure = true,
         )
 
         addCookie(Url("https://www.fanbox.cc"), cookie)

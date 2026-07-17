@@ -55,6 +55,19 @@ class PersistentCookieStorageTest {
     }
 
     @Test
+    fun overriddenFanboxSessionIsSentOnlyOverHttps() = runBlocking {
+        val storage = storage(FakeCookieDao())
+
+        storage.overrideFanboxSessionId("session-value")
+
+        assertEquals(
+            listOf("FANBOXSESSID" to "session-value"),
+            storage.get(Url("https://api.fanbox.cc/post.info")).map { it.name to it.value },
+        )
+        assertTrue(storage.get(Url("http://api.fanbox.cc/post.info")).isEmpty())
+    }
+
+    @Test
     fun expiredCookieIsFilteredAndDeletedAtReadBoundary() = runBlocking {
         val dao = FakeCookieDao(
             cookie("past", "past-value", expiresAt = NOW - 1),
