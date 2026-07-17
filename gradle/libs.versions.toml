@@ -42,7 +42,7 @@ androidxTestCore = "1.7.0"
 
 # Google
 material = "1.12.0"
-ksp = "2.2.10-2.0.2"
+ksp = "2.3.10"
 gms = "4.4.3"
 
 # koin

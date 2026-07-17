@@ -94,12 +94,14 @@ class FanboxCreatorPostsPaginationTest {
                 block,
             )
         }
+        val csrfToken = MutableStateFlow<String?>(null)
         val dependencies = FanboxDependencies(
             cookieStorage = AcceptAllCookiesStorage(),
             cookies = emptyFlow(),
-            csrfToken = MutableStateFlow(null),
-            getLatestToken = { null },
-            insertToken = {},
+            csrfToken = csrfToken,
+            getCsrfToken = { csrfToken.value },
+            setCsrfToken = { csrfToken.value = it },
+            clearCsrfToken = { csrfToken.value = null },
             clearCookies = {},
             overrideFanboxSessionId = {},
         )
