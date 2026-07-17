@@ -20,4 +20,4 @@
 
 - [x] 4.1 Update the golden fixture contributor contract with the issue-approved synthetic branch-test exception and its limits
 - [x] 4.2 Search README and docs for affected names and remove or update stale statements
-- [ ] 4.3 Run targeted tests, full fanbox tests, detekt, build/compile checks, OpenSpec validation, and diff checks through the validation lease (iOS Simulator execution attempted but unavailable because CoreSimulatorService was disconnected; Android test execution and iOS compile/link checks cover the shared code)
+- [x] 4.3 Run targeted tests, full fanbox tests, detekt, build/compile checks, OpenSpec validation, and diff checks through the validation lease (iOS Simulator execution attempted but unavailable because CoreSimulatorService was disconnected; Android test execution and iOS compile/link checks cover the shared code)
