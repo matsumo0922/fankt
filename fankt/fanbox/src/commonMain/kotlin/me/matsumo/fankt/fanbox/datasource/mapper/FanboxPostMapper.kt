@@ -1,10 +1,11 @@
 package me.matsumo.fankt.fanbox.datasource.mapper
 
-import io.github.aakira.napier.Napier
 import io.ktor.http.Url
 import kotlinx.datetime.Instant
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.decodeFromJsonElement
 import me.matsumo.fankt.fanbox.FanboxListItemDecoder
 import me.matsumo.fankt.fanbox.FanboxTolerantResult
@@ -32,6 +33,15 @@ import me.matsumo.fankt.fanbox.domain.model.id.FanboxPostId
 import me.matsumo.fankt.fanbox.domain.model.id.FanboxPostItemId
 import me.matsumo.fankt.fanbox.domain.model.id.FanboxUserId
 import me.matsumo.fankt.fanbox.domain.translateToCursor
+
+private val EMBED_SERVICE_PROVIDERS = setOf(
+    "twitter",
+    "youtube",
+    "vimeo",
+    "soundcloud",
+    "google_forms",
+    "fanbox",
+)
 
 internal class FanboxPostMapper(
     private val listItemDecoder: FanboxListItemDecoder = FanboxListItemDecoder(),
@@ -169,14 +179,21 @@ internal class FanboxPostMapper(
         body: FanboxPostDetailEntity.Body.PostBody,
     ): FanboxPostDetail.Body.Article {
         return FanboxPostDetail.Body.Article(
-            blocks = body.blocks.mapNotNull { block ->
-                when {
-                    block.text != null -> {
-                        if (block.text.isEmpty()) null else FanboxPostDetail.Body.Article.Block.Text(block.text)
+            blocks = body.blocks.mapNotNull { rawBlock ->
+                val blockType = (rawBlock["type"] as? JsonPrimitive)
+                    ?.takeIf { it.isString }
+                    ?.content
+                when (blockType) {
+                    "p", "header" -> {
+                        val block = decodeKnownBlock(rawBlock)
+                        block.text?.takeIf(String::isNotEmpty)?.let {
+                            FanboxPostDetail.Body.Article.Block.Text(it)
+                        }
                     }
 
-                    block.imageId != null -> {
-                        body.imageMap[block.imageId]?.let { image ->
+                    "image" -> {
+                        val block = decodeKnownBlock(rawBlock)
+                        block.imageId?.let { body.imageMap[it] }?.let { image ->
                             FanboxPostDetail.Body.Article.Block.Image(
                                 FanboxPostDetail.ImageItem(
                                     id = FanboxPostItemId(image.id),
@@ -187,11 +204,12 @@ internal class FanboxPostMapper(
                                     aspectRatio = image.width.toFloat() / image.height.toFloat(),
                                 ),
                             )
-                        }
+                        } ?: FanboxPostDetail.Body.Article.Block.Unknown(rawBlock.toString())
                     }
 
-                    block.fileId != null -> {
-                        body.fileMap[block.fileId]?.let { file ->
+                    "file" -> {
+                        val block = decodeKnownBlock(rawBlock)
+                        block.fileId?.let { body.fileMap[it] }?.let { file ->
                             FanboxPostDetail.Body.Article.Block.File(
                                 FanboxPostDetail.FileItem(
                                     id = FanboxPostItemId(file.id),
@@ -202,25 +220,51 @@ internal class FanboxPostMapper(
                                     url = file.url,
                                 ),
                             )
-                        }
+                        } ?: FanboxPostDetail.Body.Article.Block.Unknown(rawBlock.toString())
                     }
 
-                    block.urlEmbedId != null -> {
-                        body.urlEmbedMap[block.urlEmbedId]?.let { url ->
+                    "url_embed" -> {
+                        val block = decodeKnownBlock(rawBlock)
+                        block.urlEmbedId?.let { body.urlEmbedMap[it] }?.let { url ->
                             FanboxPostDetail.Body.Article.Block.Link(
                                 html = url.html,
                                 post = url.postInfo?.let { map(it) },
                             )
-                        }
+                        } ?: FanboxPostDetail.Body.Article.Block.Unknown(rawBlock.toString())
                     }
 
-                    else -> {
-                        Napier.w { "FanboxPostDetailEntity translate error: Unknown block type. $block" }
-                        null
-                    }
+                    "embed" -> mapEmbedBlock(body, decodeKnownBlock(rawBlock), rawBlock.toString())
+                    else -> FanboxPostDetail.Body.Article.Block.Unknown(rawBlock.toString())
                 }
             },
         )
+    }
+
+    private fun decodeKnownBlock(rawBlock: JsonObject) =
+        formatter.decodeFromJsonElement<FanboxPostDetailEntity.Body.PostBody.Block>(rawBlock)
+
+    private fun mapEmbedBlock(
+        body: FanboxPostDetailEntity.Body.PostBody,
+        block: FanboxPostDetailEntity.Body.PostBody.Block,
+        rawBlockJson: String,
+    ): FanboxPostDetail.Body.Article.Block {
+        val rawEmbed = block.embedId?.let { body.embedMap[it] }
+            ?: return FanboxPostDetail.Body.Article.Block.Unknown(rawBlockJson)
+        val embed = formatter.decodeFromJsonElement<FanboxPostDetailEntity.Body.PostBody.Embed>(rawEmbed)
+        val contentId = embed.videoId ?: embed.contentId
+        val serviceProvider = embed.serviceProvider
+        return if (
+            serviceProvider != null &&
+            serviceProvider in EMBED_SERVICE_PROVIDERS &&
+            contentId != null
+        ) {
+            FanboxPostDetail.Body.Article.Block.Embed(
+                serviceProvider = serviceProvider,
+                contentId = contentId,
+            )
+        } else {
+            FanboxPostDetail.Body.Article.Block.Unknown(rawEmbed.toString())
+        }
     }
 
     private fun mapImageBody(

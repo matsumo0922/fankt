@@ -3,6 +3,7 @@ package me.matsumo.fankt.fanbox.domain.entity
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.JsonObject
 
 @Serializable
 internal data class FanboxPostDetailEntity(
@@ -63,7 +64,9 @@ internal data class FanboxPostDetailEntity(
             @SerialName("text")
             val text: String?,
             @SerialName("blocks")
-            val blocks: List<Block> = emptyList(),
+            val blocks: List<JsonObject> = emptyList(),
+            @SerialName("embedMap")
+            val embedMap: Map<String, JsonObject> = emptyMap(),
             @SerialName("fileMap")
             val fileMap: Map<String, File> = emptyMap(),
             @SerialName("imageMap")
@@ -87,6 +90,20 @@ internal data class FanboxPostDetailEntity(
                 val fileId: String?,
                 @SerialName("urlEmbedId")
                 val urlEmbedId: String?,
+                @SerialName("embedId")
+                val embedId: String? = null,
+            )
+
+            @Serializable
+            data class Embed(
+                @SerialName("id")
+                val id: String? = null,
+                @SerialName("serviceProvider")
+                val serviceProvider: String? = null,
+                @SerialName("contentId")
+                val contentId: String? = null,
+                @SerialName("videoId")
+                val videoId: String? = null,
             )
 
             @Serializable
