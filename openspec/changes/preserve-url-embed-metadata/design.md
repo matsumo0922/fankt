@@ -1,6 +1,6 @@
 ## Context
 
-現在の `urlEmbedMap` entry entity は `id` / `type` / `html` / `postInfo` だけを持ち、`url` を unknown key として破棄する。公開 `Article.Block.Link` も `html` と `post` だけなので、`default` link は値を失う。さらに保存済み actual response の観測では `default` は `url` だけ、`html.card` は `html` だけ、`fanbox.post` は `postInfo` だけを持ち、非該当 field 自体が欠落する。nullable でも default のない entity field は欠落時に decode error になるため、field 追加と欠落許容を同時に設計する必要がある。
+現在の `urlEmbedMap` entry entity は `id` / `type` / `html` / `postInfo` だけを持ち、`url` を `ignoreUnknownKeys` により破棄する。公開 `Article.Block.Link` も `html` と `post` だけなので、`default` link は値を失う。さらに保存済み actual response の観測では `default` は `url` だけ、`html.card` は `html` だけ、`fanbox.post` は `postInfo` だけを持ち、非該当 field 自体が欠落する。現在の `explicitNulls = false` は欠落した nullable field を null として decode するが、各 nullable field に default null を明示して transport contract も同じ許容性を表す。
 
 保存済み private capture では `default` 2件、`html.card` 15件、`fanbox.post` 18件、`html` 26件を観測した。raw response と identity/free-form values は repository、OpenSpec artifact、reviewer input に含めない。
 
@@ -29,9 +29,9 @@
 
 type ごとに sealed subtype を作る案は、未知 type と将来の field 組み合わせを raw fallback なしで表現しにくく、Issue が単一 `Block.Link` の拡張を指定しているため採用しない。
 
-### 2. public Link は既存2 fieldを先頭に保ち、新fieldに compatibility defaultを置く
+### 2. public Link は既存2 fieldを先頭に保ち、新fieldに compatibility defaultと非衝突 serial nameを置く
 
-（agent 仮決め）primary constructor は既存の `html` / `post` を先頭に保ち、`type: String = "unknown"` と `url: String? = null` を末尾へ追加する。これにより既存 Kotlin source の positional / named constructor と旧 serialized Link value の decode を維持する。JVM の既コンパイル済み2引数 constructor ABI は field 追加で変わり得るため、release note / PR では binary compatibility を保証せず、downstream の再compileを要求する。
+（agent 仮決め、独立反証 F1 により修正）primary constructor は既存の `html` / `post` を先頭に保ち、`@SerialName("linkType") val type: String = "unknown"` と `url: String? = null` を末尾へ追加する。sealed `Block` の既定 class discriminator は `type` なので、property の serialized key を分離して衝突を避ける。これにより既存 Kotlin source の positional / named constructor と旧 serialized Link value の decode を維持する。JVM の既コンパイル済み2引数 constructor ABI は field 追加で変わり得るため、release note / PR では binary compatibility を保証せず、downstream の再compileを要求する。
 
 type と url を先頭へ並べる案は Issue の列挙順には近いが、既存 positional constructor を source break させるため採用しない。secondary constructor で旧署名を維持する案は、named/default overload の曖昧さと API surface を増やすため採用しない。
 
@@ -43,7 +43,7 @@ type と url を先頭へ並べる案は Issue の列挙順には近いが、既
 
 （ユーザー確認済み）前回の低速探索で private directory に永続保存した response を再利用する。fixture は actual envelope と type-specific field presence を基に、identity、free-form text、URL host/query/path token を whole-value placeholder へ置換し、mapper が消費しない unknown field を除く。private-value fixed-string scan と raw を見ない独立 staged-diff privacy review を通す。
 
-3 type が単一 response に共存することを要件にせず、各 actual response 由来 fragment を既存 actual-response-derived article envelope へ分離配置する。各 fragment の type / field presence / scalar-vs-object representation は actual evidence と一致させ、値だけを匿名化する。
+4 type が単一 response に共存することを要件にせず、`default` / `html` / `html.card` / `fanbox.post` の各 actual response 由来 fragment を既存 actual-response-derived article envelope へ分離配置する。各 fragment の type / field presence / scalar-vs-object representation は actual evidence と一致させ、値だけを匿名化する。
 
 ## Risks / Trade-offs
 
