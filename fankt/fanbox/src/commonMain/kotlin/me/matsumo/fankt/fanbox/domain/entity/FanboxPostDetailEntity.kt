@@ -62,7 +62,11 @@ internal data class FanboxPostDetailEntity(
         @Serializable
         data class PostBody(
             @SerialName("text")
-            val text: String?,
+            val text: String? = null,
+            @SerialName("video")
+            val video: Video? = null,
+            @SerialName("html")
+            val html: String? = null,
             @SerialName("blocks")
             val blocks: List<JsonObject> = emptyList(),
             @SerialName("embedMap")
@@ -104,6 +108,16 @@ internal data class FanboxPostDetailEntity(
                 val contentId: String? = null,
                 @SerialName("videoId")
                 val videoId: String? = null,
+            )
+
+            @Serializable
+            data class Video(
+                @SerialName("serviceProvider")
+                val serviceProvider: String? = null,
+                @SerialName("videoId")
+                val videoId: String? = null,
+                @SerialName("contentId")
+                val contentId: String? = null,
             )
 
             @Serializable

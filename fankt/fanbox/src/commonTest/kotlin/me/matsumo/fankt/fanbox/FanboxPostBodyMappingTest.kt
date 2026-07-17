@@ -22,16 +22,45 @@ import kotlin.test.assertIs
 class FanboxPostBodyMappingTest {
 
     @Test
-    fun unknownFallbackRunsThroughPublicPostDetailPath() = runBlocking {
+    fun legacyTextRunsThroughPublicPostDetailPath() = runBlocking {
+        val fanbox = createFanbox(FanboxPostJsonFixtures.postInfoTextHybrid)
+        try {
+            val actual = fanbox.getPostDetail(FanboxPostId("10000001"))
+            assertEquals(FanboxPostDetail.Body.Text("Fixture legacy text"), actual.body)
+        } finally {
+            fanbox.close()
+        }
+    }
+
+    @Test
+    fun legacyVideoRunsThroughPublicPostDetailPath() = runBlocking {
         val fanbox = createFanbox(FanboxPostJsonFixtures.postInfoVideo)
         try {
             val actual = fanbox.getPostDetail(FanboxPostId("10000001"))
+            assertEquals(FanboxPostDetail.Body.Video("youtube", "fixture-video-1"), actual.body)
+        } finally {
+            fanbox.close()
+        }
+    }
 
+    @Test
+    fun legacyEntryRunsThroughPublicPostDetailPath() = runBlocking {
+        val fanbox = createFanbox(FanboxPostJsonFixtures.postInfoEntry)
+        try {
+            val actual = fanbox.getPostDetail(FanboxPostId("10000001"))
+            assertEquals(FanboxPostDetail.Body.Html("<p>Fixture legacy HTML</p>"), actual.body)
+        } finally {
+            fanbox.close()
+        }
+    }
+
+    @Test
+    fun malformedLegacyBodyFallsBackThroughPublicPostDetailPath() = runBlocking {
+        val fanbox = createFanbox(FanboxPostJsonFixtures.postInfoMalformedVideo)
+        try {
+            val actual = fanbox.getPostDetail(FanboxPostId("10000001"))
             assertEquals(
-                FanboxPostDetail.Body.Unknown(
-                    type = "video",
-                    rawBodyJson = """{"videoId":"fixture-video-1","serviceProvider":"fixture-provider"}""",
-                ),
+                FanboxPostDetail.Body.Unknown("video", """{"video":"unexpected"}"""),
                 actual.body,
             )
         } finally {
