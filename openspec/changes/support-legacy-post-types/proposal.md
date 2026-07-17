@@ -8,7 +8,7 @@ FANBOX の `text` / `video` / `entry` 投稿は本文 payload が返っていて
 - `post.type` が `video` の `body.video` を `Body.Video(serviceProvider, videoId)` に変換し、YouTube / Vimeo URL を決定的に復元する。
 - `post.type` が `entry` の `body.html` を、信頼できない HTML であることを公開 KDoc に示した `Body.Html(html)` に変換する。
 - **BREAKING**: 公開 sealed `FanboxPostDetail.Body` に3 subtypeを追加するため、exhaustive `when` を持つ consumer は追従が必要になる。PixiView-KMP の描画対応は別 issue の責務とする。
-- （ユーザー確認済み）保存済み実 `post.info` response と既存の actual-response-derived fixture を envelope / field source とし、未取得の type 固有部分だけを合成した hybrid fixture で production call path を検証する。fixture と PR では実測部分・合成部分・未検証の本番 schema 互換性を区別する。
+- （ユーザー確認済み）Issue の「実レスポンス由来 fixture」は3形式の完全な実responseを各1件要求せず、保存済み実 `post.info` response と既存の actual-response-derived fixture を envelope / field source とし、未取得の type 固有部分だけを合成した hybrid fixture で満たす。fixture と PR では実測部分・合成部分・未検証の本番 schema 互換性を区別する。
 
 ## Capabilities
 

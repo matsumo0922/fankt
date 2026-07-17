@@ -11,7 +11,7 @@
 **Goals:**
 
 - `text` / `video` / `entry` を `post.type` に従って `Body.Text` / `Body.Video` / `Body.Html` へ変換する。
-- 新しい known type の欠損・型不一致を raw fallback にせず、既存の `FanboxException.SchemaMismatch` production contractで返す。
+- schemaを実測できたbodyだけを専用variantへ変換し、未検証shapeは既存のraw fallbackを保って投稿詳細の全損を防ぐ。
 - YouTube / Vimeo の video URL helper と、entry HTML の caller-side sanitization boundary を公開 API に示す。
 - actual-response-derived な envelope / field source と合成部分を区別した hybrid fixture で、production call path を固定する。
 
@@ -24,17 +24,17 @@
 
 ## Decisions
 
-### 1. type 選択後に既存 `PostBody` を decode し、branch ごとに必須値を要求する
+### 1. type 選択後に既存 `PostBody` を decode し、branch ごとに変換可否を判定する
 
-（agent 仮決め）`post.body` は引き続き `JsonElement?` で保持し、`FanboxPostDetailEntity.Body.PostBody` に nullable `video` と `html` を加える。nested `Video` の `serviceProvider` / `videoId` は non-null String とし、mapper の `text` / `video` / `entry` branch は対応 property が null なら `SerializationException` を投げる。
+（agent 仮決め、独立反証 F1・F4 により修正）`post.body` は引き続き `JsonElement?` で保持し、`FanboxPostDetailEntity.Body.PostBody` に nullable `video` と `html` を加える。nested `Video` の `serviceProvider` / `videoId` / `contentId` もnullable Stringとし、mapperは有効な文字列fieldが揃った場合だけ専用variantへ変換する。
 
-typeごとの別 body class は field 重複を減らす一方、article / image / file が共有する既存decodeとfixtureを分断する。この変更ではbranchの必須値検証を明示し、domain variant選択を単一の `when (post.type)` に保つ。
+video content ID はgallery-dlと既存article embed mapperに合わせて `videoId ?: contentId` で正規化する。両方が存在する場合は `videoId` を優先する。typeごとの別 body classはfield重複を減らす一方、article / image / file が共有する既存decodeとfixtureを分断するため採用しない。
 
-### 2. 新しい6 typeすべてを known body として fail-closed に扱う
+### 2. 未検証3 typeのshape mismatchは raw fallback にする
 
-（agent 仮決め）`text` / `video` / `entry` の body が null、必須 property 欠落、または型不一致なら `Body.Unknown` に戻さず、既存 repository 境界で `FanboxException.SchemaMismatch(endpoint = post.info, status = 200)` に変換する。既知 schema の破損を「未対応 type」と誤認して本文を黙って失わないためである。
+（agent 仮決め、独立反証 F4 により修正）`text` / `video` / `entry` はtype自体は既知でも完全な本番body schemaが未検証である。bodyがnull、必須property欠落、型不一致、またはnested shape不一致なら、投稿詳細全体を `SchemaMismatch` で失敗させず、typeとraw bodyを持つ `Body.Unknown` を返す。
 
-未知 `post.type` だけは既存どおり `Body.Unknown(type, rawBodyJson)` を返す。
+実response由来schemaを持つ `article` / `image` / `file` は従来どおりfail-closedの `SchemaMismatch` を保つ。この非対称性は、未検証shapeをknown schemaとして扱って現行のgraceful fallbackより退行させないための非退行invariantである。
 
 ### 3. Video は provider文字列を保持し、URL helper は youtube / vimeo だけを復元する
 
@@ -48,9 +48,9 @@ gallery-dl は soundcloud 等も共通embedとして扱うが、Issue #27 がtop
 
 ### 5. hybrid fixture は actual component と composed component を名前とコメントで分ける
 
-（ユーザー確認済み）既存のactual-response-derived `postInfoText` envelope、`postInfoImage` / article / urlEmbed の実測field shapeをsourceとし、type固有の `text`、nested `video`、`html` だけを明示的に合成する。fixtureはactual responseそのものと呼ばず、コメントに次を記録する。
+（ユーザー確認済み、独立反証 F3・F7 により明確化）既存のactual-response-derived `postInfoImage` envelopeと `body.text` string shape、article `urlEmbedMap.html` のHTML string shapeをsourceとし、top-level typeとtype固有の `text`、nested `video`、`html` 配置だけを明示的に合成する。provenance記録のない `postInfoText` をactual envelopeの根拠には使わない。fixtureはactual responseそのものと呼ばず、コメントに次を記録する。
 
-- actual-response-derived: `post.info` envelope、`body.text` のstring shape、HTML stringとしてのdecode形。
+- actual-response-derived: `postInfoImage` の `post.info` envelopeと `body.text` のstring shape、article `urlEmbedMap.html` のHTML string decode形。
 - composed from Issue / primary source: top-level typeとnested `body.video` の配置、entryの `body.html` 配置。
 - unverified: FANBOX本番の対象3 type完全payload、optional field、provider集合。
 
@@ -60,17 +60,19 @@ gallery-dl は soundcloud 等も共通embedとして扱うが、Issue #27 がtop
 
 （ユーザー確認済み: Issue本文）新しいsealed subtypeはadditiveだが、consumerのexhaustive `when` にはsource-breakingとなる。fanktのPRにbreaking impactを記載し、PixiView-KMPのfallback / renderer対応は連動issueで行う。このPRでconsumer repoを変更しない。
 
+（agent確認済み、独立反証 F6）既知consumerのPixiView-KMPは `FanboxPostDetail` をprocess内 `mutableMap` とCompose stateにcacheするが、durable storeへserializeする経路は確認できない。translation requestでは一時的にserializeするため新variantの変換対応はconsumer追従対象だが、rollback時の永続cache migrationは不要。未知consumerが新subtypeを永続化した場合の旧libraryへのforward compatibilityは保証しない。
+
 ## Risks / Trade-offs
 
 - [hybrid fixtureは対象3 typeの完全な実schemaを証明しない] → actual / composed / unverifiedをfixtureとPRに明記し、production call pathの内部契約へ保証を限定する。
-- [nullable shared `PostBody` はbranch必須値を型だけで表現できない] → mapperでtypeごとの必須propertyを明示し、各欠損をSchemaMismatch testで固定する。
+- [nullable shared `PostBody` はbranch必須値を型だけで表現できない] → mapperでtypeごとの変換条件を明示し、欠損・型不一致をraw fallback testで固定する。
 - [sealed subtype追加でconsumerのexhaustive分岐が壊れる] → PRでBREAKINGと明記し、PixiView-KMP対応とfankt releaseを同期する。
 - [untrusted HTMLをそのまま返すとunsanitized描画がXSS相当の表示リスクになる] → KDocとspecでcaller sanitization責務を明示し、fankt内では描画APIを提供しない。
 - [未知video providerでは表示URLがない] → provider / videoIdは保持してconsumerのfallback表示を可能にし、URLを捏造しない。
 
 ## Migration Plan
 
-1. fanktでentity、mapper、公開model、fixture / production-path / serialization test、READMEのprovenance規約を同一PRで変更する。
+1. fanktでentity、mapper、公開model、fixture / production-path / serialization / fallback test、READMEのprovenance規約を同一PRで変更する。
 2. PRにsealed subtype追加、hybrid fixtureの保証範囲、HTML trust boundary、PixiView-KMPの追従要否を記載する。
 3. fankt releaseとPixiView-KMPの新variant対応を同期し、consumerが未対応のままdependencyを更新しない。
 

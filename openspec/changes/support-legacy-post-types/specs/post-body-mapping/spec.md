@@ -24,10 +24,20 @@
 - **WHEN** `post.type` が `text` で文字列の `body.text` を持つ投稿詳細を変換する
 - **THEN** システムは同じ本文文字列を持つ `Body.Text` を返す
 
-#### Scenario: video 投稿を Video に変換する
+#### Scenario: videoId を持つ video 投稿を Video に変換する
 
 - **WHEN** `post.type` が `video` で文字列の `body.video.serviceProvider` と `body.video.videoId` を持つ投稿詳細を変換する
 - **THEN** システムは同じ provider と video ID を持つ `Body.Video` を返す
+
+#### Scenario: contentId を持つ video 投稿を Video に変換する
+
+- **WHEN** `post.type` が `video` で文字列の `body.video.serviceProvider` と `body.video.contentId` を持ち、`videoId` を持たない投稿詳細を変換する
+- **THEN** システムは `contentId` を `Body.Video.videoId` として返す
+
+#### Scenario: videoId と contentId が共存する
+
+- **WHEN** `body.video` が異なる `videoId` と `contentId` を同時に持つ
+- **THEN** システムは一次資料の precedence に従い `videoId` を `Body.Video.videoId` として返す
 
 #### Scenario: entry 投稿を Html に変換する
 
@@ -70,21 +80,16 @@
 
 ### Requirement: 遅延した既知 body の schema error は公開例外契約を保つ
 
-システム SHALL 既知 type のtyped body decodeが失敗した場合、公開 `Fanbox.getPostDetail` から生のserialization例外を漏らさず `FanboxException.SchemaMismatch` を返さなければならない。Trace: 公開APIの非退行 invariant と Issue #27 の新規 known body。
+システム SHALL 実レスポンス由来 schema を持つ `article` / `image` / `file` のtyped body decodeが失敗した場合、公開 `Fanbox.getPostDetail` から生のserialization例外を漏らさず `FanboxException.SchemaMismatch` を返さなければならない。Trace: 公開APIの非退行 invariant。
 
 #### Scenario: image body の必須fieldが欠落する
 
 - **WHEN** HTTP 200の `post.info` が `type = image` かつ必須fieldを欠くimage bodyを返す
 - **THEN** `Fanbox.getPostDetail` はendpoint `post.info`、status 200の `FanboxException.SchemaMismatch` を返す
 
-#### Scenario: 新規 known body の必須fieldが欠落する
-
-- **WHEN** HTTP 200の `post.info` が `text` の `text`、`video` の `video` / `serviceProvider` / `videoId`、または `entry` の `html` のいずれかを欠く
-- **THEN** `Fanbox.getPostDetail` はendpoint `post.info`、status 200の `FanboxException.SchemaMismatch` を返し、`Body.Unknown` へフォールバックしない
-
 #### Scenario: 既知 type の body が null である
 
-- **WHEN** HTTP 200の `post.info` が既知の6 typeかつ `post.body = null` を返す
+- **WHEN** HTTP 200の `post.info` が `type = article`、`image`、または `file` かつ `post.body = null` を返す
 - **THEN** `Fanbox.getPostDetail` はendpoint `post.info`、status 200の `FanboxException.SchemaMismatch` を返し、`Body.Unknown` へフォールバックしない
 
 ## ADDED Requirements
@@ -125,3 +130,27 @@ Issue #27 の fixture test SHALL actual-response-derived な `post.info` envelop
 
 - **WHEN** actual-response-derived envelope と field source に type 固有部分を合成した3 fixture を公開 `Fanbox.getPostDetail` から取得する test を実行する
 - **THEN** ContentNegotiation、entity、mapper を通って `Text` / `Video` / `Html` を返し、fixture source と PR に実測部分・合成部分・未検証範囲を記録する
+
+### Requirement: 未検証 legacy body shape は raw fallback を保つ
+
+システム SHALL `text` / `video` / `entry` の合成 fixture で証明していない body shape を受信した場合、投稿詳細全体を失敗させず、受信した type と raw body JSON を持つ `Body.Unknown` を返さなければならない。Trace: Issue #27 の本文欠落防止と独立反証 F4 の非退行 invariant。
+
+#### Scenario: text field がない text 投稿を変換する
+
+- **WHEN** `post.type` が `text` で `body.text` が文字列でない、または欠落する
+- **THEN** システムは type `text` と raw body JSON を持つ `Body.Unknown` を返す
+
+#### Scenario: video identity が解決できない video 投稿を変換する
+
+- **WHEN** `post.type` が `video` で nested video、provider、または `videoId` / `contentId` の両方が解決できない
+- **THEN** システムは type `video` と raw body JSON を持つ `Body.Unknown` を返す
+
+#### Scenario: html field がない entry 投稿を変換する
+
+- **WHEN** `post.type` が `entry` で `body.html` が文字列でない、または欠落する
+- **THEN** システムは type `entry` と raw body JSON を持つ `Body.Unknown` を返す
+
+#### Scenario: legacy known type の body が null である
+
+- **WHEN** `post.type` が `text`、`video`、または `entry` で `post.body = null` を返す
+- **THEN** システムは同じ type と null raw bodyを持つ `Body.Unknown` を返す
