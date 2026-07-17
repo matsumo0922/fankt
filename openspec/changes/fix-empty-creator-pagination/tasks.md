@@ -10,5 +10,5 @@
 
 ## 3. 検証とドキュメント
 
-- [ ] 3.1 full test・lint・build を validation lease と分離した `GRADLE_USER_HOME` で実行する
+- [x] 3.1 full test・lint・build を validation lease と分離した `GRADLE_USER_HOME` で実行する
 - [x] 3.2 `getCreatorPosts`、`PageCursorInfo`、`FanboxCursor` を README と docs で検索し、現在仕様に反する記述がないことを確認する
