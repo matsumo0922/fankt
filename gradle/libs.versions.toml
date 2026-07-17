@@ -59,6 +59,7 @@ detekt = "1.23.8"
 ktorfit = "2.6.4"
 buildKonfig = "0.17.1"
 twitterComposeRule = "0.0.26"
+sqliteJdbc = "3.53.2.0"
 
 # Debugs
 napier = "2.7.1"
@@ -174,6 +175,7 @@ ktot-logging = { module = "io.ktor:ktor-client-logging", version.ref = "ktor" }
 # Others
 ksoup = { module = "com.fleeksoft.ksoup:ksoup", version.ref = "ksoup" }
 desugar = { module = "com.android.tools:desugar_jdk_libs", version = "2.1.4" }
+sqlite-jdbc = { module = "org.xerial:sqlite-jdbc", version.ref = "sqliteJdbc" }
 
 # Debugs
 napier = { module = "io.github.aakira:napier", version.ref = "napier" }

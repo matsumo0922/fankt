@@ -4,6 +4,7 @@ import io.github.aakira.napier.Napier
 import io.ktor.client.HttpClient
 import io.ktor.client.HttpClientConfig
 import io.ktor.client.call.NoTransformationFoundException
+import io.ktor.client.engine.HttpClientEngine
 import io.ktor.client.plugins.HttpResponseValidator
 import io.ktor.client.plugins.api.createClientPlugin
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
@@ -61,7 +62,41 @@ internal fun buildHttpClient(
     csrfToken: CSRFToken? = null,
     logLevel: LogLevel = LogLevel.NONE,
     isEnableContentNegotiation: Boolean = true,
-): HttpClient = HttpClient {
+    engine: HttpClientEngine? = null,
+): HttpClient {
+    return if (engine == null) {
+        HttpClient {
+            configureFanboxHttpClient(
+                formatter,
+                cookieStorage,
+                source,
+                csrfToken,
+                logLevel,
+                isEnableContentNegotiation,
+            )
+        }
+    } else {
+        HttpClient(engine) {
+            configureFanboxHttpClient(
+                formatter,
+                cookieStorage,
+                source,
+                csrfToken,
+                logLevel,
+                isEnableContentNegotiation,
+            )
+        }
+    }
+}
+
+private fun HttpClientConfig<*>.configureFanboxHttpClient(
+    formatter: Json,
+    cookieStorage: PersistentCookieStorage,
+    source: FanboxDiagnosticSource,
+    csrfToken: CSRFToken?,
+    logLevel: LogLevel,
+    isEnableContentNegotiation: Boolean,
+) {
     configureFanboxClient(
         formatter = formatter,
         source = source,
