@@ -1,9 +1,5 @@
-# request-time-csrf Specification
+## MODIFIED Requirements
 
-## Purpose
-FANBOX API requests resolve the current process-session CSRF token from memory at send time while preserving a stable internal client graph.
-
-## Requirements
 ### Requirement: Requests resolve the current CSRF token
 The FANBOX client SHALL resolve the process session's current in-memory CSRF token when a request is sent. This requirement traces to Issue #21 acceptance criterion "`updateCsrfToken()` 直後の POST に新トークンが載ること" and Issue #24's storage replacement.
 

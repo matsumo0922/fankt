@@ -10,6 +10,12 @@ internal val COOKIE_MIGRATION_1_2 = object : Migration(1, 2) {
     }
 }
 
+internal val COOKIE_MIGRATION_2_3 = object : Migration(2, 3) {
+    override fun migrate(connection: SQLiteConnection) {
+        COOKIE_MIGRATION_2_3_STATEMENTS.forEach(connection::execSQL)
+    }
+}
+
 internal val COOKIE_MIGRATION_1_2_STATEMENTS = listOf(
     """
     CREATE TABLE IF NOT EXISTS `fankt_cookies_new` (
@@ -44,4 +50,8 @@ internal val COOKIE_MIGRATION_1_2_STATEMENTS = listOf(
     "ALTER TABLE `fankt_cookies_new` RENAME TO `fankt_cookies`",
     "CREATE INDEX IF NOT EXISTS `index_fankt_cookies_expiresAt` " +
         "ON `fankt_cookies` (`expiresAt`)",
+)
+
+internal val COOKIE_MIGRATION_2_3_STATEMENTS = listOf(
+    "DROP TABLE IF EXISTS `fankt_csrf_tokens`",
 )

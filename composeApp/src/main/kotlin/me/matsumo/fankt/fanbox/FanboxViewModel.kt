@@ -40,6 +40,7 @@ class FanboxViewModel : ViewModel() {
     fun setSessionId(sessionId: String) {
         viewModelScope.launch {
             fanbox.setFanboxSessionId(sessionId)
+            fanbox.updateCsrfToken()
         }
     }
 

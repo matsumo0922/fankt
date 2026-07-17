@@ -30,7 +30,6 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.io.IOException
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.Json
-import me.matsumo.fankt.fanbox.domain.model.db.CSRFToken
 
 private val FanboxResponseAttributeKey = AttributeKey<HttpResponse>("FanboxResponse")
 
@@ -41,7 +40,7 @@ internal fun interface FanboxHttpClientFactory {
 internal val DefaultFanboxHttpClientFactory = FanboxHttpClientFactory { block -> HttpClient(block) }
 
 private class FanboxCsrfTokenConfig {
-    lateinit var provider: suspend () -> CSRFToken?
+    lateinit var provider: suspend () -> String?
 }
 
 private val FanboxCsrfTokenPlugin = createClientPlugin(
@@ -51,7 +50,7 @@ private val FanboxCsrfTokenPlugin = createClientPlugin(
     val provider = pluginConfig.provider
     onRequest { request, _ ->
         if (!request.headers.contains("x-csrf-token")) {
-            request.header("x-csrf-token", provider()?.value.orEmpty())
+            request.header("x-csrf-token", provider().orEmpty())
         }
     }
 }
@@ -81,7 +80,7 @@ internal fun buildHttpClient(
     formatter: Json,
     cookieStorage: CookiesStorage,
     source: FanboxDiagnosticSource,
-    csrfTokenProvider: suspend () -> CSRFToken? = { null },
+    csrfTokenProvider: suspend () -> String? = { null },
     logLevel: LogLevel = LogLevel.NONE,
     isEnableContentNegotiation: Boolean = true,
     clientFactory: FanboxHttpClientFactory = DefaultFanboxHttpClientFactory,
@@ -116,7 +115,7 @@ private fun HttpClientConfig<*>.configureFanboxHttpClient(
     formatter: Json,
     cookieStorage: CookiesStorage,
     source: FanboxDiagnosticSource,
-    csrfTokenProvider: suspend () -> CSRFToken?,
+    csrfTokenProvider: suspend () -> String?,
     logLevel: LogLevel,
     isEnableContentNegotiation: Boolean,
 ) {

@@ -19,7 +19,7 @@ internal actual fun getCookieDatabaseBuilder(): RoomDatabase.Builder<FanktDataba
 
 private val databaseInstance by lazy(LazyThreadSafetyMode.SYNCHRONIZED) {
     getCookieDatabaseBuilder()
-        .addMigrations(COOKIE_MIGRATION_1_2)
+        .addMigrations(COOKIE_MIGRATION_1_2, COOKIE_MIGRATION_2_3)
         .fallbackToDestructiveMigrationOnDowngrade(false)
         .setDriver(AndroidSQLiteDriver())
         .setQueryCoroutineContext(Dispatchers.IO)
