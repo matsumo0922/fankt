@@ -4,17 +4,17 @@ CSRF tokens are short-lived session credentials, but `Fanbox` currently appends 
 
 ## What Changes
 
-- Keep each `Fanbox` instance's current CSRF token in memory and continue exposing it as `Flow<String?>`.
+- Keep the process session's current CSRF token in memory, share it across `Fanbox` instances like the process-local cookie database, and continue exposing it as `Flow<String?>`.
 - Make `updateCsrfToken()` publish the fetched value before returning so the next request observes it through the Issue #21 request-time provider.
 - Remove the internal `CSRFToken` Room entity, `TokenDao`, and token-table access.
 - Migrate the Room schema from v2 to v3 by dropping only `fankt_csrf_tokens`, preserving all cookie rows and the cookie schema.
-- Clear the in-memory token after a successful session-ID replacement or cookie reset so credentials do not cross session boundaries. **(agent provisional)**
+- Clear the in-memory token after a successful session-ID replacement, cookie reset, or `FANBOXSESSID` cookie replacement so credentials do not cross session boundaries. **(agent provisional)**
 - Update the current README and OpenSpec wording from persisted-row semantics to per-`Fanbox` in-memory semantics.
 
 ## Capabilities
 
 ### New Capabilities
-- `in-memory-csrf-token`: Per-`Fanbox` CSRF token lifetime, public Flow behavior, session-boundary clearing, and token-table removal migration.
+- `in-memory-csrf-token`: Process-session CSRF token lifetime, public Flow behavior, session-boundary clearing, and token-table removal migration.
 
 ### Modified Capabilities
 - `request-time-csrf`: Requests resolve the current in-memory value rather than the latest persisted Room row; row ordering and timestamp semantics are removed.

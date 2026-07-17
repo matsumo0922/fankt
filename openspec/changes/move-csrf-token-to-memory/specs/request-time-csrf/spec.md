@@ -1,7 +1,7 @@
 ## MODIFIED Requirements
 
 ### Requirement: Requests resolve the current CSRF token
-The FANBOX client SHALL resolve its owning `Fanbox` instance's current in-memory CSRF token when a request is sent. This requirement traces to Issue #21 acceptance criterion "`updateCsrfToken()` 直後の POST に新トークンが載ること" and Issue #24's storage replacement.
+The FANBOX client SHALL resolve the process session's current in-memory CSRF token when a request is sent. This requirement traces to Issue #21 acceptance criterion "`updateCsrfToken()` 直後の POST に新トークンが載ること" and Issue #24's storage replacement.
 
 #### Scenario: POST immediately after token update
 - **WHEN** `updateCsrfToken()` completes without a concurrent token update and a POST request is started
@@ -29,4 +29,3 @@ The FANBOX client SHALL construct its internal HttpClient, Ktorfit API, and repo
 #### Scenario: Repository graph is immutable
 - **WHEN** the in-memory CSRF token emits any number of values
 - **THEN** no client, generated API, mapper, or repository is reconstructed because of those emissions
-
