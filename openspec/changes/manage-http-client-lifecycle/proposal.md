@@ -27,4 +27,4 @@ None.
 - Common tests using `FanboxHttpClientFactory` and `MockEngine`.
 - README and generated API KDoc guidance for consumers such as PixiView-KMP.
 - The repository's sample `FanboxViewModel` lifecycle wiring.
-- No database schema, token policy, cookie policy, or Phase 2 download API redesign.
+- No database schema or lifecycle, token policy, cookie policy, or Phase 2 download API redesign. Per-instance RoomDatabase ownership is tracked separately by #53.

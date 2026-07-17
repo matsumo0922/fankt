@@ -20,19 +20,19 @@
 - **THEN** the caller leaves that client open because `Fanbox.close()` owns its release
 
 ### Requirement: Fanbox releases its HTTP resources
-`Fanbox` SHALL implement `AutoCloseable`, SHALL release every `HttpClient` it owns when `close()` is called, and SHALL make repeated close calls safe. This requirement traces to issue #22 acceptance criterion "`close()` 後にリソースが解放されること".
+`Fanbox` SHALL implement `AutoCloseable`, SHALL invoke `close()` on every `HttpClient` it owns when `Fanbox.close()` is called, and SHALL make sequential repeated close calls safe. This requirement traces to issue #22 acceptance criterion "`close()` 後にリソースが解放されること"; underlying engine shutdown completes according to Ktor's asynchronous close contract.
 
 #### Scenario: Close releases generated and raw clients
 - **WHEN** `close()` is called on an open `Fanbox` instance
-- **THEN** all generated-API clients and both configured raw clients owned by that instance are closed before `close()` returns
+- **THEN** close is invoked on all generated-API clients and both configured raw clients before `Fanbox.close()` returns, and none accepts a new request afterward
 
 #### Scenario: Repeated close
 - **WHEN** `close()` is called more than once
 - **THEN** calls after the first completed close have no effect and do not fail
 
 #### Scenario: Construction fails after allocating a client
-- **WHEN** `Fanbox` construction fails after one or more owned clients have been created
-- **THEN** every client created by that failed construction attempt is closed before the failure is propagated
+- **WHEN** `Fanbox` construction fails after one or more client-factory calls have successfully returned clients
+- **THEN** close is invoked on every returned client before the construction failure is propagated
 
 #### Scenario: API access after close
 - **WHEN** a public operation is started after `close()` returns

@@ -7,12 +7,12 @@
 ## 2. Lifecycle contract
 
 - [ ] 2.1 Implement idempotent `AutoCloseable` lifecycle state and close every retained client even when a prior close reports a failure
-- [ ] 2.2 Reject public storage, token, repository, and raw-client entry points started after close completes
-- [ ] 2.3 Document ownership, close responsibility, post-close behavior, and deferred-request limitations in KDoc and README
+- [ ] 2.2 Reject public Flow-property, storage, token, repository, and raw-client entry points started after close completes
+- [ ] 2.3 Document ownership, close responsibility, asynchronous Ktor shutdown, post-close behavior, and deferred-request exception limitations in class, raw-client, and download KDoc plus README
 - [ ] 2.4 Close the sample app's owned `Fanbox` from `FanboxViewModel.onCleared()`
 
 ## 3. Verification
 
-- [ ] 3.1 Add production-path MockEngine tests for same-configuration identity, distinct configuration behavior, bounded construction, and request-time CSRF preservation
-- [ ] 3.2 Add tests proving all owned clients close, repeated close is safe, and public entry points reject use after close
+- [ ] 3.1 Update existing client-count assertions and add production-path MockEngine tests for same-configuration identity, distinct configuration behavior, bounded construction, and request-time CSRF preservation
+- [ ] 3.2 Add tests proving all observable owned clients reject requests after close, repeated sequential close is safe, partial construction rolls back returned clients, and public entry points reject use after close
 - [ ] 3.3 Run focused and full validation and record Scenario evidence at the validated HEAD
