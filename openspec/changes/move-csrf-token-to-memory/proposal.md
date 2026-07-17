@@ -9,7 +9,7 @@ CSRF tokens are short-lived session credentials, but `Fanbox` currently appends 
 - Remove the internal `CSRFToken` Room entity, `TokenDao`, and token-table access.
 - Migrate the Room schema from v2 to v3 by dropping only `fankt_csrf_tokens`, preserving all cookie rows and the cookie schema.
 - Clear the in-memory token after a successful session-ID replacement, cookie reset, or `FANBOXSESSID` cookie replacement so credentials do not cross session boundaries. **(agent provisional)**
-- Update the current README and OpenSpec wording from persisted-row semantics to per-`Fanbox` in-memory semantics.
+- Update the current README and OpenSpec wording from persisted-row semantics to process-session in-memory semantics.
 
 ## Capabilities
 
