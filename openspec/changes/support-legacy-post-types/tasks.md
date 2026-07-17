@@ -6,7 +6,7 @@
 ## 2. Type-directed mapping
 
 - [ ] 2.1 Map text, video, and entry strictly from post.type and their required body fields
-- [ ] 2.2 Preserve raw Unknown fallback for malformed or unverified text, video, and entry shapes while retaining SchemaMismatch for article, image, and file
+- [ ] 2.2 Catch legacy-body SerializationException inside text, video, and entry mapper branches to preserve raw Unknown fallback while retaining SchemaMismatch for article, image, and file
 
 ## 3. Evidence and fixtures
 

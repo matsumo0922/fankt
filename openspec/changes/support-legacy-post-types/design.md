@@ -30,6 +30,8 @@
 
 video content ID はgallery-dlと既存article embed mapperに合わせて `videoId ?: contentId` で正規化する。両方が存在する場合は `videoId` を優先する。typeごとの別 body classはfield重複を減らす一方、article / image / file が共有する既存decodeとfixtureを分断するため採用しない。
 
+（agent 仮決め、独立反証 F4 PARTIAL により明確化）`text` / `video` / `entry` だけは `post.type` 分岐後の mapper 内で `PostBody` decode と必須値抽出を行い、`SerializationException` をその branch 内で捕捉して元の `JsonElement` を持つ `Body.Unknown` へ変換する。誤JSON型をrepository境界まで漏らして `SchemaMismatch` に変換しない。`article` / `image` / `file` は既存のbranch decodeとrepository-level `SchemaMismatch` を維持する。
+
 ### 2. 未検証3 typeのshape mismatchは raw fallback にする
 
 （agent 仮決め、独立反証 F4 により修正）`text` / `video` / `entry` はtype自体は既知でも完全な本番body schemaが未検証である。bodyがnull、必須property欠落、型不一致、またはnested shape不一致なら、投稿詳細全体を `SchemaMismatch` で失敗させず、typeとraw bodyを持つ `Body.Unknown` を返す。
