@@ -16,7 +16,7 @@
 
 - 公開 API signature、`PageCursorInfo`、`FanboxCursor` の型を変更すること。
 - pagination が空のとき `post.listCreator` を推測した固定 limit で呼ぶこと。
-- PixiView 側の `PagingSource` 生成条件を変更すること。
+- （ユーザー確認済み）PixiView 側の `PagingSource` 生成条件を変更し、同アプリの空 cursor error を解消すること。PixiView は `getCreatorPostsPagination()` を先に直接呼ぶため、別 Issue / change で扱う。
 
 ## Decisions
 
@@ -32,7 +32,7 @@
 
 ### 3. fixture test は公開 API と MockEngine を通す
 
-（agent 仮決め）空 pagination scenario は `Fanbox.getCreatorPosts(creatorId, null, null)` を呼び、`post.paginateCreator` の空 fixture を production ContentNegotiation で decode する。返却値が空かつ cursor null であり、`post.listCreator` が呼ばれないことを確認する。別 scenario で paginate cursor の `limit` が実際の `post.listCreator` query に使われることを確認する。
+（agent 仮決め）空 pagination scenario は既存の `paginateCreatorEmpty` fixture を再利用して `Fanbox.getCreatorPosts(creatorId, null, null)` を呼び、production ContentNegotiation で decode する。返却値が空かつ cursor null であり、`post.listCreator` が呼ばれないことを確認する。別 scenario で paginate cursor の `limit` が実際の `post.listCreator` query に使われることを確認する。
 
 repository の fake 単体テストだけでは公開 API wiring と HTTP query を証明できないため採用しない。
 
@@ -40,6 +40,7 @@ repository の fake 単体テストだけでは公開 API wiring と HTTP query 
 
 - [FANBOX が空 pagination と投稿存在を一時的に矛盾させる場合、list endpoint を呼ばず空として扱う] → pagination をページ inventory の正本とする既存フローを維持し、推測 request は行わない。
 - [cursor の `limit` が null の legacy input] → 既存の `LOAD_SIZE = 20` fallback を維持する。
+- [paginate URL の `limit` は範囲制約のない `Int` であり、極端な値を初回 request に伝播し得る] → issue #25 が求める FANBOX cursor 境界との一致を優先する。library が上流 cursor を信頼する既存方針は維持し、範囲 validation は本 change の保証に含めない。
 - [公開 API を使う test fixture の構築量が repository unit test より増える] → production call path の回帰検出を優先し、空 fixture と最小投稿 fixture に限定する。
 
 ## Migration Plan
@@ -48,4 +49,4 @@ repository の fake 単体テストだけでは公開 API wiring と HTTP query 
 
 ## Open Questions
 
-なし。agent 仮決めは PR description の「人間に確認してほしいこと」へ転記する。
+なし。PixiView の stage-out はユーザー確認済み。agent 仮決めと cursor limit の residual risk は PR description の「人間に確認してほしいこと」へ転記する。

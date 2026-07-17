@@ -23,3 +23,4 @@
 - `fankt/fanbox` の `FanboxPostRepository` と production-path fixture test が対象になる。
 - 公開 API signature と型は変更しない。投稿 0 件で発生していた `NoSuchElementException` を空の `PageCursorInfo` に置き換える。
 - （ユーザー確認済み）issue #25 の受け入れ条件と「やること」3項目を本 change の契約とする。
+- （ユーザー確認済み）本 change は fankt 単体の契約に限定する。PixiView は pagination を先に直接取得するため、本修正だけでは同アプリの空 cursor error を解消しない。PixiView 側の空 cursor 処理は別 Issue / change に stage-out する。

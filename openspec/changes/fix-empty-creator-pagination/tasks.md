@@ -5,7 +5,7 @@
 
 ## 2. Production-path fixture tests
 
-- [ ] 2.1 `post.paginateCreator` が空配列を返す fixture と、公開 `Fanbox.getCreatorPosts` が空ページを返す test を追加する
+- [ ] 2.1 既存の空 `post.paginateCreator` fixture を再利用し、公開 `Fanbox.getCreatorPosts` が空ページを返す test を追加する
 - [ ] 2.2 paginate cursor、caller cursor、null limit の各 request query を production HTTP 経路で検証する
 
 ## 3. 検証とドキュメント

@@ -4,7 +4,7 @@
 
 ライブラリは creator 投稿の初回取得で `post.paginateCreator` が空配列を返した場合、例外を送出せず、contents が空で cursor が null の `PageCursorInfo` を返さなければならない（SHALL）。この場合、存在しない cursor を合成して `post.listCreator` を呼んではならない（MUST NOT）。
 
-Issue trace: 受け入れ条件、やること 1・3。
+Issue trace: 受け入れ条件、やること 1・3。fankt 公開 API の返却契約に限定し、PixiView の `PagingSource` 生成は別 change とする（ユーザー確認済み）。
 
 #### Scenario: 投稿 0 件 creator の初回ページを取得する
 
