@@ -42,6 +42,11 @@ class FanboxViewModel : ViewModel() {
             fanbox.setFanboxSessionId(sessionId)
         }
     }
+
+    override fun onCleared() {
+        fanbox.close()
+        super.onCleared()
+    }
 }
 
 @Stable

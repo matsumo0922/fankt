@@ -9,6 +9,7 @@ import io.ktor.http.Url
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.withContext
 import kotlinx.datetime.Clock
 import me.matsumo.fankt.fanbox.datasource.createFanboxCreatorApi
@@ -55,24 +56,31 @@ import me.matsumo.fankt.fanbox.repository.FanboxUserRepository
  * raw response body. For allowlisted generated-route errors, a sanitized and bounded diagnostic
  * fragment is retained and logged through a separate path; custom requests and unknown routes
  * retain no response fragment.
+ *
+ * This instance owns every [HttpClient] it creates. Call [close] after all requests and deferred
+ * [HttpStatement] executions finish. A client returned by [getHttpClient] is shared and owned by
+ * this instance; callers must not close it directly. Public operations started after [close]
+ * throw [IllegalStateException]. Ktor completes underlying engine shutdown asynchronously after
+ * client close is initiated. Callers must not race [close] with requests or another close call.
  */
 class Fanbox internal constructor(
     private val dependencies: FanboxDependencies,
     private val clientFactory: FanboxHttpClientFactory,
     private val logLevel: LogLevel = LogLevel.NONE,
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
-) {
+) : AutoCloseable {
+    private val lifecycle = Job()
     private val formatter = createFanboxJson()
-    private val repositories = buildRepositories()
+    private val resources = buildResources()
 
-    private val post = repositories.post
-    private val creator = repositories.creator
-    private val search = repositories.search
-    private val user = repositories.user
-    private val download = repositories.download
+    private val post get() = requireOpen(resources.post)
+    private val creator get() = requireOpen(resources.creator)
+    private val search get() = requireOpen(resources.search)
+    private val user get() = requireOpen(resources.user)
+    private val download get() = requireOpen(resources.download)
 
-    val cookies = dependencies.cookies
-    val csrfToken = dependencies.csrfToken
+    val cookies get() = requireOpen(dependencies.cookies)
+    val csrfToken get() = requireOpen(dependencies.csrfToken)
 
     constructor(
         logLevel: LogLevel = LogLevel.NONE,
@@ -84,96 +92,102 @@ class Fanbox internal constructor(
         ioDispatcher = ioDispatcher,
     )
 
-    private fun buildRepositories(): FanboxRepositories {
-        val ktorfit = Ktorfit.Builder()
-            .baseUrl("https://api.fanbox.cc/")
-            .httpClient(
-                buildHttpClient(
-                    formatter,
-                    dependencies.cookieStorage,
-                    FanboxDiagnosticSource.LibraryGenerated,
-                    dependencies.getLatestToken,
-                    logLevel,
-                    true,
-                    clientFactory,
-                ),
+    private fun buildResources(): FanboxResources {
+        val clients = mutableListOf<HttpClient>()
+
+        fun buildOwnedClient(
+            source: FanboxDiagnosticSource,
+            isEnableContentNegotiation: Boolean,
+        ): HttpClient {
+            return buildHttpClient(
+                formatter = formatter,
+                cookieStorage = dependencies.cookieStorage,
+                source = source,
+                csrfTokenProvider = dependencies.getLatestToken,
+                logLevel = logLevel,
+                isEnableContentNegotiation = isEnableContentNegotiation,
+                clientFactory = clientFactory,
+            ).also(clients::add)
+        }
+
+        try {
+            val apiClient = buildOwnedClient(FanboxDiagnosticSource.LibraryGenerated, true)
+            val apiWithoutContentNegotiationClient = buildOwnedClient(
+                FanboxDiagnosticSource.LibraryGenerated,
+                false,
             )
-            .build()
+            val downloadClient = buildOwnedClient(FanboxDiagnosticSource.LibraryGenerated, true)
 
-        val ktorfitWithoutContentNegotiation = Ktorfit.Builder()
-            .baseUrl("https://api.fanbox.cc/")
-            .httpClient(
-                buildHttpClient(
-                    formatter,
-                    dependencies.cookieStorage,
-                    FanboxDiagnosticSource.LibraryGenerated,
-                    dependencies.getLatestToken,
-                    logLevel,
-                    false,
-                    clientFactory,
-                ),
+            val ktorfit = Ktorfit.Builder()
+                .baseUrl("https://api.fanbox.cc/")
+                .httpClient(apiClient)
+                .build()
+
+            val ktorfitWithoutContentNegotiation = Ktorfit.Builder()
+                .baseUrl("https://api.fanbox.cc/")
+                .httpClient(apiWithoutContentNegotiationClient)
+                .build()
+
+            val ktorfitDownload = Ktorfit.Builder()
+                .baseUrl("https://downloads.fanbox.cc/")
+                .httpClient(downloadClient)
+                .build()
+
+            val postApi = ktorfit.createFanboxPostApi()
+            val creatorApi = ktorfit.createFanboxCreatorApi()
+            val searchApi = ktorfit.createFanboxSearchApi()
+            val userApi = ktorfit.createFanboxUserApi()
+            val downloadApi = ktorfitDownload.createFanboxDownloadApi()
+
+            val postWithoutContentNegotiation = ktorfitWithoutContentNegotiation.createFanboxPostApi()
+            val creatorWithoutContentNegotiation = ktorfitWithoutContentNegotiation.createFanboxCreatorApi()
+
+            val listItemDecoder = FanboxListItemDecoder(formatter, logLevel != LogLevel.NONE)
+            val postMapper = FanboxPostMapper(listItemDecoder)
+            val creatorMapper = FanboxCreatorMapper(listItemDecoder)
+            val searchMapper = me.matsumo.fankt.fanbox.datasource.mapper.FanboxSearchMapper(creatorMapper)
+            val userMapper = FanboxUserMapper(postMapper, creatorMapper, listItemDecoder)
+            val metadataParser = FanboxMetadataParser(formatter)
+
+            return FanboxResources(
+                post = FanboxPostRepository(postApi, postWithoutContentNegotiation, postMapper),
+                creator = FanboxCreatorRepository(creatorApi, creatorWithoutContentNegotiation, creatorMapper),
+                search = FanboxSearchRepository(searchApi, searchMapper),
+                user = FanboxUserRepository(userApi, userMapper, metadataParser),
+                download = FanboxDownloadRepository(downloadApi),
+                rawClient = buildOwnedClient(FanboxDiagnosticSource.PublicRaw, true),
+                rawClientWithoutContentNegotiation = buildOwnedClient(FanboxDiagnosticSource.PublicRaw, false),
+                clients = clients,
             )
-            .build()
-
-        val ktorfitDownload = Ktorfit.Builder()
-            .baseUrl("https://downloads.fanbox.cc/")
-            .httpClient(
-                buildHttpClient(
-                    formatter,
-                    dependencies.cookieStorage,
-                    FanboxDiagnosticSource.LibraryGenerated,
-                    dependencies.getLatestToken,
-                    logLevel,
-                    true,
-                    clientFactory,
-                ),
-            )
-            .build()
-
-        val postApi = ktorfit.createFanboxPostApi()
-        val creatorApi = ktorfit.createFanboxCreatorApi()
-        val searchApi = ktorfit.createFanboxSearchApi()
-        val userApi = ktorfit.createFanboxUserApi()
-        val downloadApi = ktorfitDownload.createFanboxDownloadApi()
-
-        val postWithoutContentNegotiation = ktorfitWithoutContentNegotiation.createFanboxPostApi()
-        val creatorWithoutContentNegotiation = ktorfitWithoutContentNegotiation.createFanboxCreatorApi()
-
-        val listItemDecoder = FanboxListItemDecoder(formatter, logLevel != LogLevel.NONE)
-        val postMapper = FanboxPostMapper(listItemDecoder)
-        val creatorMapper = FanboxCreatorMapper(listItemDecoder)
-        val searchMapper = me.matsumo.fankt.fanbox.datasource.mapper.FanboxSearchMapper(creatorMapper)
-        val userMapper = FanboxUserMapper(postMapper, creatorMapper, listItemDecoder)
-        val metadataParser = FanboxMetadataParser(formatter)
-
-        return FanboxRepositories(
-            post = FanboxPostRepository(postApi, postWithoutContentNegotiation, postMapper),
-            creator = FanboxCreatorRepository(creatorApi, creatorWithoutContentNegotiation, creatorMapper),
-            search = FanboxSearchRepository(searchApi, searchMapper),
-            user = FanboxUserRepository(userApi, userMapper, metadataParser),
-            download = FanboxDownloadRepository(downloadApi),
-        )
+        } catch (failure: Throwable) {
+            closeClients(clients)?.let(failure::addSuppressed)
+            throw failure
+        }
     }
 
     /**
-     * Returns a separate client for custom requests.
+     * Returns a shared client for custom requests.
+     *
+     * The returned client is owned by this [Fanbox] instance. Callers must not close it. Repeated
+     * calls with the same [isEnableContentNegotiation] value return the same instance.
      *
      * Failures from requests made with this client always use endpoint `custom-request` and suppress
      * response fragments, even when a request targets a library-owned FANBOX path.
+     *
+     * @throws IllegalStateException when this [Fanbox] is closed.
      */
     suspend fun getHttpClient(isEnableContentNegotiation: Boolean = true): HttpClient {
-        return buildHttpClient(
-            formatter = formatter,
-            cookieStorage = dependencies.cookieStorage,
-            source = FanboxDiagnosticSource.PublicRaw,
-            csrfTokenProvider = dependencies.getLatestToken,
-            logLevel = logLevel,
-            isEnableContentNegotiation = isEnableContentNegotiation,
-            clientFactory = clientFactory,
+        return requireOpen(
+            if (isEnableContentNegotiation) {
+                resources.rawClient
+            } else {
+                resources.rawClientWithoutContentNegotiation
+            },
         )
     }
 
     suspend fun setFanboxSessionId(sessionId: String) {
+        ensureOpen()
         dependencies.overrideFanboxSessionId(sessionId)
     }
 
@@ -182,6 +196,7 @@ class Fanbox internal constructor(
         url: String = "https://www.fanbox.cc",
         reset: Boolean = false,
     ) {
+        ensureOpen()
         if (reset) {
             dependencies.clearCookies()
         }
@@ -193,6 +208,7 @@ class Fanbox internal constructor(
 
     /** Fetches metadata and stores its CSRF token. @throws FanboxException when the request fails. */
     suspend fun updateCsrfToken() {
+        ensureOpen()
         withContext(ioDispatcher) {
             fetchAndStoreCsrfToken(
                 fetchMetadata = ::getMetadata,
@@ -434,6 +450,9 @@ class Fanbox internal constructor(
     /**
      * Creates a deferred file request.
      *
+     * Execute the returned statement before [close]. Execution after owner close fails with Ktor's
+     * closed-client exception rather than a [FanboxException].
+     *
      * @throws FanboxException when the returned [HttpStatement] is executed and the request fails.
      */
     suspend fun downloadPostFile(
@@ -446,6 +465,9 @@ class Fanbox internal constructor(
 
     /**
      * Creates a deferred image request.
+     *
+     * Execute the returned statement before [close]. Execution after owner close fails with Ktor's
+     * closed-client exception rather than a [FanboxException].
      *
      * @throws FanboxException when the returned [HttpStatement] is executed and the request fails.
      */
@@ -460,6 +482,9 @@ class Fanbox internal constructor(
     /**
      * Creates a deferred thumbnail request.
      *
+     * Execute the returned statement before [close]. Execution after owner close fails with Ktor's
+     * closed-client exception rather than a [FanboxException].
+     *
      * @throws FanboxException when the returned [HttpStatement] is executed and the request fails.
      */
     suspend fun downloadPostThumbnailImage(
@@ -469,15 +494,48 @@ class Fanbox internal constructor(
     ): HttpStatement {
         return download.downloadPostThumbnailImage(postId, itemId, onDownload)
     }
+
+    override fun close() {
+        if (!lifecycle.complete()) return
+        closeClients(resources.clients)?.let { throw it }
+    }
+
+    private fun ensureOpen() {
+        check(lifecycle.isActive) { "Fanbox is closed" }
+    }
+
+    private fun <T> requireOpen(value: T): T {
+        ensureOpen()
+        return value
+    }
 }
 
-private data class FanboxRepositories(
+private data class FanboxResources(
     val post: FanboxPostRepository,
     val creator: FanboxCreatorRepository,
     val search: FanboxSearchRepository,
     val user: FanboxUserRepository,
     val download: FanboxDownloadRepository,
+    val rawClient: HttpClient,
+    val rawClientWithoutContentNegotiation: HttpClient,
+    val clients: List<HttpClient>,
 )
+
+private fun closeClients(clients: List<HttpClient>): Throwable? {
+    var failure: Throwable? = null
+    for (client in clients) {
+        try {
+            client.close()
+        } catch (closeFailure: Throwable) {
+            if (failure == null) {
+                failure = closeFailure
+            } else {
+                failure.addSuppressed(closeFailure)
+            }
+        }
+    }
+    return failure
+}
 
 internal fun <T> FanboxTolerantResult<T>.notifyMismatches(
     callback: (FanboxListItemSchemaMismatch) -> Unit,

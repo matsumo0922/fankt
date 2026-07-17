@@ -59,13 +59,23 @@ CSRF token expires after a certain period, update it as needed before API calls.
 ```kotlin
 val fanbox = Fanbox()
 
-// Set the session ID and CSRF token before using the API
-fanbox.setFanboxSessionId("your_session_id")
-fanbox.updateCsrfToken()
+try {
+    // Set the session ID and CSRF token before using the API
+    fanbox.setFanboxSessionId("your_session_id")
+    fanbox.updateCsrfToken()
 
-// Example: Retrieve posts from a creator
-fanbox.getCreatorPosts(creatorId = FanboxCreatorId("creator_id"))
+    // Example: Retrieve posts from a creator
+    fanbox.getCreatorPosts(creatorId = FanboxCreatorId("creator_id"))
+} finally {
+    fanbox.close()
+}
 ```
+
+`Fanbox` owns its generated clients and the clients returned by `getHttpClient()`. Calls to
+`getHttpClient()` with the same content-negotiation setting return the same shared instance, so do
+not close that client directly. Close the owning `Fanbox` after all requests and deferred download
+statements finish. Calls started after `Fanbox.close()` fail with `IllegalStateException`; Ktor may
+finish the underlying engine shutdown asynchronously.
 
 #### Error handling
 
