@@ -45,7 +45,10 @@ class FanboxPostMapperGoldenTest {
                     """{"id":"fixture-embed-unknown","serviceProvider":"future-provider","contentId":"future-content"}""",
                 ),
                 FanboxPostDetail.Body.Article.Block.Unknown(
-                    """{"type":"future-block","futureField":"fixture-future-block-value"}""",
+                    """{"type":"future-block","text":{"malformed":true},"futureField":"fixture-future-block-value"}""",
+                ),
+                FanboxPostDetail.Body.Article.Block.Unknown(
+                    """{"id":"fixture-embed-missing-provider","contentId":"missing-provider-content"}""",
                 ),
                 FanboxPostDetail.Body.Article.Block.Unknown(
                     """{"type":"embed","embedId":"fixture-embed-missing"}""",

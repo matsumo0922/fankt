@@ -25,13 +25,13 @@ FANBOX home の認証済み探索では article 104 件を含む 109 投稿を�
 
 ### 1. block type を分岐の正本にし、decode 前の JsonObject を保持する
 
-（agent 仮決め）`PostBody.blocks` は decode 前の `JsonObject` の list とし、mapper が各要素を nested `Block` entity へ decode する。`Block` entity には Issue 指定の `embedId` を追加する。これにより `p` / `header` / `image` / `file` / `url_embed` / `embed` を `block.type` で一意に分岐しながら、unknown field を `ignoreUnknownKeys` で失う前の JSON を fallback に渡せる。
+（agent 仮決め、review S-1 により修正）`PostBody.blocks` は decode 前の `JsonObject` の list とし、mapper は raw JSON から string の `type` を先に読む。`p` / `header` / `image` / `file` / `url_embed` / `embed` の既知 type だけを nested `Block` entity へ decode し、未知・欠落・非 string の type は typed field を読まず raw fallback にする。`Block` entity には Issue 指定の `embedId` を追加する。これにより未知 type が既知 block と同名の構造不一致 field を持っても後続 block の変換を継続しながら、unknown field を `ignoreUnknownKeys` で失う前の JSON を fallback に渡せる。
 
 custom serializer で typed field と raw JSON を同居させる案は、entity 専用 serializer と descriptor を増やす割に公開契約の利点がないため採用しない。従来の nullable field 優先順を維持する案は、type と payload が競合したとき別 variant を選ぶため採用しない。
 
 ### 2. embed entity は videoId と contentId を受け、domain では contentId に正規化する
 
-（agent 仮決め、独立反証 F1 により修正）`embedMap` entry は `id`、`serviceProvider`、nullable `contentId`、nullable `videoId` を decode する。mapper は一次資料の gallery-dl と同じ `videoId ?: contentId` を domain `Embed.contentId` に正規化する。Issue 本文は公開 model を contentId と呼ぶため、provider 固有の videoId もそこで統一する。両方がない entry は解決不能として `Unknown` にする。
+（agent 仮決め、独立反証 F1・review S-1 により修正）`embedMap` entry は nullable の `id`、`serviceProvider`、`contentId`、`videoId` を decode する。map key が参照 identity なので `id` は欠落しても変換できる。mapper は一次資料の gallery-dl と同じ `videoId ?: contentId` を domain `Embed.contentId` に正規化する。Issue 本文は公開 model を contentId と呼ぶため、provider 固有の videoId もそこで統一する。`serviceProvider` が欠落または未知の entry と、content ID がない entry は referenced raw JSON を持つ `Unknown` にする。
 
 ### 3. Unknown は fallback 原因の情報を含む raw JSON を1つ保持する
 

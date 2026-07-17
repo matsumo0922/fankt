@@ -325,7 +325,8 @@ internal object FanboxPostJsonFixtures {
                 {"type":"embed","embedId":"fixture-embed-google-forms"},
                 {"type":"embed","embedId":"fixture-embed-fanbox"},
                 {"type":"embed","embedId":"fixture-embed-unknown"},
-                {"type":"future-block","futureField":"fixture-future-block-value"},
+                {"type":"future-block","text":{"malformed":true},"futureField":"fixture-future-block-value"},
+                {"type":"embed","embedId":"fixture-embed-missing-provider"},
                 {"type":"embed","embedId":"fixture-embed-missing"},
                 {"type":"image","imageId":"fixture-image-missing"},
                 {"type":"file","fileId":"fixture-file-missing"},
@@ -339,7 +340,6 @@ internal object FanboxPostJsonFixtures {
                   "contentId":"twitter-content"
                 },
                 "fixture-embed-youtube": {
-                  "id":"fixture-embed-youtube",
                   "serviceProvider":"youtube",
                   "contentId":"youtube-content-ignored",
                   "videoId":"youtube-video"
@@ -368,6 +368,10 @@ internal object FanboxPostJsonFixtures {
                   "id":"fixture-embed-unknown",
                   "serviceProvider":"future-provider",
                   "contentId":"future-content"
+                },
+                "fixture-embed-missing-provider": {
+                  "id":"fixture-embed-missing-provider",
+                  "contentId":"missing-provider-content"
                 }
               },
               "fileMap": {},

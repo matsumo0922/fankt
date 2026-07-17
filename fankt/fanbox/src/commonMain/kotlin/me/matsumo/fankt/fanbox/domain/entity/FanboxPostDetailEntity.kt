@@ -97,9 +97,9 @@ internal data class FanboxPostDetailEntity(
             @Serializable
             data class Embed(
                 @SerialName("id")
-                val id: String,
+                val id: String? = null,
                 @SerialName("serviceProvider")
-                val serviceProvider: String,
+                val serviceProvider: String? = null,
                 @SerialName("contentId")
                 val contentId: String? = null,
                 @SerialName("videoId")

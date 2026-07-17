@@ -19,6 +19,11 @@
 - **WHEN** referenced embed entry が異なる `videoId` と `contentId` を同時に持つ
 - **THEN** システムは一次資料の precedence に従い `videoId` を `Article.Block.Embed.contentId` として返す
 
+#### Scenario: embedMap entry の id がない
+
+- **WHEN** `embedId` が `id` field を持たない既知 provider の entry を参照する
+- **THEN** システムは map key で entry を解決し、同じ provider と正規化した content ID を持つ `Article.Block.Embed` を返す
+
 ### Requirement: 既知 provider の URL を復元する
 
 公開 `Article.Block.Embed` SHALL twitter、youtube、vimeo、soundcloud、google_forms、fanbox の content ID から provider 固有 URL を決定的に復元しなければならない。fanbox は HTTP redirect の source URL を返す。Trace: Issue #28 の provider 別 URL 復元受け入れ条件。
@@ -50,6 +55,11 @@
 #### Scenario: content ID がない
 
 - **WHEN** referenced embed entry が `contentId` と `videoId` のどちらも持たない
+- **THEN** システムは referenced embed entry の raw JSON を持つ `Article.Block.Unknown` を該当位置に返す
+
+#### Scenario: service provider がない
+
+- **WHEN** `embedId` が `serviceProvider` を持たない entry を参照する
 - **THEN** システムは referenced embed entry の raw JSON を持つ `Article.Block.Unknown` を該当位置に返す
 
 #### Scenario: 既知の非 embed block の参照先がない

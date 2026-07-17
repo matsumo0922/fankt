@@ -88,7 +88,7 @@ class FanboxPostBodyMappingTest {
                 ),
                 embeds.map { it.url },
             )
-            assertEquals(6, article.blocks.filterIsInstance<FanboxPostDetail.Body.Article.Block.Unknown>().size)
+            assertEquals(7, article.blocks.filterIsInstance<FanboxPostDetail.Body.Article.Block.Unknown>().size)
         } finally {
             fanbox.close()
         }

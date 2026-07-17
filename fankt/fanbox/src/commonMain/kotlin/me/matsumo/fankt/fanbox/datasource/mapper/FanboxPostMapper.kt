@@ -4,6 +4,8 @@ import io.ktor.http.Url
 import kotlinx.datetime.Instant
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.decodeFromJsonElement
 import me.matsumo.fankt.fanbox.FanboxListItemDecoder
 import me.matsumo.fankt.fanbox.FanboxTolerantResult
@@ -178,15 +180,19 @@ internal class FanboxPostMapper(
     ): FanboxPostDetail.Body.Article {
         return FanboxPostDetail.Body.Article(
             blocks = body.blocks.mapNotNull { rawBlock ->
-                val block = formatter.decodeFromJsonElement<FanboxPostDetailEntity.Body.PostBody.Block>(rawBlock)
-                when (block.type) {
+                val blockType = (rawBlock["type"] as? JsonPrimitive)
+                    ?.takeIf { it.isString }
+                    ?.content
+                when (blockType) {
                     "p", "header" -> {
+                        val block = decodeKnownBlock(rawBlock)
                         block.text?.takeIf(String::isNotEmpty)?.let {
                             FanboxPostDetail.Body.Article.Block.Text(it)
                         }
                     }
 
                     "image" -> {
+                        val block = decodeKnownBlock(rawBlock)
                         block.imageId?.let { body.imageMap[it] }?.let { image ->
                             FanboxPostDetail.Body.Article.Block.Image(
                                 FanboxPostDetail.ImageItem(
@@ -202,6 +208,7 @@ internal class FanboxPostMapper(
                     }
 
                     "file" -> {
+                        val block = decodeKnownBlock(rawBlock)
                         block.fileId?.let { body.fileMap[it] }?.let { file ->
                             FanboxPostDetail.Body.Article.Block.File(
                                 FanboxPostDetail.FileItem(
@@ -217,6 +224,7 @@ internal class FanboxPostMapper(
                     }
 
                     "url_embed" -> {
+                        val block = decodeKnownBlock(rawBlock)
                         block.urlEmbedId?.let { body.urlEmbedMap[it] }?.let { url ->
                             FanboxPostDetail.Body.Article.Block.Link(
                                 html = url.html,
@@ -225,12 +233,15 @@ internal class FanboxPostMapper(
                         } ?: FanboxPostDetail.Body.Article.Block.Unknown(rawBlock.toString())
                     }
 
-                    "embed" -> mapEmbedBlock(body, block, rawBlock.toString())
+                    "embed" -> mapEmbedBlock(body, decodeKnownBlock(rawBlock), rawBlock.toString())
                     else -> FanboxPostDetail.Body.Article.Block.Unknown(rawBlock.toString())
                 }
             },
         )
     }
+
+    private fun decodeKnownBlock(rawBlock: JsonObject) =
+        formatter.decodeFromJsonElement<FanboxPostDetailEntity.Body.PostBody.Block>(rawBlock)
 
     private fun mapEmbedBlock(
         body: FanboxPostDetailEntity.Body.PostBody,
@@ -241,9 +252,14 @@ internal class FanboxPostMapper(
             ?: return FanboxPostDetail.Body.Article.Block.Unknown(rawBlockJson)
         val embed = formatter.decodeFromJsonElement<FanboxPostDetailEntity.Body.PostBody.Embed>(rawEmbed)
         val contentId = embed.videoId ?: embed.contentId
-        return if (embed.serviceProvider in EMBED_SERVICE_PROVIDERS && contentId != null) {
+        val serviceProvider = embed.serviceProvider
+        return if (
+            serviceProvider != null &&
+            serviceProvider in EMBED_SERVICE_PROVIDERS &&
+            contentId != null
+        ) {
             FanboxPostDetail.Body.Article.Block.Embed(
-                serviceProvider = embed.serviceProvider,
+                serviceProvider = serviceProvider,
                 contentId = contentId,
             )
         } else {
