@@ -35,6 +35,8 @@ kotlin {
         }
 
         androidUnitTest.dependencies {
+            implementation(libs.androidx.test.core)
+            implementation(libs.robolectric)
             implementation(libs.sqlite.jdbc)
         }
 
