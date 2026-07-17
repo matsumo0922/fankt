@@ -44,7 +44,7 @@ Rollback to a v1 library may use the existing downgrade-destructive policy and r
 
 ### 5. Delete expiry rows before selection
 
-（agent 仮決め）Read the finite inventory first, exclude `expiresAt != NULL && expiresAt <= now` from the returned snapshot, then issue one conditional DAO cleanup using exactly the same predicate. A key-only delete was rejected because a concurrent fresh replacement under the same key could be deleted; the expiry predicate preserves that replacement. A concurrent expired insert after the snapshot was not part of this read and is removed by the next read. The v1 `expiresAt <= 0` sentinel migrates to `NULL`; newly added Cookies whose real expiry is at or before `now` delete the matching identity immediately instead of being stored.
+（agent 仮決め）Read the finite inventory first, exclude `expiresAt != NULL && expiresAt <= now` from the returned snapshot, then issue one conditional DAO cleanup using exactly the same predicate. A key-only delete was rejected because a concurrent fresh replacement under the same key could be deleted; the expiry predicate preserves that replacement. A concurrent expired insert after the snapshot was not part of this read and is removed by the next read. Only the exact v1 session sentinel `expiresAt = -1` migrates to `NULL`; `0` and other negative real timestamps remain expired timestamps. Newly added Cookies whose real expiry is at or before `now` delete the matching identity immediately instead of being stored.
 
 Expired-row deletion is best-effort after a successful snapshot query. If cleanup fails (for example `SQLITE_BUSY` or `SQLITE_FULL`), storage still returns the in-memory filtered unexpired Cookies, so cleanup failure cannot leak expired data or stop all FANBOX traffic. The next read retries cleanup. Snapshot query failure still propagates because storage has no safe Cookie inventory to return.
 
@@ -66,7 +66,7 @@ Expired-row deletion is best-effort after a successful snapshot query. If cleanu
 
 1. Increase `FanktDatabase` from version 1 to 2.
 2. Rebuild `fankt_cookies` with `domain/path/name` composite primary key, a non-null `secure` column, nullable and indexed `expiresAt`.
-3. Canonicalize domains and copy the greatest-`rowid` v1 row for each canonical identity, with `secure = 1`; convert v1 `expiresAt <= 0` session sentinels to `NULL`. The row tie-breaker is deterministic but does not claim a creation-time ordering that v1 cannot prove.
+3. Canonicalize domains and copy the greatest-`rowid` v1 row for each canonical identity, with `secure = 1`; convert only the exact v1 `expiresAt = -1` session sentinel to `NULL`. Preserve every other timestamp for first-read expiry cleanup. The row tie-breaker is deterministic but does not claim a creation-time ordering that v1 cannot prove.
 4. Drop the v1 table and rename the rebuilt table.
 5. Register the same common migration in Android and iOS builders.
 6. Verify generated schema v2, expiry index, Cookie rows, and untouched CSRF rows against an actual v1 SQLite database.
