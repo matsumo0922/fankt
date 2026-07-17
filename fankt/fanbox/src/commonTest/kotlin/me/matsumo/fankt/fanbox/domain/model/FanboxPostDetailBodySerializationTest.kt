@@ -43,6 +43,35 @@ class FanboxPostDetailBodySerializationTest {
     }
 
     @Test
+    fun legacyBodyVariantsRoundTrip() {
+        val bodies: List<FanboxPostDetail.Body> = listOf(
+            FanboxPostDetail.Body.Text("Fixture legacy text"),
+            FanboxPostDetail.Body.Video("youtube", "fixture-video-1"),
+            FanboxPostDetail.Body.Html("<p>Fixture legacy HTML</p>"),
+        )
+
+        bodies.forEach { expected ->
+            val actual = formatter.decodeFromString<FanboxPostDetail.Body>(formatter.encodeToString(expected))
+            assertEquals(expected, actual)
+            assertEquals(emptyList(), actual.imageItems)
+            assertEquals(emptyList(), actual.fileItems)
+        }
+    }
+
+    @Test
+    fun legacyVideoRestoresSupportedProviderUrls() {
+        assertEquals(
+            "https://www.youtube.com/watch?v=fixture-video",
+            FanboxPostDetail.Body.Video("youtube", "fixture-video").url,
+        )
+        assertEquals(
+            "https://vimeo.com/fixture-video",
+            FanboxPostDetail.Body.Video("vimeo", "fixture-video").url,
+        )
+        assertNull(FanboxPostDetail.Body.Video("future-provider", "fixture-video").url)
+    }
+
+    @Test
     fun articleEmbedAndUnknownBlocksRoundTrip() {
         val expected: FanboxPostDetail.Body = FanboxPostDetail.Body.Article(
             listOf(

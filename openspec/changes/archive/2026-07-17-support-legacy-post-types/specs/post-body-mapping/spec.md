@@ -1,10 +1,4 @@
-# post-body-mapping Specification
-
-## Purpose
-
-`post.info` が返す投稿種別を正本として本文を解釈し、未対応・未知の本文でも型とJSON値を失わず安全に呼び出し側へ返す。
-
-## Requirements
+## MODIFIED Requirements
 
 ### Requirement: 投稿 type を本文 variant の正本にする
 
@@ -84,25 +78,6 @@
 - **WHEN** 未知の `post.type` の `post.body` がJSONの `null` である
 - **THEN** システムは `rawBodyJson` が null の `Body.Unknown` を返す
 
-### Requirement: Unknown は公開 serializable value として payload を保持する
-
-公開 `FanboxPostDetail.Body.Unknown` SHALL `type: String` と `rawBodyJson: String?` を値として持つ serializable data class でなければならない。Trace: Issue #26 の破壊的変更要件。
-
-#### Scenario: Unknown を値として比較する
-
-- **WHEN** 同じ type と raw body JSON を持つ2つの `Body.Unknown` を構築する
-- **THEN** システムは両者を等しい値として扱う
-
-#### Scenario: Unknown を sealed Body として round-trip する
-
-- **WHEN** `Body.Unknown` を `Body` serializerでJSONへencodeしてdecodeする
-- **THEN** discriminatorと投稿typeが衝突せず、typeとraw body JSONを保持した同じ値を返す
-
-#### Scenario: 旧 Unknown object を decode する
-
-- **WHEN** payload fieldを持たない旧 `Body.Unknown` のserialized valueを新しいmodelでdecodeする
-- **THEN** システムはtypeを `unknown`、raw body JSONをnullとする `Body.Unknown` を返す
-
 ### Requirement: 遅延した既知 body の schema error は公開例外契約を保つ
 
 システム SHALL 実レスポンス由来 schema を持つ `article` / `image` / `file` のtyped body decodeが失敗した場合、公開 `Fanbox.getPostDetail` から生のserialization例外を漏らさず `FanboxException.SchemaMismatch` を返さなければならない。Trace: 公開APIの非退行 invariant。
@@ -116,6 +91,8 @@
 
 - **WHEN** HTTP 200の `post.info` が `type = article`、`image`、または `file` かつ `post.body = null` を返す
 - **THEN** `Fanbox.getPostDetail` はendpoint `post.info`、status 200の `FanboxException.SchemaMismatch` を返し、`Body.Unknown` へフォールバックしない
+
+## ADDED Requirements
 
 ### Requirement: video provider URL を復元する
 

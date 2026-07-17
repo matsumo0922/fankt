@@ -43,7 +43,7 @@ data class FanboxPostDetail(
                     it.asImageItem()
                 }
 
-                is Unknown -> emptyList()
+                is Text, is Video, is Html, is Unknown -> emptyList()
             }
 
         val fileItems
@@ -55,7 +55,7 @@ data class FanboxPostDetail(
 
                 is Image -> emptyList()
                 is File -> files
-                is Unknown -> emptyList()
+                is Text, is Video, is Html, is Unknown -> emptyList()
             }
 
         @Serializable
@@ -125,6 +125,30 @@ data class FanboxPostDetail(
             val text: String,
             val files: List<FileItem>,
         ) : Body
+
+        @Serializable
+        data class Text(val text: String) : Body
+
+        @Serializable
+        data class Video(
+            val serviceProvider: String,
+            val videoId: String,
+        ) : Body {
+            val url: String?
+                get() = when (serviceProvider) {
+                    "youtube" -> "https://www.youtube.com/watch?v=$videoId"
+                    "vimeo" -> "https://vimeo.com/$videoId"
+                    else -> null
+                }
+        }
+
+        /**
+         * HTML received from FANBOX without sanitization.
+         *
+         * [html] is untrusted and must be sanitized by the caller before rendering.
+         */
+        @Serializable
+        data class Html(val html: String) : Body
 
         @Serializable
         data class Unknown(

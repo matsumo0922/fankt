@@ -164,12 +164,41 @@ internal class FanboxPostMapper(
             "article" -> mapArticleBody(post, formatter.decodeFromJsonElement(requireKnownBody(post)))
             "image" -> mapImageBody(post, formatter.decodeFromJsonElement(requireKnownBody(post)))
             "file" -> mapFileBody(post, formatter.decodeFromJsonElement(requireKnownBody(post)))
-            else -> FanboxPostDetail.Body.Unknown(
-                type = post.type,
-                rawBodyJson = post.body?.toString(),
-            )
+            "text" -> mapLegacyBody(post) { body ->
+                body.text?.let { FanboxPostDetail.Body.Text(it) }
+            }
+
+            "video" -> mapLegacyBody(post) { body ->
+                val video = body.video ?: return@mapLegacyBody null
+                val serviceProvider = video.serviceProvider ?: return@mapLegacyBody null
+                val videoId = video.videoId ?: video.contentId ?: return@mapLegacyBody null
+                FanboxPostDetail.Body.Video(serviceProvider, videoId)
+            }
+
+            "entry" -> mapLegacyBody(post) { body ->
+                body.html?.let { FanboxPostDetail.Body.Html(it) }
+            }
+
+            else -> unknownBody(post)
         }
     }
+
+    private fun mapLegacyBody(
+        post: FanboxPostDetailEntity.Body,
+        mapper: (FanboxPostDetailEntity.Body.PostBody) -> FanboxPostDetail.Body?,
+    ): FanboxPostDetail.Body {
+        val rawBody = post.body ?: return unknownBody(post)
+        return try {
+            mapper(formatter.decodeFromJsonElement(rawBody)) ?: unknownBody(post)
+        } catch (_: SerializationException) {
+            unknownBody(post)
+        }
+    }
+
+    private fun unknownBody(post: FanboxPostDetailEntity.Body) = FanboxPostDetail.Body.Unknown(
+        type = post.type,
+        rawBodyJson = post.body?.toString(),
+    )
 
     private fun requireKnownBody(post: FanboxPostDetailEntity.Body) =
         post.body ?: throw SerializationException("post.body is null for known post type '${post.type}'")

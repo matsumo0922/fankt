@@ -247,7 +247,7 @@ class FanboxPostMapperGoldenTest {
     }
 
     @Test
-    fun postInfoTextDecodesAndMapsToUnknownBody() {
+    fun nullLegacyTextBodyMapsToUnknown() {
         val actual = FanboxPostMapper().map(
             decodeFixture<FanboxPostDetailEntity>(FanboxPostJsonFixtures.postInfoText),
         )
@@ -281,33 +281,60 @@ class FanboxPostMapperGoldenTest {
     }
 
     @Test
-    fun syntheticVideoMapsToUnknownWithRawBody() {
+    fun hybridTextMapsToText() {
+        val actual = FanboxPostMapper().map(
+            decodeFixture<FanboxPostDetailEntity>(FanboxPostJsonFixtures.postInfoTextHybrid),
+        )
+
+        assertEquals(FanboxPostDetail.Body.Text("Fixture legacy text"), actual.body)
+    }
+
+    @Test
+    fun hybridVideoUsesVideoIdBeforeContentId() {
         val actual = FanboxPostMapper().map(
             decodeFixture<FanboxPostDetailEntity>(FanboxPostJsonFixtures.postInfoVideo),
         )
 
         assertEquals(
-            FanboxPostDetail.Body.Unknown(
-                type = "video",
-                rawBodyJson = """{"videoId":"fixture-video-1","serviceProvider":"fixture-provider"}""",
-            ),
+            FanboxPostDetail.Body.Video("youtube", "fixture-video-1"),
             actual.body,
         )
     }
 
     @Test
-    fun syntheticEntryMapsToUnknownWithRawBody() {
+    fun hybridVideoAcceptsContentIdSpelling() {
+        val actual = FanboxPostMapper().map(
+            decodeFixture<FanboxPostDetailEntity>(FanboxPostJsonFixtures.postInfoVideoContentId),
+        )
+
+        assertEquals(FanboxPostDetail.Body.Video("vimeo", "fixture-video-2"), actual.body)
+    }
+
+    @Test
+    fun hybridEntryMapsToHtml() {
         val actual = FanboxPostMapper().map(
             decodeFixture<FanboxPostDetailEntity>(FanboxPostJsonFixtures.postInfoEntry),
         )
 
-        assertEquals(
-            FanboxPostDetail.Body.Unknown(
-                type = "entry",
-                rawBodyJson = """{"entryId":"fixture-entry-1","content":"Fixture entry content"}""",
-            ),
-            actual.body,
+        assertEquals(FanboxPostDetail.Body.Html("<p>Fixture legacy HTML</p>"), actual.body)
+    }
+
+    @Test
+    fun malformedLegacyBodiesPreserveRawUnknownFallback() {
+        val cases = listOf(
+            FanboxPostJsonFixtures.postInfoMalformedText to
+                FanboxPostDetail.Body.Unknown("text", """{"text":{"unexpected":true}}"""),
+            FanboxPostJsonFixtures.postInfoMalformedVideo to
+                FanboxPostDetail.Body.Unknown("video", """{"video":"unexpected"}"""),
+            FanboxPostJsonFixtures.postInfoMalformedEntry to
+                FanboxPostDetail.Body.Unknown("entry", """{"html":{"unexpected":true}}"""),
+            FanboxPostJsonFixtures.postInfoNullVideo to FanboxPostDetail.Body.Unknown("video", null),
         )
+
+        cases.forEach { (fixture, expected) ->
+            val actual = FanboxPostMapper().map(decodeFixture<FanboxPostDetailEntity>(fixture))
+            assertEquals(expected, actual.body)
+        }
     }
 
     @Test

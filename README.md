@@ -161,6 +161,11 @@ Add a fixture with this fail-closed, one-shot procedure:
    the test verifies an internal branch or fallback without claiming compatibility with the remote
    response schema. Mark the fixture as synthetic in source, and state its provenance, limited
    guarantee, and unverified production schema in the pull request description.
+
+   An issue-approved hybrid fixture may combine a response-derived envelope and field representation
+   with a composed type-specific fragment when the target variation cannot be captured. Mark the
+   response-derived, composed, and unverified parts separately in source and in the pull request.
+   Never describe the complete hybrid fixture as response-derived.
 2. In the current implementation session, disable shell tracing and HTTP header/body logging, set
    `umask 077`, and create a private temporary directory outside the repository. Inject
    `FANBOXSESSID` through a temporary process environment without echoing it or placing it in a

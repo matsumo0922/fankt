@@ -1,5 +1,10 @@
 package me.matsumo.fankt.fanbox.fixture
 
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.jsonObject
+
 internal object FanboxPostJsonFixtures {
     val postInfoArticleA =
         """
@@ -283,22 +288,63 @@ internal object FanboxPostJsonFixtures {
         """.trimIndent()
 
     /**
-     * Synthetic fixture approved for issue #26. It verifies type dispatch and raw preservation only;
-     * it does not represent the production video body schema.
+     * Issue #27 hybrid fixture. The envelope and common post fields come from the anonymized,
+     * response-derived image fixture. The text type and body placement are composed from the
+     * documented legacy shape. The complete production text response schema remains unverified.
      */
-    val postInfoVideo = syntheticUnsupportedPostInfo(
-        type = "video",
-        bodyJson = """{"videoId":"fixture-video-1","serviceProvider":"fixture-provider"}""",
-    )
+    val postInfoTextHybrid by lazy {
+        hybridLegacyPostInfo(
+            type = "text",
+            bodyJson =
+            """{"text":"Fixture legacy text","video":{"serviceProvider":"youtube","videoId":"ignored-video"},"html":"<p>Ignored HTML</p>"}""",
+        )
+    }
 
     /**
-     * Synthetic fixture approved for issue #26. It verifies type dispatch and raw preservation only;
-     * it does not represent the production entry body schema.
+     * Issue #27 hybrid fixture. The envelope and common post fields are response-derived; the video
+     * type and nested video placement are composed from the documented legacy shape. The complete
+     * production video response schema remains unverified.
      */
-    val postInfoEntry = syntheticUnsupportedPostInfo(
-        type = "entry",
-        bodyJson = """{"entryId":"fixture-entry-1","content":"Fixture entry content"}""",
-    )
+    val postInfoVideo by lazy {
+        hybridLegacyPostInfo(
+            type = "video",
+            bodyJson =
+            """{"video":{"serviceProvider":"youtube","videoId":"fixture-video-1","contentId":"fixture-content-ignored"}}""",
+        )
+    }
+
+    /** Hybrid issue #27 fixture for the legacy contentId spelling; production schema is unverified. */
+    val postInfoVideoContentId by lazy {
+        hybridLegacyPostInfo(
+            type = "video",
+            bodyJson = """{"video":{"serviceProvider":"vimeo","contentId":"fixture-video-2"}}""",
+        )
+    }
+
+    /**
+     * Issue #27 hybrid fixture. The envelope and common post fields are response-derived. The HTML
+     * scalar shape is also present in the response-derived article urlEmbedMap; only the entry type
+     * and body placement are composed. The complete production entry response schema is unverified.
+     */
+    val postInfoEntry by lazy {
+        hybridLegacyPostInfo(type = "entry", bodyJson = """{"html":"<p>Fixture legacy HTML</p>"}""")
+    }
+
+    val postInfoMalformedText by lazy {
+        hybridLegacyPostInfo(type = "text", bodyJson = """{"text":{"unexpected":true}}""")
+    }
+
+    val postInfoMalformedVideo by lazy {
+        hybridLegacyPostInfo(type = "video", bodyJson = """{"video":"unexpected"}""")
+    }
+
+    val postInfoMalformedEntry by lazy {
+        hybridLegacyPostInfo(type = "entry", bodyJson = """{"html":{"unexpected":true}}""")
+    }
+
+    val postInfoNullVideo by lazy {
+        hybridLegacyPostInfo(type = "video", bodyJson = "null")
+    }
 
     /** Synthetic fixture for the fail-safe unknown-type branch; it is not response-derived. */
     val postInfoUnknownType = syntheticUnsupportedPostInfo(
@@ -815,5 +861,20 @@ internal object FanboxPostJsonFixtures {
         return postInfoText
             .replaceFirst(oldValue = "\"body\": null", newValue = "\"body\": $bodyJson")
             .replaceFirst(oldValue = "\"type\": \"text\"", newValue = "\"type\": \"$type\"")
+    }
+
+    private fun hybridLegacyPostInfo(type: String, bodyJson: String): String {
+        val root = Json.parseToJsonElement(postInfoImage).jsonObject
+        val responseBody = root.getValue("body").jsonObject
+        val post = responseBody.getValue("post").jsonObject
+        val hybridPost = JsonObject(
+            post + mapOf(
+                "body" to Json.parseToJsonElement(bodyJson),
+                "type" to JsonPrimitive(type),
+            ),
+        )
+        return JsonObject(
+            root + ("body" to JsonObject(responseBody + ("post" to hybridPost))),
+        ).toString()
     }
 }
