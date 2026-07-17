@@ -5,6 +5,7 @@
 ## What Changes
 
 - Resolve the latest persisted CSRF token when each FANBOX request is sent and set `x-csrf-token` on that request.
+- Preserve the current default-header policy: every request receives the persisted token unless that request explicitly supplies its own CSRF header.
 - Construct the internal HttpClient, Ktorfit API, mapper, and repository graph once during `Fanbox` initialization.
 - Remove the token collector and token-triggered client graph rebuild.
 - Add MockEngine coverage for immediate token visibility and stable client identity.
@@ -24,5 +25,5 @@ None.
 
 - `fankt/fanbox` client construction, token DAO access, and common tests.
 - README guidance for CSRF token refresh semantics.
-- No public API signature change and no database migration.
+- The latest-token query changes to use the auto-generated insertion id; no public API signature or database schema migration changes.
 - Issue acceptance criteria: #21.
