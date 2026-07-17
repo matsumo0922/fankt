@@ -3,6 +3,7 @@ package me.matsumo.fankt.fanbox
 import androidx.compose.runtime.Stable
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import io.ktor.client.plugins.logging.LogLevel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.update
@@ -10,7 +11,7 @@ import kotlinx.coroutines.launch
 
 class FanboxViewModel : ViewModel() {
 
-    private val fanbox = Fanbox()
+    private val fanbox = Fanbox(LogLevel.ALL)
 
     val uiState = MutableStateFlow(FanboxUiState(fanbox, "", ""))
 
