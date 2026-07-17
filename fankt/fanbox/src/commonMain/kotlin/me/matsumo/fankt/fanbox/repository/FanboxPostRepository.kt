@@ -8,9 +8,11 @@ import kotlinx.coroutines.IO
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
+import me.matsumo.fankt.fanbox.FanboxTolerantResult
 import me.matsumo.fankt.fanbox.datasource.FanboxPostApi
 import me.matsumo.fankt.fanbox.datasource.mapper.FanboxPostMapper
 import me.matsumo.fankt.fanbox.domain.FanboxCursor
+import me.matsumo.fankt.fanbox.domain.PageCursorInfo
 import me.matsumo.fankt.fanbox.domain.model.id.FanboxCommentId
 import me.matsumo.fankt.fanbox.domain.model.id.FanboxCreatorId
 import me.matsumo.fankt.fanbox.domain.model.id.FanboxPostId
@@ -47,22 +49,27 @@ internal class FanboxPostRepository(
     }
 
     suspend fun getCreatorPosts(creatorId: FanboxCreatorId, cursor: FanboxCursor?, nextCursor: FanboxCursor?) = withContext(ioDispatcher) {
-        val cursors = if (cursor == null) {
+        val (currentCursor, resolvedNextCursor) = if (cursor == null) {
             val pagination = getCreatorPostsPagination(creatorId)
-            pagination.first() to pagination.elementAtOrNull(1)
+            val firstCursor = pagination.firstOrNull()
+                ?: return@withContext FanboxTolerantResult(
+                    value = PageCursorInfo(contents = emptyList(), cursor = null),
+                    mismatches = emptyList(),
+                )
+            firstCursor to pagination.elementAtOrNull(1)
         } else {
             cursor to nextCursor
         }
 
         fanboxPostApi.getCreatorPosts(
             creatorId = creatorId.value,
-            loadSize = cursor?.limit?.toString() ?: LOAD_SIZE,
-            firstPublishedDatetime = cursors.first.firstPublishedDatetime,
-            maxPublishedDatetime = cursors.first.maxPublishedDatetime,
-            firstId = cursors.first.firstId,
-            maxId = cursors.first.maxId,
+            loadSize = currentCursor.limit?.toString() ?: LOAD_SIZE,
+            firstPublishedDatetime = currentCursor.firstPublishedDatetime,
+            maxPublishedDatetime = currentCursor.maxPublishedDatetime,
+            firstId = currentCursor.firstId,
+            maxId = currentCursor.maxId,
         ).let {
-            fanboxPostMapper.map(it, cursors.second, "post.listCreator")
+            fanboxPostMapper.map(it, resolvedNextCursor, "post.listCreator")
         }
     }
 
