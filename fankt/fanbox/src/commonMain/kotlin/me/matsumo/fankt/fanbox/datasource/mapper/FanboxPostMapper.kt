@@ -3,6 +3,7 @@ package me.matsumo.fankt.fanbox.datasource.mapper
 import io.github.aakira.napier.Napier
 import io.ktor.http.Url
 import kotlinx.datetime.Instant
+import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.decodeFromJsonElement
 import me.matsumo.fankt.fanbox.FanboxListItemDecoder
@@ -149,19 +150,19 @@ internal class FanboxPostMapper(
     }
 
     private fun mapBody(post: FanboxPostDetailEntity.Body): FanboxPostDetail.Body {
-        val rawBody = post.body
-            ?: return FanboxPostDetail.Body.Unknown(type = post.type, rawBodyJson = null)
-
         return when (post.type) {
-            "article" -> mapArticleBody(post, formatter.decodeFromJsonElement(rawBody))
-            "image" -> mapImageBody(post, formatter.decodeFromJsonElement(rawBody))
-            "file" -> mapFileBody(post, formatter.decodeFromJsonElement(rawBody))
+            "article" -> mapArticleBody(post, formatter.decodeFromJsonElement(requireKnownBody(post)))
+            "image" -> mapImageBody(post, formatter.decodeFromJsonElement(requireKnownBody(post)))
+            "file" -> mapFileBody(post, formatter.decodeFromJsonElement(requireKnownBody(post)))
             else -> FanboxPostDetail.Body.Unknown(
                 type = post.type,
-                rawBodyJson = rawBody.toString(),
+                rawBodyJson = post.body?.toString(),
             )
         }
     }
+
+    private fun requireKnownBody(post: FanboxPostDetailEntity.Body) =
+        post.body ?: throw SerializationException("post.body is null for known post type '${post.type}'")
 
     private fun mapArticleBody(
         post: FanboxPostDetailEntity.Body,

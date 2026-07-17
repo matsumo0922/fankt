@@ -377,6 +377,12 @@ internal object FanboxPostJsonFixtures {
         newValue = "\"unexpectedExtension\": \"jpeg\"",
     )
 
+    /** Synthetic known-type null-body fixture for the public SchemaMismatch contract. */
+    val postInfoNullArticle = postInfoText.replaceFirst(
+        oldValue = "\"type\": \"text\"",
+        newValue = "\"type\": \"article\"",
+    )
+
     val postInfoFile =
         """
         {

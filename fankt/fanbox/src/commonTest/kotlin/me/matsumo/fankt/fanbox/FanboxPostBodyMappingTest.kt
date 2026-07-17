@@ -53,6 +53,21 @@ class FanboxPostBodyMappingTest {
         }
     }
 
+    @Test
+    fun nullKnownBodyUsesSchemaMismatchThroughPublicPostDetailPath() = runBlocking {
+        val fanbox = createFanbox(FanboxPostJsonFixtures.postInfoNullArticle)
+        try {
+            val failure = assertFailsWith<FanboxException.SchemaMismatch> {
+                fanbox.getPostDetail(FanboxPostId("10000001"))
+            }
+
+            assertEquals(200, failure.statusCode)
+            assertEquals("post.info", failure.endpoint)
+        } finally {
+            fanbox.close()
+        }
+    }
+
     private fun createFanbox(responseBody: String): Fanbox {
         val clientFactory = FanboxHttpClientFactory { block ->
             HttpClient(
