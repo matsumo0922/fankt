@@ -212,7 +212,10 @@ class FanboxPostMapperGoldenTest {
         val expected = FanboxPostDetail(
             id = FanboxPostId("10000001"),
             title = "Fixture text post",
-            body = FanboxPostDetail.Body.Unknown,
+            body = FanboxPostDetail.Body.Unknown(
+                type = "text",
+                rawBodyJson = null,
+            ),
             coverImageUrl = null,
             commentCount = 0,
             excerpt = "Fixture text excerpt",
@@ -232,6 +235,64 @@ class FanboxPostMapperGoldenTest {
         )
 
         assertEquals(expected, actual)
+    }
+
+    @Test
+    fun syntheticVideoMapsToUnknownWithRawBody() {
+        val actual = FanboxPostMapper().map(
+            decodeFixture<FanboxPostDetailEntity>(FanboxPostJsonFixtures.postInfoVideo),
+        )
+
+        assertEquals(
+            FanboxPostDetail.Body.Unknown(
+                type = "video",
+                rawBodyJson = """{"videoId":"fixture-video-1","serviceProvider":"fixture-provider"}""",
+            ),
+            actual.body,
+        )
+    }
+
+    @Test
+    fun syntheticEntryMapsToUnknownWithRawBody() {
+        val actual = FanboxPostMapper().map(
+            decodeFixture<FanboxPostDetailEntity>(FanboxPostJsonFixtures.postInfoEntry),
+        )
+
+        assertEquals(
+            FanboxPostDetail.Body.Unknown(
+                type = "entry",
+                rawBodyJson = """{"entryId":"fixture-entry-1","content":"Fixture entry content"}""",
+            ),
+            actual.body,
+        )
+    }
+
+    @Test
+    fun syntheticUnknownTypeReturnsPostDetailWithRawBody() {
+        val actual = FanboxPostMapper().map(
+            decodeFixture<FanboxPostDetailEntity>(FanboxPostJsonFixtures.postInfoUnknownType),
+        )
+
+        assertEquals(FanboxPostId("10000001"), actual.id)
+        assertEquals(
+            FanboxPostDetail.Body.Unknown(
+                type = "future-post-type",
+                rawBodyJson = """{"futureField":"fixture-future-value"}""",
+            ),
+            actual.body,
+        )
+    }
+
+    @Test
+    fun explicitFileTypeWinsOverNonEmptyImagePayloadFields() {
+        val actual = FanboxPostMapper().map(
+            decodeFixture<FanboxPostDetailEntity>(FanboxPostJsonFixtures.postInfoFileTypeWithImagePayloadFields),
+        )
+
+        assertEquals(
+            FanboxPostDetail.Body.File(text = "", files = emptyList()),
+            actual.body,
+        )
     }
 
     @Test

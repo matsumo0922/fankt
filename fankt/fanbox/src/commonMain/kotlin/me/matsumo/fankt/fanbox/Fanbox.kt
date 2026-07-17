@@ -148,7 +148,7 @@ class Fanbox internal constructor(
             val creatorWithoutContentNegotiation = ktorfitWithoutContentNegotiation.createFanboxCreatorApi()
 
             val listItemDecoder = FanboxListItemDecoder(formatter, logLevel != LogLevel.NONE)
-            val postMapper = FanboxPostMapper(listItemDecoder)
+            val postMapper = FanboxPostMapper(listItemDecoder, formatter)
             val creatorMapper = FanboxCreatorMapper(listItemDecoder)
             val searchMapper = me.matsumo.fankt.fanbox.datasource.mapper.FanboxSearchMapper(creatorMapper)
             val userMapper = FanboxUserMapper(postMapper, creatorMapper, listItemDecoder)

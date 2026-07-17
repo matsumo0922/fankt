@@ -282,6 +282,30 @@ internal object FanboxPostJsonFixtures {
         }
         """.trimIndent()
 
+    /**
+     * Synthetic fixture approved for issue #26. It verifies type dispatch and raw preservation only;
+     * it does not represent the production video body schema.
+     */
+    val postInfoVideo = syntheticUnsupportedPostInfo(
+        type = "video",
+        bodyJson = """{"videoId":"fixture-video-1","serviceProvider":"fixture-provider"}""",
+    )
+
+    /**
+     * Synthetic fixture approved for issue #26. It verifies type dispatch and raw preservation only;
+     * it does not represent the production entry body schema.
+     */
+    val postInfoEntry = syntheticUnsupportedPostInfo(
+        type = "entry",
+        bodyJson = """{"entryId":"fixture-entry-1","content":"Fixture entry content"}""",
+    )
+
+    /** Synthetic fixture for the fail-safe unknown-type branch; it is not response-derived. */
+    val postInfoUnknownType = syntheticUnsupportedPostInfo(
+        type = "future-post-type",
+        bodyJson = """{"futureField":"fixture-future-value"}""",
+    )
+
     val postInfoImage =
         """
         {
@@ -337,6 +361,27 @@ internal object FanboxPostJsonFixtures {
           }
         }
         """.trimIndent()
+
+    /**
+     * Synthetic branch-selection fixture. The payload is image-shaped while post.type is file, so
+     * it verifies that non-empty payload fields do not override the explicit type.
+     */
+    val postInfoFileTypeWithImagePayloadFields = postInfoImage.replaceFirst(
+        oldValue = "\"type\": \"image\"",
+        newValue = "\"type\": \"file\"",
+    )
+
+    /** Synthetic malformed-known-body fixture for the public SchemaMismatch contract. */
+    val postInfoMalformedImage = postInfoImage.replaceFirst(
+        oldValue = "\"extension\": \"jpeg\"",
+        newValue = "\"unexpectedExtension\": \"jpeg\"",
+    )
+
+    /** Synthetic known-type null-body fixture for the public SchemaMismatch contract. */
+    val postInfoNullArticle = postInfoText.replaceFirst(
+        oldValue = "\"type\": \"text\"",
+        newValue = "\"type\": \"article\"",
+    )
 
     val postInfoFile =
         """
@@ -671,4 +716,10 @@ internal object FanboxPostJsonFixtures {
           }
         }
         """.trimIndent()
+
+    private fun syntheticUnsupportedPostInfo(type: String, bodyJson: String): String {
+        return postInfoText
+            .replaceFirst(oldValue = "\"body\": null", newValue = "\"body\": $bodyJson")
+            .replaceFirst(oldValue = "\"type\": \"text\"", newValue = "\"type\": \"$type\"")
+    }
 }

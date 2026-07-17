@@ -1,6 +1,7 @@
 package me.matsumo.fankt.fanbox.domain.model
 
 import kotlinx.datetime.Instant
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import me.matsumo.fankt.fanbox.domain.model.id.FanboxPostId
 import me.matsumo.fankt.fanbox.domain.model.id.FanboxPostItemId
@@ -91,7 +92,11 @@ data class FanboxPostDetail(
         ) : Body
 
         @Serializable
-        data object Unknown : Body
+        data class Unknown(
+            @SerialName("postType")
+            val type: String = "unknown",
+            val rawBodyJson: String? = null,
+        ) : Body
     }
 
     @Serializable

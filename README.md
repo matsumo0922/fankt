@@ -156,6 +156,11 @@ Add a fixture with this fail-closed, one-shot procedure:
 1. Identify an actual response that contains the required variation and record only its endpoint and
    non-sensitive request parameters. Do not replace an unavailable variation with synthetic response
    data.
+
+   A task-specific exception may use synthetic data only when the issue explicitly approves it and
+   the test verifies an internal branch or fallback without claiming compatibility with the remote
+   response schema. Mark the fixture as synthetic in source, and state its provenance, limited
+   guarantee, and unverified production schema in the pull request description.
 2. In the current implementation session, disable shell tracing and HTTP header/body logging, set
    `umask 077`, and create a private temporary directory outside the repository. Inject
    `FANBOXSESSID` through a temporary process environment without echoing it or placing it in a
