@@ -20,11 +20,9 @@ class FanboxRouteDriftTest {
             ?.sortedBy(File::getName)
             .orEmpty()
 
-        assertEquals(5, allApiFiles.size, "the diagnostic inventory must cover all API interfaces")
+        assertEquals(4, allApiFiles.size, "the diagnostic inventory must cover all API interfaces")
 
-        val apiFiles = allApiFiles.filterNot { it.name == "FanboxDownloadApi.kt" }
-
-        val apiRoutes = apiFiles.flatMap(::readDeclaredRoutes)
+        val apiRoutes = allApiFiles.flatMap(::readDeclaredRoutes)
         assertEquals(29, apiRoutes.size, "the production API route declaration inventory changed")
         assertEquals(28, apiRoutes.toSet().size, "the production API route inventory changed")
         assertEquals(
@@ -53,28 +51,7 @@ class FanboxRouteDriftTest {
         assertEquals("custom-request", unknownApiTarget.endpoint)
         assertFalse(unknownApiTarget.retainResponseFragment)
 
-        val downloadFile = sourceDirectory.resolve("FanboxDownloadApi.kt")
-        val downloadRoutes = readDeclaredRoutes(downloadFile)
-        assertEquals(3, downloadRoutes.size, "the production download route inventory changed")
-
-        downloadRoutes.forEach { declaration ->
-            val concretePath = declaration.replace(PLACEHOLDER, "fixture")
-            val target = FanboxExceptionFactory.target(
-                FanboxDiagnosticSource.LibraryGenerated,
-                Url("https://downloads.fanbox.cc/$concretePath"),
-            )
-            val expectedEndpoint = declaration.replace("{imageId}", "{itemId}")
-
-            assertEquals(expectedEndpoint, target.endpoint, "resolver label drifted for $declaration")
-            assertTrue(target.retainResponseFragment, "known download lost bounded diagnostics: $declaration")
-        }
-
-        val unknownDownloadTarget = FanboxExceptionFactory.target(
-            FanboxDiagnosticSource.LibraryGenerated,
-            Url("https://downloads.fanbox.cc/images/post/fixture/file.png"),
-        )
-        assertEquals("custom-request", unknownDownloadTarget.endpoint)
-        assertFalse(unknownDownloadTarget.retainResponseFragment)
+        assertFalse(sourceDirectory.resolve("FanboxDownloadApi.kt").exists())
     }
 
     private fun readDeclaredRoutes(file: File): List<String> = ROUTE_ANNOTATION
@@ -101,6 +78,5 @@ class FanboxRouteDriftTest {
 
     private companion object {
         val ROUTE_ANNOTATION = Regex("""@(GET|POST)\s*\(\s*"([^"]+)"\s*\)""")
-        val PLACEHOLDER = Regex("\\{[^}]+}")
     }
 }

@@ -42,26 +42,12 @@ class FanboxExceptionFactoryTest {
     }
 
     @Test
-    fun homepageAndDownloadsUseStableLabels() {
+    fun homepageUsesStableLabel() {
         assertEquals(
             "homepage",
             FanboxExceptionFactory.target(
                 FanboxDiagnosticSource.LibraryGenerated,
                 Url("https://www.fanbox.cc/?token=secret"),
-            ).endpoint,
-        )
-        assertEquals(
-            "files/post/{postId}/{itemId}.jpg",
-            FanboxExceptionFactory.target(
-                FanboxDiagnosticSource.LibraryGenerated,
-                Url("https://downloads.fanbox.cc/files/post/123/private-name.jpg"),
-            ).endpoint,
-        )
-        assertEquals(
-            "images/post/{postId}/w/1200/{itemId}.jpg",
-            FanboxExceptionFactory.target(
-                FanboxDiagnosticSource.LibraryGenerated,
-                Url("https://downloads.fanbox.cc/images/post/123/w/1200/private-name.jpg"),
             ).endpoint,
         )
     }

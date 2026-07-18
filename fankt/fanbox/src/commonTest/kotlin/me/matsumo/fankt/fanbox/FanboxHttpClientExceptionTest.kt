@@ -20,7 +20,6 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.runBlocking
 import kotlinx.io.IOException
 import kotlinx.serialization.Serializable
-import me.matsumo.fankt.fanbox.datasource.createFanboxDownloadApi
 import me.matsumo.fankt.fanbox.datasource.createFanboxPostApi
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -267,32 +266,6 @@ class FanboxHttpClientExceptionTest {
         } finally {
             Napier.takeLogarithm(antilog)
         }
-    }
-
-    @Test
-    fun downloadFailureIsDeferredUntilStatementExecution() = runBlocking {
-        var requestCount = 0
-        val client = HttpClient(
-            MockEngine {
-                requestCount += 1
-                respond("download denied", HttpStatusCode.Forbidden)
-            },
-        ) {
-            configureFanboxClient(createFanboxJson(), FanboxDiagnosticSource.LibraryGenerated)
-        }
-        val api = Ktorfit.Builder()
-            .baseUrl("https://downloads.fanbox.cc/")
-            .httpClient(client)
-            .build()
-            .createFanboxDownloadApi()
-
-        val statement = api.downloadPostFile("private-post", "private-item") {}
-        assertEquals(0, requestCount)
-
-        val error = captureFailure { statement.execute { it.bodyAsText() } }
-        val forbidden = assertIs<FanboxException.Forbidden>(error)
-        assertEquals(1, requestCount)
-        assertEquals("files/post/{postId}/{itemId}.jpg", forbidden.endpoint)
     }
 
     private suspend fun requestFailure(

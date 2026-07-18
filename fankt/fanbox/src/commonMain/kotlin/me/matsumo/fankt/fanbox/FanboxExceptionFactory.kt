@@ -86,9 +86,6 @@ internal object FanboxExceptionFactory {
             url.host == "www.fanbox.cc" && path.isEmpty() ->
                 FanboxDiagnosticTarget("homepage", retainResponseFragment = true)
 
-            url.host == "downloads.fanbox.cc" -> resolveDownload(path)
-                ?: FanboxDiagnosticTarget(CUSTOM_REQUEST, retainResponseFragment = false)
-
             else -> FanboxDiagnosticTarget(CUSTOM_REQUEST, retainResponseFragment = false)
         }
     }
@@ -190,21 +187,5 @@ internal object FanboxExceptionFactory {
     ): String? {
         if (!target.retainResponseFragment) return null
         return runCatching { response.bodyAsText() }.getOrNull()?.let(::sanitizeFragment)
-    }
-
-    private fun resolveDownload(path: String): FanboxDiagnosticTarget? {
-        val endpoint = when {
-            Regex("files/post/[^/]+/[^/]+\\.jpg").matches(path) ->
-                "files/post/{postId}/{itemId}.jpg"
-
-            Regex("images/post/[^/]+/w/1200/[^/]+\\.jpg").matches(path) ->
-                "images/post/{postId}/w/1200/{itemId}.jpg"
-
-            Regex("images/post/[^/]+/[^/]+\\.jpg").matches(path) ->
-                "images/post/{postId}/{itemId}.jpg"
-
-            else -> return null
-        }
-        return FanboxDiagnosticTarget(endpoint, retainResponseFragment = true)
     }
 }
