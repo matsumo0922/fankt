@@ -20,6 +20,7 @@ class LegacyRoomFanboxCookieStorageTest {
     private fun createFixture(version: Int) {
         val path = getLegacyRoomDatabasePath()
         checkNotNull(File(path).parentFile).mkdirs()
+        Class.forName("org.sqlite.JDBC")
         DriverManager.getConnection("jdbc:sqlite:$path").use { connection ->
             fixtureStatements(version).forEach { sql ->
                 connection.createStatement().use { it.execute(sql) }
