@@ -1,6 +1,7 @@
 package me.matsumo.fankt.fanbox.domain.model
 
 import io.ktor.http.Url
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import me.matsumo.fankt.fanbox.domain.model.id.FanboxCreatorId
 
@@ -21,13 +22,57 @@ data class FanboxCreatorDetail(
 ) {
     val supportingBrowserUrl get() = "https://www.fanbox.cc/creators/supporting/@${user?.creatorId}"
 
+    /** A profile item classified from the `creator.get` item type. */
     @Serializable
-    data class ProfileItem(
-        val id: String,
-        val imageUrl: String?,
-        val thumbnailUrl: String?,
-        val type: String,
-    )
+    sealed interface ProfileItem {
+
+        /** An image profile item. Both URLs retain the nullable FANBOX response values. */
+        @Serializable
+        @SerialName("image")
+        data class Image(
+            val id: String,
+            val imageUrl: String?,
+            val thumbnailUrl: String?,
+        ) : ProfileItem
+
+        /**
+         * A video profile item.
+         *
+         * [url] reconstructs only the known YouTube and Vimeo URL forms. The provider, [videoId],
+         * and resulting URL remain untrusted network data. Callers must validate them against their
+         * navigation policy before opening the URL.
+         */
+        @Serializable
+        @SerialName("video")
+        data class Video(
+            val id: String,
+            val serviceProvider: String,
+            val videoId: String,
+            val thumbnailUrl: String?,
+        ) : ProfileItem {
+            val url: String?
+                get() = when (serviceProvider) {
+                    "youtube" -> "https://www.youtube.com/watch?v=$videoId"
+                    "vimeo" -> "https://vimeo.com/$videoId"
+                    else -> null
+                }
+        }
+
+        /**
+         * A profile item that cannot be represented by a known variant.
+         *
+         * [rawJson] is untrusted network data retained for forward handling and diagnostics. Callers
+         * must validate and sanitize it before parsing, displaying, or using any contained URL.
+         */
+        @Serializable
+        @SerialName("unknown")
+        data class Unknown(
+            val id: String?,
+            @SerialName("itemType")
+            val type: String,
+            val rawJson: String,
+        ) : ProfileItem
+    }
 
     @Serializable
     data class ProfileLink(

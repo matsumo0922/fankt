@@ -121,6 +121,20 @@ internal object FanboxTolerantListJsonFixtures {
         }
         """.trimIndent()
 
+    /** Synthetic probe for mapper-time profile item decode failure in tolerant creator lists. */
+    val creatorsWithInvalidProfileItem =
+        """
+        {
+          "body": {
+            "creators": [
+              ${creator("profile-creator-1")},
+              ${creator("profile-creator-invalid", "[{\"id\": [], \"type\": \"image\"}]")},
+              ${creator("profile-creator-2")}
+            ]
+          }
+        }
+        """.trimIndent()
+
     private fun post(id: String, title: String): String =
         """
         {
@@ -191,7 +205,10 @@ internal object FanboxTolerantListJsonFixtures {
         }
         """.trimIndent()
 
-    private fun creator(id: String): String =
+    private fun creator(
+        id: String,
+        profileItems: String = "[]",
+    ): String =
         """
         {
           "coverImageUrl": null,
@@ -203,7 +220,7 @@ internal object FanboxTolerantListJsonFixtures {
           "isFollowed": true,
           "isStopped": false,
           "isSupported": false,
-          "profileItems": [],
+          "profileItems": $profileItems,
           "profileLinks": [],
           "user": null
         }

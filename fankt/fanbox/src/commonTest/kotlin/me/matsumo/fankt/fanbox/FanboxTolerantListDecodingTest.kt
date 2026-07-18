@@ -140,6 +140,21 @@ class FanboxTolerantListDecodingTest {
     }
 
     @Test
+    fun creatorProfileItemDecodeFailureKeepsTolerantListBoundary() {
+        val formatter = createFanboxJson()
+        val entity = formatter.decodeFromString<me.matsumo.fankt.fanbox.domain.entity.FanboxCreatorListEntity>(
+            FanboxTolerantListJsonFixtures.creatorsWithInvalidProfileItem,
+        )
+        val mapper = FanboxCreatorMapper(FanboxListItemDecoder(formatter))
+
+        listOf("creator.listFollowing", "creator.listPixiv", "creator.listRecommended").forEach { endpoint ->
+            val result = mapper.map(entity, endpoint)
+            assertEquals(listOf("profile-creator-1", "profile-creator-2"), result.value.map { it.creatorId.value })
+            assertEquals(listOf(FanboxListItemSchemaMismatch(endpoint, listOf(1))), result.mismatches)
+        }
+    }
+
+    @Test
     fun callbackIsSynchronousCallLocalAndPropagatesConsumerFailure() {
         val first = FanboxListItemSchemaMismatch("post.listHome", listOf(0))
         val second = FanboxListItemSchemaMismatch("post.listHome", listOf(2))

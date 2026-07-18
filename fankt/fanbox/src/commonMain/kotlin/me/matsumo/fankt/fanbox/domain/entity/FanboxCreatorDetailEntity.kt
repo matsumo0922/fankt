@@ -2,6 +2,7 @@ package me.matsumo.fankt.fanbox.domain.entity
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.JsonObject
 
 @Serializable
 internal data class FanboxCreatorDetailEntity(
@@ -29,7 +30,7 @@ internal data class FanboxCreatorDetailEntity(
         @SerialName("isSupported")
         val isSupported: Boolean,
         @SerialName("profileItems")
-        val profileItems: List<ProfileItem>,
+        val profileItems: List<JsonObject>,
         @SerialName("profileLinks")
         val profileLinks: List<String>,
         @SerialName("user")
@@ -45,6 +46,10 @@ internal data class FanboxCreatorDetailEntity(
             val thumbnailUrl: String?,
             @SerialName("type")
             val type: String,
+            @SerialName("serviceProvider")
+            val serviceProvider: String?,
+            @SerialName("videoId")
+            val videoId: String?,
         )
     }
 }

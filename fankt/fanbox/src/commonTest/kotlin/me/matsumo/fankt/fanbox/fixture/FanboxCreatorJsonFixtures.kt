@@ -54,6 +54,59 @@ internal object FanboxCreatorJsonFixtures {
         """.trimIndent()
 
     /**
+     * Hybrid fixture for creator.get profile item coverage.
+     *
+     * The image/image/video field presence, string representation, and order are derived from a
+     * saved actual response. The creator envelope is the existing whole-value-anonymized fixture
+     * shape. This is not claimed to be one complete original response. Vimeo, unknown items, and
+     * malformed values are not part of the observed fragment.
+     */
+    val actualDerivedCreatorGetWithVideoProfileItem =
+        """
+        {
+          "body": {
+            "user": {
+              "userId": "92000001",
+              "name": "Fixture Video Creator",
+              "iconUrl": "https://example.invalid/video-creator-icon"
+            },
+            "creatorId": "fixture-video-creator",
+            "description": "Fixture video creator description",
+            "hasAdultContent": false,
+            "coverImageUrl": "https://example.invalid/video-creator-cover",
+            "profileLinks": [],
+            "profileItems": [
+              {
+                "id": "fixture-profile-image-1",
+                "type": "image",
+                "imageUrl": "https://example.invalid/profile-image-1",
+                "thumbnailUrl": "https://example.invalid/profile-thumbnail-1"
+              },
+              {
+                "id": "fixture-profile-image-2",
+                "type": "image",
+                "imageUrl": "https://example.invalid/profile-image-2",
+                "thumbnailUrl": "https://example.invalid/profile-thumbnail-2"
+              },
+              {
+                "id": "fixture-profile-video-1",
+                "type": "video",
+                "serviceProvider": "youtube",
+                "videoId": "fixture-video-1"
+              }
+            ],
+            "isFollowed": false,
+            "isSupported": false,
+            "isStopped": false,
+            "isAcceptingRequest": false,
+            "hasBoothShop": false,
+            "hasPublishedPost": true,
+            "category": "fixture-video-category"
+          }
+        }
+        """.trimIndent()
+
+    /**
      * Whole-value-anonymized actual response captured from plan.listCreator.
      */
     val actualCreatorPlanList =
@@ -93,6 +146,44 @@ internal object FanboxCreatorJsonFixtures {
               "perks": []
             }
           ]
+        }
+        """.trimIndent()
+
+    /** Synthetic creator.get probe; it does not claim production schema compatibility. */
+    fun syntheticCreatorGet(profileItems: String): String =
+        """
+        {
+          "body": ${syntheticCreatorBody(profileItems)}
+        }
+        """.trimIndent()
+
+    /** Synthetic creator.search probe; it does not claim production schema compatibility. */
+    fun syntheticCreatorSearch(profileItems: String): String =
+        """
+        {
+          "body": {
+            "count": 1,
+            "creators": [${syntheticCreatorBody(profileItems)}],
+            "nextPage": null
+          }
+        }
+        """.trimIndent()
+
+    private fun syntheticCreatorBody(profileItems: String): String =
+        """
+        {
+          "user": null,
+          "creatorId": "synthetic-creator",
+          "description": "Synthetic creator probe",
+          "hasAdultContent": false,
+          "coverImageUrl": null,
+          "profileLinks": [],
+          "profileItems": $profileItems,
+          "isFollowed": false,
+          "isSupported": false,
+          "isStopped": false,
+          "isAcceptingRequest": false,
+          "hasBoothShop": false
         }
         """.trimIndent()
 }
