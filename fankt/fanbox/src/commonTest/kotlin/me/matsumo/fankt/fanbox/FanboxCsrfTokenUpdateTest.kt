@@ -145,7 +145,7 @@ class FanboxCsrfTokenUpdateTest {
     }
 
     @Test
-    fun siblingFanboxInstancesShareProcessTokenState() = runBlocking {
+    fun siblingFanboxInstancesShareExplicitlyProvidedTokenState() = runBlocking {
         val sharedToken = MutableStateFlow<String?>(null)
         val firstFixture = createFixture(sharedToken, metadataToken = { "shared-token" })
         val secondFixture = createFixture(sharedToken)
@@ -191,29 +191,32 @@ class FanboxCsrfTokenUpdateTest {
     @Test
     fun resetCookiesClearsTokenBeforeReplacementFailure() = runBlocking {
         val latestToken = MutableStateFlow<String?>("old-token")
-        var clearCount = 0
+        var replaceCount = 0
         val fixture = createFixture(
             latestToken = latestToken,
-            cookieStorage = failingCookieStorage { assertEquals(null, latestToken.value) },
-            clearCookies = { clearCount += 1 },
+            replaceCookies = { _, _ ->
+                replaceCount += 1
+                assertEquals(null, latestToken.value)
+                error("atomic replacement failed")
+            },
         )
 
         assertFailsWith<IllegalStateException> {
             fixture.fanbox.setCookies(listOf(Cookie("replacement", "value")), reset = true)
         }
 
-        assertEquals(1, clearCount)
+        assertEquals(1, replaceCount)
         assertEquals(null, latestToken.value)
         fixture.fanbox.close()
     }
 
     @Test
-    fun failedCookieResetPreservesToken() = runBlocking {
+    fun failedAtomicCookieReplacementStillLeavesTokenCleared() = runBlocking {
         val latestToken = MutableStateFlow<String?>("old-token")
-        val failure = IllegalStateException("cookie clear failed")
+        val failure = IllegalStateException("atomic replacement failed")
         val fixture = createFixture(
             latestToken = latestToken,
-            clearCookies = { throw failure },
+            replaceCookies = { _, _ -> throw failure },
         )
 
         val actual = assertFailsWith<IllegalStateException> {
@@ -221,7 +224,7 @@ class FanboxCsrfTokenUpdateTest {
         }
 
         assertSame(failure, actual)
-        assertEquals("old-token", latestToken.value)
+        assertEquals(null, latestToken.value)
         fixture.fanbox.close()
     }
 
@@ -339,8 +342,8 @@ class FanboxCsrfTokenUpdateTest {
         getCsrfToken: suspend () -> String? = { latestToken.value },
         setCsrfToken: suspend (String) -> Unit = { latestToken.value = it },
         cookieStorage: CookiesStorage = AcceptAllCookiesStorage(),
-        clearCookies: suspend () -> Unit = {},
         overrideFanboxSessionId: suspend (String) -> Unit = {},
+        replaceCookies: suspend (Url, List<Cookie>) -> Unit = { _, _ -> },
     ): FanboxFixture {
         val clients = mutableListOf<HttpClient>()
         val postHeaders = mutableListOf<String?>()
@@ -382,8 +385,8 @@ class FanboxCsrfTokenUpdateTest {
             cookieStorage = cookieStorage,
             getCsrfToken = getCsrfToken,
             setCsrfToken = setCsrfToken,
-            clearCookies = clearCookies,
             overrideFanboxSessionId = overrideFanboxSessionId,
+            replaceCookies = replaceCookies,
         )
 
         return FanboxFixture(
@@ -404,8 +407,8 @@ class FanboxCsrfTokenUpdateTest {
         cookieStorage: CookiesStorage = AcceptAllCookiesStorage(),
         getCsrfToken: suspend () -> String? = { latestToken.value },
         setCsrfToken: suspend (String) -> Unit = { latestToken.value = it },
-        clearCookies: suspend () -> Unit = {},
         overrideFanboxSessionId: suspend (String) -> Unit = {},
+        replaceCookies: suspend (Url, List<Cookie>) -> Unit = { _, _ -> },
     ) = FanboxDependencies(
         cookieStorage = cookieStorage,
         cookies = emptyFlow(),
@@ -413,8 +416,8 @@ class FanboxCsrfTokenUpdateTest {
         getCsrfToken = getCsrfToken,
         setCsrfToken = setCsrfToken,
         clearCsrfToken = { latestToken.value = null },
-        clearCookies = clearCookies,
         overrideFanboxSessionId = overrideFanboxSessionId,
+        replaceCookies = replaceCookies,
     )
 
     private fun failingCookieStorage(onAdd: () -> Unit): CookiesStorage {

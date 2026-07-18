@@ -1,9 +1,5 @@
-# in-memory-csrf-token Specification
+## MODIFIED Requirements
 
-## Purpose
-Keep each host-owned CSRF token in memory, observable through the public Flow, isolated by the injected store, and separate from Cookie persistence.
-
-## Requirements
 ### Requirement: CSRF token state is memory-only and observable
 Each `Fanbox` SHALL retain at most one current CSRF token in its injected `FanboxTokenStore`, SHALL initialize a newly allocated default store to null, SHALL share a value only between `Fanbox` dependency graphs that are explicitly given the same store instance, and SHALL expose it through `Fanbox.csrfToken: Flow<String?>`. The default token store SHALL NOT persist the value across process recreation. This requirement traces to Issue #24 and is revised by Issue #33 for host ownership and multi-account isolation.
 
@@ -40,19 +36,8 @@ Each `Fanbox` SHALL retain at most one current CSRF token in its injected `Fanbo
 
 #### Scenario: Session Cookie is replaced without reset
 - **WHEN** `setCookies(reset = false)` is given a `FANBOXSESSID` Cookie
-- **THEN** the token is null before any supplied-cookie operation can fail
+- **THEN** the token is null before any supplied-Cookie operation can fail
 
 #### Scenario: Unrelated Cookies are added without reset
 - **WHEN** `setCookies(reset = false)` adds Cookies that do not include `FANBOXSESSID`
 - **THEN** the current token remains unchanged
-
-### Requirement: Token-table removal preserves cookies
-The Room v3 schema SHALL contain no CSRF token entity or DAO. Upgrading from v2 to v3 SHALL drop only `fankt_csrf_tokens`, and the supported v1-to-v3 migration chain SHALL preserve the canonical cookie rows produced by v1-to-v2. This requirement traces to Issue #24 acceptance criterion "既存ユーザーの DB を開いても cookie が消えないこと".
-
-#### Scenario: Direct v2 upgrade
-- **WHEN** a v2 database containing cookies and CSRF token rows is upgraded to v3
-- **THEN** every cookie row remains unchanged and the `fankt_csrf_tokens` table no longer exists
-
-#### Scenario: Chained v1 upgrade
-- **WHEN** a v1 database is upgraded through v2 to v3
-- **THEN** its canonicalized cookie rows and cookie index remain present while the CSRF token table is removed

@@ -11,6 +11,7 @@ class CookieDatabaseMigrationTest {
 
     @Test
     fun migrationFromVersionOneCanonicalizesCookiesAndDropsCsrfTokenInVersionThree() {
+        Class.forName("org.sqlite.JDBC")
         DriverManager.getConnection("jdbc:sqlite::memory:").use { connection ->
             createVersionOneSchema(connection)
             connection.execute(
@@ -63,6 +64,7 @@ class CookieDatabaseMigrationTest {
 
     @Test
     fun migrationFromVersionTwoDropsOnlyCsrfTokenTable() {
+        Class.forName("org.sqlite.JDBC")
         DriverManager.getConnection("jdbc:sqlite::memory:").use { connection ->
             createVersionTwoSchema(connection)
             connection.execute(

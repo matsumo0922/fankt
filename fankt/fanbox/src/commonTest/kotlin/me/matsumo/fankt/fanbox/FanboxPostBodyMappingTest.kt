@@ -272,8 +272,8 @@ class FanboxPostBodyMappingTest {
             getCsrfToken = { csrfToken.value },
             setCsrfToken = { csrfToken.value = it },
             clearCsrfToken = { csrfToken.value = null },
-            clearCookies = {},
             overrideFanboxSessionId = {},
+            replaceCookies = { _, _ -> },
         )
         return Fanbox(
             dependencies = dependencies,
