@@ -23,8 +23,11 @@ internal fun verifyRoomStorageVersions(
         assertFalse(snapshot.single().hostOnly)
         first.upsert(snapshot.single().copy(name = "coerced", hostOnly = true))
         assertFalse(first.snapshot().single { it.name == "coerced" }.hostOnly)
+        val independentlyOwned = createStorage()
         first.close()
         first.close()
+        assertEquals(2, independentlyOwned.snapshot().size)
+        independentlyOwned.close()
         assertFailsWith<IllegalStateException> { first.cookies }
         assertFailsWith<IllegalStateException> { first.snapshot() }
 
