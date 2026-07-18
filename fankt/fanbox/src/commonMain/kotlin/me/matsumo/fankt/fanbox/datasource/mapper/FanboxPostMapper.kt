@@ -258,6 +258,8 @@ internal class FanboxPostMapper(
                             FanboxPostDetail.Body.Article.Block.Link(
                                 html = url.html,
                                 post = url.postInfo?.let { map(it) },
+                                type = url.type,
+                                url = url.url,
                             )
                         } ?: FanboxPostDetail.Body.Article.Block.Unknown(rawBlock.toString())
                     }

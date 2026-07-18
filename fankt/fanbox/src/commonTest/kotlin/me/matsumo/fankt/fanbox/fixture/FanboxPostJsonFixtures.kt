@@ -1,6 +1,7 @@
 package me.matsumo.fankt.fanbox.fixture
 
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.jsonObject
@@ -256,6 +257,61 @@ internal object FanboxPostJsonFixtures {
           }
         }
         """.trimIndent()
+
+    /**
+     * Issue #29 actual-response-derived fixture. The article envelope and embedded FANBOX post
+     * come from the existing anonymized response-derived Article B fixture. The four URL embed
+     * fragments preserve the observed type-specific field presence and scalar/object shapes;
+     * identity, URL, and free-form values are whole-value placeholders. The fragments are composed
+     * into one envelope for coverage and are not claimed to be one complete original response.
+     */
+    val postInfoArticleUrlEmbeds by lazy {
+        val fanboxPostInfo = responseDerivedEmbeddedFanboxPostInfo()
+        articleUrlEmbedPostInfo(
+            """
+            {
+              "fixture-url-default": {
+                "id": "fixture-url-default",
+                "type": "default",
+                "url": "https://example.invalid/plain-link"
+              },
+              "fixture-url-html": {
+                "id": "fixture-url-html",
+                "type": "html",
+                "html": "<div>Fixture HTML embed</div>"
+              },
+              "fixture-url-html-card": {
+                "id": "fixture-url-html-card",
+                "type": "html.card",
+                "html": "<article>Fixture HTML card embed</article>"
+              },
+              "fixture-url-fanbox-post": {
+                "id": "fixture-url-fanbox-post",
+                "type": "fanbox.post",
+                "postInfo": $fanboxPostInfo
+              }
+            }
+            """.trimIndent(),
+        )
+    }
+
+    /** Synthetic fixture for forward-compatible unknown URL embed metadata passthrough. */
+    val postInfoArticleUnknownUrlEmbed by lazy {
+        val fanboxPostInfo = responseDerivedEmbeddedFanboxPostInfo()
+        articleUrlEmbedPostInfo(
+            """
+            {
+              "fixture-url-unknown": {
+                "id": "fixture-url-unknown",
+                "type": "future.embed",
+                "url": "https://example.invalid/future-link",
+                "html": "<aside>Fixture future embed</aside>",
+                "postInfo": $fanboxPostInfo
+              }
+            }
+            """.trimIndent(),
+        )
+    }
 
     val postInfoText =
         """
@@ -877,4 +933,38 @@ internal object FanboxPostJsonFixtures {
             root + ("body" to JsonObject(responseBody + ("post" to hybridPost))),
         ).toString()
     }
+
+    private fun articleUrlEmbedPostInfo(urlEmbedMapJson: String): String {
+        val root = Json.parseToJsonElement(postInfoArticleB).jsonObject
+        val responseBody = root.getValue("body").jsonObject
+        val post = responseBody.getValue("post").jsonObject
+        val articleBody = post.getValue("body").jsonObject
+        val urlEmbedMap = Json.parseToJsonElement(urlEmbedMapJson).jsonObject
+        val blocks = JsonArray(
+            urlEmbedMap.keys.map { id ->
+                Json.parseToJsonElement(
+                    """{"type":"url_embed","text":null,"imageId":null,"fileId":null,"urlEmbedId":"$id"}""",
+                )
+            },
+        )
+        val fixtureBody = JsonObject(
+            articleBody + mapOf(
+                "blocks" to blocks,
+                "urlEmbedMap" to urlEmbedMap,
+            ),
+        )
+        val fixturePost = JsonObject(post + ("body" to fixtureBody))
+        return JsonObject(
+            root + ("body" to JsonObject(responseBody + ("post" to fixturePost))),
+        ).toString()
+    }
+
+    private fun responseDerivedEmbeddedFanboxPostInfo() =
+        Json.parseToJsonElement(postInfoArticleB).jsonObject
+            .getValue("body").jsonObject
+            .getValue("post").jsonObject
+            .getValue("body").jsonObject
+            .getValue("urlEmbedMap").jsonObject
+            .getValue("fixture-url-b-1").jsonObject
+            .getValue("postInfo")
 }

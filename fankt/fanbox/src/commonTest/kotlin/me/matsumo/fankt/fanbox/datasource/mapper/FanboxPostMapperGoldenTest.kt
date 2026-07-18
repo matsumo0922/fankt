@@ -23,8 +23,64 @@ import me.matsumo.fankt.fanbox.fixture.FanboxPostJsonFixtures
 import me.matsumo.fankt.fanbox.fixture.decodeFixture
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertIs
 
 class FanboxPostMapperGoldenTest {
+
+    @Test
+    fun actualDerivedUrlEmbedFragmentsPreserveTypeSpecificMetadata() {
+        val body = FanboxPostMapper().map(
+            decodeFixture<FanboxPostDetailEntity>(FanboxPostJsonFixtures.postInfoArticleUrlEmbeds),
+        ).body
+        val links = assertIs<FanboxPostDetail.Body.Article>(body).blocks
+            .filterIsInstance<FanboxPostDetail.Body.Article.Block.Link>()
+
+        assertEquals(4, links.size)
+        assertEquals(
+            FanboxPostDetail.Body.Article.Block.Link(
+                html = null,
+                post = null,
+                type = "default",
+                url = "https://example.invalid/plain-link",
+            ),
+            links[0],
+        )
+        assertEquals(
+            FanboxPostDetail.Body.Article.Block.Link(
+                html = "<div>Fixture HTML embed</div>",
+                post = null,
+                type = "html",
+            ),
+            links[1],
+        )
+        assertEquals(
+            FanboxPostDetail.Body.Article.Block.Link(
+                html = "<article>Fixture HTML card embed</article>",
+                post = null,
+                type = "html.card",
+            ),
+            links[2],
+        )
+        assertEquals("fanbox.post", links[3].type)
+        assertEquals(null, links[3].url)
+        assertEquals(null, links[3].html)
+        assertEquals(FanboxPostId("13000001"), links[3].post?.id)
+    }
+
+    @Test
+    fun unknownUrlEmbedTypePreservesAllReceivedMetadata() {
+        val body = FanboxPostMapper().map(
+            decodeFixture<FanboxPostDetailEntity>(FanboxPostJsonFixtures.postInfoArticleUnknownUrlEmbed),
+        ).body
+        val link = assertIs<FanboxPostDetail.Body.Article>(body).blocks
+            .filterIsInstance<FanboxPostDetail.Body.Article.Block.Link>()
+            .single()
+
+        assertEquals("future.embed", link.type)
+        assertEquals("https://example.invalid/future-link", link.url)
+        assertEquals("<aside>Fixture future embed</aside>", link.html)
+        assertEquals(FanboxPostId("13000001"), link.post?.id)
+    }
 
     @Test
     fun syntheticArticleEmbedsMapProvidersAndFallbacksInOrder() {
@@ -190,25 +246,30 @@ class FanboxPostMapperGoldenTest {
                             publishedDatetime = Instant.parse("2000-02-01T00:00:00+00:00"),
                             updatedDatetime = Instant.parse("2000-02-02T00:00:00+00:00"),
                         ),
+                        type = "fanbox.post",
                     ),
                     FanboxPostDetail.Body.Article.Block.Text("Fixture B Text 3"),
                     FanboxPostDetail.Body.Article.Block.Text("Fixture B Header 2"),
                     FanboxPostDetail.Body.Article.Block.Link(
                         html = "<div>Fixture B Link 4</div>",
                         post = null,
+                        type = "html",
                     ),
                     FanboxPostDetail.Body.Article.Block.Link(
                         html = "<div>Fixture B Link 5</div>",
                         post = null,
+                        type = "html",
                     ),
                     FanboxPostDetail.Body.Article.Block.Text("Fixture B Text 4"),
                     FanboxPostDetail.Body.Article.Block.Link(
                         html = "<div>Fixture B Link 3</div>",
                         post = null,
+                        type = "html",
                     ),
                     FanboxPostDetail.Body.Article.Block.Link(
                         html = "<div>Fixture B Link 2</div>",
                         post = null,
+                        type = "html",
                     ),
                 ),
             ),

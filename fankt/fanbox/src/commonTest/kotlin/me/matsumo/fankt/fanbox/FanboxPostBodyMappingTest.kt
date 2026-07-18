@@ -124,6 +124,27 @@ class FanboxPostBodyMappingTest {
     }
 
     @Test
+    fun actualDerivedUrlEmbedsRunThroughPublicPostDetailPath() = runBlocking {
+        val fanbox = createFanbox(FanboxPostJsonFixtures.postInfoArticleUrlEmbeds)
+        try {
+            val actual = fanbox.getPostDetail(FanboxPostId("10000003"))
+            val links = assertIs<FanboxPostDetail.Body.Article>(actual.body).blocks
+                .filterIsInstance<FanboxPostDetail.Body.Article.Block.Link>()
+
+            assertEquals(
+                listOf("default", "html", "html.card", "fanbox.post"),
+                links.map { it.type },
+            )
+            assertEquals("https://example.invalid/plain-link", links[0].url)
+            assertEquals("<div>Fixture HTML embed</div>", links[1].html)
+            assertEquals("<article>Fixture HTML card embed</article>", links[2].html)
+            assertEquals(FanboxPostId("13000001"), links[3].post?.id)
+        } finally {
+            fanbox.close()
+        }
+    }
+
+    @Test
     fun malformedKnownArticleBlockUsesSchemaMismatchThroughPublicPostDetailPath() = runBlocking {
         val fanbox = createFanbox(FanboxPostJsonFixtures.postInfoMalformedArticleBlock)
         try {

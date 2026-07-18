@@ -2,6 +2,7 @@ package me.matsumo.fankt.fanbox.domain.model
 
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
@@ -83,6 +84,52 @@ class FanboxPostDetailBodySerializationTest {
         val actual = formatter.decodeFromString<FanboxPostDetail.Body>(formatter.encodeToString(expected))
 
         assertEquals(expected, actual)
+    }
+
+    @Test
+    fun articleLinkRoundTripsWithoutDiscriminatorConflict() {
+        val expected: FanboxPostDetail.Body.Article.Block =
+            FanboxPostDetail.Body.Article.Block.Link(
+                html = "<div>Fixture link</div>",
+                post = null,
+                type = "default",
+                url = "https://example.invalid/link",
+            )
+
+        val encoded = formatter.encodeToString(expected)
+        val encodedObject = formatter.parseToJsonElement(encoded).jsonObject
+        val actual = formatter.decodeFromString<FanboxPostDetail.Body.Article.Block>(encoded)
+
+        assertEquals(expected, actual)
+        assertEquals("default", encodedObject["linkType"]?.jsonPrimitive?.content)
+        assertEquals(
+            "https://example.invalid/link",
+            encodedObject["url"]?.jsonPrimitive?.content,
+        )
+        assertEquals(true, encodedObject.containsKey("type"))
+    }
+
+    @Test
+    fun legacyArticleLinkDecodesWithCompatibilityDefaults() {
+        val current: FanboxPostDetail.Body.Article.Block =
+            FanboxPostDetail.Body.Article.Block.Link(
+                html = "<div>Fixture legacy link</div>",
+                post = null,
+                type = "html",
+                url = "https://example.invalid/current-link",
+            )
+        val currentObject = formatter.parseToJsonElement(formatter.encodeToString(current)).jsonObject
+        val legacyJson = JsonObject(currentObject - "linkType" - "url").toString()
+
+        val actual = formatter.decodeFromString<FanboxPostDetail.Body.Article.Block>(legacyJson)
+
+        assertEquals(
+            FanboxPostDetail.Body.Article.Block.Link(
+                html = "<div>Fixture legacy link</div>",
+                post = null,
+            ),
+            actual,
+        )
     }
 
     @Test
