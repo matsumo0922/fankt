@@ -27,6 +27,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -44,6 +45,7 @@ internal fun FanboxScreen(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
     val scope = rememberCoroutineScope()
+    val context = LocalContext.current
     val state = rememberTopAppBarState()
     val behavior = TopAppBarDefaults.pinnedScrollBehavior(state)
 
@@ -69,7 +71,7 @@ internal fun FanboxScreen(
                 onSessionIdChanged = {
                     scope.launch {
                         sessionId = it
-                        setFanboxSessionId(sessionId)
+                        setFanboxSessionId(context, sessionId)
 
                         if (sessionId.isNotBlank()) {
                             viewModel.setSessionId(sessionId)
