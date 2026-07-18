@@ -9,6 +9,7 @@
 - 現行 `PersistentCookieStorage` を同じ Cookie storage 契約の legacy Room 実装として残し、PixiView-KMP の移行完了までは既存 DB を読み出せる、DB instance を bridge 自身が所有する明示的な入口を提供する。
 - **BREAKING**: 引数なし `Fanbox()` は source-compatible のまま、Cookie の再起動後永続化を暗黙には行わない。永続化が必要なホストは storage を明示注入する。
 - **BREAKING**: process-global CSRF token を廃止し、token state を注入した `FanboxTokenStore` の所有範囲へ分離する。
+- **BREAKING**: `Fanbox.setCookies()` に domain なしで渡した Cookie は `url` の origin host に限定し、兄弟 host へ送らない。FANBOX subdomain 間で共有する Cookie は `domain = ".fanbox.cc"` を指定し、session ID は `setFanboxSessionId()` で設定する。
 - **BREAKING**: Android/iOS の secure credential は端末間 backup/transfer の対象外とし、機種変更または別端末への backup 復元後は再ログインを要求する。
 - PixiView-KMP に Android Keystore-backed storage と iOS Keychain-backed storage を実装し、Koin から単一の storage instance を `FanboxRepositoryImpl` と `Fanbox` に注入する。
 - PixiView-KMP の初回起動で legacy Room Cookie を secure store へ copy → completion marker と同時 commit → read-back verify → routing 切替 → legacy clear/close/delete の順に移す、crash-safe で再試行可能な移行を追加する。

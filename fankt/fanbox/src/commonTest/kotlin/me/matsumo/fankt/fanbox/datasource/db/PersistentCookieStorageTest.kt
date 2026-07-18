@@ -41,18 +41,19 @@ class PersistentCookieStorageTest {
 
     @Test
     fun fanboxRequestUsesCommonAdapterForLegacyBackend() = runBlocking {
-        val storage = PersistentCookieStorage(
-            FakeCookieDao(
-                cookie("fanbox", "fanbox-value"),
-                cookie("pixiv", "pixiv-value", domain = "pixiv.net"),
-                cookie("expired", "expired-value", expiresAt = NOW),
-            ),
+        val dao = FakeCookieDao(
+            cookie("fanbox", "fanbox-value"),
+            cookie("pixiv", "pixiv-value", domain = "pixiv.net"),
+            cookie("expired", "expired-value", expiresAt = NOW),
         )
+        val storage = PersistentCookieStorage(dao)
         val adapter = FanboxCookiesStorageAdapter(storage) { NOW }
 
         val cookies = adapter.get(Url("https://api.fanbox.cc/post.info"))
 
         assertEquals(listOf("fanbox"), cookies.map { it.name })
+        assertEquals(1, dao.deleteExpiredCalls)
+        assertFalse(storage.snapshot().any { it.name == "expired" })
     }
 
     @Test
@@ -86,6 +87,7 @@ class PersistentCookieStorageTest {
 
         val state = MutableStateFlow(initialCookies.toList())
         var replaceAllCalls = 0
+        var deleteExpiredCalls = 0
         var insertObservedDispatch = false
 
         override fun getAllCookies(): Flow<List<CookieEntity>> = state
@@ -104,6 +106,7 @@ class PersistentCookieStorageTest {
         }
 
         override suspend fun deleteExpired(nowEpochMilliseconds: Long) {
+            deleteExpiredCalls += 1
             state.value = state.value.filterNot {
                 it.expiresAt?.let { expiry -> expiry <= nowEpochMilliseconds } == true
             }

@@ -47,6 +47,7 @@ interface FanboxCookieStorage {
     suspend fun snapshot(): List<FanboxCookieRecord>
     suspend fun upsert(cookie: FanboxCookieRecord)
     suspend fun delete(domain: String, path: String, name: String)
+    suspend fun deleteExpired(nowEpochMilliseconds: Long)
     suspend fun replaceAll(cookies: List<FanboxCookieRecord>)
     suspend fun clear()
 }
@@ -60,7 +61,9 @@ interface FanboxTokenStore {
 
 実装時の名称は既存 package 命名に合わせてよいが、意味と field は固定する。Cookie は入力時点で domain の有無を `hostOnly` として保持してから `fillDefaults(requestUrl)` を適用し、domain の leading dot/case、path、absolute expiry を正規化して record 化する。value を含む record の `toString()` は生成せず、KDoc で credential 扱いを明示する。
 
-内部 `FanboxCookiesStorageAdapter : CookiesStorage` が Ktor `Cookie` との変換、host-only/domain/path/secure matching、期限切れ除外と cleanup、`FANBOXSESSID` replacement を一元化する。request path は観測用 Flow の最初の emission を待たず、必ず `snapshot()` から有限時間で現在値を読む。期限切れ cleanup の書き込みが失敗しても、in-memory filtering を authoritative として request 自体は継続する。これにより Android Keystore、iOS Keychain、Room、in-memory の各 backend は request URL を知らず、security policy が分岐しない。
+内部 `FanboxCookiesStorageAdapter : CookiesStorage` が Ktor `Cookie` との変換、host-only/domain/path/secure matching、期限切れ除外と cleanup、`FANBOXSESSID` replacement を一元化する。request path は観測用 Flow の最初の emission を待たず、必ず `snapshot()` から有限時間で現在値を読む。期限切れ cleanup は `deleteExpired(nowEpochMilliseconds)` の一回の条件付き mutation とし、backend は commit 時点の現在値を同じ条件で再評価する。snapshot 後に同一 identity が refresh されても、古い snapshot の identity を無条件削除しない。cleanup の cancellation は再送出し、その他の書き込み失敗では in-memory filtering を authoritative として request 自体を継続する。これにより Android Keystore、iOS Keychain、Room、in-memory の各 backend は request URL を知らず、security policy が分岐しない。
+
+`Fanbox.setCookies()` が domain なしの Ktor `Cookie` を受け取ると、その record は `url` の origin host を所有者とする `hostOnly = true` になる。たとえば既定 `url` の `www.fanbox.cc` で作った host-only Cookie は `api.fanbox.cc` へ送らない。FANBOX subdomain 間で共有する Cookie は呼び出し側が `domain = ".fanbox.cc"` を指定し、`FANBOXSESSID` は domain-scoped record を作る `setFanboxSessionId()` を使用する。この strict behavior は backend によらず共通 adapter が適用する。
 
 `replaceAll()` は backend ごとに単一 atomic commit とし、`Fanbox.setCookies(reset = true)` は clear + N upserts ではなく正規化済み全 records の `replaceAll()` を一度だけ呼ぶ。commit に失敗した場合は置換前 snapshot を維持する。`cookies` は UI/consumer 観測用で、collector ごとに現在 snapshot を少なくとも一度 emit する hot/current-value contract とする。request correctness 自体は Flow emission のタイミングに依存せず `snapshot()` を使う。
 

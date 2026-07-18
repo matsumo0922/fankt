@@ -247,8 +247,8 @@ class FanboxDownloadTest {
             getCsrfToken = { latestToken.value },
             setCsrfToken = { latestToken.value = it },
             clearCsrfToken = { latestToken.value = null },
-            clearCookies = {},
             overrideFanboxSessionId = {},
+            replaceCookies = { _, _ -> },
         )
 
         return Fixture(

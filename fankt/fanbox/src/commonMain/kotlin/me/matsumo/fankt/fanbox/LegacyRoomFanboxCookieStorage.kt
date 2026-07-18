@@ -47,6 +47,9 @@ public class LegacyRoomFanboxCookieStorage internal constructor(
     override suspend fun delete(domain: String, path: String, name: String): Unit =
         requireOpen { backend.delete(domain, path, name) }
 
+    override suspend fun deleteExpired(nowEpochMilliseconds: Long): Unit =
+        requireOpen { backend.deleteExpired(nowEpochMilliseconds) }
+
     override suspend fun replaceAll(cookies: List<FanboxCookieRecord>): Unit =
         requireOpen { backend.replaceAll(cookies) }
 

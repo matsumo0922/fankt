@@ -219,6 +219,10 @@ class Fanbox internal constructor(
     /**
      * Stores [cookies]. Resetting cookies or supplying `FANBOXSESSID` clears the injected
      * CSRF token before replacement-cookie writes; unrelated additive cookies preserve it.
+     *
+     * A Cookie without `domain` is host-only for [url]'s origin host and is not sent to sibling
+     * hosts. Supply `domain = ".fanbox.cc"` for a Cookie that must cross FANBOX subdomains, or use
+     * [setFanboxSessionId] for `FANBOXSESSID`.
      */
     suspend fun setCookies(
         cookies: List<Cookie>,

@@ -35,7 +35,9 @@ public data class FanboxCookieRecord(
  * Implementations store records and publish the current snapshot; request URL matching belongs to
  * fankt. [snapshot] must return a finite current value without depending on Flow collection.
  * [replaceAll] atomically replaces the complete snapshot and must retain the previous snapshot if
- * its commit fails. Every collector of [cookies] receives the current snapshot at least once.
+ * its commit fails. [deleteExpired] must atomically remove only records whose current expiry is at
+ * or before its argument; a record refreshed after an earlier snapshot must survive cleanup. Every
+ * collector of [cookies] receives the current snapshot at least once.
  *
  * A [Fanbox] never closes or clears an injected storage when the client closes. The host owns its
  * lifetime. State is shared only when the host passes the same instance to multiple clients.
@@ -49,6 +51,8 @@ public interface FanboxCookieStorage {
     public suspend fun upsert(cookie: FanboxCookieRecord)
 
     public suspend fun delete(domain: String, path: String, name: String)
+
+    public suspend fun deleteExpired(nowEpochMilliseconds: Long)
 
     public suspend fun replaceAll(cookies: List<FanboxCookieRecord>)
 
@@ -92,6 +96,16 @@ public class InMemoryFanboxCookieStorage(
         val identity = CookieIdentity(domain.canonicalDomain(), path.canonicalPath(), name)
         mutex.withLock {
             state.value = state.value.filterNot { it.identity == identity }
+        }
+    }
+
+    override suspend fun deleteExpired(nowEpochMilliseconds: Long) {
+        mutex.withLock {
+            state.value = state.value.filterNot { record ->
+                record.expiresAtEpochMilliseconds?.let { expiry ->
+                    expiry <= nowEpochMilliseconds
+                } == true
+            }
         }
     }
 

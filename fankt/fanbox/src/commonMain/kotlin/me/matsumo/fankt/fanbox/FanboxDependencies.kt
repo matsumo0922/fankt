@@ -13,12 +13,8 @@ internal class FanboxDependencies(
     val getCsrfToken: suspend () -> String?,
     val setCsrfToken: suspend (String) -> Unit,
     val clearCsrfToken: suspend () -> Unit,
-    val clearCookies: suspend () -> Unit,
     val overrideFanboxSessionId: suspend (String) -> Unit,
-    val replaceCookies: suspend (Url, List<Cookie>) -> Unit = { requestUrl, replacement ->
-        clearCookies()
-        replacement.forEach { cookie -> cookieStorage.addCookie(requestUrl, cookie) }
-    },
+    val replaceCookies: suspend (Url, List<Cookie>) -> Unit,
 )
 
 internal fun createFanboxDependencies(
@@ -34,7 +30,6 @@ internal fun createFanboxDependencies(
         getCsrfToken = tokenStore::get,
         setCsrfToken = { token -> tokenStore.set(token) },
         clearCsrfToken = { tokenStore.set(null) },
-        clearCookies = cookieStore::clear,
         overrideFanboxSessionId = adapter::overrideFanboxSessionId,
         replaceCookies = adapter::replaceAll,
     )

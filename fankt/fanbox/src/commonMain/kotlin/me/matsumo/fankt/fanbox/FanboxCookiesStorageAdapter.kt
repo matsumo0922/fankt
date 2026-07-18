@@ -25,11 +25,10 @@ internal class FanboxCookiesStorageAdapter(
     override suspend fun get(requestUrl: Url): List<Cookie> {
         val now = nowEpochMilliseconds()
         val snapshot = storage.snapshot()
-        val expired = snapshot.filter { it.isExpired(now) }
 
-        for (record in expired) {
+        if (snapshot.any { it.isExpired(now) }) {
             try {
-                storage.delete(record.domain, record.path, record.name)
+                storage.deleteExpired(now)
             } catch (error: CancellationException) {
                 throw error
             } catch (_: Exception) {

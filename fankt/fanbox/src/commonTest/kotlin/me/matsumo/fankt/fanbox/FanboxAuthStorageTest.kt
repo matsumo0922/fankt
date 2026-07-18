@@ -10,6 +10,7 @@ import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.Url
 import io.ktor.http.headersOf
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.flow.first
@@ -18,6 +19,7 @@ import me.matsumo.fankt.fanbox.domain.model.id.FanboxPostId
 import me.matsumo.fankt.fanbox.fixture.FanboxMetadataHtmlFixtures
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
@@ -155,6 +157,30 @@ class FanboxAuthStorageTest {
     }
 
     @Test
+    fun expiryCleanupCancellationIsRethrown() = runBlocking {
+        val storage = CleanupCancellingStorage(
+            listOf(record("expired", "secret", expiresAt = NOW)),
+        )
+        val adapter = FanboxCookiesStorageAdapter(storage) { NOW }
+
+        assertFailsWith<CancellationException> {
+            adapter.get(Url("https://api.fanbox.cc/"))
+        }
+        Unit
+    }
+
+    @Test
+    fun cleanupDoesNotDeleteCookieRefreshedAfterSnapshot() = runBlocking {
+        val expired = record("session", "expired", expiresAt = NOW)
+        val refreshed = record("session", "refreshed", expiresAt = NOW + 60_000)
+        val storage = RefreshAfterSnapshotStorage(expired, refreshed)
+        val adapter = FanboxCookiesStorageAdapter(storage) { NOW }
+
+        assertTrue(adapter.get(Url("https://api.fanbox.cc/")).isEmpty())
+        assertEquals("refreshed", storage.snapshot().single().value)
+    }
+
+    @Test
     fun expiryBoundaryAndLaterCleanupRetryRemainSafe() = runBlocking {
         val storage = RetryCleanupStorage(
             listOf(
@@ -168,8 +194,30 @@ class FanboxAuthStorageTest {
 
         assertEquals(setOf("future", "session"), adapter.get(Url("https://api.fanbox.cc/")).map { it.name }.toSet())
         assertEquals(setOf("future", "session"), adapter.get(Url("https://api.fanbox.cc/")).map { it.name }.toSet())
-        assertTrue(storage.deleteAttempts >= 3)
+        assertEquals(2, storage.cleanupAttempts)
         assertFalse(storage.snapshot().any { it.name == "past" || it.name == "boundary" })
+    }
+
+    @Test
+    fun resetCookiesUsesExactlyOneAtomicReplacement() = runBlocking {
+        val storage = RecordingMutationStorage()
+        val fanbox = Fanbox(
+            clientFactory = metadataClientFactory("unused-token"),
+            cookieStorage = storage,
+        )
+        try {
+            fanbox.setCookies(
+                cookies = listOf(Cookie("first", "one"), Cookie("second", "two")),
+                reset = true,
+            )
+
+            assertEquals(1, storage.replaceAllCalls)
+            assertEquals(0, storage.clearCalls)
+            assertEquals(0, storage.upsertCalls)
+            assertEquals(setOf("first", "second"), storage.snapshot().map { it.name }.toSet())
+        } finally {
+            fanbox.close()
+        }
     }
 
     @Test
@@ -327,6 +375,8 @@ class FanboxAuthStorageTest {
         override suspend fun upsert(cookie: FanboxCookieRecord) = delegate.upsert(cookie)
         override suspend fun delete(domain: String, path: String, name: String) =
             delegate.delete(domain, path, name)
+        override suspend fun deleteExpired(nowEpochMilliseconds: Long) =
+            delegate.deleteExpired(nowEpochMilliseconds)
         override suspend fun replaceAll(cookies: List<FanboxCookieRecord>): Unit =
             error("atomic commit failed")
         override suspend fun clear() = delegate.clear()
@@ -338,7 +388,9 @@ class FanboxAuthStorageTest {
         override val cookies = delegate.cookies
         override suspend fun snapshot() = delegate.snapshot()
         override suspend fun upsert(cookie: FanboxCookieRecord) = delegate.upsert(cookie)
-        override suspend fun delete(domain: String, path: String, name: String) {
+        override suspend fun delete(domain: String, path: String, name: String) =
+            delegate.delete(domain, path, name)
+        override suspend fun deleteExpired(nowEpochMilliseconds: Long) {
             cleanupAttempts += 1
             error("cleanup unavailable")
         }
@@ -348,17 +400,81 @@ class FanboxAuthStorageTest {
 
     private class RetryCleanupStorage(initial: List<FanboxCookieRecord>) : FanboxCookieStorage {
         private val delegate = InMemoryFanboxCookieStorage(initial)
-        var deleteAttempts = 0
+        var cleanupAttempts = 0
         override val cookies = delegate.cookies
         override suspend fun snapshot() = delegate.snapshot()
         override suspend fun upsert(cookie: FanboxCookieRecord) = delegate.upsert(cookie)
-        override suspend fun delete(domain: String, path: String, name: String) {
-            deleteAttempts += 1
-            if (deleteAttempts == 1) error("first cleanup unavailable")
+        override suspend fun delete(domain: String, path: String, name: String) =
             delegate.delete(domain, path, name)
+        override suspend fun deleteExpired(nowEpochMilliseconds: Long) {
+            cleanupAttempts += 1
+            if (cleanupAttempts == 1) error("first cleanup unavailable")
+            delegate.deleteExpired(nowEpochMilliseconds)
         }
         override suspend fun replaceAll(cookies: List<FanboxCookieRecord>) = delegate.replaceAll(cookies)
         override suspend fun clear() = delegate.clear()
+    }
+
+    private class CleanupCancellingStorage(initial: List<FanboxCookieRecord>) : FanboxCookieStorage {
+        private val delegate = InMemoryFanboxCookieStorage(initial)
+        override val cookies = delegate.cookies
+        override suspend fun snapshot() = delegate.snapshot()
+        override suspend fun upsert(cookie: FanboxCookieRecord) = delegate.upsert(cookie)
+        override suspend fun delete(domain: String, path: String, name: String) =
+            delegate.delete(domain, path, name)
+        override suspend fun deleteExpired(nowEpochMilliseconds: Long): Unit =
+            throw CancellationException("cleanup cancelled")
+        override suspend fun replaceAll(cookies: List<FanboxCookieRecord>) = delegate.replaceAll(cookies)
+        override suspend fun clear() = delegate.clear()
+    }
+
+    private class RefreshAfterSnapshotStorage(
+        expired: FanboxCookieRecord,
+        private val refreshed: FanboxCookieRecord,
+    ) : FanboxCookieStorage {
+        private val delegate = InMemoryFanboxCookieStorage(listOf(expired))
+        private var refreshPending = true
+        override val cookies = delegate.cookies
+        override suspend fun snapshot(): List<FanboxCookieRecord> {
+            val snapshot = delegate.snapshot()
+            if (refreshPending) {
+                refreshPending = false
+                delegate.upsert(refreshed)
+            }
+            return snapshot
+        }
+        override suspend fun upsert(cookie: FanboxCookieRecord) = delegate.upsert(cookie)
+        override suspend fun delete(domain: String, path: String, name: String) =
+            delegate.delete(domain, path, name)
+        override suspend fun deleteExpired(nowEpochMilliseconds: Long) =
+            delegate.deleteExpired(nowEpochMilliseconds)
+        override suspend fun replaceAll(cookies: List<FanboxCookieRecord>) = delegate.replaceAll(cookies)
+        override suspend fun clear() = delegate.clear()
+    }
+
+    private class RecordingMutationStorage : FanboxCookieStorage {
+        private val delegate = InMemoryFanboxCookieStorage()
+        var upsertCalls = 0
+        var replaceAllCalls = 0
+        var clearCalls = 0
+        override val cookies = delegate.cookies
+        override suspend fun snapshot() = delegate.snapshot()
+        override suspend fun upsert(cookie: FanboxCookieRecord) {
+            upsertCalls += 1
+            delegate.upsert(cookie)
+        }
+        override suspend fun delete(domain: String, path: String, name: String) =
+            delegate.delete(domain, path, name)
+        override suspend fun deleteExpired(nowEpochMilliseconds: Long) =
+            delegate.deleteExpired(nowEpochMilliseconds)
+        override suspend fun replaceAll(cookies: List<FanboxCookieRecord>) {
+            replaceAllCalls += 1
+            delegate.replaceAll(cookies)
+        }
+        override suspend fun clear() {
+            clearCalls += 1
+            delegate.clear()
+        }
     }
 
     private companion object {

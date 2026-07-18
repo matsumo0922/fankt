@@ -38,9 +38,14 @@ internal actual fun getFanktDatabase(): FanktDatabase = databaseInstance
 @OptIn(ExperimentalForeignApi::class)
 internal actual fun deleteLegacyRoomDatabaseFiles(): Boolean {
     val databasePath = getLegacyRoomDatabasePath()
-    return listOf(databasePath, "$databasePath-wal", "$databasePath-shm", "$databasePath-journal")
-        .all { path ->
-            !NSFileManager.defaultManager.fileExistsAtPath(path) ||
-                NSFileManager.defaultManager.removeItemAtPath(path, error = null)
+    var allDeleted = true
+    for (path in listOf(databasePath, "$databasePath-wal", "$databasePath-shm", "$databasePath-journal")) {
+        if (
+            NSFileManager.defaultManager.fileExistsAtPath(path) &&
+            !NSFileManager.defaultManager.removeItemAtPath(path, error = null)
+        ) {
+            allDeleted = false
         }
+    }
+    return allDeleted
 }

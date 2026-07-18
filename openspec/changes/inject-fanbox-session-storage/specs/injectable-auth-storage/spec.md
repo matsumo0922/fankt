@@ -27,6 +27,10 @@
 - **WHEN** storage contains a host-only Cookie created for `www.fanbox.cc` and a request targets `api.fanbox.cc`
 - **THEN** the common adapter does not send that Cookie to the sibling host
 
+#### Scenario: Domain omission uses strict origin ownership
+- **WHEN** `Fanbox.setCookies()` receives a Cookie without `domain` for `https://www.fanbox.cc`
+- **THEN** the Cookie is host-only for `www.fanbox.cc` and is not sent to `api.fanbox.cc`; a caller that requires cross-subdomain delivery supplies `domain = ".fanbox.cc"` or uses `setFanboxSessionId()` for the session Cookie
+
 ### Requirement: Room-free defaults
 The public `Fanbox` constructor SHALL default to newly allocated in-memory Cookie and token stores, SHALL preserve source-compatible construction for callers that pass no storage arguments, and SHALL NOT persist default authentication state across process recreation. Documentation SHALL identify explicit storage injection as required for persistence.
 
@@ -54,11 +58,15 @@ The in-memory implementations and the `Fanbox` authentication adapter SHALL seri
 - **THEN** later reads observe the complete pre-replacement Cookie snapshot rather than an empty or partially replaced set
 
 ### Requirement: Non-blocking expiry cleanup
-The authentication adapter SHALL exclude expired Cookies from every request before attempting backend cleanup. Cleanup failure SHALL NOT deliver an expired Cookie and SHALL NOT fail the request; a later read SHALL retry cleanup.
+The authentication adapter SHALL exclude expired Cookies from every request before attempting backend cleanup. `FanboxCookieStorage.deleteExpired(nowEpochMilliseconds)` SHALL remove only records whose current expiry is at or before the supplied instant in one conditional mutation, so a same-identity Cookie refreshed after the adapter snapshot survives cleanup. Cleanup cancellation SHALL be rethrown. Any other cleanup failure SHALL NOT deliver an expired Cookie and SHALL NOT fail the request; a later read SHALL retry cleanup.
 
 #### Scenario: Expiry cleanup write fails
 - **WHEN** a request snapshot contains an expired Cookie and backend deletion fails
 - **THEN** the request proceeds without the expired Cookie and a later snapshot read may retry deletion
+
+#### Scenario: Cookie is refreshed after the request snapshot
+- **WHEN** a request snapshot contains an expired Cookie and the same identity is refreshed before conditional cleanup commits
+- **THEN** the request still excludes the expired snapshot value and cleanup retains the refreshed current record
 
 ### Requirement: Explicit legacy Room access
 Until the Room artifact separation is released, fankt SHALL provide an explicit legacy Room-backed `FanboxCookieStorage` factory or equivalent migration bridge that reads Android `getDatabasePath("fankt.db")` or iOS `NSDocumentDirectory/fankt.db` and implements the same storage contract. The bridge SHALL keep schema v3 unchanged, SHALL expose every legacy row with `hostOnly = false`, and SHALL coerce legacy-backend writes to `hostOnly = false` because the schema cannot preserve that distinction. Each bridge SHALL own its database instance, SHALL close it before file deletion, and SHALL permit a later factory call to create a fresh instance after close. Default `Fanbox` construction SHALL NOT select this bridge implicitly.

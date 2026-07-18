@@ -90,10 +90,15 @@ val fanbox = Fanbox(
 ```
 
 `FanboxCookieStorage` stores normalized `FanboxCookieRecord` values and implements finite
-`snapshot()`, current-value `cookies` observation, and atomic `replaceAll()`. fankt applies Cookie
-domain, host-only, path, secure-transport, and expiry matching uniformly to every backend. Cookie
-values and CSRF tokens are credentials; storage implementations must not log them or include them in
-telemetry.
+`snapshot()`, current-value `cookies` observation, atomic `replaceAll()`, and conditional
+`deleteExpired()`. fankt applies Cookie domain, host-only, path, secure-transport, and expiry
+matching uniformly to every backend. Cookie values and CSRF tokens are credentials; storage
+implementations must not log them or include them in telemetry.
+
+`Fanbox.setCookies()` treats a Cookie without `domain` as host-only for the `url` origin. With the
+default `url`, that Cookie belongs only to `www.fanbox.cc` and is not sent to sibling hosts such as
+`api.fanbox.cc`. Set `domain = ".fanbox.cc"` when a Cookie must cross FANBOX subdomains. Use
+`setFanboxSessionId()` for `FANBOXSESSID`; it creates the required domain-scoped session Cookie.
 
 The application owns injected stores. `Fanbox.close()` closes only the HTTP clients and does not
 close or clear a store. Passing the same Cookie or token store instance to multiple `Fanbox` clients

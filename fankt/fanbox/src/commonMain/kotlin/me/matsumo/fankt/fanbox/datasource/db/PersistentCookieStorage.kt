@@ -36,6 +36,12 @@ internal class PersistentCookieStorage(
         }
     }
 
+    override suspend fun deleteExpired(nowEpochMilliseconds: Long) {
+        withContext(ioDispatcher) {
+            cookieDao.deleteExpired(nowEpochMilliseconds)
+        }
+    }
+
     override suspend fun replaceAll(cookies: List<FanboxCookieRecord>) {
         val replacement = cookies.map(FanboxCookieRecord::toLegacyEntity)
         withContext(ioDispatcher) {

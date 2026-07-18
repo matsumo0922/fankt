@@ -30,6 +30,9 @@ internal actual fun getFanktDatabase(): FanktDatabase = databaseInstance
 
 internal actual fun deleteLegacyRoomDatabaseFiles(): Boolean {
     val database = java.io.File(getLegacyRoomDatabasePath())
-    return listOf(database, java.io.File("${database.path}-wal"), java.io.File("${database.path}-shm"), java.io.File("${database.path}-journal"))
-        .all { file -> !file.exists() || file.delete() }
+    var allDeleted = true
+    for (file in listOf(database, java.io.File("${database.path}-wal"), java.io.File("${database.path}-shm"), java.io.File("${database.path}-journal"))) {
+        if (file.exists() && !file.delete()) allDeleted = false
+    }
+    return allDeleted
 }
