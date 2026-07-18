@@ -9,7 +9,7 @@ The project SHALL publish `me.matsumo.fankt:fanbox-persistence-room` as an optio
 
 #### Scenario: Optional artifact is published
 - **WHEN** the release workflow publishes the project libraries
-- **THEN** it invokes the Maven Central publication task for `:fankt:fanbox-persistence-room`
+- **THEN** it successfully publishes `:fankt:fanbox-persistence-room` before publishing the breaking `:fankt:fanbox` artifact, so a failed optional-artifact publication cannot expose the core removal without its replacement
 
 #### Scenario: Core Android manifest is merged
 - **WHEN** an Android application depends only on `fanbox`
@@ -45,14 +45,13 @@ The optional Room storage SHALL implement `FanboxCookieStorage`, preserve Room s
 - **WHEN** the optional backend writes a `FanboxCookieRecord` whose `hostOnly` value is true
 - **THEN** reopening the record returns `hostOnly = false` without changing schema version 3
 
-### Requirement: Owned lifecycle and cleanup
-Each explicitly created Room storage SHALL own one separately closeable database instance. Operations after close SHALL fail, close SHALL be idempotent, database file deletion SHALL require prior close, and a later explicit creation for the same path SHALL return a fresh usable instance. This requirement traces to Issue #34’s explicit-initialization choice and the existing non-regression lifecycle invariant.
+### Requirement: Owned lifecycle
+Each explicitly created Room storage SHALL own one separately closeable database instance. Operations after close SHALL fail, close SHALL be idempotent, and a later explicit creation for the same path SHALL return a fresh usable instance. The storage API SHALL NOT delete the database file or its SQLite sidecars because it cannot prove that every separately created owner for that path is closed. Documentation SHALL require hosts to close both `Fanbox` and the injected Room storage. This requirement traces to Issue #34’s explicit-initialization choice and the existing non-regression lifecycle invariant.
 
 #### Scenario: Storage is reopened after close
 - **WHEN** one explicit Room storage is closed and the host creates storage for the same path again
 - **THEN** the later storage owns a new open database instance and can read the persisted rows
 
-#### Scenario: Cleanup requires close
-- **WHEN** a host requests database-file deletion before closing the owning storage
-- **THEN** the operation fails without deleting the database or SQLite sidecars
-
+#### Scenario: Storage cleanup is explicit
+- **WHEN** a host finishes using a `Fanbox` with injected Room storage
+- **THEN** documentation directs the host to close the `Fanbox` and then close the Room storage, while exposing no library API that can unlink a database still used by another owner

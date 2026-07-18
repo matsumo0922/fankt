@@ -6,14 +6,14 @@
 
 ## 2. Explicit Storage API and Compatibility
 
-- [ ] 2.1 Implement closeable `RoomFanboxCookieStorage` and explicit Android/iOS factories while preserving schema v3, database paths, and legacy `hostOnly = false` behavior.
+- [ ] 2.1 Implement closeable `RoomFanboxCookieStorage` and explicit Android/iOS factories without file-deletion API while preserving schema v3, database paths, and legacy `hostOnly = false` behavior.
 - [ ] 2.2 Move and adapt storage, migration, lifecycle, and v1/v2/v3 fixture tests to the optional module.
 - [ ] 2.3 Add restart restoration and production `Fanbox` injection tests for a persisted `FANBOXSESSID`.
 - [ ] 2.4 Add a dependency/manifest boundary regression check proving `:fankt:fanbox` contains no Room, sqlite, Startup, or optional-module dependency.
 
 ## 3. Publication and Documentation
 
-- [ ] 3.1 Add the optional artifact to Dokka aggregation and `deploy-library.yml` publication.
+- [ ] 3.1 Add the optional artifact to Dokka aggregation and publish it before the breaking core artifact in `deploy-library.yml`.
 - [ ] 3.2 Update README dependency and explicit Android/iOS storage-injection examples, lifecycle guidance, and removal of the old bridge wording.
 - [ ] 3.3 Search README, docs, and KDoc for moved APIs and stale Room/startup behavior, then update all affected current-specification text.
 

@@ -8,7 +8,7 @@
 - **BREAKING**: move the legacy Room factory and all Room database implementation types out of `fanbox`; callers that need persistence add the new artifact and explicitly create/inject its storage.
 - Remove Room, androidx.sqlite, androidx.startup, and the AndroidX Startup provider from the `fanbox` artifact.
 - Publish `fanbox-persistence-room` to Maven Central and document explicit persistent-storage setup.
-- Preserve the existing `fankt.db` path, schema v3, v1/v2 migrations, Cookie semantics, and close/delete lifecycle.
+- Preserve the existing `fankt.db` path, schema v3, v1/v2 migrations, Cookie semantics, and close/reopen lifecycle; remove library-owned database-file deletion from the long-lived persistence backend.
 
 ## Capabilities
 
@@ -19,7 +19,7 @@
 ### Modified Capabilities
 
 - `injectable-auth-storage`: Moves explicit Room access from the core artifact to the optional persistence artifact while retaining the injected `FanboxCookieStorage` contract. This traces to Issue #34 acceptance criterion “persistence-room を注入した場合の動作が現行と同等”.
-- `room-database-lifecycle`: Replaces the former core-owned legacy bridge wording with explicitly created, instance-owned storage in the optional artifact and removes process-global initialization. This traces to Issue #34’s explicit-initialization recommendation and unchanged-database constraint.
+- `room-database-lifecycle`: Replaces the former core-owned legacy bridge wording and singleton accessor with explicitly created, instance-owned storage in the optional artifact. This traces to Issue #34’s explicit-initialization recommendation and unchanged-database constraint.
 
 ## Impact
 
