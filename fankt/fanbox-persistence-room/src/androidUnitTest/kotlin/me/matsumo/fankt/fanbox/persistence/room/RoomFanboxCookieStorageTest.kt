@@ -10,6 +10,9 @@ import kotlin.test.Test
 
 @RunWith(RobolectricTestRunner::class)
 class RoomFanboxCookieStorageTest {
+    private val context: Context
+        get() = ApplicationProvider.getApplicationContext()
+
     @Test
     fun opensAllLegacyVersionsAndRestoresSessionThroughFanbox() {
         verifyRoomStorageVersions(
@@ -44,6 +47,4 @@ class RoomFanboxCookieStorageTest {
         File("${database.path}-journal"),
     )
 
-    private val context: Context
-        get() = ApplicationProvider.getApplicationContext()
 }

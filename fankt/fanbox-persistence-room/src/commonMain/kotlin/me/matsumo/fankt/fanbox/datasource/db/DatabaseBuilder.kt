@@ -2,10 +2,10 @@ package me.matsumo.fankt.fanbox.datasource.db
 
 import androidx.room.RoomDatabase
 import androidx.sqlite.SQLiteDriver
-import kotlin.coroutines.CoroutineContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import me.matsumo.fankt.fanbox.domain.model.db.FanktDatabase
+import kotlin.coroutines.CoroutineContext
 
 internal fun buildFanktDatabase(
     builder: RoomDatabase.Builder<FanktDatabase>,

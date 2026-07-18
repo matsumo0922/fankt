@@ -4,8 +4,8 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import me.matsumo.fankt.fanbox.Fanbox
 import kotlin.test.assertEquals
-import kotlin.test.assertFalse
 import kotlin.test.assertFailsWith
+import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 internal fun verifyRoomStorageVersions(
