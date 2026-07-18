@@ -95,12 +95,30 @@ class FanboxDownloadTest {
     }
 
     @Test
-    fun uppercaseAllowedHostIsNormalized() = runBlocking {
+    fun allowedHostMatchingIsCaseInsensitive() = runBlocking {
         val fixture = createFixture()
 
         fixture.fanbox.download("https://DOWNLOADS.FANBOX.CC/file.psd") {}.execute { it.bodyAsText() }
 
-        assertEquals("downloads.fanbox.cc", fixture.requests.single().url.host.lowercase())
+        assertTrue(fixture.requests.single().url.host.equals("downloads.fanbox.cc", ignoreCase = true))
+        fixture.fanbox.close()
+    }
+
+    @Test
+    fun zeroContentLengthReportsZeroProgress() = runBlocking {
+        val fixture = createFixture {
+            respond(
+                content = "",
+                headers = headersOf(HttpHeaders.ContentLength, "0"),
+            )
+        }
+        val progress = mutableListOf<Float>()
+
+        fixture.fanbox.download("https://downloads.fanbox.cc/empty", progress::add)
+            .execute { it.bodyAsText() }
+
+        assertTrue(progress.isNotEmpty())
+        assertTrue(progress.all { it == 0f })
         fixture.fanbox.close()
     }
 
@@ -143,6 +161,7 @@ class FanboxDownloadTest {
         assertEquals(listOf("downloads.fanbox.cc", "pixiv.pximg.net"), fixture.requests.map { it.url.host })
         assertEquals("fixture-token", fixture.requests.first().csrfToken)
         assertNull(fixture.requests.last().csrfToken)
+        assertNull(fixture.requests.last().cookie)
         fixture.fanbox.close()
     }
 

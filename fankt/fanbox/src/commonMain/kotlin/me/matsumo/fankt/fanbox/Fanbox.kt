@@ -476,7 +476,8 @@ class Fanbox internal constructor(
      * fraction when the response supplies a content length, or `0f` while the length is unknown.
      *
      * Execute the returned statement before [close]. Execution after owner close fails with Ktor's
-     * closed-client exception rather than a [FanboxException].
+     * closed-client exception rather than a [FanboxException]. Statement execution and
+     * [onProgress] callbacks run on the caller's coroutine context.
      *
      * @throws IllegalArgumentException when [url] or a redirect destination is not allowed.
      * @throws FanboxException when the returned [HttpStatement] is executed and the request otherwise fails.
@@ -487,11 +488,13 @@ class Fanbox internal constructor(
     ): HttpStatement {
         val client = downloadClient
         val validatedUrl = parseFanboxDownloadUrl(url)
-        return withContext(ioDispatcher) {
-            client.prepareGet(validatedUrl.toString()) {
-                onDownload { bytesReceivedTotal, contentLength ->
-                    onProgress(contentLength?.let { bytesReceivedTotal.toFloat() / it } ?: 0f)
-                }
+        return client.prepareGet(validatedUrl.toString()) {
+            onDownload { bytesReceivedTotal, contentLength ->
+                val progress = contentLength
+                    ?.takeIf { it > 0L }
+                    ?.let { bytesReceivedTotal.toFloat() / it }
+                    ?: 0f
+                onProgress(progress)
             }
         }
     }
