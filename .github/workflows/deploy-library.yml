@@ -42,6 +42,9 @@ jobs:
           java-version: '21'
           distribution: 'temurin'
 
+      - name: Publish Fanbox Room persistence library to MavenCentral
+        run: ./gradlew :fankt:fanbox-persistence-room:publishAndReleaseToMavenCentral --no-configuration-cache
+
       - name: Publish Fanbox library to MavenCentral
         run: ./gradlew :fankt:fanbox:publishAndReleaseToMavenCentral --no-configuration-cache
 

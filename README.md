@@ -36,6 +36,8 @@ repositories {
 
 dependencies {
     implementation("me.matsumo.fankt:fanbox:$version")
+    // Add only when Room-backed FANBOX session persistence is required.
+    implementation("me.matsumo.fankt:fanbox-persistence-room:$version")
     implementation("me.matsumo.fankt:fantia:$version")
 }
 ```
@@ -104,18 +106,52 @@ The application owns injected stores. `Fanbox.close()` closes only the HTTP clie
 close or clear a store. Passing the same Cookie or token store instance to multiple `Fanbox` clients
 shares that state deliberately; passing different instances keeps accounts isolated.
 
+Room-backed Cookie persistence is provided by the optional
+`me.matsumo.fankt:fanbox-persistence-room` artifact. It uses the existing schema-v3 `fankt.db` in
+place, including the existing v1 and v2 migrations. Each factory call owns a new database instance;
+there is no AndroidX Startup initializer, global `Context`, singleton database, or database-file
+deletion API.
+
+On Android, pass a `Context` explicitly. The factory uses
+`context.applicationContext.getDatabasePath("fankt.db")`:
+
+```kotlin
+val storage = createRoomFanboxCookieStorage(applicationContext)
+val fanbox = Fanbox(cookieStorage = storage)
+
+try {
+    // A restored FANBOXSESSID is available through this Fanbox instance.
+    fanbox.updateCsrfToken()
+} finally {
+    fanbox.close()
+    storage.close()
+}
+```
+
+On iOS, the factory uses `NSDocumentDirectory/fankt.db`:
+
+```kotlin
+val storage = createRoomFanboxCookieStorage()
+val fanbox = Fanbox(cookieStorage = storage)
+
+try {
+    // Use Fanbox with the restored persistent Cookie state.
+} finally {
+    fanbox.close()
+    storage.close()
+}
+```
+
+Create one storage for the host lifecycle that needs persistence. Close every `Fanbox` that uses it,
+then close the storage. `close()` is idempotent; storage operations after close fail. A later factory
+call opens a fresh instance over the same database file and restores committed Cookie rows. The
+schema stores legacy records as domain Cookies, so Room-backed records have `hostOnly = false`.
+
 The v0.1.0 API keeps existing source constructor forms, including `Fanbox()` and positional
 `logLevel`/`ioDispatcher` calls. Its default authentication durability changes from implicit Room
 persistence to process-memory storage, and the constructor's binary signature changes. Consumers
 must perform a clean rebuild and inject persistence before upgrading when restart durability is
 required.
-
-`createLegacyRoomFanboxCookieStorage()` is an opt-in migration bridge for an existing platform
-`fankt.db`. A migration reads and verifies its snapshot before calling `clear()`, `close()`, and
-`deleteDatabaseFiles()` in that order. The bridge owns a fresh Room instance and exposes legacy rows
-as domain Cookies because schema version 3 has no host-only column. Default `Fanbox()` construction
-never opens this bridge. The bridge remains available until PixiView-KMP's oldest supported version
-already contains secure session migration and fankt issue #34 confirms that it is removable.
 
 `Fanbox` owns its generated clients and the clients returned by `getHttpClient()`. Calls to
 `getHttpClient()` with the same content-negotiation setting return the same shared instance, so do

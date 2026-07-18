@@ -63,7 +63,9 @@ import me.matsumo.fankt.fanbox.repository.FanboxUserRepository
  * Authentication state belongs to the injected [FanboxCookieStorage] and [FanboxTokenStore]. The
  * public constructor creates new in-memory stores for each call by default, so authentication is
  * isolated between instances and is not restored after process recreation. Inject persistent
- * storage explicitly when durability is required. [close] does not close or clear injected stores.
+ * storage explicitly when durability is required. The optional `fanbox-persistence-room` artifact
+ * provides platform-explicit Room storage without changing this default. [close] does not close or
+ * clear injected stores; close this [Fanbox] before closing its host-owned storage.
  *
  * The v0.1.0 constructor remains source-compatible with earlier call forms, but changing default
  * authentication durability and adding default parameters is intentionally binary-incompatible.

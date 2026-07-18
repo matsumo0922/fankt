@@ -66,6 +66,7 @@ class MavenPublishPlugin : Plugin<Project> {
 
             dependencies {
                 add("dokka", project(":fankt:fanbox"))
+                add("dokka", project(":fankt:fanbox-persistence-room"))
                 add("dokka", project(":fankt:fantia"))
             }
         }
