@@ -46,5 +46,4 @@ class RoomFanboxCookieStorageTest {
         File("${database.path}-shm"),
         File("${database.path}-journal"),
     )
-
 }
