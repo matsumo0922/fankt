@@ -1,13 +1,16 @@
 package me.matsumo.fankt.fanbox.repository
 
 import io.ktor.http.ContentType
+import io.ktor.http.HttpStatusCode
 import io.ktor.http.content.TextContent
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.withContext
+import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
+import me.matsumo.fankt.fanbox.FanboxExceptionFactory
 import me.matsumo.fankt.fanbox.datasource.FanboxCreatorApi
 import me.matsumo.fankt.fanbox.datasource.mapper.FanboxCreatorMapper
 import me.matsumo.fankt.fanbox.domain.model.id.FanboxCreatorId
@@ -20,8 +23,16 @@ internal class FanboxCreatorRepository(
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
 ) {
     suspend fun getCreatorDetail(creatorId: FanboxCreatorId) = withContext(ioDispatcher) {
-        fanboxCreatorApi.getCreatorDetail(creatorId.value).let {
-            fanboxCreatorMapper.map(it)
+        val entity = fanboxCreatorApi.getCreatorDetail(creatorId.value)
+        try {
+            fanboxCreatorMapper.map(entity)
+        } catch (failure: SerializationException) {
+            throw FanboxExceptionFactory.schemaMismatch(
+                statusCode = HttpStatusCode.OK.value,
+                html = entity.body.profileItems.toString(),
+                endpoint = "creator.get",
+                cause = failure,
+            )
         }
     }
 

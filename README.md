@@ -135,6 +135,32 @@ exception is propagated to the caller. The no-callback `getSupportedPlans()` rem
 a missing active support plan must not look like an ordinary partial list. Use its callback overload
 to opt into per-item tolerant results explicitly.
 
+#### Creator profile items
+
+`FanboxCreatorDetail.profileItems` is a sealed list. Consumers must branch over
+`ProfileItem.Image`, `ProfileItem.Video`, and `ProfileItem.Unknown` instead of reading one flat
+profile-item shape:
+
+```kotlin
+creator.profileItems.forEach { item ->
+    when (item) {
+        is FanboxCreatorDetail.ProfileItem.Image -> showImage(item.thumbnailUrl ?: item.imageUrl)
+        is FanboxCreatorDetail.ProfileItem.Video -> item.url?.let(::openReviewedUrl)
+        is FanboxCreatorDetail.ProfileItem.Unknown -> reportUnknownType(item.type)
+    }
+}
+```
+
+`Video.url` reconstructs a URL for YouTube and Vimeo and returns `null` for other providers. Only a
+YouTube item is represented in the actual-derived test fragment; Vimeo is covered as a synthetic
+helper contract. Provider names, video IDs, reconstructed URLs, and `Unknown.rawJson` remain
+untrusted network data, so applications must validate them before navigation, parsing, display, or
+logging.
+
+The sealed model is a source and serialization compatibility break for consumers of the flat
+`ProfileItem` data class. Recompile consumers and migrate exhaustive branches when updating fankt.
+PixiView dependency updates and UI support are handled independently of this library change.
+
 ### Fantia
 
 WIP (Work in Progress)

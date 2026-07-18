@@ -33,23 +33,20 @@ class FanboxCreatorMapperGoldenTest {
             isStopped = false,
             isSupported = false,
             profileItems = listOf(
-                FanboxCreatorDetail.ProfileItem(
+                FanboxCreatorDetail.ProfileItem.Image(
                     id = "fixture-profile-item-1",
                     imageUrl = "https://example.invalid/resource-3",
                     thumbnailUrl = "https://example.invalid/resource-4",
-                    type = "image",
                 ),
-                FanboxCreatorDetail.ProfileItem(
+                FanboxCreatorDetail.ProfileItem.Image(
                     id = "fixture-profile-item-2",
                     imageUrl = "https://example.invalid/resource-5",
                     thumbnailUrl = "https://example.invalid/resource-6",
-                    type = "image",
                 ),
-                FanboxCreatorDetail.ProfileItem(
+                FanboxCreatorDetail.ProfileItem.Image(
                     id = "fixture-profile-item-3",
                     imageUrl = "https://example.invalid/resource-7",
                     thumbnailUrl = "https://example.invalid/resource-8",
-                    type = "image",
                 ),
             ),
             profileLinks = listOf(
@@ -71,6 +68,37 @@ class FanboxCreatorMapperGoldenTest {
         )
 
         assertEquals(expected, actual)
+    }
+
+    @Test
+    fun actualDerivedMixedProfileItemsMapInOriginalOrder() {
+        val actual = FanboxCreatorMapper().map(
+            decodeFixture<FanboxCreatorDetailEntity>(
+                FanboxCreatorJsonFixtures.actualDerivedCreatorGetWithVideoProfileItem,
+            ),
+        )
+
+        assertEquals(
+            listOf(
+                FanboxCreatorDetail.ProfileItem.Image(
+                    id = "fixture-profile-image-1",
+                    imageUrl = "https://example.invalid/profile-image-1",
+                    thumbnailUrl = "https://example.invalid/profile-thumbnail-1",
+                ),
+                FanboxCreatorDetail.ProfileItem.Image(
+                    id = "fixture-profile-image-2",
+                    imageUrl = "https://example.invalid/profile-image-2",
+                    thumbnailUrl = "https://example.invalid/profile-thumbnail-2",
+                ),
+                FanboxCreatorDetail.ProfileItem.Video(
+                    id = "fixture-profile-video-1",
+                    serviceProvider = "youtube",
+                    videoId = "fixture-video-1",
+                    thumbnailUrl = null,
+                ),
+            ),
+            actual.profileItems,
+        )
     }
 
     @Test

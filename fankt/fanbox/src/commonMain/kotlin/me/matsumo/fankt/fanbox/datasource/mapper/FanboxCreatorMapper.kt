@@ -1,8 +1,11 @@
 package me.matsumo.fankt.fanbox.datasource.mapper
 
 import kotlinx.datetime.Instant
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.decodeFromJsonElement
 import me.matsumo.fankt.fanbox.FanboxListItemDecoder
 import me.matsumo.fankt.fanbox.FanboxTolerantResult
+import me.matsumo.fankt.fanbox.createFanboxJson
 import me.matsumo.fankt.fanbox.domain.entity.FanboxCreatorDetailEntity
 import me.matsumo.fankt.fanbox.domain.entity.FanboxCreatorEntity
 import me.matsumo.fankt.fanbox.domain.entity.FanboxCreatorListEntity
@@ -22,6 +25,7 @@ import me.matsumo.fankt.fanbox.domain.model.id.FanboxUserId
 
 internal class FanboxCreatorMapper(
     private val listItemDecoder: FanboxListItemDecoder = FanboxListItemDecoder(),
+    private val formatter: Json = createFanboxJson(),
 ) {
 
     fun map(entity: FanboxCreatorEntity): FanboxCreator {
@@ -62,13 +66,33 @@ internal class FanboxCreatorMapper(
                 isFollowed = isFollowed,
                 isStopped = isStopped,
                 isSupported = isSupported,
-                profileItems = profileItems.map { profileItem ->
-                    FanboxCreatorDetail.ProfileItem(
-                        id = profileItem.id,
-                        imageUrl = profileItem.imageUrl,
-                        thumbnailUrl = profileItem.thumbnailUrl,
-                        type = profileItem.type,
+                profileItems = profileItems.map { rawProfileItem ->
+                    val profileItem = formatter.decodeFromJsonElement<FanboxCreatorDetailEntity.Body.ProfileItem>(
+                        rawProfileItem,
                     )
+                    val serviceProvider = profileItem.serviceProvider
+                    val videoId = profileItem.videoId
+                    when {
+                        profileItem.type == "image" -> FanboxCreatorDetail.ProfileItem.Image(
+                            id = profileItem.id,
+                            imageUrl = profileItem.imageUrl,
+                            thumbnailUrl = profileItem.thumbnailUrl,
+                        )
+
+                        profileItem.type == "video" && !serviceProvider.isNullOrBlank() && !videoId.isNullOrBlank() ->
+                            FanboxCreatorDetail.ProfileItem.Video(
+                                id = profileItem.id,
+                                serviceProvider = serviceProvider,
+                                videoId = videoId,
+                                thumbnailUrl = profileItem.thumbnailUrl,
+                            )
+
+                        else -> FanboxCreatorDetail.ProfileItem.Unknown(
+                            id = profileItem.id,
+                            type = profileItem.type,
+                            rawJson = rawProfileItem.toString(),
+                        )
+                    }
                 },
                 profileLinks = profileLinks.map { profileLink ->
                     FanboxCreatorDetail.ProfileLink(
