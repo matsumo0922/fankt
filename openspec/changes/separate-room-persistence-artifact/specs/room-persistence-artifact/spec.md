@@ -9,7 +9,7 @@ The project SHALL publish `me.matsumo.fankt:fanbox-persistence-room` as an optio
 
 #### Scenario: Optional artifact is published
 - **WHEN** the release workflow publishes the project libraries
-- **THEN** it successfully publishes `:fankt:fanbox-persistence-room` before publishing the breaking `:fankt:fanbox` artifact, so a failed optional-artifact publication cannot expose the core removal without its replacement
+- **THEN** every coordinate uses the same previously unpublished v0.1.0 version and it successfully publishes `:fankt:fanbox-persistence-room` before publishing the breaking `:fankt:fanbox` artifact, so a failed optional-artifact publication cannot expose the core removal without its replacement
 
 #### Scenario: Core Android manifest is merged
 - **WHEN** an Android application depends only on `fanbox`

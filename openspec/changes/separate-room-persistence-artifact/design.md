@@ -46,9 +46,9 @@ Package/class names may change because Room compatibility is defined by the data
 
 No process-global singleton replaces the initializer. Each factory call builds a database and returns an owning storage wrapper. `close()` is idempotent; reads and writes after close fail; reopening creates a fresh instance. The public storage exposes no database-file deletion method: a single instance cannot prove that another explicit owner for the same path is closed, so unlinking would be unsafe. Hosts that intentionally delete app data must coordinate every owner outside this library. This retains safe close/reopen behavior from Issue #33 without promoting its one-shot migration cleanup API into a long-lived backend.
 
-### 5. Publish the replacement before the breaking core（agent 仮決め）
+### 5. Publish one aligned v0.1.0 release, with the replacement before the breaking core（ユーザー確認済み: Issue #34 parent v0.1.0）
 
-The release workflow publishes `fanbox-persistence-room` first and `fanbox` afterward. If the optional artifact fails to publish, the job stops before the core factory removal is released. If the later core publication fails, the additive optional artifact may already exist but no existing caller is broken. Maven Central cannot atomically publish separate coordinates, so ordering is the fail-safe boundary.
+Every project artifact uses the same v0.1.0 release version. The release workflow publishes `fanbox-persistence-room:0.1.0` first and `fanbox:0.1.0` afterward; it does not combine an already published 0.0.20 core or Fantia artifact with a new optional artifact. If the optional artifact fails to publish, the job stops before the core factory removal is released. If the later core publication fails, the additive optional artifact may already exist but no existing caller is broken. Maven Central cannot atomically publish separate coordinates, so ordering is the fail-safe boundary within one version-aligned release.
 
 Alternative: keep the current core-first order. Rejected because a failure in the new artifact step would irreversibly publish the breaking removal without a replacement.
 
@@ -68,17 +68,18 @@ Validation combines:
 - [The core still appears Room-free only in source while published metadata leaks it transitively] → inspect Gradle dependency metadata for core variants, not only source imports.
 - [Moving internal canonicalization helpers across the module boundary duplicates behavior] → use public `FanboxCookieRecord` values and keep storage normalization inside the optional backend; the core adapter remains the sole request-matching authority.
 - [Two explicit instances open the same SQLite file concurrently] → do not expose file deletion; each instance closes only its own database. Document one host-owned storage per lifecycle and explicit close order.
-- [The new persistence artifact fails to publish] → publish it before the breaking core coordinate and rely on workflow fail-fast behavior.
+- [The new persistence artifact fails to publish] → keep every coordinate on v0.1.0, publish the optional artifact before the breaking core coordinate, and rely on workflow fail-fast behavior.
 - [Breaking removal of the old factory surprises callers] → the v0.1.0 issue is explicitly breaking; README shows the replacement artifact and API.
 
 ## Migration Plan
 
-1. Publish `fanbox-persistence-room` at the release version before publishing `fanbox` at that version.
-2. Callers that do not need restart persistence keep `Fanbox()` and remove no data.
-3. Callers that need Room persistence add `me.matsumo.fankt:fanbox-persistence-room:<version>`, explicitly create platform Room storage, and pass it as `Fanbox(cookieStorage = storage)`.
-4. Existing `fankt.db` is opened in place. No file copy or schema migration beyond the existing v1/v2-to-v3 migrations occurs.
-5. If optional-artifact publication fails, stop before publishing core. If core publication then fails, the already published optional artifact is additive and the old core remains available.
-6. Rollback uses the prior library version against the unchanged schema-v3 file. The new change creates no schema-v4 state.
+1. Set the project-wide release version to v0.1.0 so `fanbox`, `fanbox-persistence-room`, `fantia`, and every platform publication use the same previously unpublished version.
+2. Publish `fanbox-persistence-room:0.1.0` before publishing `fanbox:0.1.0`.
+3. Callers that do not need restart persistence keep `Fanbox()` and remove no data.
+4. Callers that need Room persistence add `me.matsumo.fankt:fanbox-persistence-room:<version>`, explicitly create platform Room storage, and pass it as `Fanbox(cookieStorage = storage)`.
+5. Existing `fankt.db` is opened in place. No file copy or schema migration beyond the existing v1/v2-to-v3 migrations occurs.
+6. If optional-artifact publication fails, stop before publishing core. If core publication then fails, the already published optional artifact is additive and the old core remains available.
+7. Rollback uses the prior library version against the unchanged schema-v3 file. The new change creates no schema-v4 state.
 
 ## Open Questions
 

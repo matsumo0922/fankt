@@ -7,7 +7,7 @@
 - Add an optional `fanbox-persistence-room` KMP artifact that implements `FanboxCookieStorage` with the existing Room schema and database locations on Android and iOS.
 - **BREAKING**: move the legacy Room factory and all Room database implementation types out of `fanbox`; callers that need persistence add the new artifact and explicitly create/inject its storage.
 - Remove Room, androidx.sqlite, androidx.startup, and the AndroidX Startup provider from the `fanbox` artifact.
-- Publish `fanbox-persistence-room` to Maven Central and document explicit persistent-storage setup.
+- Release every project artifact at v0.1.0, publish `fanbox-persistence-room` before the breaking `fanbox` artifact within that aligned release, and document explicit persistent-storage setup.
 - Preserve the existing `fankt.db` path, schema v3, v1/v2 migrations, Cookie semantics, and close/reopen lifecycle; remove library-owned database-file deletion from the long-lived persistence backend.
 
 ## Capabilities
@@ -23,7 +23,7 @@
 
 ## Impact
 
-- Gradle modules and publication: `settings.gradle.kts`, `fankt/fanbox`, new `fankt/fanbox-persistence-room`, `.github/workflows/deploy-library.yml`, and Dokka aggregation.
+- Gradle modules and publication: `settings.gradle.kts`, `fankt/fanbox`, new `fankt/fanbox-persistence-room`, the project-wide v0.1.0 release metadata, `.github/workflows/deploy-library.yml`, and Dokka aggregation.
 - Public API: the Room storage factory moves to the new artifact and requires explicit platform initialization; `Fanbox`, `FanboxCookieStorage`, and default in-memory behavior remain in `fanbox`.
 - Data compatibility: Android continues to use `Context.getDatabasePath("fankt.db")`; iOS continues to use `NSDocumentDirectory/fankt.db`; Room schema remains version 3.
 - Documentation and tests: README dependency/injection example, dependency-boundary verification, schema migration tests, restart restoration tests, and production `Fanbox` injection coverage.
