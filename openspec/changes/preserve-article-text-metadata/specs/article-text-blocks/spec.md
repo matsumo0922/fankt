@@ -19,6 +19,11 @@
 - **WHEN** `type = p` かつ空文字の text を持つ block が他の block の間に存在する
 - **THEN** システムは空文字の Text を同じ位置に返し、段落を除外しない
 
+#### Scenario: 空 header を保持する
+
+- **WHEN** `type = header` かつ空文字の text を持つ block を変換する
+- **THEN** システムは空文字と `isHeader = true` を持つ Text を同じ位置に返す
+
 ### Requirement: style と inline link span を保持する
 
 システム SHALL p / header block が持つ各 style と inline link の type、offset、length、URL を公開 Text span value に変更せず保持しなければならない。欠落または null の span list は公開 empty list としなければならない。Trace: Issue #30 の styles / links field と AnnotatedString consumer 向け受け入れ条件。
@@ -43,6 +48,16 @@
 - **WHEN** text block が未知の文字列 type を持つ style span を含む
 - **THEN** システムは style を拒否・削除・既知 type へ変換せず同じ文字列 type を返す
 
+#### Scenario: incomplete span を除外する
+
+- **WHEN** text 自体は文字列だが style または link span の required inner field が欠落または null である
+- **THEN** システムは投稿全体を失敗させず同じ Text を返し、不完全な span だけを公開 list から除外する
+
+#### Scenario: span field の型が不正である
+
+- **WHEN** text 自体は文字列だが styles または links field の型が transport schema と一致しない
+- **THEN** システムは投稿全体を失敗させず同じ Text と empty span lists を返し、span 以外の known-block schema error は隠さない
+
 ### Requirement: 旧 Text value の decode 互換を保つ
 
 公開 `Article.Block.Text` SHALL text だけを持つ旧 serialized value を decode でき、その場合は empty styles、empty links、`isHeader = false` を使用しなければならない。Trace: public serializable model への field 追加に対する非退行 invariant。
@@ -59,12 +74,17 @@
 
 ### Requirement: span と URL の trust boundary を公開する
 
-公開 Text span KDoc SHALL offset / length を受信値として保持し、caller が text boundary を検証してから適用する責務を記載しなければならない。LinkSpan KDoc SHALL caller が URL policy を検証してから navigation に使う責務を記載しなければならない。Trace: 未信頼 network metadata を downstream UI が安全に使用するための非退行 invariant。
+公開 Text KDoc SHALL consumer が `isHeader` を段落と見出しの分岐に使用することを記載しなければならない。公開 Text span KDoc SHALL offset / length が FANBOX payload の UTF-16 code-unit coordinate であることを示し、caller が text boundary を検証してから適用する責務を記載しなければならない。LinkSpan KDoc SHALL caller が URL policy を検証してから navigation に使う責務を記載しなければならない。Trace: 未信頼 network metadata を downstream UI が安全に使用するための非退行 invariant。
 
 #### Scenario: caller が span を描画へ適用する
 
 - **WHEN** caller が StyleSpan または LinkSpan の range を text に適用する
 - **THEN** 公開 KDoc は offset と length が text boundary 内か事前に検証する責務を示す
+
+#### Scenario: caller が header を描画する
+
+- **WHEN** caller が Text の typography を決定する
+- **THEN** 公開 KDoc は `isHeader` を段落と見出しの分岐に使用することを示す
 
 #### Scenario: caller が inline link を開く
 
