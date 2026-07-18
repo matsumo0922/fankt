@@ -97,10 +97,12 @@ statement.execute { response ->
 
 Downloads accept HTTPS URLs on `fanbox.cc` and its subdomains, plus the observed external media
 hosts `pixiv.pximg.net` and `fanbox.pixiv.net`. The same allowlist applies to redirects. Invalid
-initial URLs throw `IllegalArgumentException` when `download()` is called; an invalid redirect
-throws it when the returned statement is executed. Network and HTTP failures use `FanboxException`.
+initial URLs throw `IllegalArgumentException` when `download()` is called; a redirect to a
+disallowed host throws it when the returned statement is executed. Ktor does not follow an
+HTTPS-to-HTTP downgrade. Network and HTTP failures use `FanboxException`.
 The returned statement uses a shared client owned by `Fanbox`, so execute it before closing the
-owner. Progress is `0f` while the response length is unknown.
+owner. The complete port, path, and query are preserved. Progress is `0f` while the response length
+is unknown or zero.
 
 #### Error handling
 

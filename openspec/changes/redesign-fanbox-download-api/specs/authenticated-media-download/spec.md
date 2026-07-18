@@ -42,7 +42,7 @@
 #### Scenario: Redirect cannot escape the allowlist
 
 - **WHEN** an allowed media URL redirects to a URL whose scheme or host is not allowed
-- **THEN** the prior call is cancelled and execution throws `IllegalArgumentException` before the redirected request reaches transport
+- **THEN** the prior call is cancelled and execution rejects the redirect before the redirected request reaches transport; Ktor's HTTPS downgrade guard provides the first layer for an HTTP destination
 
 ### Requirement: API-provided media URLs are requested without reconstruction
 
@@ -62,6 +62,11 @@
 
 - **WHEN** the caller executes a download whose response has a known content length
 - **THEN** `onProgress` receives downloaded-byte progress as a `Float` fraction compatible with the existing consumer callback
+
+#### Scenario: Empty or unknown-length progress is safe
+
+- **WHEN** the caller executes a download whose response length is zero or unknown
+- **THEN** `onProgress` receives `0f` instead of a non-finite value
 
 #### Scenario: Owner close applies to download work
 
