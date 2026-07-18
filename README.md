@@ -53,11 +53,10 @@ Set the session ID using `fanbox.setFanboxSessionId(sessionId: String)` before u
 Additionally, you need to obtain a CSRF token (X-CSRF-Token) for operations like POST requests.  
 You can acquire this token by calling `fanbox.updateCsrfToken()`.  
 Make sure to retrieve the token before using the API. When `updateCsrfToken()` returns, requests
-started afterward use the current process-session token without recreating the `Fanbox` instance.
-The token is kept only in memory, is shared by `Fanbox` instances that use the process-local cookie
-session, and is cleared when that session is replaced. Refresh it after process startup or a session
-change and as needed before later API calls. Do not race a refresh with session or reset-cookie
-changes.
+started afterward use the current token without recreating the `Fanbox` instance. The default token
+store keeps the token only in memory and belongs to one `Fanbox` instance. It is cleared when that
+instance's session is replaced. Refresh it after process startup or a session change and as needed
+before later API calls. Do not race a refresh with session or reset-cookie changes.
 
 ```kotlin
 val fanbox = Fanbox()
@@ -73,6 +72,45 @@ try {
     fanbox.close()
 }
 ```
+
+#### Authentication storage
+
+Each `Fanbox()` call creates independent `InMemoryFanboxCookieStorage` and
+`InMemoryFanboxTokenStore` instances. The default Cookie and CSRF state is isolated from other
+`Fanbox` instances and is not restored after process recreation. Applications that require durable
+sessions inject a host-owned `FanboxCookieStorage` implementation explicitly:
+
+```kotlin
+val cookieStorage: FanboxCookieStorage = applicationCookieStorage
+val tokenStore = InMemoryFanboxTokenStore()
+val fanbox = Fanbox(
+    cookieStorage = cookieStorage,
+    tokenStore = tokenStore,
+)
+```
+
+`FanboxCookieStorage` stores normalized `FanboxCookieRecord` values and implements finite
+`snapshot()`, current-value `cookies` observation, and atomic `replaceAll()`. fankt applies Cookie
+domain, host-only, path, secure-transport, and expiry matching uniformly to every backend. Cookie
+values and CSRF tokens are credentials; storage implementations must not log them or include them in
+telemetry.
+
+The application owns injected stores. `Fanbox.close()` closes only the HTTP clients and does not
+close or clear a store. Passing the same Cookie or token store instance to multiple `Fanbox` clients
+shares that state deliberately; passing different instances keeps accounts isolated.
+
+The v0.1.0 API keeps existing source constructor forms, including `Fanbox()` and positional
+`logLevel`/`ioDispatcher` calls. Its default authentication durability changes from implicit Room
+persistence to process-memory storage, and the constructor's binary signature changes. Consumers
+must perform a clean rebuild and inject persistence before upgrading when restart durability is
+required.
+
+`createLegacyRoomFanboxCookieStorage()` is an opt-in migration bridge for an existing platform
+`fankt.db`. A migration reads and verifies its snapshot before calling `clear()`, `close()`, and
+`deleteDatabaseFiles()` in that order. The bridge owns a fresh Room instance and exposes legacy rows
+as domain Cookies because schema version 3 has no host-only column. Default `Fanbox()` construction
+never opens this bridge. The bridge remains available until PixiView-KMP's oldest supported version
+already contains secure session migration and fankt issue #34 confirms that it is removable.
 
 `Fanbox` owns its generated clients and the clients returned by `getHttpClient()`. Calls to
 `getHttpClient()` with the same content-negotiation setting return the same shared instance, so do

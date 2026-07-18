@@ -59,6 +59,15 @@ import me.matsumo.fankt.fanbox.repository.FanboxUserRepository
  * this instance; callers must not close it directly. Public operations started after [close]
  * throw [IllegalStateException]. Ktor completes underlying engine shutdown asynchronously after
  * client close is initiated. Callers must not race [close] with requests or another close call.
+ *
+ * Authentication state belongs to the injected [FanboxCookieStorage] and [FanboxTokenStore]. The
+ * public constructor creates new in-memory stores for each call by default, so authentication is
+ * isolated between instances and is not restored after process recreation. Inject persistent
+ * storage explicitly when durability is required. [close] does not close or clear injected stores.
+ *
+ * The v0.1.0 constructor remains source-compatible with earlier call forms, but changing default
+ * authentication durability and adding default parameters is intentionally binary-incompatible.
+ * Consumers must perform a clean rebuild when upgrading.
  */
 class Fanbox internal constructor(
     private val dependencies: FanboxDependencies,
@@ -78,20 +87,30 @@ class Fanbox internal constructor(
 
     val cookies get() = requireOpen(dependencies.cookies)
 
-    /**
-     * Observes the current process-session CSRF token.
-     *
-     * The value starts as null in a fresh process, is shared by [Fanbox] instances that use the
-     * process-local cookie session, and is not persisted across process recreation.
-     */
+    /** Observes the current CSRF token in this instance's injected [FanboxTokenStore]. */
     val csrfToken get() = requireOpen(dependencies.csrfToken)
 
     constructor(
         logLevel: LogLevel = LogLevel.NONE,
         ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
+        cookieStorage: FanboxCookieStorage = InMemoryFanboxCookieStorage(),
+        tokenStore: FanboxTokenStore = InMemoryFanboxTokenStore(),
     ) : this(
-        dependencies = createFanboxDependencies(ioDispatcher),
+        dependencies = createFanboxDependencies(cookieStorage, tokenStore),
         clientFactory = DefaultFanboxHttpClientFactory,
+        logLevel = logLevel,
+        ioDispatcher = ioDispatcher,
+    )
+
+    internal constructor(
+        clientFactory: FanboxHttpClientFactory,
+        logLevel: LogLevel = LogLevel.NONE,
+        ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
+        cookieStorage: FanboxCookieStorage = InMemoryFanboxCookieStorage(),
+        tokenStore: FanboxTokenStore = InMemoryFanboxTokenStore(),
+    ) : this(
+        dependencies = createFanboxDependencies(cookieStorage, tokenStore),
+        clientFactory = clientFactory,
         logLevel = logLevel,
         ioDispatcher = ioDispatcher,
     )
@@ -190,7 +209,7 @@ class Fanbox internal constructor(
         )
     }
 
-    /** Replaces the FANBOX session cookie and clears the process-session CSRF token on success. */
+    /** Replaces the FANBOX session Cookie and then clears the injected CSRF token on success. */
     suspend fun setFanboxSessionId(sessionId: String) {
         ensureOpen()
         dependencies.overrideFanboxSessionId(sessionId)
@@ -198,7 +217,7 @@ class Fanbox internal constructor(
     }
 
     /**
-     * Stores [cookies]. Resetting cookies or supplying `FANBOXSESSID` clears the process-session
+     * Stores [cookies]. Resetting cookies or supplying `FANBOXSESSID` clears the injected
      * CSRF token before replacement-cookie writes; unrelated additive cookies preserve it.
      */
     suspend fun setCookies(
@@ -207,21 +226,23 @@ class Fanbox internal constructor(
         reset: Boolean = false,
     ) {
         ensureOpen()
-        if (reset) {
-            dependencies.clearCookies()
-        }
-
         if (reset || cookies.any { cookie -> cookie.name == FANBOX_SESSION_COOKIE_NAME }) {
             dependencies.clearCsrfToken()
         }
 
+        val requestUrl = Url(url)
+        if (reset) {
+            dependencies.replaceCookies(requestUrl, cookies)
+            return
+        }
+
         for (cookie in cookies) {
-            dependencies.cookieStorage.addCookie(Url(url), cookie)
+            dependencies.cookieStorage.addCookie(requestUrl, cookie)
         }
     }
 
     /**
-     * Fetches metadata and stores its CSRF token in process memory.
+     * Fetches metadata and stores its CSRF token in the injected token store.
      *
      * Callers must serialize this operation with session or reset-cookie changes. A fresh process
      * and a changed session require a successful refresh before protected requests are started.
@@ -556,5 +577,3 @@ internal suspend fun fetchAndStoreCsrfToken(
     val metadata = fetchMetadata()
     storeToken(metadata.csrfToken)
 }
-
-private const val FANBOX_SESSION_COOKIE_NAME = "FANBOXSESSID"

@@ -145,7 +145,7 @@ class FanboxCsrfTokenUpdateTest {
     }
 
     @Test
-    fun siblingFanboxInstancesShareProcessTokenState() = runBlocking {
+    fun siblingFanboxInstancesShareExplicitlyProvidedTokenState() = runBlocking {
         val sharedToken = MutableStateFlow<String?>(null)
         val firstFixture = createFixture(sharedToken, metadataToken = { "shared-token" })
         val secondFixture = createFixture(sharedToken)
@@ -208,7 +208,7 @@ class FanboxCsrfTokenUpdateTest {
     }
 
     @Test
-    fun failedCookieResetPreservesToken() = runBlocking {
+    fun failedCookieResetStillLeavesTokenCleared() = runBlocking {
         val latestToken = MutableStateFlow<String?>("old-token")
         val failure = IllegalStateException("cookie clear failed")
         val fixture = createFixture(
@@ -221,7 +221,7 @@ class FanboxCsrfTokenUpdateTest {
         }
 
         assertSame(failure, actual)
-        assertEquals("old-token", latestToken.value)
+        assertEquals(null, latestToken.value)
         fixture.fanbox.close()
     }
 

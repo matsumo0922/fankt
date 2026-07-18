@@ -1,78 +1,70 @@
 package me.matsumo.fankt.fanbox.datasource.db
 
-import io.ktor.client.plugins.cookies.CookiesStorage
-import io.ktor.client.plugins.cookies.matches
-import io.ktor.http.Cookie
-import io.ktor.http.Url
-import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
-import kotlinx.datetime.Clock
-import me.matsumo.fankt.fanbox.domain.model.db.toCookie
-import me.matsumo.fankt.fanbox.domain.model.db.toEntity
+import me.matsumo.fankt.fanbox.FanboxCookieRecord
+import me.matsumo.fankt.fanbox.FanboxCookieStorage
+import me.matsumo.fankt.fanbox.canonicalDomain
+import me.matsumo.fankt.fanbox.canonicalPath
+import me.matsumo.fankt.fanbox.domain.model.db.CookieEntity
 
 internal class PersistentCookieStorage(
     private val cookieDao: CookieDao,
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
-    private val nowEpochMilliseconds: () -> Long = { Clock.System.now().toEpochMilliseconds() },
-) : CookiesStorage {
+) : FanboxCookieStorage {
+    override val cookies: Flow<List<FanboxCookieRecord>> =
+        cookieDao.getAllCookies().map { entities -> entities.map(CookieEntity::toRecord) }
 
-    override suspend fun addCookie(requestUrl: Url, cookie: Cookie) {
+    override suspend fun snapshot(): List<FanboxCookieRecord> = withContext(ioDispatcher) {
+        cookieDao.getAllCookies().first().map(CookieEntity::toRecord)
+    }
+
+    override suspend fun upsert(cookie: FanboxCookieRecord) {
         withContext(ioDispatcher) {
-            val now = nowEpochMilliseconds()
-            val entity = cookie.toEntity(requestUrl, now)
-
-            if (entity.expiresAt != null && entity.expiresAt <= now) {
-                cookieDao.delete(entity.domain, entity.path, entity.name)
-            } else {
-                cookieDao.insert(entity)
-            }
+            cookieDao.insert(cookie.toLegacyEntity())
         }
     }
 
-    override suspend fun get(requestUrl: Url): List<Cookie> {
-        return withContext(ioDispatcher) {
-            val now = nowEpochMilliseconds()
-            val cookies = cookieDao.getAllCookies().first()
-                .filterNot { entity -> entity.expiresAt?.let { it <= now } == true }
-                .map { it.toCookie() }
-                .filter { it.matches(requestUrl) }
-
-            try {
-                cookieDao.deleteExpired(now)
-            } catch (error: CancellationException) {
-                throw error
-            } catch (_: Exception) {
-                // Expiry filtering above remains authoritative; a later read retries cleanup.
-            }
-
-            cookies
+    override suspend fun delete(domain: String, path: String, name: String) {
+        withContext(ioDispatcher) {
+            cookieDao.delete(domain.canonicalDomain(), path.canonicalPath(), name)
         }
     }
 
-    override fun close() {
-        // do nothing
+    override suspend fun replaceAll(cookies: List<FanboxCookieRecord>) {
+        val replacement = cookies.map(FanboxCookieRecord::toLegacyEntity)
+        withContext(ioDispatcher) {
+            cookieDao.replaceAll(replacement)
+        }
     }
 
-    suspend fun clear() {
+    override suspend fun clear() {
         withContext(ioDispatcher) {
             cookieDao.clear()
         }
     }
-
-    suspend fun overrideFanboxSessionId(sessionId: String) {
-        val cookie = Cookie(
-            name = "FANBOXSESSID",
-            value = sessionId,
-            domain = ".fanbox.cc",
-            path = "/",
-            expires = null,
-            secure = true,
-        )
-
-        addCookie(Url("https://www.fanbox.cc"), cookie)
-    }
 }
+
+private fun CookieEntity.toRecord(): FanboxCookieRecord = FanboxCookieRecord(
+    domain = domain.canonicalDomain(),
+    path = path.canonicalPath(),
+    name = name,
+    value = value,
+    expiresAtEpochMilliseconds = expiresAt,
+    secure = secure,
+    hostOnly = false,
+)
+
+private fun FanboxCookieRecord.toLegacyEntity(): CookieEntity = CookieEntity(
+    domain = domain.canonicalDomain(),
+    path = path.canonicalPath(),
+    name = name,
+    value = value,
+    expiresAt = expiresAtEpochMilliseconds,
+    secure = secure,
+)

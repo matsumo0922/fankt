@@ -4,6 +4,7 @@ import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
+import androidx.room.Transaction
 import kotlinx.coroutines.flow.Flow
 import me.matsumo.fankt.fanbox.domain.model.db.CookieEntity
 
@@ -16,6 +17,9 @@ internal interface CookieDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insert(cookie: CookieEntity)
 
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertAll(cookies: List<CookieEntity>)
+
     @Query("DELETE FROM fankt_cookies WHERE domain = :domain AND path = :path AND name = :name")
     suspend fun delete(domain: String, path: String, name: String)
 
@@ -24,4 +28,10 @@ internal interface CookieDao {
 
     @Query("DELETE FROM fankt_cookies")
     suspend fun clear()
+
+    @Transaction
+    suspend fun replaceAll(cookies: List<CookieEntity>) {
+        clear()
+        insertAll(cookies)
+    }
 }
