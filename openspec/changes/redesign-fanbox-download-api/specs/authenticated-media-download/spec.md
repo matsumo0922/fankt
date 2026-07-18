@@ -60,7 +60,7 @@
 
 #### Scenario: Progress is reported while consuming the response
 
-- **WHEN** the caller executes a download whose response has a known content length
+- **WHEN** the caller executes a download whose response has a positive content length
 - **THEN** `onProgress` receives downloaded-byte progress as a `Float` fraction compatible with the existing consumer callback
 
 #### Scenario: Empty or unknown-length progress is safe
