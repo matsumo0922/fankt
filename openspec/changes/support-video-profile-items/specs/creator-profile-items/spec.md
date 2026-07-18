@@ -29,10 +29,34 @@
 - **WHEN** `type = video` だがserviceProviderまたはvideoIdが欠落/nullである
 - **THEN** システムはcreator response全体を失敗させずoriginal typeとraw JSONを持つUnknownを返す
 
-#### Scenario: non-object または required field 型不一致を拒否する
+#### Scenario: non-object または required field の非 primitive/nullを拒否する
 
-- **WHEN** profile item がJSON objectでないかid/typeがtransport schemaに一致しない
+- **WHEN** profile itemがJSON objectでないかid/typeがobject、array、nullである
 - **THEN** システムは既存のcreator schema mismatch boundaryを維持し、値をknown/unknown variantへ捏造しない
+
+#### Scenario: lenient primitive coercion を維持する
+
+- **WHEN** required idまたはtypeがnumber/boolean JSON primitiveである
+- **THEN** システムは既存formatterと同じstring coercionを維持し、profile itemだけにstrict policyを導入しない
+
+### Requirement: profile item decode failure の endpoint boundary を維持する
+
+システム SHALL raw profile itemのinner decodeをmapperへ移した後も、direct creator.get、strict creator.search、tolerant creator listで既存のpublic failure semanticsを維持しなければならない。Trace: profile item raw保持が例外発生位置をHTTP scope外へ移すことに対する非退行invariant。
+
+#### Scenario: direct creator.get の inner decode が失敗する
+
+- **WHEN** creator.getのobject profile itemでrequired id/typeがobject、array、nullである
+- **THEN** public APIはstatus 200・endpoint `creator.get`のFanboxException.SchemaMismatchを返し、生のSerializationExceptionを公開しない
+
+#### Scenario: strict creator.search の inner decode が失敗する
+
+- **WHEN** creator.search結果のcreatorにinner decode不能なprofile itemがある
+- **THEN** public APIはstatus 200・endpoint `creator.search`のFanboxException.SchemaMismatchを返し、生のSerializationExceptionを公開しない
+
+#### Scenario: tolerant creator list の inner decode が失敗する
+
+- **WHEN** following/Pixiv/recommended listの1 creatorにinner decode不能なprofile itemがある
+- **THEN** システムはそのcreatorだけをdropしてindex mismatchを返し、他のcreatorを保持する
 
 ### Requirement: video 埋め込み URL を復元する
 
@@ -53,6 +77,11 @@
 - **WHEN** serviceProviderがyoutube/vimeo以外である
 - **THEN** helperはnullを返し、別providerのURLを生成しない
 
+#### Scenario: blank provider または videoId の URL を捏造しない
+
+- **WHEN** typeがvideoだがserviceProviderまたはvideoIdがblankである
+- **THEN** システムはUnknownへ分類し、Video URLを生成しない
+
 ### Requirement: sealed ProfileItem の serialization contract を固定する
 
 公開 ProfileItem SHALL Image / Video / Unknownをsealed serializerでround-tripでき、Unknownのoriginal typeとclass discriminatorを衝突させてはならない。Trace: Issue #31 が明示するbreaking sealed migrationに対するserializable public model invariant。
@@ -66,6 +95,11 @@
 
 - **WHEN** Unknownをsealed ProfileItemとしてserializeする
 - **THEN** class discriminatorとoriginal item typeを別keyで保持し、decode後にoriginal typeを返す
+
+#### Scenario: discriminator のない sealed value を拒否する
+
+- **WHEN** class discriminatorを持たないJSONをProfileItem serializerでdecodeする
+- **THEN** decodeは失敗し、variantを推測しない
 
 ### Requirement: actual-derived mixed fixture を公開経路で検証する
 

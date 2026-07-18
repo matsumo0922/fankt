@@ -23,9 +23,9 @@
 
 ## Impact
 
-- 影響コード: `FanboxCreatorDetailEntity`、`FanboxCreatorDetail`、`FanboxCreatorMapper`、creator fixture/tests、README/KDoc。
+- 影響コード: `FanboxCreatorDetailEntity`、`FanboxCreatorDetail`、`FanboxCreatorMapper`、`FanboxCreatorRepository`、`FanboxSearchRepository`、creator fixture/tests、README/KDoc。
 - **BREAKING**: `ProfileItem` の旧 constructor/property access は利用できなくなるため、downstream binary/source consumer は再コンパイルと sealed branch 対応が必要。
 - （ユーザー確認済み）Issue #31 が要求する fankt 側の public model と helper をこの PR に含める。
 - （ユーザー確認済み）直前に探索・保存した実測 `creator.get` の field presence/type だけを匿名化 fixture の根拠にし、raw response や identity は repository/Claude input に含めない。
-- （agent 仮決め）既存 item ID と nullable image URL semantics は各 known subtype に保持し、未知 item は original type と raw JSON string を保持する。
+- （agent 仮決め）既存 item ID と nullable image URL semantics は各 known subtype に保持し、未知 item は nullable ID、original type、raw JSON string を保持する。
 - PixiView の pager/video UI 変更と dependency bump は別 repository の連動 issue とし、この PR の non-goal とする。
