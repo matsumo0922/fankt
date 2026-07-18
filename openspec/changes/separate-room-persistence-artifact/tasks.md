@@ -19,6 +19,6 @@
 
 ## 4. Validation
 
-- [ ] 4.1 Run OpenSpec validation and targeted persistence/core tests.
-- [ ] 4.2 Run full test, lint/detekt, build, dependency-report, and publication-task validation under the validation lease with isolated Gradle and Kotlin/Native caches.
-- [ ] 4.3 Record Scenario-to-test evidence, validation commands, results, and the validated HEAD SHA for PR review.
+- [x] 4.1 Run OpenSpec validation and targeted persistence/core tests.
+- [x] 4.2 Run full test, lint/detekt, build, dependency-report, and publication-task validation under the validation lease with isolated Gradle and Kotlin/Native caches.
+- [x] 4.3 Record Scenario-to-test evidence, validation commands, results, and the validated HEAD SHA for PR review.
