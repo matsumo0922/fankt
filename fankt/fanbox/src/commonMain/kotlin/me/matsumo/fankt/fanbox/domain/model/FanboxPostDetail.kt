@@ -62,8 +62,47 @@ data class FanboxPostDetail(
         data class Article(val blocks: List<Block>) : Body {
             @Serializable
             sealed interface Block {
+                /**
+                 * A paragraph or heading from an article body.
+                 *
+                 * Use [isHeader] to select paragraph or heading presentation. Span offsets and
+                 * lengths use the FANBOX payload's UTF-16 code-unit coordinates and are untrusted:
+                 * callers must validate every range against [text] before applying it.
+                 */
                 @Serializable
-                data class Text(val text: String) : Block
+                data class Text(
+                    val text: String,
+                    val styles: List<StyleSpan> = emptyList(),
+                    val links: List<LinkSpan> = emptyList(),
+                    val isHeader: Boolean = false,
+                ) : Block {
+                    /**
+                     * An untrusted style range in FANBOX UTF-16 code-unit coordinates.
+                     *
+                     * Callers must verify [offset] and [length] against the owning Text's text
+                     * boundary before applying the style. Unknown [type] values are preserved.
+                     */
+                    @Serializable
+                    data class StyleSpan(
+                        val type: String,
+                        val offset: Int,
+                        val length: Int,
+                    )
+
+                    /**
+                     * An untrusted inline-link range in FANBOX UTF-16 code-unit coordinates.
+                     *
+                     * Callers must verify [offset] and [length] against the owning Text's text
+                     * boundary and validate [url] against an application URL and scheme policy
+                     * before navigation.
+                     */
+                    @Serializable
+                    data class LinkSpan(
+                        val offset: Int,
+                        val length: Int,
+                        val url: String,
+                    )
+                }
 
                 @Serializable
                 data class Image(val item: ImageItem) : Block

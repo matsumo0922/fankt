@@ -313,6 +313,50 @@ internal object FanboxPostJsonFixtures {
         )
     }
 
+    /**
+     * Issue #30 actual-response-derived fragments. The header, bold-plus-link paragraph, and empty
+     * paragraph preserve the observed field presence and scalar/list/object shapes; text and URL
+     * values are whole-value placeholders. The fragments are composed into the existing anonymized
+     * Article B envelope and are not claimed to be one complete original response.
+     */
+    val postInfoArticleTextMetadata by lazy {
+        articleTextBlockPostInfo(
+            """
+            [
+              {"type":"header","text":"Fixture Heading"},
+              {"type":"p","text":"Fixture bold link","styles":[{"type":"bold","offset":0,"length":7}],"links":[{"offset":8,"length":4,"url":"https://example.invalid/inline"}]},
+              {"type":"p","text":""}
+            ]
+            """.trimIndent(),
+        )
+    }
+
+    /** Synthetic contract probes for unknown style passthrough and incomplete-span omission. */
+    val postInfoArticleSyntheticTextSpans by lazy {
+        articleTextBlockPostInfo(
+            """
+            [
+              {"type":"p","text":"Fixture future style","styles":[{"type":"future-style","offset":8,"length":4}]},
+              {"type":"p","text":"Fixture incomplete spans","styles":[{"type":"bold","offset":0},{"type":null,"offset":0,"length":7}],"links":[{"offset":8,"length":4},{"offset":null,"length":4,"url":"https://example.invalid/incomplete"}]}
+            ]
+            """.trimIndent(),
+        )
+    }
+
+    /** Synthetic schema-drift fixture: only the decorative span containers have wrong shapes. */
+    val postInfoArticleMalformedTextSpans by lazy {
+        articleTextBlockPostInfo(
+            """[{"type":"header","text":"Fixture degraded heading","styles":[{"type":"bold","offset":"unexpected","length":7}],"links":[{"offset":0,"length":{"unexpected":true},"url":"https://example.invalid/malformed"}]}]""",
+        )
+    }
+
+    /** Synthetic known-block failure fixture: span drift must not hide malformed text. */
+    val postInfoArticleMalformedTextAndSpans by lazy {
+        articleTextBlockPostInfo(
+            """[{"type":"p","text":{"unexpected":true},"styles":[{"type":"bold","offset":"unexpected","length":7}],"links":[]}]""",
+        )
+    }
+
     val postInfoText =
         """
         {
@@ -952,6 +996,20 @@ internal object FanboxPostJsonFixtures {
                 "blocks" to blocks,
                 "urlEmbedMap" to urlEmbedMap,
             ),
+        )
+        val fixturePost = JsonObject(post + ("body" to fixtureBody))
+        return JsonObject(
+            root + ("body" to JsonObject(responseBody + ("post" to fixturePost))),
+        ).toString()
+    }
+
+    private fun articleTextBlockPostInfo(blocksJson: String): String {
+        val root = Json.parseToJsonElement(postInfoArticleB).jsonObject
+        val responseBody = root.getValue("body").jsonObject
+        val post = responseBody.getValue("post").jsonObject
+        val articleBody = post.getValue("body").jsonObject
+        val fixtureBody = JsonObject(
+            articleBody + ("blocks" to Json.parseToJsonElement(blocksJson)),
         )
         val fixturePost = JsonObject(post + ("body" to fixtureBody))
         return JsonObject(
