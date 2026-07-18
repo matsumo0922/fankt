@@ -1,45 +1,49 @@
 # in-memory-csrf-token Specification
 
 ## Purpose
-Keep the process session's current CSRF token in memory, observable through the public Flow, and separate from persistent cookie storage.
+Keep each host-owned CSRF token in memory, observable through the public Flow, isolated by the injected store, and separate from Cookie persistence.
 
 ## Requirements
 ### Requirement: CSRF token state is memory-only and observable
-The process SHALL initialize its CSRF token to null, SHALL retain at most one current token in memory, SHALL share that value across `Fanbox` dependency graphs that use the process-local cookie database, and SHALL expose it through the existing `Fanbox.csrfToken: Flow<String?>` API. This requirement traces to Issue #24 tasks "CSRF トークンを in-memory 管理" and "公開 API は維持する".
+Each `Fanbox` SHALL retain at most one current CSRF token in its injected `FanboxTokenStore`, SHALL initialize a newly allocated default store to null, SHALL share a value only between `Fanbox` dependency graphs that are explicitly given the same store instance, and SHALL expose it through `Fanbox.csrfToken: Flow<String?>`. The default token store SHALL NOT persist the value across process recreation. This requirement traces to Issue #24 and is revised by Issue #33 for host ownership and multi-account isolation.
 
-#### Scenario: Fresh process has no token
-- **WHEN** the first `Fanbox` instance is created in a fresh process before a token refresh
+#### Scenario: Fresh default store has no token
+- **WHEN** a `Fanbox` instance is created with a new default token store before a token refresh
 - **THEN** its `csrfToken` Flow exposes null and no persisted token is restored
 
-#### Scenario: Sibling Fanbox observes current token
-- **WHEN** one `Fanbox` completes a token update and another `Fanbox` exists in the same process
+#### Scenario: Explicitly shared store shares current token
+- **WHEN** one `Fanbox` updates a token and another `Fanbox` was constructed with the identical token store instance
 - **THEN** both `csrfToken` Flows expose the same current token
+
+#### Scenario: Independent stores isolate current token
+- **WHEN** two `Fanbox` instances use different token store instances and one updates its token
+- **THEN** the other instance's token value does not change
 
 #### Scenario: Token update is observable
 - **WHEN** `updateCsrfToken()` fetches a token and completes
 - **THEN** the same `Fanbox` instance's `csrfToken` Flow exposes the fetched String
 
 #### Scenario: Token update replaces instead of appends
-- **WHEN** `updateCsrfToken()` completes more than once on the same `Fanbox`
+- **WHEN** `updateCsrfToken()` completes more than once against the same store
 - **THEN** only the most recently completed in-memory value is retained
 
 ### Requirement: Session replacement clears the in-memory token
-`Fanbox` SHALL clear the process CSRF token after a session-ID replacement succeeds, SHALL clear it after reset-cookie clearing succeeds before adding replacement cookies, and SHALL clear it before an additive cookie update that contains `FANBOXSESSID`. Additive updates containing no session cookie SHALL preserve the current token.
+`Fanbox` SHALL clear its injected token store after a session-ID replacement succeeds, SHALL clear it before an atomic `replaceAll()` for `setCookies(reset = true)`, and SHALL clear it before an additive Cookie update that contains `FANBOXSESSID`. A failed atomic replacement MAY retain the previous Cookie snapshot but SHALL leave the token cleared. Additive updates containing no session Cookie SHALL preserve the current token.
 
 #### Scenario: Session ID is replaced
-- **WHEN** `setFanboxSessionId()` successfully replaces the session cookie
-- **THEN** `csrfToken` exposes null until a later token refresh completes
+- **WHEN** `setFanboxSessionId()` successfully replaces the session Cookie
+- **THEN** the injected token store exposes null until a later token refresh completes
 
 #### Scenario: Cookies are reset
-- **WHEN** `setCookies(reset = true)` successfully clears stored cookies
-- **THEN** the token is null before any replacement-cookie operation can fail
+- **WHEN** `setCookies(reset = true)` is called
+- **THEN** the token is null before `replaceAll()` starts and remains null whether the replacement commit succeeds or fails
 
-#### Scenario: Session cookie is replaced without reset
-- **WHEN** `setCookies(reset = false)` is given a `FANBOXSESSID` cookie
+#### Scenario: Session Cookie is replaced without reset
+- **WHEN** `setCookies(reset = false)` is given a `FANBOXSESSID` Cookie
 - **THEN** the token is null before any supplied-cookie operation can fail
 
-#### Scenario: Unrelated cookies are added without reset
-- **WHEN** `setCookies(reset = false)` adds cookies that do not include `FANBOXSESSID`
+#### Scenario: Unrelated Cookies are added without reset
+- **WHEN** `setCookies(reset = false)` adds Cookies that do not include `FANBOXSESSID`
 - **THEN** the current token remains unchanged
 
 ### Requirement: Token-table removal preserves cookies
