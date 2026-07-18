@@ -71,10 +71,21 @@ data class FanboxPostDetail(
                 @Serializable
                 data class File(val item: FileItem) : Block
 
+                /**
+                 * A URL embed referenced by an article block.
+                 *
+                 * [type] is the FANBOX embed type. `default` represents a plain [url], `html`
+                 * and `html.card` expose untrusted [html], and `fanbox.post` exposes [post].
+                 * Unknown types are preserved without inventing type-specific metadata.
+                 * Callers must sanitize [html] before rendering it.
+                 */
                 @Serializable
                 data class Link(
                     val html: String?,
                     val post: FanboxPost?,
+                    @SerialName("linkType")
+                    val type: String = "unknown",
+                    val url: String? = null,
                 ) : Block
 
                 /**

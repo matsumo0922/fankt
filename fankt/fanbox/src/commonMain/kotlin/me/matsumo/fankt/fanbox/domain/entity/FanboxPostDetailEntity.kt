@@ -156,10 +156,12 @@ internal data class FanboxPostDetailEntity(
                 val id: String,
                 @SerialName("type")
                 val type: String,
+                @SerialName("url")
+                val url: String? = null,
                 @SerialName("html")
-                val html: String?,
+                val html: String? = null,
                 @SerialName("postInfo")
-                val postInfo: FanboxPostEntity?,
+                val postInfo: FanboxPostEntity? = null,
             )
         }
 
