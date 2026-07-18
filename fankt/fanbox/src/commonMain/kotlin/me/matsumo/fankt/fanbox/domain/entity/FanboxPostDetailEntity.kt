@@ -96,7 +96,31 @@ internal data class FanboxPostDetailEntity(
                 val urlEmbedId: String?,
                 @SerialName("embedId")
                 val embedId: String? = null,
-            )
+                @SerialName("styles")
+                val styles: List<Style>? = null,
+                @SerialName("links")
+                val links: List<Link>? = null,
+            ) {
+                @Serializable
+                data class Style(
+                    @SerialName("type")
+                    val type: String? = null,
+                    @SerialName("offset")
+                    val offset: Int? = null,
+                    @SerialName("length")
+                    val length: Int? = null,
+                )
+
+                @Serializable
+                data class Link(
+                    @SerialName("offset")
+                    val offset: Int? = null,
+                    @SerialName("length")
+                    val length: Int? = null,
+                    @SerialName("url")
+                    val url: String? = null,
+                )
+            }
 
             @Serializable
             data class Embed(

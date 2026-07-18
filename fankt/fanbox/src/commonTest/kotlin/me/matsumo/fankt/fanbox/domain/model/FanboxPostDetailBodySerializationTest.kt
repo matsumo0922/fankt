@@ -133,6 +133,60 @@ class FanboxPostDetailBodySerializationTest {
     }
 
     @Test
+    fun articleTextMetadataRoundTripsAsSealedBlock() {
+        val expected: FanboxPostDetail.Body.Article.Block =
+            FanboxPostDetail.Body.Article.Block.Text(
+                text = "Fixture text",
+                styles = listOf(
+                    FanboxPostDetail.Body.Article.Block.Text.StyleSpan("bold", 0, 7),
+                ),
+                links = listOf(
+                    FanboxPostDetail.Body.Article.Block.Text.LinkSpan(
+                        8,
+                        4,
+                        "https://example.invalid/inline",
+                    ),
+                ),
+                isHeader = true,
+            )
+
+        val encoded = formatter.encodeToString(expected)
+        val encodedObject = formatter.parseToJsonElement(encoded).jsonObject
+        val actual = formatter.decodeFromString<FanboxPostDetail.Body.Article.Block>(encoded)
+
+        assertEquals(expected, actual)
+        assertEquals(true, encodedObject.containsKey("type"))
+    }
+
+    @Test
+    fun legacyArticleTextDecodesWithCompatibilityDefaults() {
+        val current: FanboxPostDetail.Body.Article.Block =
+            FanboxPostDetail.Body.Article.Block.Text(
+                text = "Fixture legacy article text",
+                styles = listOf(
+                    FanboxPostDetail.Body.Article.Block.Text.StyleSpan("bold", 0, 7),
+                ),
+                links = listOf(
+                    FanboxPostDetail.Body.Article.Block.Text.LinkSpan(
+                        8,
+                        4,
+                        "https://example.invalid/current-inline",
+                    ),
+                ),
+                isHeader = true,
+            )
+        val currentObject = formatter.parseToJsonElement(formatter.encodeToString(current)).jsonObject
+        val legacyJson = JsonObject(currentObject - "styles" - "links" - "isHeader").toString()
+
+        val actual = formatter.decodeFromString<FanboxPostDetail.Body.Article.Block>(legacyJson)
+
+        assertEquals(
+            FanboxPostDetail.Body.Article.Block.Text("Fixture legacy article text"),
+            actual,
+        )
+    }
+
+    @Test
     fun embedRestoresProviderUrls() {
         val cases = mapOf(
             "twitter" to "https://twitter.com/_/status/fixture-content",

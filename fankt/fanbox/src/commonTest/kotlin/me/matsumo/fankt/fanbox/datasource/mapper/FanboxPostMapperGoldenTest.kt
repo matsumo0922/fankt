@@ -28,6 +28,39 @@ import kotlin.test.assertIs
 class FanboxPostMapperGoldenTest {
 
     @Test
+    fun actualDerivedTextFragmentsPreserveMetadataAndEmptyParagraphOrder() {
+        val body = FanboxPostMapper().map(
+            decodeFixture<FanboxPostDetailEntity>(FanboxPostJsonFixtures.postInfoArticleTextMetadata),
+        ).body
+        val blocks = assertIs<FanboxPostDetail.Body.Article>(body).blocks
+
+        assertEquals(true, assertIs<FanboxPostDetail.Body.Article.Block.Text>(blocks[0]).isHeader)
+        val styled = assertIs<FanboxPostDetail.Body.Article.Block.Text>(blocks[1])
+        assertEquals(listOf("bold"), styled.styles.map { it.type })
+        assertEquals(listOf(0), styled.styles.map { it.offset })
+        assertEquals(listOf(7), styled.styles.map { it.length })
+        assertEquals("https://example.invalid/inline", styled.links.single().url)
+        assertEquals(FanboxPostDetail.Body.Article.Block.Text(""), blocks[2])
+    }
+
+    @Test
+    fun syntheticTextSpansPreserveUnknownTypeAndOmitIncompleteValues() {
+        val body = FanboxPostMapper().map(
+            decodeFixture<FanboxPostDetailEntity>(FanboxPostJsonFixtures.postInfoArticleSyntheticTextSpans),
+        ).body
+        val blocks = assertIs<FanboxPostDetail.Body.Article>(body).blocks
+
+        assertEquals(
+            listOf(FanboxPostDetail.Body.Article.Block.Text.StyleSpan("future-style", 8, 4)),
+            assertIs<FanboxPostDetail.Body.Article.Block.Text>(blocks[0]).styles,
+        )
+        assertEquals(
+            FanboxPostDetail.Body.Article.Block.Text("Fixture incomplete spans"),
+            blocks[1],
+        )
+    }
+
+    @Test
     fun actualDerivedUrlEmbedFragmentsPreserveTypeSpecificMetadata() {
         val body = FanboxPostMapper().map(
             decodeFixture<FanboxPostDetailEntity>(FanboxPostJsonFixtures.postInfoArticleUrlEmbeds),
@@ -136,6 +169,7 @@ class FanboxPostMapperGoldenTest {
             title = "Fixture Article A",
             body = FanboxPostDetail.Body.Article(
                 blocks = listOf(
+                    FanboxPostDetail.Body.Article.Block.Text(""),
                     FanboxPostDetail.Body.Article.Block.Image(
                         item = FanboxPostDetail.ImageItem(
                             id = FanboxPostItemId("fixture-image-a-1"),
@@ -146,6 +180,7 @@ class FanboxPostMapperGoldenTest {
                             aspectRatio = 1201.toFloat() / 801.toFloat(),
                         ),
                     ),
+                    FanboxPostDetail.Body.Article.Block.Text(""),
                     FanboxPostDetail.Body.Article.Block.File(
                         item = FanboxPostDetail.FileItem(
                             id = FanboxPostItemId("fixture-file-a-1"),
@@ -157,6 +192,7 @@ class FanboxPostMapperGoldenTest {
                         ),
                     ),
                     FanboxPostDetail.Body.Article.Block.Text("Fixture A Text 1"),
+                    FanboxPostDetail.Body.Article.Block.Text(""),
                     FanboxPostDetail.Body.Article.Block.Text("Fixture A Text 2"),
                     FanboxPostDetail.Body.Article.Block.Text("Fixture A Text 3"),
                     FanboxPostDetail.Body.Article.Block.Text("Fixture A Text 4"),
@@ -207,7 +243,8 @@ class FanboxPostMapperGoldenTest {
             title = "Fixture Article B",
             body = FanboxPostDetail.Body.Article(
                 blocks = listOf(
-                    FanboxPostDetail.Body.Article.Block.Text("Fixture B Header 1"),
+                    FanboxPostDetail.Body.Article.Block.Text(""),
+                    FanboxPostDetail.Body.Article.Block.Text("Fixture B Header 1", isHeader = true),
                     FanboxPostDetail.Body.Article.Block.Text("Fixture B Text 1"),
                     FanboxPostDetail.Body.Article.Block.Text("Fixture B Text 2"),
                     FanboxPostDetail.Body.Article.Block.Image(
@@ -220,6 +257,7 @@ class FanboxPostMapperGoldenTest {
                             aspectRatio = 1201.toFloat() / 801.toFloat(),
                         ),
                     ),
+                    FanboxPostDetail.Body.Article.Block.Text(""),
                     FanboxPostDetail.Body.Article.Block.Link(
                         html = null,
                         post = FanboxPost(
@@ -248,29 +286,43 @@ class FanboxPostMapperGoldenTest {
                         ),
                         type = "fanbox.post",
                     ),
+                    FanboxPostDetail.Body.Article.Block.Text(""),
                     FanboxPostDetail.Body.Article.Block.Text("Fixture B Text 3"),
-                    FanboxPostDetail.Body.Article.Block.Text("Fixture B Header 2"),
+                    FanboxPostDetail.Body.Article.Block.Text(""),
+                    FanboxPostDetail.Body.Article.Block.Text(""),
+                    FanboxPostDetail.Body.Article.Block.Text(""),
+                    FanboxPostDetail.Body.Article.Block.Text(""),
+                    FanboxPostDetail.Body.Article.Block.Text(""),
+                    FanboxPostDetail.Body.Article.Block.Text(""),
+                    FanboxPostDetail.Body.Article.Block.Text(""),
+                    FanboxPostDetail.Body.Article.Block.Text(""),
+                    FanboxPostDetail.Body.Article.Block.Text(""),
+                    FanboxPostDetail.Body.Article.Block.Text("Fixture B Header 2", isHeader = true),
                     FanboxPostDetail.Body.Article.Block.Link(
                         html = "<div>Fixture B Link 4</div>",
                         post = null,
                         type = "html",
                     ),
+                    FanboxPostDetail.Body.Article.Block.Text(""),
                     FanboxPostDetail.Body.Article.Block.Link(
                         html = "<div>Fixture B Link 5</div>",
                         post = null,
                         type = "html",
                     ),
+                    FanboxPostDetail.Body.Article.Block.Text(""),
                     FanboxPostDetail.Body.Article.Block.Text("Fixture B Text 4"),
                     FanboxPostDetail.Body.Article.Block.Link(
                         html = "<div>Fixture B Link 3</div>",
                         post = null,
                         type = "html",
                     ),
+                    FanboxPostDetail.Body.Article.Block.Text(""),
                     FanboxPostDetail.Body.Article.Block.Link(
                         html = "<div>Fixture B Link 2</div>",
                         post = null,
                         type = "html",
                     ),
+                    FanboxPostDetail.Body.Article.Block.Text(""),
                 ),
             ),
             coverImageUrl = "https://example.invalid/article-b-cover.jpg",

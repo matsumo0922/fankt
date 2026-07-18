@@ -145,6 +145,98 @@ class FanboxPostBodyMappingTest {
     }
 
     @Test
+    fun actualDerivedTextMetadataRunsThroughPublicPostDetailPath() = runBlocking {
+        val fanbox = createFanbox(FanboxPostJsonFixtures.postInfoArticleTextMetadata)
+        try {
+            val actual = fanbox.getPostDetail(FanboxPostId("10000003"))
+            val blocks = assertIs<FanboxPostDetail.Body.Article>(actual.body).blocks
+
+            assertEquals(
+                FanboxPostDetail.Body.Article.Block.Text(
+                    text = "Fixture Heading",
+                    isHeader = true,
+                ),
+                blocks[0],
+            )
+            assertEquals(
+                FanboxPostDetail.Body.Article.Block.Text(
+                    text = "Fixture bold link",
+                    styles = listOf(
+                        FanboxPostDetail.Body.Article.Block.Text.StyleSpan("bold", 0, 7),
+                    ),
+                    links = listOf(
+                        FanboxPostDetail.Body.Article.Block.Text.LinkSpan(
+                            8,
+                            4,
+                            "https://example.invalid/inline",
+                        ),
+                    ),
+                ),
+                blocks[1],
+            )
+            assertEquals(FanboxPostDetail.Body.Article.Block.Text(""), blocks[2])
+        } finally {
+            fanbox.close()
+        }
+    }
+
+    @Test
+    fun syntheticIncompleteTextSpansAreOmittedThroughPublicPostDetailPath() = runBlocking {
+        val fanbox = createFanbox(FanboxPostJsonFixtures.postInfoArticleSyntheticTextSpans)
+        try {
+            val actual = fanbox.getPostDetail(FanboxPostId("10000003"))
+            val blocks = assertIs<FanboxPostDetail.Body.Article>(actual.body).blocks
+
+            assertEquals(
+                listOf(FanboxPostDetail.Body.Article.Block.Text.StyleSpan("future-style", 8, 4)),
+                assertIs<FanboxPostDetail.Body.Article.Block.Text>(blocks[0]).styles,
+            )
+            assertEquals(
+                FanboxPostDetail.Body.Article.Block.Text("Fixture incomplete spans"),
+                blocks[1],
+            )
+        } finally {
+            fanbox.close()
+        }
+    }
+
+    @Test
+    fun malformedSpanShapesDegradeThroughPublicPostDetailPath() = runBlocking {
+        val fanbox = createFanbox(FanboxPostJsonFixtures.postInfoArticleMalformedTextSpans)
+        try {
+            val actual = fanbox.getPostDetail(FanboxPostId("10000003"))
+            val blocks = assertIs<FanboxPostDetail.Body.Article>(actual.body).blocks
+
+            assertEquals(
+                listOf(
+                    FanboxPostDetail.Body.Article.Block.Text(
+                        text = "Fixture degraded heading",
+                        isHeader = true,
+                    ),
+                ),
+                blocks,
+            )
+        } finally {
+            fanbox.close()
+        }
+    }
+
+    @Test
+    fun malformedNonSpanTextStillUsesSchemaMismatchThroughPublicPostDetailPath() = runBlocking {
+        val fanbox = createFanbox(FanboxPostJsonFixtures.postInfoArticleMalformedTextAndSpans)
+        try {
+            val failure = assertFailsWith<FanboxException.SchemaMismatch> {
+                fanbox.getPostDetail(FanboxPostId("10000003"))
+            }
+
+            assertEquals(200, failure.statusCode)
+            assertEquals("post.info", failure.endpoint)
+        } finally {
+            fanbox.close()
+        }
+    }
+
+    @Test
     fun malformedKnownArticleBlockUsesSchemaMismatchThroughPublicPostDetailPath() = runBlocking {
         val fanbox = createFanbox(FanboxPostJsonFixtures.postInfoMalformedArticleBlock)
         try {

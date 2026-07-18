@@ -214,9 +214,24 @@ internal class FanboxPostMapper(
                     ?.content
                 when (blockType) {
                     "p", "header" -> {
-                        val block = decodeKnownBlock(rawBlock)
-                        block.text?.takeIf(String::isNotEmpty)?.let {
-                            FanboxPostDetail.Body.Article.Block.Text(it)
+                        val block = decodeTextBlock(rawBlock)
+                        block.text?.let { text ->
+                            FanboxPostDetail.Body.Article.Block.Text(
+                                text = text,
+                                styles = block.styles.orEmpty().mapNotNull styleSpan@{ style ->
+                                    val type = style.type ?: return@styleSpan null
+                                    val offset = style.offset ?: return@styleSpan null
+                                    val length = style.length ?: return@styleSpan null
+                                    FanboxPostDetail.Body.Article.Block.Text.StyleSpan(type, offset, length)
+                                },
+                                links = block.links.orEmpty().mapNotNull linkSpan@{ link ->
+                                    val offset = link.offset ?: return@linkSpan null
+                                    val length = link.length ?: return@linkSpan null
+                                    val url = link.url ?: return@linkSpan null
+                                    FanboxPostDetail.Body.Article.Block.Text.LinkSpan(offset, length, url)
+                                },
+                                isHeader = blockType == "header",
+                            )
                         }
                     }
 
@@ -273,6 +288,14 @@ internal class FanboxPostMapper(
 
     private fun decodeKnownBlock(rawBlock: JsonObject) =
         formatter.decodeFromJsonElement<FanboxPostDetailEntity.Body.PostBody.Block>(rawBlock)
+
+    private fun decodeTextBlock(rawBlock: JsonObject): FanboxPostDetailEntity.Body.PostBody.Block {
+        return try {
+            decodeKnownBlock(rawBlock)
+        } catch (_: SerializationException) {
+            decodeKnownBlock(JsonObject(rawBlock - "styles" - "links"))
+        }
+    }
 
     private fun mapEmbedBlock(
         body: FanboxPostDetailEntity.Body.PostBody,
