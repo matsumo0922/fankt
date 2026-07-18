@@ -1,0 +1,21 @@
+## 1. Transport and public models
+
+- [ ] 1.1 Decode nullable style and inline-link lists with required span fields on known text blocks
+- [ ] 1.2 Extend public Text with compatibility-defaulted StyleSpan, LinkSpan, and isHeader values plus range and URL trust-boundary KDoc
+
+## 2. Text block mapping
+
+- [ ] 2.1 Map p and header blocks by block type while preserving span order and unknown style strings
+- [ ] 2.2 Preserve empty-string paragraphs in their original block positions without changing null-text policy
+
+## 3. Actual-derived fixtures and tests
+
+- [ ] 3.1 Build anonymized actual-derived header, bold, inline-link, combined-span, and empty-paragraph fixture fragments with explicit provenance
+- [ ] 3.2 Add mapper and public production-path assertions for text metadata and update existing Article A/B golden ordering and header expectations
+- [ ] 3.3 Add Text serialization round-trip and legacy decode compatibility tests
+- [ ] 3.4 Run private-value exclusion scan and independent staged-diff privacy review
+
+## 4. Documentation and validation
+
+- [ ] 4.1 Verify README and KDoc references for Text metadata, span/URL validation, downstream compatibility, and PixiView non-goal
+- [ ] 4.2 Run full fanbox tests, detekt, and build through the validation lease and record the successful HEAD
