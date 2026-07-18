@@ -43,14 +43,16 @@ private class FanboxCsrfTokenConfig {
     lateinit var provider: suspend () -> String?
 }
 
+internal const val FANBOX_CSRF_HEADER = "x-csrf-token"
+
 private val FanboxCsrfTokenPlugin = createClientPlugin(
     name = "FanboxCsrfToken",
     createConfiguration = ::FanboxCsrfTokenConfig,
 ) {
     val provider = pluginConfig.provider
     onRequest { request, _ ->
-        if (!request.headers.contains("x-csrf-token")) {
-            request.header("x-csrf-token", provider().orEmpty())
+        if (!request.headers.contains(FANBOX_CSRF_HEADER)) {
+            request.header(FANBOX_CSRF_HEADER, provider().orEmpty())
         }
     }
 }
@@ -83,6 +85,7 @@ internal fun buildHttpClient(
     csrfTokenProvider: suspend () -> String? = { null },
     logLevel: LogLevel = LogLevel.NONE,
     isEnableContentNegotiation: Boolean = true,
+    isDownloadClient: Boolean = false,
     clientFactory: FanboxHttpClientFactory = DefaultFanboxHttpClientFactory,
     engine: HttpClientEngine? = null,
 ): HttpClient {
@@ -95,6 +98,7 @@ internal fun buildHttpClient(
                 csrfTokenProvider,
                 logLevel,
                 isEnableContentNegotiation,
+                isDownloadClient,
             )
         }
     } else {
@@ -106,6 +110,7 @@ internal fun buildHttpClient(
                 csrfTokenProvider,
                 logLevel,
                 isEnableContentNegotiation,
+                isDownloadClient,
             )
         }
     }
@@ -118,6 +123,7 @@ private fun HttpClientConfig<*>.configureFanboxHttpClient(
     csrfTokenProvider: suspend () -> String?,
     logLevel: LogLevel,
     isEnableContentNegotiation: Boolean,
+    isDownloadClient: Boolean,
 ) {
     configureFanboxClient(
         formatter = formatter,
@@ -140,8 +146,14 @@ private fun HttpClientConfig<*>.configureFanboxHttpClient(
         )
     }
 
-    install(FanboxCsrfTokenPlugin) {
-        provider = csrfTokenProvider
+    if (isDownloadClient) {
+        install(FanboxDownloadDestinationPlugin) {
+            this.csrfTokenProvider = csrfTokenProvider
+        }
+    } else {
+        install(FanboxCsrfTokenPlugin) {
+            provider = csrfTokenProvider
+        }
     }
 }
 
@@ -164,7 +176,7 @@ internal fun HttpClientConfig<*>.configureFanboxClient(
         }
         sanitizeHeader { header ->
             header.equals(HttpHeaders.Cookie, ignoreCase = true) ||
-                header.equals("x-csrf-token", ignoreCase = true) ||
+                header.equals(FANBOX_CSRF_HEADER, ignoreCase = true) ||
                 header.equals(HttpHeaders.Authorization, ignoreCase = true)
         }
     }

@@ -80,6 +80,30 @@ not close that client directly. Close the owning `Fanbox` after all requests and
 statements finish. Calls started after `Fanbox.close()` fail with `IllegalStateException`; Ktor may
 finish the underlying engine shutdown asynchronously.
 
+#### Media downloads
+
+Pass the complete media URL returned by FANBOX to `Fanbox.download()` instead of reconstructing a
+path or filename extension:
+
+```kotlin
+val statement = fanbox.download(image.originalUrl) { progress ->
+    updateDownloadProgress(progress)
+}
+
+statement.execute { response ->
+    consume(response)
+}
+```
+
+Downloads accept HTTPS URLs on `fanbox.cc` and its subdomains, plus the observed external media
+hosts `pixiv.pximg.net` and `fanbox.pixiv.net`. The same allowlist applies to redirects. Invalid
+initial URLs throw `IllegalArgumentException` when `download()` is called; a redirect to a
+disallowed host throws it when the returned statement is executed. Ktor does not follow an
+HTTPS-to-HTTP downgrade. Network and HTTP failures use `FanboxException`.
+The returned statement uses a shared client owned by `Fanbox`, so execute it before closing the
+owner. The complete port, path, and query are preserved. Progress is `0f` while the response length
+is unknown or zero.
+
 #### Error handling
 
 FANBOX request failures use the public `FanboxException` hierarchy. Catch a specific subtype when
