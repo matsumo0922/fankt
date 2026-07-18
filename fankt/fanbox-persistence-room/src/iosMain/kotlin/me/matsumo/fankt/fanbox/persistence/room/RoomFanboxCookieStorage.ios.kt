@@ -35,7 +35,7 @@ internal fun roomFanboxDatabasePath(): String {
         directory = NSDocumentDirectory,
         inDomain = NSUserDomainMask,
         appropriateForURL = null,
-        create = false,
+        create = true,
         error = null,
     )
     return "${requireNotNull(documentDir?.path)}/fankt.db"
