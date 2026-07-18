@@ -22,5 +22,5 @@
 ## 4. fankt validation and downstream handoff
 
 - [ ] 4.1 Run fankt common/Android/iOS tests, detekt, Room migration tests, and mock-engine production-path tests under the validation lease at one final HEAD.
-- [ ] 4.2 Verify source compatibility with existing constructor call forms, record intentional binary incompatibility, and clean-build `../PixiView-KMP` against the local fankt change when dependency substitution is available; otherwise document the exact unverified downstream build reason.
-- [ ] 4.3 Confirm the approved `pixiview-secure-session-migration` spec remains a downstream contract for PixiView-KMP#109, list its independent implementation as a follow-up in the PR, and do not edit PixiView source in this stage.
+- [x] 4.2 Verify source compatibility with existing constructor call forms, record intentional binary incompatibility, and clean-build `../PixiView-KMP` against the local fankt change when dependency substitution is available; otherwise document the exact unverified downstream build reason.
+- [x] 4.3 Confirm the approved `pixiview-secure-session-migration` spec remains a downstream contract for PixiView-KMP#109, list its independent implementation as a follow-up in the PR, and do not edit PixiView source in this stage.
