@@ -25,4 +25,3 @@
 #### Scenario: API access after close
 - **WHEN** a public operation is started after `close()` returns
 - **THEN** the operation fails with `IllegalStateException` before starting storage or network work
-

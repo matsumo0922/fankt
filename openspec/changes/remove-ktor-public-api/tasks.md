@@ -22,6 +22,7 @@
 - [x] 3.7 Inspect Android public/protected generic Signature attributes for Ktor types in addition to the checked text ABI
 - [x] 3.8 Verify Android runtime metadata against a fixed required Ktor module inventory including the OkHttp engine
 - [x] 3.9 Property-version and exclusive-scope the isolated consumer repository, then verify the resolved fankt artifact path is local
+- [x] 3.10 Inspect Android Kotlin metadata for public/protected type aliases and expanded Ktor types, with an Android-only failing-alias regression fixture
 
 ## 4. Consumers and documentation
 

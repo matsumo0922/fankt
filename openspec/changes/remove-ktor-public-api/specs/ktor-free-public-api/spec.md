@@ -1,7 +1,7 @@
 ## ADDED Requirements
 
 ### Requirement: Public Fanbox API is independent from Ktor
-Every public or protected declaration in the `me.matsumo.fankt.fanbox` production API SHALL use Kotlin standard-library, kotlinx, or fankt-owned types and SHALL contain no `io.ktor` type in parameters, returns, properties, supertypes, or type aliases. Cookie-facing operations SHALL use `FanboxCookieRecord`, and logging configuration SHALL use `FanboxLogLevel`.
+Every public or protected declaration in the `me.matsumo.fankt.fanbox` production API SHALL use Kotlin standard-library, kotlinx, or fankt-owned types and SHALL contain no `io.ktor` type in parameters, returns, properties, supertypes, or type aliases. Android verification SHALL inspect Kotlin metadata for public or protected type aliases and their expanded types because type aliases are erased from JVM descriptors and generic Signature attributes. Cookie-facing operations SHALL use `FanboxCookieRecord`, and logging configuration SHALL use `FanboxLogLevel`.
 
 #### Scenario: Compiled API is inspected
 - **WHEN** the compiled Kotlin public ABI of `fanbox` is generated and inspected
@@ -10,6 +10,10 @@ Every public or protected declaration in the `me.matsumo.fankt.fanbox` productio
 #### Scenario: Android generic signatures are inspected
 - **WHEN** Android public and protected class, field, and method signatures are inspected from compiled class files
 - **THEN** their generic Signature attributes contain no `io.ktor` type even when the erased descriptor contains only a collection or another generic container
+
+#### Scenario: Android type aliases are inspected
+- **WHEN** Android Kotlin metadata contains a public or protected type alias
+- **THEN** the alias underlying and expanded types contain no `io.ktor` type, and an Android-only Ktor alias regression fixture proves the boundary gate rejects that metadata
 
 #### Scenario: Cookies are observed and replaced
 - **WHEN** a consumer observes `Fanbox.cookies` or calls `Fanbox.setCookies`

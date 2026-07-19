@@ -12,12 +12,29 @@ import org.gradle.api.tasks.InputFiles
 import org.gradle.api.tasks.PathSensitive
 import org.gradle.api.tasks.PathSensitivity
 import org.gradle.api.tasks.TaskAction
+import org.objectweb.asm.AnnotationVisitor
 import org.objectweb.asm.ClassReader
 import org.objectweb.asm.ClassVisitor
 import org.objectweb.asm.FieldVisitor
 import org.objectweb.asm.MethodVisitor
 import org.objectweb.asm.Opcodes
+import java.util.Collections
+import java.util.IdentityHashMap
 import java.util.zip.ZipFile
+import kotlin.metadata.KmClassifier
+import kotlin.metadata.KmType
+import kotlin.metadata.Visibility
+import kotlin.metadata.jvm.KotlinClassMetadata
+import kotlin.metadata.visibility
+
+buildscript {
+    repositories {
+        mavenCentral()
+    }
+    dependencies {
+        classpath("org.jetbrains.kotlin:kotlin-metadata-jvm:2.2.0")
+    }
+}
 
 private val requiredAndroidRuntimeKtorModules = listOf(
     "io.ktor:ktor-client-core",
@@ -40,6 +57,149 @@ private fun ResolvedComponentResult.allComponentIdentities(): List<String> {
         }
     }
     return identities.toList()
+}
+
+private object AndroidKotlinMetadataInspector {
+    private const val KTOR_DOTTED_PACKAGE = "io.ktor"
+    private const val KTOR_INTERNAL_PACKAGE = "io/ktor"
+
+    fun inspect(classFiles: List<java.io.File>): Result {
+        val violations = mutableListOf<String>()
+        var metadataFiles = 0
+        var visibleTypeAliases = 0
+
+        classFiles.forEach { classFile ->
+            val header = readMetadataHeader(classFile) ?: return@forEach
+            metadataFiles += 1
+            val metadata = KotlinClassMetadata.readLenient(header.toMetadata())
+            val typeAliases = when (metadata) {
+                is KotlinClassMetadata.Class -> metadata.kmClass.typeAliases
+                is KotlinClassMetadata.FileFacade -> metadata.kmPackage.typeAliases
+                is KotlinClassMetadata.MultiFileClassPart -> metadata.kmPackage.typeAliases
+                else -> emptyList()
+            }
+            typeAliases
+                .filter { it.visibility == Visibility.PUBLIC || it.visibility == Visibility.PROTECTED }
+                .forEach { typeAlias ->
+                    visibleTypeAliases += 1
+                    val underlyingKtorTypes = typeAlias.underlyingType.findKtorTypes()
+                    val expandedKtorTypes = typeAlias.expandedType.findKtorTypes()
+                    if (underlyingKtorTypes.isNotEmpty() || expandedKtorTypes.isNotEmpty()) {
+                        violations += buildString {
+                            append(classFile.name)
+                            append(" typealias ")
+                            append(typeAlias.name)
+                            append(" -> underlying=")
+                            append(underlyingKtorTypes.sorted())
+                            append(", expanded=")
+                            append(expandedKtorTypes.sorted())
+                        }
+                    }
+                }
+        }
+
+        return Result(
+            metadataFiles = metadataFiles,
+            visibleTypeAliases = visibleTypeAliases,
+            violations = violations.sorted(),
+        )
+    }
+
+    private fun readMetadataHeader(classFile: java.io.File): MetadataHeader? {
+        var header: MetadataHeader? = null
+        ClassReader(classFile.readBytes()).accept(
+            object : ClassVisitor(Opcodes.ASM9) {
+                override fun visitAnnotation(descriptor: String, visible: Boolean): AnnotationVisitor? {
+                    if (descriptor != "Lkotlin/Metadata;") return null
+                    return MetadataHeader().also { metadataHeader ->
+                        header = metadataHeader
+                    }.asAnnotationVisitor()
+                }
+            },
+            ClassReader.SKIP_CODE or ClassReader.SKIP_DEBUG or ClassReader.SKIP_FRAMES,
+        )
+        return header
+    }
+
+    private fun MetadataHeader.asAnnotationVisitor(): AnnotationVisitor =
+        object : AnnotationVisitor(Opcodes.ASM9) {
+            override fun visit(name: String, value: Any) {
+                when (name) {
+                    "k" -> kind = value as Int
+                    "mv" -> metadataVersion = value as IntArray
+                    "xs" -> extraString = value as String
+                    "pn" -> packageName = value as String
+                    "xi" -> extraInt = value as Int
+                }
+            }
+
+            override fun visitArray(name: String): AnnotationVisitor =
+                object : AnnotationVisitor(Opcodes.ASM9) {
+                    private val values = mutableListOf<Any>()
+
+                    override fun visit(elementName: String?, value: Any) {
+                        values += value
+                    }
+
+                    override fun visitEnd() {
+                        when (name) {
+                            "mv" -> metadataVersion = values.map { it as Int }.toIntArray()
+                            "d1" -> data1 = values.map { it as String }.toTypedArray()
+                            "d2" -> data2 = values.map { it as String }.toTypedArray()
+                        }
+                    }
+                }
+        }
+
+    private fun KmType.findKtorTypes(): Set<String> {
+        val result = linkedSetOf<String>()
+        val visited = Collections.newSetFromMap(IdentityHashMap<KmType, Boolean>())
+
+        fun visit(type: KmType) {
+            if (!visited.add(type)) return
+            when (val classifier = type.classifier) {
+                is KmClassifier.Class -> classifier.name.takeIf { it.containsKtorType() }?.let(result::add)
+                is KmClassifier.TypeAlias -> classifier.name.takeIf { it.containsKtorType() }?.let(result::add)
+                is KmClassifier.TypeParameter -> Unit
+            }
+            type.arguments.forEach { projection -> projection.type?.let(::visit) }
+            type.abbreviatedType?.let(::visit)
+            type.outerType?.let(::visit)
+            type.flexibleTypeUpperBound?.type?.let(::visit)
+        }
+
+        visit(this)
+        return result
+    }
+
+    private fun String.containsKtorType(): Boolean =
+        KTOR_DOTTED_PACKAGE in this || KTOR_INTERNAL_PACKAGE in this
+
+    data class Result(
+        val metadataFiles: Int,
+        val visibleTypeAliases: Int,
+        val violations: List<String>,
+    )
+
+    private data class MetadataHeader(
+        var kind: Int = 1,
+        var metadataVersion: IntArray = intArrayOf(),
+        var data1: Array<String> = emptyArray(),
+        var data2: Array<String> = emptyArray(),
+        var extraString: String = "",
+        var packageName: String = "",
+        var extraInt: Int = 0,
+    ) {
+        fun toMetadata(): Metadata = Metadata(
+            kind = kind,
+            metadataVersion = metadataVersion,
+            data1 = data1,
+            data2 = data2,
+            extraString = extraString,
+            packageName = packageName,
+            extraInt = extraInt,
+        )
+    }
 }
 
 abstract class VerifyPersistenceBoundaryTask : DefaultTask() {
@@ -143,6 +303,17 @@ abstract class VerifyKtorBoundaryTask : DefaultTask() {
         check(genericSignatureViolations.isEmpty()) {
             "Ktor types leaked into Android public/protected generic signatures:\n" +
                 genericSignatureViolations.joinToString("\n")
+        }
+
+        val typeAliasInspection = AndroidKotlinMetadataInspector.inspect(
+            androidClassFiles.files.filter { it.isFile },
+        )
+        check(typeAliasInspection.metadataFiles > 0) {
+            "No Android Kotlin metadata was inspected"
+        }
+        check(typeAliasInspection.violations.isEmpty()) {
+            "Ktor types leaked through Android public/protected type aliases:\n" +
+                typeAliasInspection.violations.joinToString("\n")
         }
 
         val metadataFiles = androidModuleMetadata.files.filter { it.isFile }
@@ -336,6 +507,33 @@ abstract class VerifyKtorBoundaryTask : DefaultTask() {
     }
 }
 
+abstract class VerifyKtorTypeAliasFixtureTask : DefaultTask() {
+    @get:InputFiles
+    @get:PathSensitive(PathSensitivity.RELATIVE)
+    abstract val fixtureClassFiles: ConfigurableFileCollection
+
+    @TaskAction
+    fun verify() {
+        val classFiles = fixtureClassFiles.files.filter { it.isFile }
+        check(classFiles.isNotEmpty()) { "No Android Ktor typealias regression fixture was compiled" }
+        val inspection = AndroidKotlinMetadataInspector.inspect(classFiles)
+        check(inspection.metadataFiles > 0) {
+            "Android Ktor typealias regression fixture contains no Kotlin metadata"
+        }
+        check(inspection.visibleTypeAliases > 0) {
+            "Android Ktor typealias regression fixture contains no public/protected typealias metadata"
+        }
+        check(
+            inspection.violations.any { violation ->
+                "AndroidKtorClientAlias" in violation && "io/ktor/client/HttpClient" in violation
+            },
+        ) {
+            "The Android Ktor typealias regression fixture did not trigger the production metadata gate:\n" +
+                inspection.violations.joinToString("\n")
+        }
+    }
+}
+
 plugins {
     id("matsumo.primitive.kmp.common")
     id("matsumo.primitive.android.library")
@@ -430,10 +628,30 @@ val androidMetadataTasks = tasks.withType<GenerateModuleMetadata>().matching {
     it.name == "generateMetadataFileForAndroidReleasePublication"
 }
 
+val verifyKtorTypeAliasFixture = tasks.register<VerifyKtorTypeAliasFixtureTask>(
+    "verifyKtorTypeAliasFixture",
+) {
+    group = "verification"
+    description = "Proves that Android public Ktor type aliases fail the Kotlin metadata boundary"
+    dependsOn("compileDebugUnitTestKotlinAndroid")
+    fixtureClassFiles.from(
+        layout.buildDirectory.dir("tmp/kotlin-classes/debugUnitTest").map { outputDirectory ->
+            outputDirectory.asFileTree.matching {
+                include("**/KtorBoundaryTypeAliasFixtureKt.class")
+            }
+        },
+    )
+}
+
 val verifyKtorBoundary = tasks.register<VerifyKtorBoundaryTask>("verifyKtorBoundary") {
     group = "verification"
     description = "Verifies that Ktor remains outside the public FANBOX API boundary"
-    dependsOn("checkLegacyAbi", "compileReleaseKotlinAndroid", androidMetadataTasks)
+    dependsOn(
+        "checkLegacyAbi",
+        "compileReleaseKotlinAndroid",
+        androidMetadataTasks,
+        verifyKtorTypeAliasFixture,
+    )
 
     abiFiles.from(layout.projectDirectory.dir("api").asFileTree.matching { include("**/*.api") })
     androidAbiFile.set(layout.projectDirectory.file("api/android/fanbox.api"))
