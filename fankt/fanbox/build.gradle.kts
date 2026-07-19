@@ -99,7 +99,7 @@ tasks.register<VerifyPersistenceBoundaryTask>("verifyPersistenceBoundary") {
     }
     aarFiles.from(
         layout.buildDirectory.dir("outputs/aar").map { outputDirectory ->
-            outputDirectory.asFileTree.matching { include("*.aar") }
+            outputDirectory.asFileTree.matching { include("*-release.aar") }
         },
     )
 }
