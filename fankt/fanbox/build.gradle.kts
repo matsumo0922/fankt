@@ -289,6 +289,10 @@ abstract class VerifyKtorBoundaryTask : DefaultTask() {
     @get:PathSensitive(PathSensitivity.RELATIVE)
     abstract val publishedModuleMetadata: ConfigurableFileCollection
 
+    @get:InputFiles
+    @get:PathSensitive(PathSensitivity.RELATIVE)
+    abstract val requiredPublishedModuleMetadata: ConfigurableFileCollection
+
     @get:Input
     abstract val publicationMetadataTaskNames: ListProperty<String>
 
@@ -434,8 +438,28 @@ abstract class VerifyKtorBoundaryTask : DefaultTask() {
             "FANBOX publication metadata tasks were not inspected:\n" +
                 missingPublicationMetadataTasks.joinToString("\n")
         }
+        val requiredPublishedMetadataOutputs = requiredPublishedModuleMetadata.files
+        check(
+            requiredPublishedMetadataOutputs.size ==
+                requiredPublicationMetadataTaskNames.get().size,
+        ) {
+            "Expected one publication metadata output per required task, but found " +
+                "${requiredPublishedMetadataOutputs.size} outputs for " +
+                "${requiredPublicationMetadataTaskNames.get().size} tasks"
+        }
+        val missingPublishedMetadataOutputs = requiredPublishedMetadataOutputs.filterNot(File::isFile)
+        check(missingPublishedMetadataOutputs.isEmpty()) {
+            "Required FANBOX publication metadata was not generated:\n" +
+                missingPublishedMetadataOutputs.joinToString("\n") { it.path }
+        }
         check(publishedMetadataFiles.isNotEmpty()) {
             "No Android or Kotlin Multiplatform publication metadata was generated"
+        }
+        val uninspectedRequiredMetadata =
+            requiredPublishedMetadataOutputs - publishedMetadataFiles.toSet()
+        check(uninspectedRequiredMetadata.isEmpty()) {
+            "Required FANBOX publication metadata was not inspected:\n" +
+                uninspectedRequiredMetadata.joinToString("\n") { it.path }
         }
         val datetimeMetadataViolations = publishedMetadataFiles.flatMap { metadataFile ->
             val metadata = JsonSlurper().parse(metadataFile) as Map<*, *>
@@ -758,6 +782,9 @@ val requiredPublicationMetadataTasks = buildList {
         add("generateMetadataFileForIosX64Publication")
     }
 }
+val requiredPublicationMetadataTaskOutputs = publicationMetadataTasks.matching { task ->
+    task.name in requiredPublicationMetadataTasks
+}
 
 val verifyKtorTypeAliasFixture = tasks.register<VerifyKtorTypeAliasFixtureTask>(
     "verifyKtorTypeAliasFixture",
@@ -799,6 +826,7 @@ val verifyKtorBoundary = tasks.register<VerifyKtorBoundaryTask>("verifyKtorBound
     )
     androidModuleMetadata.from(androidMetadataTasks)
     publishedModuleMetadata.from(publicationMetadataTasks)
+    requiredPublishedModuleMetadata.from(requiredPublicationMetadataTaskOutputs)
     publicationMetadataTaskNames.set(publicationMetadataTasks.names.sorted())
     requiredPublicationMetadataTaskNames.set(requiredPublicationMetadataTasks.sorted())
     requiredAndroidRuntimeKtorDependencies.set(requiredAndroidRuntimeKtorModules)
