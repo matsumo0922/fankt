@@ -21,6 +21,6 @@
 
 ## 4. Final validation and delivery
 
-- [ ] 4.1 Run focused Android/common/iOS tests, ABI and dependency gates, detekt, strict OpenSpec validation, and full repository validation on the final implementation HEAD
-- [ ] 4.2 Create the PR with breaking migration notes, validation evidence, and documentation impact
-- [ ] 4.3 Complete clean-context review, close every accepted finding, and obtain green required CI on the final review-fix HEAD
+- [x] 4.1 Run focused Android/common/iOS tests, ABI and dependency gates, detekt, strict OpenSpec validation, and full repository validation on the final implementation HEAD
+- [x] 4.2 Create the PR with breaking migration notes, validation evidence, and documentation impact
+- [x] 4.3 Complete clean-context review, close every accepted finding, and obtain green required CI on the final review-fix HEAD
