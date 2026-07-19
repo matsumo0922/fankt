@@ -36,7 +36,7 @@
 - **THEN** execution rejects the redirect before the redirected request reaches transport
 
 ### Requirement: API-provided media URLs are streamed without reconstruction
-`Fanbox.download` SHALL suspend while it creates and consumes one GET response using the complete caller-supplied URL without changing its path, filename extension, or query. It SHALL deliver bounded response chunks to a suspend callback in order, SHALL not require the complete body to reside in memory, and SHALL use a download client shared and owned by the `Fanbox` instance.
+`Fanbox.download` SHALL suspend while it creates and consumes one GET response using the complete caller-supplied URL without changing its path, filename extension, or query. It SHALL consume the response inside a bounded execution scope that releases the response on success, callback failure, cancellation, transport failure, or owner close. It SHALL read and deliver one bounded response chunk at a time to a suspend callback in order, SHALL request the next read only after that callback completes, SHALL expose no whole-body return, and SHALL use a download client shared and owned by the `Fanbox` instance.
 
 #### Scenario: File extension and query are preserved
 - **WHEN** `download` receives an allowed URL ending in `.zip` with a query string
@@ -48,26 +48,34 @@
 
 #### Scenario: Slow consumer applies backpressure
 - **WHEN** the suspend chunk callback has not completed for a delivered chunk
-- **THEN** `download` does not deliver the next chunk and does not read the complete response into memory
+- **THEN** `download` does not request or deliver the next chunk
+
+#### Scenario: Progress starts at zero
+- **WHEN** an allowed response begins consumption
+- **THEN** `onProgress` receives one initial `0f` before any chunk callback is invoked
 
 #### Scenario: Progress is reported while consuming the response
 - **WHEN** a download response has a positive content length
-- **THEN** `onProgress` receives downloaded-byte progress as a finite `Float` fraction after chunks are consumed
+- **THEN** `onProgress` receives downloaded-byte progress as a finite `Float` fraction after the corresponding chunk callback completes
 
 #### Scenario: Empty or unknown-length progress is safe
 - **WHEN** a download response length is zero or unknown
-- **THEN** `onProgress` receives `0f` instead of a non-finite value
+- **THEN** `onProgress` receives the initial `0f` and never receives a non-finite value
 
 #### Scenario: Chunk callback failure cancels consumption
 - **WHEN** the suspend chunk callback throws or is cancelled
-- **THEN** response consumption stops and the same failure is propagated without being normalized as an HTTP failure
+- **THEN** response consumption stops, the response is released, and the same failure is propagated without being normalized as an HTTP failure
 
 #### Scenario: Owner close prevents new download work
 - **WHEN** `download` is called after the owning `Fanbox` is closed
 - **THEN** it fails with `IllegalStateException` before starting a network request
 
+#### Scenario: Owner closes during active download
+- **WHEN** the owning `Fanbox` closes while a download is consuming a response
+- **THEN** response consumption stops, resources are released, cancellation is rethrown unchanged or a non-cancellation transport failure is normalized to `FanboxException`, and already delivered chunks remain the caller's responsibility
+
 #### Scenario: Download transport failure is normalized
-- **WHEN** an allowed download receives a non-success HTTP response or the transport fails
+- **WHEN** an allowed download receives a non-success HTTP response or the transport fails before or during body consumption
 - **THEN** `download` throws `FanboxException` without retaining a raw response body
 
 ### Requirement: Extension-specific download APIs are removed
@@ -76,4 +84,3 @@ The public `Fanbox` API SHALL expose one URL-based chunk-streaming `download` op
 #### Scenario: Public download operation inventory
 - **WHEN** the production `Fanbox` download API surface and generated route declarations are inspected
 - **THEN** only the URL-based public download operation remains and no `.jpg` download route is declared
-

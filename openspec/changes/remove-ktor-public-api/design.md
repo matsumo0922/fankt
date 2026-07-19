@@ -24,7 +24,7 @@ Issue #35 targets the intentionally breaking v0.1.0 boundary. Issues #32 and #33
 
 ### Reuse `FanboxCookieRecord` as the public cookie type（agent 仮決め）
 
-`Fanbox.cookies` and `setCookies` will use the existing record already shared by in-memory and Room storage. An additional `FanboxCookie` type would duplicate identity, expiry, domain, path, secure, and host-only semantics and create conversion drift. Internal adapters remain responsible for translating records to Ktor cookies.
+`Fanbox.cookies` and `setCookies` will use the existing record already shared by in-memory and Room storage. `FanboxCookieRecord.domain` is required and `hostOnly` is explicit, so `setCookies` will remove its `url` parameter rather than retain two competing scope authorities. `setFanboxSessionId` remains the convenience API for the conventional `.fanbox.cc` session scope. The public mutation adapter will preserve existing expiry behavior: expired additive records delete their identity and expired replacement records are omitted atomically. An additional `FanboxCookie` type would duplicate identity, expiry, domain, path, secure, and host-only semantics and create conversion drift. Internal adapters remain responsible for translating records to Ktor cookies.
 
 Alternative: rename the record or add a public type alias. Rejected because v0.1.0 has not been published, the existing name accurately describes stored values, and an alias adds another public name without new behavior.
 
@@ -36,7 +36,7 @@ Alternative: expose only the three effective levels. Rejected because keeping th
 
 ### Replace deferred statements with direct suspend chunk streaming（agent 仮決め）
 
-`download(url, onProgress, onChunk)` will validate the destination, execute the request, and invoke a suspend callback with bounded `ByteArray` chunks in order. Waiting for each callback provides backpressure. The callback's exception and cancellation propagate unchanged; HTTP and transport failures keep the existing `FanboxException` normalization.
+`download(url, onProgress, onChunk)` will validate the destination, execute the request in the HTTP client's scoped response API, and invoke a suspend callback with bounded `ByteArray` chunks in order. The response scope guarantees release on every exit. Waiting for each callback before requesting the next read provides an observable backpressure guarantee. `onProgress` receives an initial `0f` before chunks, then known-length progress is computed from bytes whose callback has completed rather than from an ahead-of-consumer transport hook. Callback exceptions and `CancellationException` propagate unchanged. HTTP failures and transport exceptions from header or body reads are normalized to `FanboxException`, with callback execution kept outside that normalization boundary so caller failures retain identity.
 
 This deliberately removes deferred request ownership. A whole-body convenience API is omitted because `.zip`, `.psd`, and video responses can be large; consumers that knowingly want a complete body may accumulate chunks themselves. A Ktor-free request-wrapper abstraction was considered, but it would recreate lifecycle and execution-state complexity solely to preserve deferred semantics that the issue does not require.
 
@@ -44,9 +44,13 @@ This deliberately removes deferred request ownership. A whole-body convenience A
 
 `getHttpClient` will be deleted. Generated methods and `download` are the supported fankt operations; host applications own separate clients for unrelated network traffic. This also reduces the internal client graph by the two raw-client configurations while retaining generated and download clients.
 
+The download client will use a download-specific diagnostic source rather than the removed raw-client `custom-request` label, so public `FanboxException.endpoint` values do not refer to a deleted API.
+
 ### Verify the compiled and published boundaries（agent 仮決め）
 
-Kotlin Gradle Plugin ABI validation will generate a checked-in public ABI dump for `fanbox`. A verification task will fail when the dump contains `io.ktor`. Publication verification will generate Gradle module metadata and inspect API dependency sets, failing when any Ktor module appears there. Source-text scanning alone is insufficient because inferred signatures and type aliases can leak dependencies without an obvious declaration.
+Kotlin Gradle Plugin 2.2.10's experimental ABI validation is the first candidate for checked-in public ABI dumps for the supported `fanbox` targets. Task 3.2 must prove Android and iOS Gradle integration before the change relies on it; if a target is unsupported, the fallback is a deterministic target compiler/KLib ABI dump committed and checked by the same boundary task. A verification task will fail when any dump contains `io.ktor`. Publication verification will generate Gradle module metadata and inspect API dependency sets, failing when any Ktor module appears there. Task inputs will be provider-backed so verification remains compatible with the repository's configuration-cache policy. Source-text scanning alone is insufficient because inferred signatures and type aliases can leak dependencies without an obvious declaration.
+
+PR CI will run the common/Android ABI and metadata gate, while the existing macOS job will run the iOS ABI and iOS publication-metadata gates. The release workflow will rerun the complete boundary gate before any publication step. A consumer fixture will resolve the locally published module metadata from an isolated repository rather than use a project dependency, ensuring it exercises the actual published API variants.
 
 Ktor common and engine dependencies move to `implementation`. This removes them from the consumer compile API and lets a consumer explicitly select a compatible runtime version; it does not promise that incompatible Ktor binaries can coexist.
 
@@ -58,13 +62,15 @@ Ktor common and engine dependencies move to `implementation`. This removes them 
 - [An inferred or platform-specific Ktor signature escapes review] -> Generate ABI for supported targets and scan the checked-in ABI boundary in CI.
 - [Gradle metadata uses variant-specific dependency sets] -> Inspect generated `.module` variants rather than relying only on source dependency declarations or Maven POM scopes.
 - [Consumers interpret `implementation` as arbitrary version compatibility] -> State runtime compatibility precisely in README migration guidance and test only a known-compatible consumer-selected version.
+- [One PR spans API, streaming, and build gates] -> Keep the v0.1.0 breaking boundary atomic, organize implementation as separately reviewable commits, and require focused streaming plus boundary validation before the aggregate suite.
+- [Close or disk failure leaves a partial consumer file] -> Propagate cancellation/callback failure and document that callers should write to a temporary destination and promote it only after `download` returns.
 
 ## Migration Plan
 
 1. Introduce `FanboxLogLevel`, change cookie signatures to `FanboxCookieRecord`, remove raw-client access, and replace download execution in one breaking commit series.
-2. Move Ktor declarations to `implementation`, enable ABI validation, generate the intended v0.1.0 baseline, and add publication checks.
+2. Move Ktor declarations to `implementation`, enable ABI validation, generate the intended v0.1.0 baseline, and add publication checks to PR and release CI.
 3. Update repository consumers, tests, README, and KDoc together.
-4. Validate common, Android, iOS, publication metadata, and a consumer compile fixture before publishing v0.1.0.
+4. Validate common, Android, iOS, locally published metadata, and a consumer compile fixture before publishing v0.1.0; the release workflow blocks publication until the same boundary checks pass.
 5. External consumers migrate logging/cookies/downloads and own any general-purpose HTTP clients before adopting v0.1.0.
 
 Rollback before publication is a source revert. After v0.1.0 publication, fixes must preserve the new Ktor-free boundary; restoring the Ktor-exposing v0.0.x signatures would require a separate compatibility release decision.
