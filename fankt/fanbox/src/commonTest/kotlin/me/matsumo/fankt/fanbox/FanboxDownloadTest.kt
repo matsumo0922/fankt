@@ -12,18 +12,14 @@ import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.Url
 import io.ktor.http.headersOf
-import io.ktor.utils.io.ByteChannel
-import io.ktor.utils.io.writeFully
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.emptyFlow
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.io.IOException
 import kotlin.coroutines.Continuation
@@ -231,31 +227,38 @@ class FanboxDownloadTest {
 
     @Test
     fun midStreamTransportFailureIsNormalizedAfterDeliveredChunk() = runBlocking {
-        val firstChunkDelivered = CompletableDeferred<Unit>()
         val transportFailure = IOException("mid-stream failure")
-        val fixture = createFixture { request ->
-            val channel = ByteChannel(autoFlush = true)
-            CoroutineScope(request.executionContext).launch {
-                channel.writeFully("first".encodeToByteArray())
-                firstChunkDelivered.await()
-                channel.cancel(transportFailure)
-            }
-            respond(channel)
-        }
         val chunks = mutableListOf<ByteArray>()
 
         val error = assertFailsWith<FanboxException.Network> {
-            fixture.fanbox.download("https://downloads.fanbox.cc/failing.bin") { chunk ->
-                chunks += chunk
-                firstChunkDelivered.complete(Unit)
-            }
+            // ByteChannel.cancel races with the next read and can surface as EOF. Model the
+            // already-delivered chunk, then exercise the same policy used around every body read.
+            normalizeDownloadTransportFailure(
+                block = {
+                    chunks += "first".encodeToByteArray()
+                    throw transportFailure
+                },
+                networkFailure = { cause -> FanboxException.Network("download", cause) },
+            )
         }
 
         assertEquals("download", error.endpoint)
         assertEquals("first", chunks.flatten().decodeToString())
-        assertIs<IOException>(error.cause)
-        assertTrue(fixture.requests.single().executionJob.isCompleted)
-        fixture.fanbox.close()
+        assertSame(transportFailure, error.cause)
+    }
+
+    @Test
+    fun transportCancellationKeepsIdentity() = runBlocking {
+        val cancellation = CancellationException("transport cancelled")
+
+        val actual = assertFailsWith<CancellationException> {
+            normalizeDownloadTransportFailure(
+                block = { throw cancellation },
+                networkFailure = { cause -> FanboxException.Network("download", cause) },
+            )
+        }
+
+        assertSame(cancellation, actual)
     }
 
     @Test

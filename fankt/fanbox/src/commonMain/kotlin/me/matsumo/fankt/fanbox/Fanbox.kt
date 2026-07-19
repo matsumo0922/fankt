@@ -584,6 +584,16 @@ private const val DOWNLOAD_CHUNK_SIZE: Int = 8 * 1_024
 private suspend inline fun <T> normalizeDownloadTransport(
     request: io.ktor.client.request.HttpRequest,
     block: suspend () -> T,
+): T = normalizeDownloadTransportFailure(
+    block = block,
+    networkFailure = { failure ->
+        FanboxExceptionFactory.network(request, FanboxDiagnosticSource.Download, failure)
+    },
+)
+
+internal suspend inline fun <T> normalizeDownloadTransportFailure(
+    block: suspend () -> T,
+    networkFailure: (IOException) -> FanboxException.Network,
 ): T = try {
     block()
 } catch (failure: CancellationException) {
@@ -591,7 +601,7 @@ private suspend inline fun <T> normalizeDownloadTransport(
 } catch (failure: FanboxException) {
     throw failure
 } catch (failure: IOException) {
-    throw FanboxExceptionFactory.network(request, FanboxDiagnosticSource.Download, failure)
+    throw networkFailure(failure)
 }
 
 private fun closeClients(clients: List<HttpClient>): Throwable? {
