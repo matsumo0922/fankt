@@ -6,6 +6,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.runBlocking
 import me.matsumo.fankt.fanbox.FanboxCookieRecord
+import me.matsumo.fankt.fanbox.InMemoryFanboxCookieStorage
 import me.matsumo.fankt.fanbox.domain.model.db.CookieEntity
 import kotlin.coroutines.CoroutineContext
 import kotlin.test.Test
@@ -30,24 +31,26 @@ class PersistentCookieStorageTest {
     fun canonicalizationMatchesCoreStorageIdentity() = runBlocking {
         val dao = FakeCookieDao()
         val storage = PersistentCookieStorage(dao)
-
-        storage.upsert(
-            record(
-                name = "session",
-                value = "value",
-                domain = " .FANBOX.CC ",
-                path = "index",
-            ),
+        val coreStorage = InMemoryFanboxCookieStorage()
+        val input = record(
+            name = "session",
+            value = "value",
+            domain = " .FANBOX.CC ",
+            path = "index",
         )
+
+        storage.upsert(input)
+        coreStorage.upsert(input)
 
         assertEquals("fanbox.cc", dao.state.value.single().domain)
         assertEquals("/", dao.state.value.single().path)
-        assertEquals("fanbox.cc", storage.snapshot().single().domain)
-        assertEquals("/", storage.snapshot().single().path)
+        assertEquals(coreStorage.snapshot().single().domain, storage.snapshot().single().domain)
+        assertEquals(coreStorage.snapshot().single().path, storage.snapshot().single().path)
 
         storage.delete(" .FANBOX.CC ", "index", "session")
+        coreStorage.delete(" .FANBOX.CC ", "index", "session")
 
-        assertTrue(storage.snapshot().isEmpty())
+        assertEquals(coreStorage.snapshot(), storage.snapshot())
     }
 
     @Test
