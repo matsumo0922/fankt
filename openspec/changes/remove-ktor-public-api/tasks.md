@@ -32,6 +32,6 @@
 
 ## 5. Validation and delivery
 
-- [ ] 5.1 Run focused common, Android, iOS, download, ABI, declared-scope, Android metadata, and locally published consumer checks with isolated caches
-- [ ] 5.2 Run the required repository test and static-analysis suites
-- [ ] 5.3 Validate OpenSpec artifacts strictly and reconcile completed task state
+- [x] 5.1 Run focused common, Android, iOS, download, ABI, declared-scope, Android metadata, and locally published consumer checks with isolated caches
+- [x] 5.2 Run the required repository test and static-analysis suites
+- [x] 5.3 Validate OpenSpec artifacts strictly and reconcile completed task state
