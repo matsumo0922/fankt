@@ -199,7 +199,8 @@ class FanboxCreatorProfileItemTest {
             setCsrfToken = { csrfToken.value = it },
             clearCsrfToken = { csrfToken.value = null },
             overrideFanboxSessionId = {},
-            replaceCookies = { _, _ -> },
+            addCookie = {},
+            replaceCookies = {},
         )
         return Fanbox(
             dependencies = dependencies,

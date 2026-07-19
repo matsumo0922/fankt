@@ -39,6 +39,11 @@ public data class FanboxCookieRecord(
  * or before its argument; a record refreshed after an earlier snapshot must survive cleanup. Every
  * collector of [cookies] receives the current snapshot at least once.
  *
+ * Records use a canonical persistence identity consisting of domain, path, and name. The domain is
+ * trimmed, has all leading dots removed, and is converted to lowercase. A path that does not start
+ * with `/` is stored as `/`. Records with the same canonical domain, canonical path, and name are
+ * the same Cookie identity.
+ *
  * A [Fanbox] never closes or clears an injected storage when the client closes. The host owns its
  * lifetime. State is shared only when the host passes the same instance to multiple clients.
  * Cookie values are credentials and must not be logged or included in telemetry.
@@ -154,12 +159,12 @@ internal fun String.canonicalDomain(): String = trim().trimStart('.').lowercase(
 
 internal fun String.canonicalPath(): String = takeIf { startsWith('/') } ?: "/"
 
-private fun List<FanboxCookieRecord>.canonicalSnapshot(): List<FanboxCookieRecord> =
+internal fun FanboxCookieRecord.canonicalized(): FanboxCookieRecord = copy(
+    domain = domain.canonicalDomain(),
+    path = path.canonicalPath(),
+)
+
+internal fun List<FanboxCookieRecord>.canonicalSnapshot(): List<FanboxCookieRecord> =
     associateBy { it.identity }
         .values
-        .map { record ->
-            record.copy(
-                domain = record.domain.canonicalDomain(),
-                path = record.path.canonicalPath(),
-            )
-        }
+        .map(FanboxCookieRecord::canonicalized)

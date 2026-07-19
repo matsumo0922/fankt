@@ -69,6 +69,9 @@ jobs:
           :fankt:fanbox-persistence-room:testDebugUnitTest
           :fankt:fanbox:verifyPersistenceBoundary
 
+      - name: Verify published consumer boundary
+        run: scripts/verify_ktor_consumer_boundary.sh
+
   ios-test:
     if: github.event.pull_request.draft == false
     runs-on: macos-latest
@@ -94,5 +97,9 @@ jobs:
           java-version: '21'
           distribution: 'temurin'
 
-      - name: Run iOS simulator tests
-        run: ./gradlew :fankt:fanbox-persistence-room:iosSimulatorArm64Test
+      - name: Run iOS simulator tests and ABI checks
+        run: >-
+          ./gradlew
+          :fankt:fanbox:iosSimulatorArm64Test
+          :fankt:fanbox:checkLegacyAbi
+          :fankt:fanbox-persistence-room:iosSimulatorArm64Test

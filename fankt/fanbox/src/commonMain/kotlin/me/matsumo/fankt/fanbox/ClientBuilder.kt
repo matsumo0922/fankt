@@ -83,7 +83,7 @@ internal fun buildHttpClient(
     cookieStorage: CookiesStorage,
     source: FanboxDiagnosticSource,
     csrfTokenProvider: suspend () -> String? = { null },
-    logLevel: LogLevel = LogLevel.NONE,
+    logLevel: FanboxLogLevel = FanboxLogLevel.NONE,
     isEnableContentNegotiation: Boolean = true,
     isDownloadClient: Boolean = false,
     clientFactory: FanboxHttpClientFactory = DefaultFanboxHttpClientFactory,
@@ -121,7 +121,7 @@ private fun HttpClientConfig<*>.configureFanboxHttpClient(
     cookieStorage: CookiesStorage,
     source: FanboxDiagnosticSource,
     csrfTokenProvider: suspend () -> String?,
-    logLevel: LogLevel,
+    logLevel: FanboxLogLevel,
     isEnableContentNegotiation: Boolean,
     isDownloadClient: Boolean,
 ) {
@@ -160,15 +160,11 @@ private fun HttpClientConfig<*>.configureFanboxHttpClient(
 internal fun HttpClientConfig<*>.configureFanboxClient(
     formatter: Json,
     source: FanboxDiagnosticSource,
-    logLevel: LogLevel = LogLevel.NONE,
+    logLevel: FanboxLogLevel = FanboxLogLevel.NONE,
     isEnableContentNegotiation: Boolean = true,
 ) {
     install(Logging) {
-        level = when (logLevel) {
-            LogLevel.BODY -> LogLevel.INFO
-            LogLevel.ALL -> LogLevel.HEADERS
-            else -> logLevel
-        }
+        level = logLevel.toInternalLogLevel()
         logger = object : Logger {
             override fun log(message: String) {
                 Napier.d(message)
@@ -197,7 +193,7 @@ internal fun HttpClientConfig<*>.configureFanboxClient(
 
             val target = FanboxExceptionFactory.target(source, response.request.url)
             val failure = FanboxExceptionFactory.fromHttpResponse(response, source)
-            if (logLevel != LogLevel.NONE && target.retainResponseFragment) {
+            if (logLevel != FanboxLogLevel.NONE && target.retainResponseFragment) {
                 failure.rawBody?.let { body -> Napier.d { "FANBOX response: $body" } }
             }
 
@@ -226,6 +222,14 @@ internal fun HttpClientConfig<*>.configureFanboxClient(
             }
         }
     }
+}
+
+internal fun FanboxLogLevel.toInternalLogLevel(): LogLevel = when (this) {
+    FanboxLogLevel.NONE -> LogLevel.NONE
+    FanboxLogLevel.INFO -> LogLevel.INFO
+    FanboxLogLevel.HEADERS -> LogLevel.HEADERS
+    FanboxLogLevel.BODY -> LogLevel.INFO
+    FanboxLogLevel.ALL -> LogLevel.HEADERS
 }
 
 private fun io.ktor.client.request.HttpRequest.responseOrNull(): HttpResponse? =

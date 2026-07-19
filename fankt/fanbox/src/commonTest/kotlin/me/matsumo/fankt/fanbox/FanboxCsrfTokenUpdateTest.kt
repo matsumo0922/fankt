@@ -1,19 +1,13 @@
 package me.matsumo.fankt.fanbox
 
 import io.ktor.client.HttpClient
-import io.ktor.client.call.NoTransformationFoundException
-import io.ktor.client.call.body
 import io.ktor.client.engine.mock.MockEngine
 import io.ktor.client.engine.mock.respond
 import io.ktor.client.plugins.cookies.AcceptAllCookiesStorage
 import io.ktor.client.plugins.cookies.CookiesStorage
 import io.ktor.client.request.get
-import io.ktor.client.request.header
-import io.ktor.client.statement.bodyAsText
-import io.ktor.http.Cookie
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
-import io.ktor.http.Url
 import io.ktor.http.headersOf
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
@@ -22,15 +16,12 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
-import kotlinx.serialization.json.JsonObject
-import kotlinx.serialization.json.jsonPrimitive
 import me.matsumo.fankt.fanbox.domain.model.id.FanboxPostId
 import me.matsumo.fankt.fanbox.fixture.FanboxMetadataHtmlFixtures
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertNotNull
-import kotlin.test.assertNotSame
 import kotlin.test.assertSame
 
 class FanboxCsrfTokenUpdateTest {
@@ -75,7 +66,7 @@ class FanboxCsrfTokenUpdateTest {
         fixture.fanbox.likePost(FanboxPostId("100"))
 
         assertEquals("first-token", fixture.postHeaders.last())
-        assertEquals(5, fixture.clients.size)
+        assertEquals(3, fixture.clients.size)
         initialClients.zip(fixture.clients).forEach { (before, after) -> assertSame(before, after) }
 
         nextToken = "second-token"
@@ -83,7 +74,7 @@ class FanboxCsrfTokenUpdateTest {
         fixture.fanbox.likePost(FanboxPostId("101"))
 
         assertEquals(listOf("first-token", "second-token"), fixture.postHeaders)
-        assertEquals(5, fixture.clients.size)
+        assertEquals(3, fixture.clients.size)
         initialClients.zip(fixture.clients).forEach { (before, after) -> assertSame(before, after) }
         fixture.fanbox.close()
     }
@@ -118,29 +109,7 @@ class FanboxCsrfTokenUpdateTest {
         fixture.fanbox.likePost(FanboxPostId("102"))
 
         assertEquals("first-token", fixture.postHeaders.last())
-        assertEquals(5, fixture.clients.size)
-        fixture.fanbox.close()
-    }
-
-    @Test
-    fun explicitRawClientHeaderKeepsCallerValueWithoutTokenLookup() = runBlocking {
-        val latestToken = MutableStateFlow<String?>("memory-token")
-        var lookupCount = 0
-        val fixture = createFixture(
-            latestToken = latestToken,
-            getCsrfToken = {
-                lookupCount += 1
-                latestToken.value
-            },
-        )
-        val rawClient = fixture.fanbox.getHttpClient()
-
-        rawClient.get("https://api.fanbox.cc/custom") {
-            header("x-csrf-token", "explicit-token")
-        }.bodyAsText()
-
-        assertEquals("explicit-token", fixture.rawHeaders.last())
-        assertEquals(0, lookupCount)
+        assertEquals(3, fixture.clients.size)
         fixture.fanbox.close()
     }
 
@@ -194,7 +163,7 @@ class FanboxCsrfTokenUpdateTest {
         var replaceCount = 0
         val fixture = createFixture(
             latestToken = latestToken,
-            replaceCookies = { _, _ ->
+            replaceCookies = { _ ->
                 replaceCount += 1
                 assertEquals(null, latestToken.value)
                 error("atomic replacement failed")
@@ -202,7 +171,7 @@ class FanboxCsrfTokenUpdateTest {
         )
 
         assertFailsWith<IllegalStateException> {
-            fixture.fanbox.setCookies(listOf(Cookie("replacement", "value")), reset = true)
+            fixture.fanbox.setCookies(listOf(record("replacement", "value")), reset = true)
         }
 
         assertEquals(1, replaceCount)
@@ -216,11 +185,11 @@ class FanboxCsrfTokenUpdateTest {
         val failure = IllegalStateException("atomic replacement failed")
         val fixture = createFixture(
             latestToken = latestToken,
-            replaceCookies = { _, _ -> throw failure },
+            replaceCookies = { _ -> throw failure },
         )
 
         val actual = assertFailsWith<IllegalStateException> {
-            fixture.fanbox.setCookies(listOf(Cookie("replacement", "value")), reset = true)
+            fixture.fanbox.setCookies(listOf(record("replacement", "value")), reset = true)
         }
 
         assertSame(failure, actual)
@@ -233,11 +202,14 @@ class FanboxCsrfTokenUpdateTest {
         val latestToken = MutableStateFlow<String?>("old-token")
         val fixture = createFixture(
             latestToken = latestToken,
-            cookieStorage = failingCookieStorage { assertEquals(null, latestToken.value) },
+            addCookie = {
+                assertEquals(null, latestToken.value)
+                error("cookie write failed")
+            },
         )
 
         assertFailsWith<IllegalStateException> {
-            fixture.fanbox.setCookies(listOf(Cookie("FANBOXSESSID", "new-session")))
+            fixture.fanbox.setCookies(listOf(record("FANBOXSESSID", "new-session")))
         }
 
         assertEquals(null, latestToken.value)
@@ -249,31 +221,9 @@ class FanboxCsrfTokenUpdateTest {
         val latestToken = MutableStateFlow<String?>("current-token")
         val fixture = createFixture(latestToken)
 
-        fixture.fanbox.setCookies(listOf(Cookie("theme", "dark")))
+        fixture.fanbox.setCookies(listOf(record("theme", "dark")))
 
         assertEquals("current-token", latestToken.value)
-        fixture.fanbox.close()
-    }
-
-    @Test
-    fun rawClientsAreSharedPerConfigurationWithoutChangingConversionBehavior() = runBlocking {
-        val fixture = createFixture(MutableStateFlow(null))
-        val defaultClient = fixture.fanbox.getHttpClient()
-        val sameDefaultClient = fixture.fanbox.getHttpClient(isEnableContentNegotiation = true)
-        val plainClient = fixture.fanbox.getHttpClient(isEnableContentNegotiation = false)
-        val samePlainClient = fixture.fanbox.getHttpClient(isEnableContentNegotiation = false)
-
-        assertSame(defaultClient, sameDefaultClient)
-        assertSame(plainClient, samePlainClient)
-        assertNotSame(defaultClient, plainClient)
-        assertEquals(5, fixture.clients.size)
-        assertEquals(
-            "ok",
-            defaultClient.get("https://api.fanbox.cc/json").body<JsonObject>()["value"]?.jsonPrimitive?.content,
-        )
-        assertFailsWith<NoTransformationFoundException> {
-            plainClient.get("https://api.fanbox.cc/json").body<JsonObject>()
-        }
         fixture.fanbox.close()
     }
 
@@ -285,7 +235,7 @@ class FanboxCsrfTokenUpdateTest {
         fixture.fanbox.close()
         fixture.fanbox.close()
 
-        assertEquals(5, clients.size)
+        assertEquals(3, clients.size)
         clients.forEach { client ->
             val requestCountBefore = fixture.requestCount()
             val failure = runCatching { client.get("https://api.fanbox.cc/after-close") }.exceptionOrNull()
@@ -294,7 +244,6 @@ class FanboxCsrfTokenUpdateTest {
         }
         assertFailsWith<IllegalStateException> { fixture.fanbox.cookies }
         assertFailsWith<IllegalStateException> { fixture.fanbox.csrfToken }
-        assertFailsWith<IllegalStateException> { fixture.fanbox.getHttpClient() }
         assertFailsWith<IllegalStateException> { fixture.fanbox.setFanboxSessionId("session") }
         assertFailsWith<IllegalStateException> { fixture.fanbox.setCookies(emptyList()) }
         assertFailsWith<IllegalStateException> { fixture.fanbox.updateCsrfToken() }
@@ -309,7 +258,7 @@ class FanboxCsrfTokenUpdateTest {
         var requestCount = 0
         val factory = FanboxHttpClientFactory { block ->
             factoryCalls += 1
-            if (factoryCalls == 4) error("factory failure")
+            if (factoryCalls == 3) error("factory failure")
             HttpClient(
                 MockEngine {
                     requestCount += 1
@@ -327,8 +276,8 @@ class FanboxCsrfTokenUpdateTest {
             )
         }
 
-        assertEquals(4, factoryCalls)
-        assertEquals(3, clients.size)
+        assertEquals(3, factoryCalls)
+        assertEquals(2, clients.size)
         clients.forEach { client ->
             val failure = runCatching { client.get("https://api.fanbox.cc/after-failure") }.exceptionOrNull()
             assertNotNull(failure)
@@ -343,11 +292,11 @@ class FanboxCsrfTokenUpdateTest {
         setCsrfToken: suspend (String) -> Unit = { latestToken.value = it },
         cookieStorage: CookiesStorage = AcceptAllCookiesStorage(),
         overrideFanboxSessionId: suspend (String) -> Unit = {},
-        replaceCookies: suspend (Url, List<Cookie>) -> Unit = { _, _ -> },
+        addCookie: suspend (FanboxCookieRecord) -> Unit = {},
+        replaceCookies: suspend (List<FanboxCookieRecord>) -> Unit = {},
     ): FanboxFixture {
         val clients = mutableListOf<HttpClient>()
         val postHeaders = mutableListOf<String?>()
-        val rawHeaders = mutableListOf<String?>()
         var requestCount = 0
         val clientFactory = FanboxHttpClientFactory { block ->
             HttpClient(
@@ -371,10 +320,7 @@ class FanboxCsrfTokenUpdateTest {
                             headers = headersOf(HttpHeaders.ContentType, "application/json"),
                         )
 
-                        else -> {
-                            rawHeaders += request.headers["x-csrf-token"]
-                            respond("", HttpStatusCode.OK)
-                        }
+                        else -> respond("", HttpStatusCode.OK)
                     }
                 },
                 block,
@@ -386,6 +332,7 @@ class FanboxCsrfTokenUpdateTest {
             getCsrfToken = getCsrfToken,
             setCsrfToken = setCsrfToken,
             overrideFanboxSessionId = overrideFanboxSessionId,
+            addCookie = addCookie,
             replaceCookies = replaceCookies,
         )
 
@@ -397,7 +344,6 @@ class FanboxCsrfTokenUpdateTest {
             ),
             clients = clients,
             postHeaders = postHeaders,
-            rawHeaders = rawHeaders,
             requestCount = { requestCount },
         )
     }
@@ -408,7 +354,8 @@ class FanboxCsrfTokenUpdateTest {
         getCsrfToken: suspend () -> String? = { latestToken.value },
         setCsrfToken: suspend (String) -> Unit = { latestToken.value = it },
         overrideFanboxSessionId: suspend (String) -> Unit = {},
-        replaceCookies: suspend (Url, List<Cookie>) -> Unit = { _, _ -> },
+        addCookie: suspend (FanboxCookieRecord) -> Unit = {},
+        replaceCookies: suspend (List<FanboxCookieRecord>) -> Unit = {},
     ) = FanboxDependencies(
         cookieStorage = cookieStorage,
         cookies = emptyFlow(),
@@ -417,27 +364,24 @@ class FanboxCsrfTokenUpdateTest {
         setCsrfToken = setCsrfToken,
         clearCsrfToken = { latestToken.value = null },
         overrideFanboxSessionId = overrideFanboxSessionId,
+        addCookie = addCookie,
         replaceCookies = replaceCookies,
     )
 
-    private fun failingCookieStorage(onAdd: () -> Unit): CookiesStorage {
-        return object : CookiesStorage {
-            override suspend fun addCookie(requestUrl: Url, cookie: Cookie) {
-                onAdd()
-                error("cookie write failed")
-            }
-
-            override suspend fun get(requestUrl: Url): List<Cookie> = emptyList()
-
-            override fun close() = Unit
-        }
-    }
+    private fun record(name: String, value: String) = FanboxCookieRecord(
+        domain = "fanbox.cc",
+        path = "/",
+        name = name,
+        value = value,
+        expiresAtEpochMilliseconds = null,
+        secure = true,
+        hostOnly = false,
+    )
 
     private data class FanboxFixture(
         val fanbox: Fanbox,
         val clients: List<HttpClient>,
         val postHeaders: List<String?>,
-        val rawHeaders: List<String?>,
         val requestCount: () -> Int,
     )
 }

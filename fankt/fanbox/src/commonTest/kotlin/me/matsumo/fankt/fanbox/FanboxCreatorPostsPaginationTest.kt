@@ -103,7 +103,8 @@ class FanboxCreatorPostsPaginationTest {
             setCsrfToken = { csrfToken.value = it },
             clearCsrfToken = { csrfToken.value = null },
             overrideFanboxSessionId = {},
-            replaceCookies = { _, _ -> },
+            addCookie = {},
+            replaceCookies = {},
         )
         return Fixture(
             fanbox = Fanbox(

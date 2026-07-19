@@ -8,7 +8,6 @@ import io.ktor.client.call.body
 import io.ktor.client.engine.mock.MockEngine
 import io.ktor.client.engine.mock.respond
 import io.ktor.client.plugins.HttpResponseValidator
-import io.ktor.client.plugins.logging.LogLevel
 import io.ktor.client.request.get
 import io.ktor.client.statement.bodyAsText
 import io.ktor.http.ContentType
@@ -109,9 +108,9 @@ class FanboxHttpClientExceptionTest {
     }
 
     @Test
-    fun successfulStringThroughProductionConfigUsesPublicRawClientSource() = runBlocking {
+    fun successfulStringThroughProductionConfigUsesDownloadClientSource() = runBlocking {
         val client = mockClient(
-            source = FanboxDiagnosticSource.PublicRaw,
+            source = FanboxDiagnosticSource.Download,
             status = HttpStatusCode.OK,
             body = "raw-response",
         )
@@ -191,7 +190,7 @@ class FanboxHttpClientExceptionTest {
     }
 
     @Test
-    fun generatedAndPublicRawSamePathKeepDiagnosticSourcesIsolated() = runBlocking {
+    fun generatedAndDownloadSamePathKeepDiagnosticSourcesIsolated() = runBlocking {
         val reflectedSecret = "reflected-query-secret-and-response-body"
         val generatedClient = mockClient(
             source = FanboxDiagnosticSource.LibraryGenerated,
@@ -203,11 +202,11 @@ class FanboxHttpClientExceptionTest {
             .httpClient(generatedClient)
             .build()
             .createFanboxPostApi()
-        val rawClient = mockClient(
-            source = FanboxDiagnosticSource.PublicRaw,
+        val downloadClient = mockClient(
+            source = FanboxDiagnosticSource.Download,
             status = HttpStatusCode.Forbidden,
             body = reflectedSecret,
-            logLevel = LogLevel.ALL,
+            logLevel = FanboxLogLevel.ALL,
         )
 
         val generated = assertIs<FanboxException.Forbidden>(
@@ -215,13 +214,13 @@ class FanboxHttpClientExceptionTest {
         )
         val raw = assertIs<FanboxException.Forbidden>(
             captureFailure {
-                rawClient.get("https://api.fanbox.cc/post.info?token=query-secret").bodyAsText()
+                downloadClient.get("https://api.fanbox.cc/post.info?token=query-secret").bodyAsText()
             },
         )
 
         assertEquals("post.info", generated.endpoint)
         assertTrue(generated.rawBody.orEmpty().isNotEmpty())
-        assertEquals("custom-request", raw.endpoint)
+        assertEquals("download", raw.endpoint)
         assertNull(raw.rawBody)
         assertFalse("query-secret" in raw.message.orEmpty())
         assertFalse(reflectedSecret in raw.message.orEmpty())
@@ -249,7 +248,7 @@ class FanboxHttpClientExceptionTest {
                 source = FanboxDiagnosticSource.LibraryGenerated,
                 status = HttpStatusCode.Forbidden,
                 body = "{\"csrfToken\":\"$credential\",\"error\":\"${"x".repeat(3_000)}$tail\"}",
-                logLevel = LogLevel.ALL,
+                logLevel = FanboxLogLevel.ALL,
             )
             val error = assertIs<FanboxException.Forbidden>(
                 captureFailure { client.get("https://api.fanbox.cc/post.info").bodyAsText() },
@@ -298,7 +297,7 @@ class FanboxHttpClientExceptionTest {
         body: String,
         headers: Headers = Headers.Empty,
         contentType: ContentType = ContentType.Application.Json,
-        logLevel: LogLevel = LogLevel.NONE,
+        logLevel: FanboxLogLevel = FanboxLogLevel.NONE,
     ): HttpClient {
         val responseHeaders = Headers.build {
             appendAll(headers)
