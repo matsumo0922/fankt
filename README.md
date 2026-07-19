@@ -200,7 +200,9 @@ length never produces a non-finite value.
 Network and HTTP failures use `FanboxException`; callback failures and coroutine cancellation
 propagate unchanged. A partial output remains the caller's responsibility, so file consumers should
 write to a temporary path and promote it only after `download()` returns successfully. The response
-is released on success, failure, cancellation, or owner close.
+is released on success, failure, cancellation, or owner close. A download accepts a coroutine
+context without a `Job`; when a caller `Job` exists, cancellation propagates into the download while
+`Fanbox.close()` cancels only the download work and does not cancel the caller's surrounding scope.
 
 #### Error handling
 

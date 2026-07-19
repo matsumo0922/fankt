@@ -9,6 +9,7 @@
 - [x] 2.1 Replace `HttpStatement` exposure with scoped suspend streaming that emits initial `0f`, reads bounded chunks one at a time, and reports known-length progress after callback completion
 - [x] 2.2 Preserve destination/redirect validation, authentication scoping, and HTTP error tests; add mid-stream transport normalization coverage
 - [x] 2.3 Add tests for bounded ordered chunks, slow consumers, callback failure identity, cancellation, response release, and close before/during download
+- [x] 2.4 Give each download an optionally parented owner-cancellable Job, accept Job-less contexts, and prove close does not cancel the caller parent
 
 ## 3. Dependency and ABI enforcement
 
@@ -17,6 +18,10 @@
 - [x] 3.3 Verify common/Android/iOS declared API scopes and Android Gradle module metadata with provider-backed configuration-cache-compatible inputs
 - [x] 3.4 Publish to an isolated local repository and compile a consumer fixture that resolves that metadata and explicitly selects a compatible Ktor version without using Ktor in a fankt signature
 - [x] 3.5 Wire declared-scope, Android ABI/metadata checks to the Linux PR job, iOS ABI checks to the macOS PR job, and the complete gate before release publication
+- [x] 3.6 Publish only the non-Ktor dependencies required by Android public signatures and compile a Ktor-free consumer against Flow, datetime, and serialization usages
+- [x] 3.7 Inspect Android public/protected generic Signature attributes for Ktor types in addition to the checked text ABI
+- [x] 3.8 Verify Android runtime metadata against a fixed required Ktor module inventory including the OkHttp engine
+- [x] 3.9 Property-version and exclusive-scope the isolated consumer repository, then verify the resolved fankt artifact path is local
 
 ## 4. Consumers and documentation
 

@@ -12,6 +12,7 @@ import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.withContext
 import kotlinx.io.IOException
@@ -482,7 +483,9 @@ class Fanbox internal constructor(
      *
      * Callback failures and cancellation propagate unchanged. The response is released before this
      * function returns or throws. Callers writing files should write to a temporary destination and
-     * promote it only after this function completes successfully.
+     * promote it only after this function completes successfully. A caller context does not need a
+     * Job. When it has one, cancellation propagates into a dedicated download Job; [close] cancels
+     * that download Job without cancelling the caller's parent Job.
      *
      * @throws IllegalArgumentException when [url] or a redirect host is not allowed.
      * @throws FanboxException when the request or response transport fails.
@@ -494,37 +497,60 @@ class Fanbox internal constructor(
     ) {
         val client = downloadClient
         val validatedUrl = parseFanboxDownloadUrl(url)
-        val downloadJob = requireNotNull(currentCoroutineContext()[Job])
+        val downloadJob = SupervisorJob(currentCoroutineContext()[Job])
         val closeHandle = lifecycle.invokeOnCompletion {
             downloadJob.cancel(CancellationException("Fanbox is closed"))
         }
+        var callbackFailure: Throwable? = null
         try {
-            client.prepareGet(validatedUrl.toString()).execute { response ->
-                val contentLength = response.headers[HttpHeaders.ContentLength]
-                    ?.toLongOrNull()
-                    ?.takeIf { it > 0L }
-                val channel = normalizeDownloadTransport(response.request) {
-                    response.bodyAsChannel()
-                }
-                val buffer = ByteArray(DOWNLOAD_CHUNK_SIZE)
-                var deliveredBytes = 0L
+            try {
+                withContext(downloadJob) {
+                    client.prepareGet(validatedUrl.toString()).execute { response ->
+                        val contentLength = response.headers[HttpHeaders.ContentLength]
+                            ?.toLongOrNull()
+                            ?.takeIf { it > 0L }
+                        val channel = normalizeDownloadTransport(response.request) {
+                            response.bodyAsChannel()
+                        }
+                        val buffer = ByteArray(DOWNLOAD_CHUNK_SIZE)
+                        var deliveredBytes = 0L
 
-                onProgress(0f)
-                while (true) {
-                    val read = normalizeDownloadTransport(response.request) {
-                        channel.readAvailable(buffer)
-                    }
-                    if (read < 0) break
-                    if (read == 0) continue
+                        try {
+                            onProgress(0f)
+                        } catch (failure: Throwable) {
+                            callbackFailure = failure
+                            throw failure
+                        }
+                        while (true) {
+                            val read = normalizeDownloadTransport(response.request) {
+                                channel.readAvailable(buffer)
+                            }
+                            if (read < 0) break
+                            if (read == 0) continue
 
-                    onChunk(buffer.copyOf(read))
-                    deliveredBytes += read
-                    if (contentLength != null) {
-                        onProgress((deliveredBytes.toDouble() / contentLength).toFloat())
+                            try {
+                                onChunk(buffer.copyOf(read))
+                            } catch (failure: Throwable) {
+                                callbackFailure = failure
+                                throw failure
+                            }
+                            deliveredBytes += read
+                            if (contentLength != null) {
+                                try {
+                                    onProgress((deliveredBytes.toDouble() / contentLength).toFloat())
+                                } catch (failure: Throwable) {
+                                    callbackFailure = failure
+                                    throw failure
+                                }
+                            }
+                        }
                     }
                 }
+            } catch (failure: Throwable) {
+                throw callbackFailure ?: failure
             }
         } finally {
+            downloadJob.complete()
             closeHandle.dispose()
         }
     }

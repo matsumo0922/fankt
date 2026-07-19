@@ -3,14 +3,29 @@ import org.gradle.api.DefaultTask
 import org.gradle.api.artifacts.result.ResolvedComponentResult
 import org.gradle.api.artifacts.result.ResolvedDependencyResult
 import org.gradle.api.file.ConfigurableFileCollection
+import org.gradle.api.file.RegularFileProperty
 import org.gradle.api.provider.ListProperty
 import org.gradle.api.publish.tasks.GenerateModuleMetadata
 import org.gradle.api.tasks.Input
+import org.gradle.api.tasks.InputFile
 import org.gradle.api.tasks.InputFiles
 import org.gradle.api.tasks.PathSensitive
 import org.gradle.api.tasks.PathSensitivity
 import org.gradle.api.tasks.TaskAction
+import org.objectweb.asm.ClassReader
+import org.objectweb.asm.ClassVisitor
+import org.objectweb.asm.FieldVisitor
+import org.objectweb.asm.MethodVisitor
+import org.objectweb.asm.Opcodes
 import java.util.zip.ZipFile
+
+private val requiredAndroidRuntimeKtorModules = listOf(
+    "io.ktor:ktor-client-core",
+    "io.ktor:ktor-client-content-negotiation",
+    "io.ktor:ktor-serialization-kotlinx-json",
+    "io.ktor:ktor-client-logging",
+    "io.ktor:ktor-client-okhttp",
+)
 
 private fun ResolvedComponentResult.allComponentIdentities(): List<String> {
     val identities = linkedSetOf<String>()
@@ -95,6 +110,14 @@ abstract class VerifyKtorBoundaryTask : DefaultTask() {
     @get:PathSensitive(PathSensitivity.RELATIVE)
     abstract val androidModuleMetadata: ConfigurableFileCollection
 
+    @get:InputFile
+    @get:PathSensitive(PathSensitivity.RELATIVE)
+    abstract val androidAbiFile: RegularFileProperty
+
+    @get:InputFiles
+    @get:PathSensitive(PathSensitivity.RELATIVE)
+    abstract val androidClassFiles: ConfigurableFileCollection
+
     @TaskAction
     fun verify() {
         val forbiddenApiDeclarations = apiDependencyDeclarations.get().filter { "io.ktor:" in it }
@@ -107,10 +130,19 @@ abstract class VerifyKtorBoundaryTask : DefaultTask() {
         check(checkedAbiFiles.isNotEmpty()) {
             "No checked-in fanbox ABI files were found; run :fankt:fanbox:updateLegacyAbi"
         }
-        val leakingAbiFiles = checkedAbiFiles.filter { abi -> "io.ktor" in abi.readText() }
+        val leakingAbiFiles = checkedAbiFiles.filter { abi -> abi.readText().containsKtorType() }
         check(leakingAbiFiles.isEmpty()) {
             "Ktor types leaked into the public fanbox ABI:\n" +
                 leakingAbiFiles.joinToString("\n") { it.relativeTo(project.projectDir).path }
+        }
+
+        val genericSignatureViolations = inspectAndroidGenericSignatures(
+            abiText = androidAbiFile.get().asFile.readText(),
+            classFiles = androidClassFiles.files.filter { it.isFile },
+        )
+        check(genericSignatureViolations.isEmpty()) {
+            "Ktor types leaked into Android public/protected generic signatures:\n" +
+                genericSignatureViolations.joinToString("\n")
         }
 
         val metadataFiles = androidModuleMetadata.files.filter { it.isFile }
@@ -163,6 +195,144 @@ abstract class VerifyKtorBoundaryTask : DefaultTask() {
             "Android runtime publication metadata is missing required Ktor dependencies:\n" +
                 missingRuntimeDependencies.joinToString("\n")
         }
+    }
+    private fun inspectAndroidGenericSignatures(
+        abiText: String,
+        classFiles: List<java.io.File>,
+    ): List<String> {
+        val visibleApi = parseVisibleAndroidApi(abiText)
+        check(visibleApi.isNotEmpty()) { "Android ABI baseline contains no visible classes" }
+        check(classFiles.isNotEmpty()) { "No compiled Android release classes were found" }
+
+        val violations = mutableListOf<String>()
+        val matchedClasses = linkedSetOf<String>()
+        var matchedMembers = 0
+        var genericSignatures = 0
+        classFiles.forEach { classFile ->
+            ClassReader(classFile.readBytes()).accept(
+                object : ClassVisitor(Opcodes.ASM9) {
+                    private var visibleClass: VisibleAndroidClass? = null
+                    private var className: String = classFile.name
+
+                    override fun visit(
+                        version: Int,
+                        access: Int,
+                        name: String,
+                        signature: String?,
+                        superName: String?,
+                        interfaces: Array<out String>?,
+                    ) {
+                        className = name
+                        visibleClass = visibleApi[name]
+                        if (visibleClass != null) {
+                            matchedClasses += name
+                            if (signature != null) genericSignatures += 1
+                            recordKtorSignature("$name class", signature, violations)
+                        }
+                    }
+
+                    override fun visitField(
+                        access: Int,
+                        name: String,
+                        descriptor: String,
+                        signature: String?,
+                        value: Any?,
+                    ): FieldVisitor? {
+                        val visible = visibleClass ?: return null
+                        if (VisibleAndroidMember(name, descriptor) in visible.fields) {
+                            matchedMembers += 1
+                            if (signature != null) genericSignatures += 1
+                            recordKtorSignature("$className.$name", signature, violations)
+                        }
+                        return null
+                    }
+
+                    override fun visitMethod(
+                        access: Int,
+                        name: String,
+                        descriptor: String,
+                        signature: String?,
+                        exceptions: Array<out String>?,
+                    ): MethodVisitor? {
+                        val visible = visibleClass ?: return null
+                        if (VisibleAndroidMember(name, descriptor) in visible.methods) {
+                            matchedMembers += 1
+                            if (signature != null) genericSignatures += 1
+                            recordKtorSignature("$className.$name$descriptor", signature, violations)
+                        }
+                        return null
+                    }
+                },
+                ClassReader.SKIP_CODE or ClassReader.SKIP_DEBUG or ClassReader.SKIP_FRAMES,
+            )
+        }
+        check(matchedClasses == visibleApi.keys) {
+            "Compiled Android classes did not cover the checked ABI:\n" +
+                (visibleApi.keys - matchedClasses).joinToString("\n")
+        }
+        val expectedMembers = visibleApi.values.sumOf { visible ->
+            visible.fields.size + visible.methods.size
+        }
+        check(matchedMembers == expectedMembers) {
+            "Compiled Android members did not cover the checked ABI: " +
+                "matched $matchedMembers of $expectedMembers"
+        }
+        check(genericSignatures > 0) {
+            "No Android generic Signature attributes were inspected"
+        }
+        return violations.sorted()
+    }
+
+    private fun parseVisibleAndroidApi(abiText: String): Map<String, VisibleAndroidClass> {
+        val classPattern = Regex("^(?:public|protected)\\s+.*\\bclass\\s+([^\\s:]+)")
+        val methodPattern = Regex("^\\t(?:public|protected)\\s+.*\\bfun\\s+(\\S+)\\s+(\\([^)]*\\)\\S+)$")
+        val fieldPattern = Regex("^\\t(?:public|protected)\\s+.*\\bfield\\s+(\\S+)\\s+(\\S+)$")
+        val classes = linkedMapOf<String, VisibleAndroidClass>()
+        var current: VisibleAndroidClass? = null
+
+        abiText.lineSequence().forEach { line ->
+            classPattern.find(line)?.let { match ->
+                current = VisibleAndroidClass()
+                classes[match.groupValues[1]] = checkNotNull(current)
+                return@forEach
+            }
+            methodPattern.find(line)?.let { match ->
+                current?.methods?.add(VisibleAndroidMember(match.groupValues[1], match.groupValues[2]))
+                return@forEach
+            }
+            fieldPattern.find(line)?.let { match ->
+                current?.fields?.add(VisibleAndroidMember(match.groupValues[1], match.groupValues[2]))
+            }
+        }
+        return classes
+    }
+
+    private fun recordKtorSignature(
+        declaration: String,
+        signature: String?,
+        violations: MutableList<String>,
+    ) {
+        if (signature?.containsKtorType() == true) {
+            violations += "$declaration -> $signature"
+        }
+    }
+
+    private fun String.containsKtorType(): Boolean =
+        KTOR_DOTTED_PACKAGE in this || KTOR_INTERNAL_PACKAGE in this
+
+    private data class VisibleAndroidClass(
+        val methods: MutableSet<VisibleAndroidMember> = linkedSetOf(),
+        val fields: MutableSet<VisibleAndroidMember> = linkedSetOf(),
+    )
+
+    private data class VisibleAndroidMember(
+        val name: String,
+        val descriptor: String,
+    )
+
+    private companion object {
+        const val KTOR_DOTTED_PACKAGE = "io.ktor"
+        const val KTOR_INTERNAL_PACKAGE = "io/ktor"
     }
 }
 
@@ -222,6 +392,10 @@ kotlin {
 
     sourceSets {
         commonMain.dependencies {
+            api(libs.kotlinx.coroutines.core)
+            api(libs.kotlinx.datetime)
+            api(libs.kotlinx.serialization.core)
+
             implementation(libs.bundles.infra.api)
             implementation(libs.bundles.ktor)
 
@@ -252,9 +426,6 @@ kotlin {
 val sourceSetApiConfigurations = configurations.matching { configuration ->
     configuration.name.endsWith("MainApi")
 }
-val androidRuntimeImplementationConfigurations = configurations.matching { configuration ->
-    configuration.name == "commonMainImplementation" || configuration.name == "androidMainImplementation"
-}
 val androidMetadataTasks = tasks.withType<GenerateModuleMetadata>().matching {
     it.name == "generateMetadataFileForAndroidReleasePublication"
 }
@@ -262,10 +433,17 @@ val androidMetadataTasks = tasks.withType<GenerateModuleMetadata>().matching {
 val verifyKtorBoundary = tasks.register<VerifyKtorBoundaryTask>("verifyKtorBoundary") {
     group = "verification"
     description = "Verifies that Ktor remains outside the public FANBOX API boundary"
-    dependsOn("checkLegacyAbi", androidMetadataTasks)
+    dependsOn("checkLegacyAbi", "compileReleaseKotlinAndroid", androidMetadataTasks)
 
     abiFiles.from(layout.projectDirectory.dir("api").asFileTree.matching { include("**/*.api") })
+    androidAbiFile.set(layout.projectDirectory.file("api/android/fanbox.api"))
+    androidClassFiles.from(
+        layout.buildDirectory.dir("tmp/kotlin-classes/release").map { outputDirectory ->
+            outputDirectory.asFileTree.matching { include("**/*.class") }
+        },
+    )
     androidModuleMetadata.from(androidMetadataTasks)
+    requiredAndroidRuntimeKtorDependencies.set(requiredAndroidRuntimeKtorModules)
 }
 
 sourceSetApiConfigurations.configureEach {
@@ -275,21 +453,6 @@ sourceSetApiConfigurations.configureEach {
             provider {
                 apiConfiguration.dependencies.map { dependency ->
                     "${apiConfiguration.name}: ${dependency.group}:${dependency.name}"
-                }
-            },
-        )
-    }
-}
-
-androidRuntimeImplementationConfigurations.configureEach {
-    val implementationConfiguration = this
-    verifyKtorBoundary.configure {
-        requiredAndroidRuntimeKtorDependencies.addAll(
-            provider {
-                implementationConfiguration.dependencies.mapNotNull { dependency ->
-                    dependency.group
-                        ?.takeIf { it == "io.ktor" }
-                        ?.let { group -> "$group:${dependency.name}" }
                 }
             },
         )

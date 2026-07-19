@@ -26,6 +26,10 @@ import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.io.IOException
+import kotlin.coroutines.Continuation
+import kotlin.coroutines.CoroutineContext
+import kotlin.coroutines.EmptyCoroutineContext
+import kotlin.coroutines.startCoroutine
 import kotlin.test.Test
 import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
@@ -291,6 +295,24 @@ class FanboxDownloadTest {
     }
 
     @Test
+    fun downloadAcceptsCoroutineContextWithoutJob() = runBlocking {
+        val fixture = createFixture { respond("jobless") }
+        val chunks = mutableListOf<ByteArray>()
+
+        val result = startWithContext(EmptyCoroutineContext) {
+            fixture.fanbox.download(
+                url = "https://downloads.fanbox.cc/jobless.bin",
+                onChunk = chunks::add,
+            )
+        }.await()
+
+        result.getOrThrow()
+        assertEquals("jobless", chunks.flatten().decodeToString())
+        assertTrue(fixture.requests.single().executionJob.isCompleted)
+        fixture.fanbox.close()
+    }
+
+    @Test
     fun ownerClosePreventsNewDownloadWork() = runBlocking {
         val fixture = createFixture()
         fixture.fanbox.close()
@@ -317,6 +339,27 @@ class FanboxDownloadTest {
 
         assertFailsWith<CancellationException> { download.await() }
         assertTrue(fixture.requests.single().executionJob.isCompleted)
+    }
+
+    @Test
+    fun ownerCloseCancelsOnlyDedicatedDownloadJob() = runBlocking {
+        val callbackStarted = CompletableDeferred<Unit>()
+        val fixture = createFixture()
+        val parentJob = Job()
+        val completion = startWithContext(parentJob + Dispatchers.Default) {
+            fixture.fanbox.download("https://downloads.fanbox.cc/file.bin") {
+                callbackStarted.complete(Unit)
+                awaitCancellation()
+            }
+        }
+
+        callbackStarted.await()
+        fixture.fanbox.close()
+
+        assertIs<CancellationException>(completion.await().exceptionOrNull())
+        assertTrue(parentJob.isActive)
+        assertTrue(fixture.requests.single().executionJob.isCompleted)
+        parentJob.cancel()
     }
 
     @Test
@@ -385,6 +428,23 @@ class FanboxDownloadTest {
             requests = requests,
             clients = clients,
         )
+    }
+
+    private fun <T> startWithContext(
+        context: CoroutineContext,
+        block: suspend () -> T,
+    ): CompletableDeferred<Result<T>> {
+        val completion = CompletableDeferred<Result<T>>()
+        block.startCoroutine(
+            object : Continuation<T> {
+                override val context: CoroutineContext = context
+
+                override fun resumeWith(result: Result<T>) {
+                    completion.complete(result)
+                }
+            },
+        )
+        return completion
     }
 
     private fun HttpRequestData.record(): RecordedRequest = RecordedRequest(
