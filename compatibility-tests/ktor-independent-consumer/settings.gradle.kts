@@ -7,6 +7,12 @@ pluginManagement {
 }
 
 dependencyResolutionManagement {
+    versionCatalogs {
+        create("libs") {
+            from(files("../../gradle/libs.versions.toml"))
+        }
+    }
+
     repositories {
         val fanktRepository = providers.gradleProperty("fanktRepository").orNull
             ?: error("-PfanktRepository must point to the isolated fankt Maven repository")

@@ -2,6 +2,7 @@ package me.matsumo.fankt.fanbox
 
 import de.jensklingenberg.ktorfit.Ktorfit
 import io.ktor.client.HttpClient
+import io.ktor.client.request.HttpRequest
 import io.ktor.client.request.prepareGet
 import io.ktor.client.statement.bodyAsChannel
 import io.ktor.client.statement.request
@@ -15,6 +16,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.yield
 import kotlinx.io.IOException
 import me.matsumo.fankt.fanbox.datasource.createFanboxCreatorApi
 import me.matsumo.fankt.fanbox.datasource.createFanboxPostApi
@@ -544,7 +546,11 @@ class Fanbox internal constructor(
                             deliveredBytes += chunk.size
                             if (contentLength != null) {
                                 try {
-                                    onProgress((deliveredBytes.toDouble() / contentLength).toFloat())
+                                    onProgress(
+                                        (deliveredBytes.toDouble() / contentLength)
+                                            .toFloat()
+                                            .coerceIn(0f, 1f),
+                                    )
                                 } catch (failure: Throwable) {
                                     callbackFailure = failure
                                     throw failure
@@ -586,10 +592,10 @@ private data class FanboxResources(
     val clients: List<HttpClient>,
 )
 
-private const val DOWNLOAD_CHUNK_SIZE: Int = 8 * 1_024
+private const val DOWNLOAD_CHUNK_SIZE: Int = 64 * 1_024
 
 private suspend inline fun <T> normalizeDownloadTransport(
-    request: io.ktor.client.request.HttpRequest,
+    request: HttpRequest,
     block: suspend () -> T,
 ): T = normalizeDownloadTransportFailure(
     block = block,
@@ -629,7 +635,10 @@ internal suspend inline fun readDownloadChunk(
             )
             return null
         }
-        if (readCount == 0) continue
+        if (readCount == 0) {
+            yield()
+            continue
+        }
         return buffer.copyOf(readCount)
     }
 }

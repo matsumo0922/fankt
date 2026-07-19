@@ -68,20 +68,9 @@ jobs:
           :fankt:fanbox:testDebugUnitTest
           :fankt:fanbox-persistence-room:testDebugUnitTest
           :fankt:fanbox:verifyPersistenceBoundary
-          :fankt:fanbox:verifyKtorBoundary
 
       - name: Verify published consumer boundary
-        run: |
-          consumer_repository="$RUNNER_TEMP/fankt-consumer-repository"
-          ./gradlew \
-            :fankt:fanbox:publishKotlinMultiplatformPublicationToMavenLocal \
-            :fankt:fanbox:publishAndroidReleasePublicationToMavenLocal \
-            -Dmaven.repo.local="$consumer_repository" \
-            --no-configuration-cache
-          ./gradlew \
-            -p compatibility-tests/ktor-independent-consumer \
-            verifyKtorSelection \
-            -PfanktRepository="$consumer_repository"
+        run: scripts/verify_ktor_consumer_boundary.sh
 
   ios-test:
     if: github.event.pull_request.draft == false

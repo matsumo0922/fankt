@@ -36,7 +36,7 @@
 - **THEN** execution rejects the redirect before the redirected request reaches transport
 
 ### Requirement: API-provided media URLs are streamed without reconstruction
-`Fanbox.download` SHALL suspend while it creates and consumes one GET response using the complete caller-supplied URL without changing its path, filename extension, or query. It SHALL consume the response inside a bounded execution scope that releases the response on success, callback failure, cancellation, transport failure, or owner close. Each invocation SHALL use a download-specific Job whose optional parent is the caller context's Job, so Job-less coroutine contexts remain valid and owner close cancels the download without cancelling the caller's parent Job. It SHALL read and deliver one bounded response chunk at a time to a suspend callback in order, SHALL request the next read only after that callback completes, SHALL expose no whole-body return, and SHALL use a download client shared and owned by the `Fanbox` instance.
+`Fanbox.download` SHALL suspend while it creates and consumes one GET response using the complete caller-supplied URL without changing its path, filename extension, or query. It SHALL consume the response inside a bounded execution scope that releases the response on success, callback failure, cancellation, transport failure, or owner close. Each invocation SHALL use a download-specific Job whose optional parent is the caller context's Job, so Job-less coroutine contexts remain valid and owner close cancels the download without cancelling the caller's parent Job. It SHALL read and deliver one non-empty response chunk of at most 64 KiB at a time to a suspend callback in order, SHALL request the next read only after that callback completes, SHALL suspend or yield rather than spin when a read temporarily returns no bytes, SHALL expose no whole-body return, and SHALL use a download client shared and owned by the `Fanbox` instance.
 
 #### Scenario: File extension and query are preserved
 - **WHEN** `download` receives an allowed URL ending in `.zip` with a query string
@@ -56,7 +56,7 @@
 
 #### Scenario: Progress is reported while consuming the response
 - **WHEN** a download response has a positive content length
-- **THEN** `onProgress` receives downloaded-byte progress as a finite `Float` fraction after the corresponding chunk callback completes
+- **THEN** `onProgress` receives downloaded-byte progress as a finite `Float` fraction clamped to `0f..1f` after the corresponding chunk callback completes
 
 #### Scenario: Empty or unknown-length progress is safe
 - **WHEN** a download response length is zero or unknown
@@ -81,6 +81,10 @@
 #### Scenario: Download transport failure is normalized
 - **WHEN** an allowed download receives a non-success HTTP response or the transport fails before or during body consumption
 - **THEN** `download` throws `FanboxException` without retaining a raw response body
+
+#### Scenario: Mid-stream transport failure follows the public download path
+- **WHEN** an allowed download delivers one chunk and its response channel then fails during body consumption
+- **THEN** the public `download` operation preserves the delivered chunk, releases the response, and throws `FanboxException.Network` with endpoint `download`
 
 ### Requirement: Extension-specific download APIs are removed
 The public `Fanbox` API SHALL expose one URL-based chunk-streaming `download` operation instead of `downloadPostFile`, `downloadPostImage`, and `downloadPostThumbnailImage`, and production source SHALL contain no generated `FanboxDownloadApi` route declarations. Trace: issue #32 download API removal checklist.

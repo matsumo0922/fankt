@@ -12,6 +12,7 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.runBlocking
 import me.matsumo.fankt.fanbox.domain.model.id.FanboxPostId
 import me.matsumo.fankt.fanbox.fixture.FanboxMetadataHtmlFixtures
@@ -261,6 +262,78 @@ class FanboxAuthStorageTest {
 
             assertEquals(1, storage.replaceAllCalls)
             assertEquals(listOf("live"), storage.snapshot().map { it.name })
+        } finally {
+            fanbox.close()
+        }
+    }
+
+    @Test
+    fun publicReplacementCanonicalizesAndDeduplicatesBeforeThirdPartyStorage() = runBlocking {
+        val storage = RecordingBoundaryStorage()
+        val fanbox = Fanbox(cookieStorage = storage)
+        try {
+            fanbox.setCookies(
+                listOf(
+                    record("session", "first-credential", domain = " .FANBOX.CC ", path = "index"),
+                    record("session", "second-credential", domain = "fanbox.cc", path = "/", secure = false),
+                    record(
+                        "session",
+                        "expired-credential",
+                        domain = ".fanbox.cc",
+                        path = "other",
+                        expiresAt = 0,
+                    ),
+                ),
+                reset = true,
+            )
+
+            assertEquals(1, storage.replacement.size)
+            assertEquals("fanbox.cc", storage.replacement.single().domain)
+            assertEquals("/", storage.replacement.single().path)
+            assertEquals("session", storage.replacement.single().name)
+            assertFalse(storage.replacement.single().secure)
+        } finally {
+            fanbox.close()
+        }
+    }
+
+    @Test
+    fun publicAdditiveMutationCanonicalizesBeforeThirdPartyStorage() = runBlocking {
+        val storage = RecordingBoundaryStorage()
+        val fanbox = Fanbox(cookieStorage = storage)
+        try {
+            fanbox.setCookies(
+                listOf(record("custom", "credential", domain = " .FANBOX.CC ", path = "index")),
+            )
+
+            assertEquals(1, storage.upserts.size)
+            assertEquals("fanbox.cc", storage.upserts.single().domain)
+            assertEquals("/", storage.upserts.single().path)
+            assertEquals("custom", storage.upserts.single().name)
+        } finally {
+            fanbox.close()
+        }
+    }
+
+    @Test
+    fun publicExpiredAdditiveMutationDeletesCanonicalIdentityFromThirdPartyStorage() = runBlocking {
+        val storage = RecordingBoundaryStorage()
+        val fanbox = Fanbox(cookieStorage = storage)
+        try {
+            fanbox.setCookies(
+                listOf(
+                    record(
+                        "expired",
+                        "credential",
+                        domain = " .FANBOX.CC ",
+                        path = "index",
+                        expiresAt = 0,
+                    ),
+                ),
+            )
+
+            assertEquals(CookieIdentity("fanbox.cc", "/", "expired"), storage.deletedIdentity)
+            assertTrue(storage.upserts.isEmpty())
         } finally {
             fanbox.close()
         }
@@ -517,6 +590,29 @@ class FanboxAuthStorageTest {
             clearCalls += 1
             delegate.clear()
         }
+    }
+
+    private class RecordingBoundaryStorage : FanboxCookieStorage {
+        val upserts = mutableListOf<FanboxCookieRecord>()
+        var replacement: List<FanboxCookieRecord> = emptyList()
+            private set
+        var deletedIdentity: CookieIdentity? = null
+            private set
+
+        override val cookies = flowOf(emptyList<FanboxCookieRecord>())
+        override suspend fun snapshot(): List<FanboxCookieRecord> = replacement.toList()
+        override suspend fun upsert(cookie: FanboxCookieRecord) {
+            upserts += cookie
+        }
+        override suspend fun delete(domain: String, path: String, name: String) {
+            deletedIdentity = CookieIdentity(domain, path, name)
+        }
+        override suspend fun deleteExpired(nowEpochMilliseconds: Long) =
+            error("unexpected expiry cleanup")
+        override suspend fun replaceAll(cookies: List<FanboxCookieRecord>) {
+            replacement = cookies.toList()
+        }
+        override suspend fun clear() = error("unexpected clear")
     }
 
     private companion object {

@@ -17,7 +17,11 @@ Every public or protected declaration in the `me.matsumo.fankt.fanbox` productio
 
 #### Scenario: Cookies are observed and replaced
 - **WHEN** a consumer observes `Fanbox.cookies` or calls `Fanbox.setCookies`
-- **THEN** the values use `FanboxCookieRecord` without requiring Ktor Cookie types
+- **THEN** the values use `FanboxCookieRecord` without requiring Ktor Cookie types, and fankt canonicalizes domain and path identity before invoking host-owned storage
+
+#### Scenario: Host-owned Cookie storage receives canonical identity
+- **WHEN** a consumer supplies equivalent records whose domains differ by whitespace, leading dot, or case and whose paths do not begin with `/`
+- **THEN** fankt passes one canonical record to the host-owned storage and the public storage contract defines equality by canonical domain, canonical path, and name
 
 #### Scenario: Logging is configured
 - **WHEN** a consumer selects a `FanboxLogLevel`
@@ -47,5 +51,9 @@ Every `fanbox` common, hierarchical native, target-specific iOS, and Android sou
 - **THEN** compilation succeeds with no Ktor component on its compile classpath while the runtime graph retains the consumer-selected compatible Ktor version
 
 #### Scenario: Consumer fixture resolves only the isolated publication
-- **WHEN** the compatibility fixture resolves `me.matsumo.fankt:fanbox` using its property-supplied version and repository
+- **WHEN** the compatibility fixture resolves `me.matsumo.fankt:fanbox` using the root version catalog's `versionName` and its property-supplied repository
 - **THEN** exclusive repository content rules prevent fallback for the `me.matsumo.fankt` group and verification proves the resolved artifact path is inside that local repository
+
+#### Scenario: Boundary tooling versions follow the root catalog
+- **WHEN** the Android metadata and generic-signature boundary tooling is configured
+- **THEN** Kotlin metadata and ASM buildscript dependencies are declared explicitly from the root version catalog rather than hard-coded or inherited transitively

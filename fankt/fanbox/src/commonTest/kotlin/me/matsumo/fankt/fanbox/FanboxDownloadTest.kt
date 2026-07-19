@@ -12,6 +12,8 @@ import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.Url
 import io.ktor.http.headersOf
+import io.ktor.utils.io.ByteReadChannel
+import io.ktor.utils.io.InternalAPI
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
@@ -21,7 +23,9 @@ import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.runBlocking
+import kotlinx.io.Buffer
 import kotlinx.io.IOException
+import kotlinx.io.Source
 import kotlin.coroutines.Continuation
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
@@ -31,6 +35,7 @@ import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertIs
+import kotlin.test.assertNotSame
 import kotlin.test.assertNull
 import kotlin.test.assertSame
 import kotlin.test.assertTrue
@@ -65,7 +70,7 @@ class FanboxDownloadTest {
 
     @Test
     fun boundedOrderedChunksWaitForSlowConsumer() = runBlocking {
-        val payload = ByteArray(20_000) { index -> (index % 251).toByte() }
+        val payload = ByteArray(150_000) { index -> (index % 251).toByte() }
         val fixture = createFixture {
             respond(
                 content = payload,
@@ -96,7 +101,8 @@ class FanboxDownloadTest {
         download.await()
 
         assertTrue(chunks.size > 1)
-        assertTrue(chunks.all { it.isNotEmpty() && it.size <= 8 * 1_024 })
+        assertTrue(chunks.all { it.isNotEmpty() && it.size <= 64 * 1_024 })
+        chunks.zipWithNext().forEach { (previous, next) -> assertNotSame(previous, next) }
         assertContentEquals(payload, chunks.flatten())
         assertEquals(0f to 0, progress.first())
         assertTrue(progress.drop(1).all { (_, deliveredChunkCount) -> deliveredChunkCount > 0 })
@@ -172,6 +178,26 @@ class FanboxDownloadTest {
     }
 
     @Test
+    fun knownContentLengthProgressIsClampedWhenDeliveredBytesExceedHeader() = runBlocking {
+        val fixture = createFixture {
+            respond(
+                content = "longer-than-declared",
+                headers = headersOf(HttpHeaders.ContentLength, "3"),
+            )
+        }
+        val progress = mutableListOf<Float>()
+
+        fixture.fanbox.download(
+            url = "https://downloads.fanbox.cc/mismatched-length.bin",
+            onProgress = progress::add,
+        ) {}
+
+        assertEquals(listOf(0f, 1f), progress)
+        assertTrue(progress.all { it.isFinite() && it in 0f..1f })
+        fixture.fanbox.close()
+    }
+
+    @Test
     fun redirectOutsideAllowlistIsRejectedBeforeSecondTransportAndReleasesPriorCall() = runBlocking {
         val fixture = createFixture { request ->
             if (request.url.host == "downloads.fanbox.cc") {
@@ -228,32 +254,60 @@ class FanboxDownloadTest {
     @Test
     fun midStreamTransportFailureIsNormalizedAfterDeliveredChunk() = runBlocking {
         val transportFailure = IOException("mid-stream failure")
-        val chunks = mutableListOf("first".encodeToByteArray())
-        var readCount = 0
-        var closedCauseCount = 0
+        val firstChunk = "first".encodeToByteArray()
+        val firstChunkDelivered = CompletableDeferred<Unit>()
+        val fixture = createFixture {
+            respond(
+                GatedFailingContentChannel(
+                    content = firstChunk,
+                    firstChunkDelivered = firstChunkDelivered,
+                    failure = transportFailure,
+                ),
+            )
+        }
+        val chunks = mutableListOf<ByteArray>()
 
         val error = assertFailsWith<FanboxException.Network> {
-            // The production loop obtains every chunk through this function, including EOF handling
-            // after an earlier chunk callback has completed.
-            readDownloadChunk(
-                buffer = ByteArray(8 * 1_024),
-                read = {
-                    readCount += 1
-                    -1
-                },
-                closedCause = {
-                    closedCauseCount += 1
-                    transportFailure
-                },
-                networkFailure = { cause -> FanboxException.Network("download", cause) },
-            )
+            fixture.fanbox.download(
+                url = "https://downloads.fanbox.cc/mid-stream.bin",
+            ) { chunk ->
+                chunks += chunk
+                firstChunkDelivered.complete(Unit)
+            }
         }
 
         assertEquals("download", error.endpoint)
-        assertEquals("first", chunks.flatten().decodeToString())
-        assertSame(transportFailure, error.cause)
-        assertEquals(1, readCount)
-        assertEquals(1, closedCauseCount)
+        assertEquals(1, chunks.size)
+        assertContentEquals(firstChunk, chunks.single())
+        assertIs<IOException>(error.cause)
+        assertEquals(transportFailure.message, error.cause?.message)
+        assertEquals(1, fixture.requests.size)
+        assertTrue(fixture.requests.single().executionJob.isCompleted)
+        fixture.fanbox.close()
+    }
+
+    @Test
+    fun zeroReadYieldsBeforeRetryingAndThenReturnsData() = runBlocking {
+        val payload = "data".encodeToByteArray()
+        var reads = 0
+
+        val chunk = readDownloadChunk(
+            buffer = ByteArray(payload.size),
+            read = { target ->
+                reads += 1
+                if (reads == 1) {
+                    0
+                } else {
+                    payload.copyInto(target)
+                    payload.size
+                }
+            },
+            closedCause = { null },
+            networkFailure = { cause -> FanboxException.Network("download", cause) },
+        )
+
+        assertContentEquals(payload, chunk)
+        assertEquals(2, reads)
     }
 
     @Test
@@ -490,4 +544,34 @@ class FanboxDownloadTest {
         val cookie: String?,
         val executionJob: Job,
     )
+
+    @OptIn(InternalAPI::class)
+    private class GatedFailingContentChannel(
+        content: ByteArray,
+        private val firstChunkDelivered: CompletableDeferred<Unit>,
+        private val failure: IOException,
+    ) : ByteReadChannel {
+        private val buffer = Buffer().apply { write(content) }
+        private var failed = false
+
+        override val closedCause: Throwable?
+            get() = failure.takeIf { failed }
+
+        override val isClosedForRead: Boolean
+            get() = failed
+
+        override val readBuffer: Source
+            get() = buffer
+
+        override suspend fun awaitContent(min: Int): Boolean {
+            if (buffer.size >= min) return true
+            firstChunkDelivered.await()
+            failed = true
+            throw failure
+        }
+
+        override fun cancel(cause: Throwable?) {
+            // Failure delivery belongs to awaitContent after the callback gate opens.
+        }
+    }
 }

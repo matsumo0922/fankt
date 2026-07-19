@@ -1,4 +1,5 @@
 import org.gradle.api.DefaultTask
+import org.gradle.api.artifacts.Configuration
 import org.gradle.api.artifacts.component.ModuleComponentIdentifier
 import org.gradle.api.file.ConfigurableFileCollection
 import org.gradle.api.file.DirectoryProperty
@@ -93,12 +94,12 @@ abstract class VerifyPublishedConsumerTask : DefaultTask() {
 }
 
 plugins {
-    id("com.android.library") version "8.12.0"
-    id("org.jetbrains.kotlin.android") version "2.2.10"
+    alias(libs.plugins.android.library)
+    alias(libs.plugins.kotlin.android)
 }
 
 val consumerKtorVersion = "3.2.2"
-val publishedFanktVersion = providers.gradleProperty("fanktVersion")
+val publishedFanktVersion = libs.versions.versionName
 
 configurations.configureEach {
     resolutionStrategy.eachDependency {
@@ -160,7 +161,7 @@ tasks.register<VerifyPublishedConsumerTask>("verifyKtorSelection") {
     )
 }
 
-fun componentIdentities(configuration: org.gradle.api.artifacts.Configuration): List<String> =
+fun componentIdentities(configuration: Configuration): List<String> =
     configuration.incoming.resolutionResult.allComponents.map { component ->
         component.moduleVersion?.let { "${it.group}:${it.name}:${it.version}" }
             ?: component.id.displayName

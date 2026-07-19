@@ -35,3 +35,10 @@
 - [x] 5.1 Run focused common, Android, iOS, download, ABI, declared-scope, Android metadata, and locally published consumer checks with isolated caches
 - [x] 5.2 Run the required repository test and static-analysis suites
 - [x] 5.3 Validate OpenSpec artifacts strictly and reconcile completed task state
+
+## 6. Review follow-up
+
+- [x] 6.1 Remove release-version duplication, make Kotlin metadata and ASM tooling explicit catalog-backed dependencies, and share the isolated consumer boundary script across PR and release workflows
+- [x] 6.2 Prove mid-stream transport normalization through public `download`, use 64 KiB bounded chunks, clamp progress, and avoid zero-read spinning
+- [x] 6.3 Canonicalize Cookie identity before host storage and document Cookie and effective logging-level contracts at the public declarations
+- [ ] 6.4 Run focused cross-platform tests, boundary publication checks, full repository validation, strict OpenSpec validation, and required CI on the final review-fix HEAD

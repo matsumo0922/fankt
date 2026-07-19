@@ -18,6 +18,7 @@ import org.objectweb.asm.ClassVisitor
 import org.objectweb.asm.FieldVisitor
 import org.objectweb.asm.MethodVisitor
 import org.objectweb.asm.Opcodes
+import java.io.File
 import java.util.Collections
 import java.util.IdentityHashMap
 import java.util.zip.ZipFile
@@ -32,7 +33,8 @@ buildscript {
         mavenCentral()
     }
     dependencies {
-        classpath("org.jetbrains.kotlin:kotlin-metadata-jvm:2.2.0")
+        classpath(libs.kotlin.metadata.jvm)
+        classpath(libs.asm)
     }
 }
 
@@ -63,7 +65,7 @@ private object AndroidKotlinMetadataInspector {
     private const val KTOR_DOTTED_PACKAGE = "io.ktor"
     private const val KTOR_INTERNAL_PACKAGE = "io/ktor"
 
-    fun inspect(classFiles: List<java.io.File>): Result {
+    fun inspect(classFiles: List<File>): Result {
         val violations = mutableListOf<String>()
         var metadataFiles = 0
         var visibleTypeAliases = 0
@@ -105,7 +107,7 @@ private object AndroidKotlinMetadataInspector {
         )
     }
 
-    private fun readMetadataHeader(classFile: java.io.File): MetadataHeader? {
+    private fun readMetadataHeader(classFile: File): MetadataHeader? {
         var header: MetadataHeader? = null
         ClassReader(classFile.readBytes()).accept(
             object : ClassVisitor(Opcodes.ASM9) {
@@ -367,9 +369,10 @@ abstract class VerifyKtorBoundaryTask : DefaultTask() {
                 missingRuntimeDependencies.joinToString("\n")
         }
     }
+
     private fun inspectAndroidGenericSignatures(
         abiText: String,
-        classFiles: List<java.io.File>,
+        classFiles: List<File>,
     ): List<String> {
         val visibleApi = parseVisibleAndroidApi(abiText)
         check(visibleApi.isNotEmpty()) { "Android ABI baseline contains no visible classes" }
