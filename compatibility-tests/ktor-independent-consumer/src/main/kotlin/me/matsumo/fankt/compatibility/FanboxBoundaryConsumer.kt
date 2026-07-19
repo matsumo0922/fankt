@@ -1,12 +1,14 @@
+@file:OptIn(kotlin.time.ExperimentalTime::class)
+
 package me.matsumo.fankt.compatibility
 
 import kotlinx.coroutines.flow.Flow
-import kotlinx.datetime.Instant
 import kotlinx.serialization.KSerializer
 import me.matsumo.fankt.fanbox.Fanbox
 import me.matsumo.fankt.fanbox.FanboxCookieRecord
 import me.matsumo.fankt.fanbox.FanboxLogLevel
 import me.matsumo.fankt.fanbox.domain.model.FanboxPost
+import kotlin.time.Instant
 
 internal class FanboxBoundaryConsumer {
     val fanbox: Fanbox = Fanbox(logLevel = FanboxLogLevel.INFO)

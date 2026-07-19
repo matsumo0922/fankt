@@ -1,7 +1,8 @@
+@file:OptIn(kotlin.time.ExperimentalTime::class)
+
 package me.matsumo.fankt.fanbox.datasource.mapper
 
 import io.ktor.http.Url
-import kotlinx.datetime.Instant
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
@@ -33,6 +34,7 @@ import me.matsumo.fankt.fanbox.domain.model.id.FanboxPostId
 import me.matsumo.fankt.fanbox.domain.model.id.FanboxPostItemId
 import me.matsumo.fankt.fanbox.domain.model.id.FanboxUserId
 import me.matsumo.fankt.fanbox.domain.translateToCursor
+import kotlin.time.Instant
 
 private val EMBED_SERVICE_PROVIDERS = setOf(
     "twitter",

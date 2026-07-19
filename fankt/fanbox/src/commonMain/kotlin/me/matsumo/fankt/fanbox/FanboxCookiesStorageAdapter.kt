@@ -1,3 +1,5 @@
+@file:OptIn(kotlin.time.ExperimentalTime::class)
+
 package me.matsumo.fankt.fanbox
 
 import io.ktor.client.plugins.cookies.CookiesStorage
@@ -6,7 +8,7 @@ import io.ktor.http.Cookie
 import io.ktor.http.Url
 import io.ktor.util.date.GMTDate
 import kotlinx.coroutines.CancellationException
-import kotlinx.datetime.Clock
+import kotlin.time.Clock
 
 internal class FanboxCookiesStorageAdapter(
     private val storage: FanboxCookieStorage,

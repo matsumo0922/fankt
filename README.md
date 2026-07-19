@@ -172,6 +172,14 @@ The default authentication durability changes from implicit Room persistence to 
 storage, and constructor binary signatures change. Consumers must perform a clean rebuild and
 inject persistence before upgrading when restart durability is required.
 
+FANBOX model timestamps now use `kotlin.time.Instant` instead of the transitional
+`kotlinx.datetime.Instant` compatibility type. On Kotlin 2.2, callers must explicitly opt in to
+`kotlin.time.ExperimentalTime`; this API is experimental and may change binary shape in a future
+Kotlin release. Remove `toStdlibInstant()` calls and accept model timestamps directly. PixiView's
+known migration covers payment grouping, the common formatting extension, and both relative-time
+extensions. Consumers that still need calendar or time-zone APIs should select a normal
+non-compat `kotlinx-datetime` artifact independently; fankt no longer publishes that dependency.
+
 `Fanbox` owns its generated and download clients. Close it after all requests and downloads finish.
 Calls started after `Fanbox.close()` fail with `IllegalStateException`; the HTTP engine may finish
 shutdown asynchronously.

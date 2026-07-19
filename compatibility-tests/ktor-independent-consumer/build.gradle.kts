@@ -47,12 +47,22 @@ abstract class VerifyPublishedConsumerTask : DefaultTask() {
             "Ktor leaked onto the published consumer compile classpath:\n" +
                 compileKtorComponents.joinToString("\n")
         }
+        val compileDatetimeComponents = resolvedCompileComponents.filter { it.isKotlinxDatetime() }
+        check(compileDatetimeComponents.isEmpty()) {
+            "kotlinx-datetime leaked onto the published consumer compile classpath:\n" +
+                compileDatetimeComponents.joinToString("\n")
+        }
 
         val selectedKtorComponents = runtimeComponents.get().filter { it.startsWith("io.ktor:") }
         check(selectedKtorComponents.isNotEmpty()) { "The fixture did not resolve runtime Ktor modules" }
         check(selectedKtorComponents.all { it.endsWith(":${selectedKtorVersion.get()}") }) {
             "The consumer-selected Ktor version was not honored:\n" +
                 selectedKtorComponents.joinToString("\n")
+        }
+        val runtimeDatetimeComponents = runtimeComponents.get().filter { it.isKotlinxDatetime() }
+        check(runtimeDatetimeComponents.isEmpty()) {
+            "kotlinx-datetime leaked onto the published consumer runtime classpath:\n" +
+                runtimeDatetimeComponents.joinToString("\n")
         }
 
         val resolvedArtifacts = resolvedFanktArtifacts.files
@@ -91,6 +101,9 @@ abstract class VerifyPublishedConsumerTask : DefaultTask() {
         }
         return digest.digest()
     }
+
+    private fun String.isKotlinxDatetime(): Boolean =
+        startsWith("org.jetbrains.kotlinx:kotlinx-datetime:")
 }
 
 plugins {
@@ -134,7 +147,7 @@ dependencies {
 
 tasks.register<VerifyPublishedConsumerTask>("verifyKtorSelection") {
     group = "verification"
-    description = "Compiles without Ktor while selecting a compatible Ktor version for runtime"
+    description = "Compiles with stdlib time and without Ktor or datetime API leakage"
     dependsOn("compileReleaseKotlin")
 
     val releaseCompileClasspath = configurations.named("releaseCompileClasspath")

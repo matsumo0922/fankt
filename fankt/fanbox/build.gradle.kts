@@ -264,6 +264,14 @@ abstract class VerifyKtorBoundaryTask : DefaultTask() {
     @get:Input
     abstract val requiredAndroidRuntimeKtorDependencies: ListProperty<String>
 
+    @get:InputFile
+    @get:PathSensitive(PathSensitivity.RELATIVE)
+    abstract val versionCatalogFile: RegularFileProperty
+
+    @get:InputFiles
+    @get:PathSensitive(PathSensitivity.RELATIVE)
+    abstract val productionKotlinFiles: ConfigurableFileCollection
+
     @get:InputFiles
     @get:PathSensitive(PathSensitivity.RELATIVE)
     abstract val abiFiles: ConfigurableFileCollection
@@ -271,6 +279,10 @@ abstract class VerifyKtorBoundaryTask : DefaultTask() {
     @get:InputFiles
     @get:PathSensitive(PathSensitivity.RELATIVE)
     abstract val androidModuleMetadata: ConfigurableFileCollection
+
+    @get:InputFiles
+    @get:PathSensitive(PathSensitivity.RELATIVE)
+    abstract val publishedModuleMetadata: ConfigurableFileCollection
 
     @get:InputFile
     @get:PathSensitive(PathSensitivity.RELATIVE)
@@ -288,6 +300,21 @@ abstract class VerifyKtorBoundaryTask : DefaultTask() {
                 forbiddenApiDeclarations.joinToString("\n")
         }
 
+        val versionCatalog = versionCatalogFile.get().asFile.readText()
+        check("kotlinx-datetime" !in versionCatalog && "kotlinxDatetime" !in versionCatalog) {
+            "The root version catalog still declares kotlinx-datetime or its compatibility version"
+        }
+
+        val deprecatedDatetimeSourceViolations = productionKotlinFiles.files
+            .filter { it.isFile }
+            .filter { source -> source.readText().containsDeprecatedDatetimeType() }
+        check(deprecatedDatetimeSourceViolations.isEmpty()) {
+            "Deprecated kotlinx-datetime Instant or Clock remains in production source:\n" +
+                deprecatedDatetimeSourceViolations.joinToString("\n") {
+                    it.relativeTo(project.projectDir).path
+                }
+        }
+
         val checkedAbiFiles = abiFiles.files.filter { it.isFile }
         check(checkedAbiFiles.isNotEmpty()) {
             "No checked-in fanbox ABI files were found; run :fankt:fanbox:updateLegacyAbi"
@@ -296,6 +323,15 @@ abstract class VerifyKtorBoundaryTask : DefaultTask() {
         check(leakingAbiFiles.isEmpty()) {
             "Ktor types leaked into the public fanbox ABI:\n" +
                 leakingAbiFiles.joinToString("\n") { it.relativeTo(project.projectDir).path }
+        }
+        val deprecatedDatetimeAbiFiles = checkedAbiFiles.filter { abi ->
+            abi.readText().containsDeprecatedDatetimeType()
+        }
+        check(deprecatedDatetimeAbiFiles.isEmpty()) {
+            "Deprecated kotlinx-datetime Instant or Clock leaked into the public fanbox ABI:\n" +
+                deprecatedDatetimeAbiFiles.joinToString("\n") {
+                    it.relativeTo(project.projectDir).path
+                }
         }
 
         val genericSignatureViolations = inspectAndroidGenericSignatures(
@@ -367,6 +403,36 @@ abstract class VerifyKtorBoundaryTask : DefaultTask() {
         check(missingRuntimeDependencies.isEmpty()) {
             "Android runtime publication metadata is missing required Ktor dependencies:\n" +
                 missingRuntimeDependencies.joinToString("\n")
+        }
+
+        val publishedMetadataFiles = publishedModuleMetadata.files.filter { it.isFile }
+        check(publishedMetadataFiles.isNotEmpty()) {
+            "No Android or Kotlin Multiplatform publication metadata was generated"
+        }
+        val datetimeMetadataViolations = publishedMetadataFiles.flatMap { metadataFile ->
+            val metadata = JsonSlurper().parse(metadataFile) as Map<*, *>
+            val variants = metadata["variants"] as? List<*> ?: emptyList<Any>()
+            variants.flatMap variantLoop@{ variantValue ->
+                val variant = variantValue as? Map<*, *> ?: return@variantLoop emptyList()
+                val variantName = variant["name"].toString()
+                val dependencies = variant["dependencies"] as? List<*> ?: emptyList<Any>()
+                dependencies.mapNotNull dependencyLoop@{ dependencyValue ->
+                    val dependency = dependencyValue as? Map<*, *> ?: return@dependencyLoop null
+                    if (
+                        dependency["group"] == "org.jetbrains.kotlinx" &&
+                        dependency["module"].toString().startsWith("kotlinx-datetime")
+                    ) {
+                        "${metadataFile.name}: $variantName -> " +
+                            "${dependency["group"]}:${dependency["module"]}"
+                    } else {
+                        null
+                    }
+                }
+            }
+        }
+        check(datetimeMetadataViolations.isEmpty()) {
+            "kotlinx-datetime leaked into published FANBOX metadata:\n" +
+                datetimeMetadataViolations.joinToString("\n")
         }
     }
 
@@ -494,6 +560,9 @@ abstract class VerifyKtorBoundaryTask : DefaultTask() {
     private fun String.containsKtorType(): Boolean =
         KTOR_DOTTED_PACKAGE in this || KTOR_INTERNAL_PACKAGE in this
 
+    private fun String.containsDeprecatedDatetimeType(): Boolean =
+        DEPRECATED_DATETIME_TYPES.any(this::contains)
+
     private data class VisibleAndroidClass(
         val methods: MutableSet<VisibleAndroidMember> = linkedSetOf(),
         val fields: MutableSet<VisibleAndroidMember> = linkedSetOf(),
@@ -507,6 +576,12 @@ abstract class VerifyKtorBoundaryTask : DefaultTask() {
     private companion object {
         const val KTOR_DOTTED_PACKAGE = "io.ktor"
         const val KTOR_INTERNAL_PACKAGE = "io/ktor"
+        val DEPRECATED_DATETIME_TYPES = listOf(
+            "kotlinx.datetime.Instant",
+            "kotlinx.datetime.Clock",
+            "kotlinx/datetime/Instant",
+            "kotlinx/datetime/Clock",
+        )
     }
 }
 
@@ -594,7 +669,6 @@ kotlin {
     sourceSets {
         commonMain.dependencies {
             api(libs.kotlinx.coroutines.core)
-            api(libs.kotlinx.datetime)
             api(libs.kotlinx.serialization.core)
 
             implementation(libs.bundles.infra.api)
@@ -630,6 +704,9 @@ val sourceSetApiConfigurations = configurations.matching { configuration ->
 val androidMetadataTasks = tasks.withType<GenerateModuleMetadata>().matching {
     it.name == "generateMetadataFileForAndroidReleasePublication"
 }
+val kotlinMultiplatformMetadataTasks = tasks.withType<GenerateModuleMetadata>().matching {
+    it.name == "generateMetadataFileForKotlinMultiplatformPublication"
+}
 
 val verifyKtorTypeAliasFixture = tasks.register<VerifyKtorTypeAliasFixtureTask>(
     "verifyKtorTypeAliasFixture",
@@ -653,9 +730,16 @@ val verifyKtorBoundary = tasks.register<VerifyKtorBoundaryTask>("verifyKtorBound
         "checkLegacyAbi",
         "compileReleaseKotlinAndroid",
         androidMetadataTasks,
+        kotlinMultiplatformMetadataTasks,
         verifyKtorTypeAliasFixture,
     )
 
+    productionKotlinFiles.from(
+        layout.projectDirectory.dir("src/commonMain/kotlin").asFileTree.matching {
+            include("**/*.kt")
+        },
+    )
+    versionCatalogFile.set(rootProject.layout.projectDirectory.file("gradle/libs.versions.toml"))
     abiFiles.from(layout.projectDirectory.dir("api").asFileTree.matching { include("**/*.api") })
     androidAbiFile.set(layout.projectDirectory.file("api/android/fanbox.api"))
     androidClassFiles.from(
@@ -664,6 +748,7 @@ val verifyKtorBoundary = tasks.register<VerifyKtorBoundaryTask>("verifyKtorBound
         },
     )
     androidModuleMetadata.from(androidMetadataTasks)
+    publishedModuleMetadata.from(androidMetadataTasks, kotlinMultiplatformMetadataTasks)
     requiredAndroidRuntimeKtorDependencies.set(requiredAndroidRuntimeKtorModules)
 }
 

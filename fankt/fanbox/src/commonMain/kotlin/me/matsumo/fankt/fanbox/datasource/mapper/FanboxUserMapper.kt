@@ -1,7 +1,8 @@
+@file:OptIn(kotlin.time.ExperimentalTime::class)
+
 package me.matsumo.fankt.fanbox.datasource.mapper
 
 import io.ktor.http.Url
-import kotlinx.datetime.Instant
 import me.matsumo.fankt.fanbox.FanboxListItemDecoder
 import me.matsumo.fankt.fanbox.FanboxTolerantResult
 import me.matsumo.fankt.fanbox.domain.PageNumberInfo
@@ -22,6 +23,7 @@ import me.matsumo.fankt.fanbox.domain.model.id.FanboxCreatorId
 import me.matsumo.fankt.fanbox.domain.model.id.FanboxNewsLetterId
 import me.matsumo.fankt.fanbox.domain.model.id.FanboxPostId
 import me.matsumo.fankt.fanbox.domain.model.id.FanboxUserId
+import kotlin.time.Instant
 
 internal class FanboxUserMapper(
     private val postMapper: FanboxPostMapper,
