@@ -39,7 +39,7 @@ Alternative: keep `0.8.0` as `implementation`. Rejected because an unused depend
 
 ### 3. Make the existing isolated consumer gate enforce the new boundary
 
-（agent 仮決め）Change `FanboxBoundaryConsumer.publishedAt` to an explicitly opted-in `kotlin.time.Instant`, retain `FanboxPost.serializer()` compilation, and extend its verification task to fail if any kotlinx-datetime module appears in compile or runtime resolution. Extend the root boundary task to reject `kotlinx/datetime/Instant`, `kotlinx/datetime/Clock`, and the module dependency in Android/Kotlin Native ABI and publication metadata. Keep Ktor checks intact.
+（agent 仮決め）Change `FanboxBoundaryConsumer.publishedAt` to an explicitly opted-in `kotlin.time.Instant`, retain `FanboxPost.serializer()` compilation, and extend its verification task to fail if any kotlinx-datetime module appears in compile or runtime resolution. Extend the root boundary task to reject `kotlinx/datetime/Instant`, `kotlinx/datetime/Clock`, and the module dependency in Android/Kotlin Native ABI and publication metadata. The Linux consumer-boundary job requires Android and root KMP metadata, while the macOS iOS job also requires every iOS publication metadata task so disabled targets cannot make the gate fail open. Keep Ktor checks intact.
 
 Alternative: rely only on source grep. Rejected because the regression can survive in generated ABI or publication metadata even when direct imports disappear.
 

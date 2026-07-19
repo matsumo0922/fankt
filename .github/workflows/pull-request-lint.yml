@@ -102,4 +102,5 @@ jobs:
           ./gradlew
           :fankt:fanbox:iosSimulatorArm64Test
           :fankt:fanbox:checkLegacyAbi
+          :fankt:fanbox:verifyKtorBoundary
           :fankt:fanbox-persistence-room:iosSimulatorArm64Test

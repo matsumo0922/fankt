@@ -292,6 +292,9 @@ abstract class VerifyKtorBoundaryTask : DefaultTask() {
     @get:Input
     abstract val publicationMetadataTaskNames: ListProperty<String>
 
+    @get:Input
+    abstract val requiredPublicationMetadataTaskNames: ListProperty<String>
+
     @get:InputFile
     @get:PathSensitive(PathSensitivity.RELATIVE)
     abstract val androidAbiFile: RegularFileProperty
@@ -425,7 +428,8 @@ abstract class VerifyKtorBoundaryTask : DefaultTask() {
 
         val publishedMetadataFiles = publishedModuleMetadata.files.filter { it.isFile }
         val missingPublicationMetadataTasks =
-            REQUIRED_PUBLICATION_METADATA_TASKS - publicationMetadataTaskNames.get().toSet()
+            requiredPublicationMetadataTaskNames.get().toSet() -
+                publicationMetadataTaskNames.get().toSet()
         check(missingPublicationMetadataTasks.isEmpty()) {
             "FANBOX publication metadata tasks were not inspected:\n" +
                 missingPublicationMetadataTasks.joinToString("\n")
@@ -607,13 +611,6 @@ abstract class VerifyKtorBoundaryTask : DefaultTask() {
             "kotlinx/datetime/Instant",
             "kotlinx/datetime/Clock",
         )
-        val REQUIRED_PUBLICATION_METADATA_TASKS = setOf(
-            "generateMetadataFileForAndroidReleasePublication",
-            "generateMetadataFileForIosArm64Publication",
-            "generateMetadataFileForIosSimulatorArm64Publication",
-            "generateMetadataFileForIosX64Publication",
-            "generateMetadataFileForKotlinMultiplatformPublication",
-        )
     }
 }
 
@@ -752,6 +749,15 @@ val androidMetadataTasks = tasks.withType<GenerateModuleMetadata>().matching {
     it.name == "generateMetadataFileForAndroidReleasePublication"
 }
 val publicationMetadataTasks = tasks.withType<GenerateModuleMetadata>()
+val requiredPublicationMetadataTasks = buildList {
+    add("generateMetadataFileForAndroidReleasePublication")
+    add("generateMetadataFileForKotlinMultiplatformPublication")
+    if (System.getProperty("os.name").startsWith("Mac", ignoreCase = true)) {
+        add("generateMetadataFileForIosArm64Publication")
+        add("generateMetadataFileForIosSimulatorArm64Publication")
+        add("generateMetadataFileForIosX64Publication")
+    }
+}
 
 val verifyKtorTypeAliasFixture = tasks.register<VerifyKtorTypeAliasFixtureTask>(
     "verifyKtorTypeAliasFixture",
@@ -794,6 +800,7 @@ val verifyKtorBoundary = tasks.register<VerifyKtorBoundaryTask>("verifyKtorBound
     androidModuleMetadata.from(androidMetadataTasks)
     publishedModuleMetadata.from(publicationMetadataTasks)
     publicationMetadataTaskNames.set(publicationMetadataTasks.names.sorted())
+    requiredPublicationMetadataTaskNames.set(requiredPublicationMetadataTasks.sorted())
     requiredAndroidRuntimeKtorDependencies.set(requiredAndroidRuntimeKtorModules)
 }
 
