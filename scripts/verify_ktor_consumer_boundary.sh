@@ -20,8 +20,14 @@ trap cleanup EXIT
     -Dmaven.repo.local="$consumer_repository" \
     --no-configuration-cache
 
-"$repository_root/gradlew" \
-    -p "$consumer_project" \
-    verifyKtorSelection \
-    -PfanktRepository="$consumer_repository" \
-    --configuration-cache
+verify_consumer() {
+    "$repository_root/gradlew" \
+        -p "$consumer_project" \
+        verifyKtorSelection \
+        -PfanktRepository="$consumer_repository" \
+        --configuration-cache \
+        --configuration-cache-problems=fail
+}
+
+verify_consumer
+verify_consumer

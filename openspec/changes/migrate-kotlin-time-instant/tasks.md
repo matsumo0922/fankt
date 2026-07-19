@@ -15,6 +15,8 @@
 
 - [x] 3.1 Update the existing README v0.1.0 migration section with the stdlib timestamp replacement, `ExperimentalTime` caveat, four bridge removals, and independent normal datetime rule
 - [x] 3.2 Validate all four known PixiView bridge call sites with explicit opt-ins against the isolated fankt candidate in a disposable worktree without modifying its dirty main checkout
+  - Evidence: detached PixiView `f13dcf1f18369b50b2e66aadca67f54d185b1d2a`; removed the payment grouping bridge, common formatting bridge, and both relative-time bridges; selected normal `kotlinx-datetime:0.8.0` and the isolated fankt `0.1.0` publication
+  - Command: `./gradlew :core:common:compileAndroidMain :feature:creator:compileAndroidMain :feature:post:compileAndroidMain :feature:library:compileAndroidMain`; result: `BUILD SUCCESSFUL` after applying the prerequisite v0.1.0 logging, cookie, download, and sealed-model migrations in the disposable worktree
 - [x] 3.3 Search README and OpenSpec documentation for stale public timestamp or compat dependency guidance and update affected current-spec wording
 
 ## 4. Final validation and delivery

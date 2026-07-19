@@ -62,10 +62,10 @@ private fun ResolvedComponentResult.allComponentIdentities(): List<String> {
 }
 
 private object AndroidKotlinMetadataInspector {
-    private const val KTOR_DOTTED_PACKAGE = "io.ktor"
-    private const val KTOR_INTERNAL_PACKAGE = "io/ktor"
-
-    fun inspect(classFiles: List<File>): Result {
+    fun inspect(
+        classFiles: List<File>,
+        forbiddenTypeMarkers: Set<String>,
+    ): Result {
         val violations = mutableListOf<String>()
         var metadataFiles = 0
         var visibleTypeAliases = 0
@@ -84,17 +84,19 @@ private object AndroidKotlinMetadataInspector {
                 .filter { it.visibility == Visibility.PUBLIC || it.visibility == Visibility.PROTECTED }
                 .forEach { typeAlias ->
                     visibleTypeAliases += 1
-                    val underlyingKtorTypes = typeAlias.underlyingType.findKtorTypes()
-                    val expandedKtorTypes = typeAlias.expandedType.findKtorTypes()
-                    if (underlyingKtorTypes.isNotEmpty() || expandedKtorTypes.isNotEmpty()) {
+                    val forbiddenUnderlyingTypes =
+                        typeAlias.underlyingType.findForbiddenTypes(forbiddenTypeMarkers)
+                    val forbiddenExpandedTypes =
+                        typeAlias.expandedType.findForbiddenTypes(forbiddenTypeMarkers)
+                    if (forbiddenUnderlyingTypes.isNotEmpty() || forbiddenExpandedTypes.isNotEmpty()) {
                         violations += buildString {
                             append(classFile.name)
                             append(" typealias ")
                             append(typeAlias.name)
                             append(" -> underlying=")
-                            append(underlyingKtorTypes.sorted())
+                            append(forbiddenUnderlyingTypes.sorted())
                             append(", expanded=")
-                            append(expandedKtorTypes.sorted())
+                            append(forbiddenExpandedTypes.sorted())
                         }
                     }
                 }
@@ -153,15 +155,21 @@ private object AndroidKotlinMetadataInspector {
                 }
         }
 
-    private fun KmType.findKtorTypes(): Set<String> {
+    private fun KmType.findForbiddenTypes(forbiddenTypeMarkers: Set<String>): Set<String> {
         val result = linkedSetOf<String>()
         val visited = Collections.newSetFromMap(IdentityHashMap<KmType, Boolean>())
 
         fun visit(type: KmType) {
             if (!visited.add(type)) return
             when (val classifier = type.classifier) {
-                is KmClassifier.Class -> classifier.name.takeIf { it.containsKtorType() }?.let(result::add)
-                is KmClassifier.TypeAlias -> classifier.name.takeIf { it.containsKtorType() }?.let(result::add)
+                is KmClassifier.Class ->
+                    classifier.name
+                        .takeIf { name -> forbiddenTypeMarkers.any(name::contains) }
+                        ?.let(result::add)
+                is KmClassifier.TypeAlias ->
+                    classifier.name
+                        .takeIf { name -> forbiddenTypeMarkers.any(name::contains) }
+                        ?.let(result::add)
                 is KmClassifier.TypeParameter -> Unit
             }
             type.arguments.forEach { projection -> projection.type?.let(::visit) }
@@ -173,9 +181,6 @@ private object AndroidKotlinMetadataInspector {
         visit(this)
         return result
     }
-
-    private fun String.containsKtorType(): Boolean =
-        KTOR_DOTTED_PACKAGE in this || KTOR_INTERNAL_PACKAGE in this
 
     data class Result(
         val metadataFiles: Int,
@@ -284,6 +289,9 @@ abstract class VerifyKtorBoundaryTask : DefaultTask() {
     @get:PathSensitive(PathSensitivity.RELATIVE)
     abstract val publishedModuleMetadata: ConfigurableFileCollection
 
+    @get:Input
+    abstract val publicationMetadataTaskNames: ListProperty<String>
+
     @get:InputFile
     @get:PathSensitive(PathSensitivity.RELATIVE)
     abstract val androidAbiFile: RegularFileProperty
@@ -343,8 +351,10 @@ abstract class VerifyKtorBoundaryTask : DefaultTask() {
                 genericSignatureViolations.joinToString("\n")
         }
 
+        val typeAliasClassFiles = androidClassFiles.files.filter { it.isFile }
         val typeAliasInspection = AndroidKotlinMetadataInspector.inspect(
-            androidClassFiles.files.filter { it.isFile },
+            classFiles = typeAliasClassFiles,
+            forbiddenTypeMarkers = KTOR_TYPE_MARKERS,
         )
         check(typeAliasInspection.metadataFiles > 0) {
             "No Android Kotlin metadata was inspected"
@@ -352,6 +362,14 @@ abstract class VerifyKtorBoundaryTask : DefaultTask() {
         check(typeAliasInspection.violations.isEmpty()) {
             "Ktor types leaked through Android public/protected type aliases:\n" +
                 typeAliasInspection.violations.joinToString("\n")
+        }
+        val datetimeTypeAliasInspection = AndroidKotlinMetadataInspector.inspect(
+            classFiles = typeAliasClassFiles,
+            forbiddenTypeMarkers = DEPRECATED_DATETIME_TYPES.toSet(),
+        )
+        check(datetimeTypeAliasInspection.violations.isEmpty()) {
+            "Deprecated kotlinx-datetime types leaked through Android public/protected type aliases:\n" +
+                datetimeTypeAliasInspection.violations.joinToString("\n")
         }
 
         val metadataFiles = androidModuleMetadata.files.filter { it.isFile }
@@ -406,6 +424,12 @@ abstract class VerifyKtorBoundaryTask : DefaultTask() {
         }
 
         val publishedMetadataFiles = publishedModuleMetadata.files.filter { it.isFile }
+        val missingPublicationMetadataTasks =
+            REQUIRED_PUBLICATION_METADATA_TASKS - publicationMetadataTaskNames.get().toSet()
+        check(missingPublicationMetadataTasks.isEmpty()) {
+            "FANBOX publication metadata tasks were not inspected:\n" +
+                missingPublicationMetadataTasks.joinToString("\n")
+        }
         check(publishedMetadataFiles.isNotEmpty()) {
             "No Android or Kotlin Multiplatform publication metadata was generated"
         }
@@ -576,11 +600,19 @@ abstract class VerifyKtorBoundaryTask : DefaultTask() {
     private companion object {
         const val KTOR_DOTTED_PACKAGE = "io.ktor"
         const val KTOR_INTERNAL_PACKAGE = "io/ktor"
+        val KTOR_TYPE_MARKERS = setOf(KTOR_DOTTED_PACKAGE, KTOR_INTERNAL_PACKAGE)
         val DEPRECATED_DATETIME_TYPES = listOf(
             "kotlinx.datetime.Instant",
             "kotlinx.datetime.Clock",
             "kotlinx/datetime/Instant",
             "kotlinx/datetime/Clock",
+        )
+        val REQUIRED_PUBLICATION_METADATA_TASKS = setOf(
+            "generateMetadataFileForAndroidReleasePublication",
+            "generateMetadataFileForIosArm64Publication",
+            "generateMetadataFileForIosSimulatorArm64Publication",
+            "generateMetadataFileForIosX64Publication",
+            "generateMetadataFileForKotlinMultiplatformPublication",
         )
     }
 }
@@ -594,20 +626,35 @@ abstract class VerifyKtorTypeAliasFixtureTask : DefaultTask() {
     fun verify() {
         val classFiles = fixtureClassFiles.files.filter { it.isFile }
         check(classFiles.isNotEmpty()) { "No Android Ktor typealias regression fixture was compiled" }
-        val inspection = AndroidKotlinMetadataInspector.inspect(classFiles)
-        check(inspection.metadataFiles > 0) {
+        val ktorInspection = AndroidKotlinMetadataInspector.inspect(
+            classFiles = classFiles,
+            forbiddenTypeMarkers = setOf("io.ktor", "io/ktor"),
+        )
+        check(ktorInspection.metadataFiles > 0) {
             "Android Ktor typealias regression fixture contains no Kotlin metadata"
         }
-        check(inspection.visibleTypeAliases > 0) {
+        check(ktorInspection.visibleTypeAliases > 0) {
             "Android Ktor typealias regression fixture contains no public/protected typealias metadata"
         }
         check(
-            inspection.violations.any { violation ->
+            ktorInspection.violations.any { violation ->
                 "AndroidKtorClientAlias" in violation && "io/ktor/client/HttpClient" in violation
             },
         ) {
             "The Android Ktor typealias regression fixture did not trigger the production metadata gate:\n" +
-                inspection.violations.joinToString("\n")
+                ktorInspection.violations.joinToString("\n")
+        }
+        val instantInspection = AndroidKotlinMetadataInspector.inspect(
+            classFiles = classFiles,
+            forbiddenTypeMarkers = setOf("kotlin/time/Instant"),
+        )
+        check(
+            instantInspection.violations.any { violation ->
+                "AndroidStdlibInstantAlias" in violation && "kotlin/time/Instant" in violation
+            },
+        ) {
+            "The Android Instant typealias regression fixture did not trigger the generic metadata gate:\n" +
+                instantInspection.violations.joinToString("\n")
         }
     }
 }
@@ -704,9 +751,7 @@ val sourceSetApiConfigurations = configurations.matching { configuration ->
 val androidMetadataTasks = tasks.withType<GenerateModuleMetadata>().matching {
     it.name == "generateMetadataFileForAndroidReleasePublication"
 }
-val kotlinMultiplatformMetadataTasks = tasks.withType<GenerateModuleMetadata>().matching {
-    it.name == "generateMetadataFileForKotlinMultiplatformPublication"
-}
+val publicationMetadataTasks = tasks.withType<GenerateModuleMetadata>()
 
 val verifyKtorTypeAliasFixture = tasks.register<VerifyKtorTypeAliasFixtureTask>(
     "verifyKtorTypeAliasFixture",
@@ -729,14 +774,13 @@ val verifyKtorBoundary = tasks.register<VerifyKtorBoundaryTask>("verifyKtorBound
     dependsOn(
         "checkLegacyAbi",
         "compileReleaseKotlinAndroid",
-        androidMetadataTasks,
-        kotlinMultiplatformMetadataTasks,
+        publicationMetadataTasks,
         verifyKtorTypeAliasFixture,
     )
 
     productionKotlinFiles.from(
-        layout.projectDirectory.dir("src/commonMain/kotlin").asFileTree.matching {
-            include("**/*.kt")
+        layout.projectDirectory.dir("src").asFileTree.matching {
+            include("*Main/kotlin/**/*.kt")
         },
     )
     versionCatalogFile.set(rootProject.layout.projectDirectory.file("gradle/libs.versions.toml"))
@@ -748,7 +792,8 @@ val verifyKtorBoundary = tasks.register<VerifyKtorBoundaryTask>("verifyKtorBound
         },
     )
     androidModuleMetadata.from(androidMetadataTasks)
-    publishedModuleMetadata.from(androidMetadataTasks, kotlinMultiplatformMetadataTasks)
+    publishedModuleMetadata.from(publicationMetadataTasks)
+    publicationMetadataTaskNames.set(publicationMetadataTasks.names.sorted())
     requiredAndroidRuntimeKtorDependencies.set(requiredAndroidRuntimeKtorModules)
 }
 
