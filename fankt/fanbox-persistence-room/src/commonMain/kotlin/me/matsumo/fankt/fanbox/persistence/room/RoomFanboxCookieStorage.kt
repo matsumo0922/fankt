@@ -10,8 +10,10 @@ import me.matsumo.fankt.fanbox.domain.model.db.FanktDatabase
 /**
  * Explicitly created Room-backed storage for FANBOX Cookie records.
  *
- * This instance owns one database connection. [close] is idempotent, and every storage operation
- * fails after close. Create another storage to reopen the unchanged platform `fankt.db` file.
+ * This instance owns one database connection. [close] is idempotent, and operations started after
+ * close fail. A [Flow] obtained before close remains backed by Room and can terminate with an
+ * underlying database exception if it is collected after close. Callers must not race [close] with
+ * storage operations. Create another storage to reopen the unchanged platform `fankt.db` file.
  * Schema version 3 stores every record as a domain Cookie, so loaded and written records expose
  * `hostOnly = false`.
  */

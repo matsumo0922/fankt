@@ -46,7 +46,7 @@ The optional Room storage SHALL implement `FanboxCookieStorage`, preserve Room s
 - **THEN** reopening the record returns `hostOnly = false` without changing schema version 3
 
 ### Requirement: Owned lifecycle
-Each explicitly created Room storage SHALL own one separately closeable database instance. Operations after close SHALL fail, close SHALL be idempotent, and a later explicit creation for the same path SHALL return a fresh usable instance. The storage API SHALL NOT delete the database file or its SQLite sidecars because it cannot prove that every separately created owner for that path is closed. Documentation SHALL require hosts to close both `Fanbox` and the injected Room storage. This requirement traces to Issue #34’s explicit-initialization choice and the existing non-regression lifecycle invariant.
+Each explicitly created Room storage SHALL own one separately closeable database instance. Operations started after close SHALL fail, close SHALL be idempotent, and a later explicit creation for the same path SHALL return a fresh usable instance. A Flow obtained before close MAY instead terminate with an underlying Room exception when collected after close. The storage API SHALL NOT delete the database file or its SQLite sidecars because it cannot prove that every separately created owner for that path is closed. Documentation SHALL require hosts to create only one storage per database path, explain that independently opened instances do not propagate invalidation Flow updates and can encounter competing writes, and require hosts to close both `Fanbox` and the injected Room storage. This requirement traces to Issue #34’s explicit-initialization choice and the existing non-regression lifecycle invariant.
 
 #### Scenario: Storage is reopened after close
 - **WHEN** one explicit Room storage is closed and the host creates storage for the same path again
@@ -55,3 +55,7 @@ Each explicitly created Room storage SHALL own one separately closeable database
 #### Scenario: Storage cleanup is explicit
 - **WHEN** a host finishes using a `Fanbox` with injected Room storage
 - **THEN** documentation directs the host to close the `Fanbox` and then close the Room storage, while exposing no library API that can unlink a database still used by another owner
+
+#### Scenario: Multiple owners are discouraged
+- **WHEN** a host reads the Room persistence setup guidance
+- **THEN** the guidance warns that multiple storage instances for one database path do not propagate Flow invalidations and can encounter competing writes

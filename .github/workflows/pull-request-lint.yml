@@ -65,7 +65,6 @@ jobs:
       - name: Run tests
         run: >-
           ./gradlew
-          --no-configuration-cache
           :fankt:fanbox:testDebugUnitTest
           :fankt:fanbox-persistence-room:testDebugUnitTest
           :fankt:fanbox:verifyPersistenceBoundary

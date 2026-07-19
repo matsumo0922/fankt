@@ -46,6 +46,11 @@ Package/class names may change because Room compatibility is defined by the data
 
 No process-global singleton replaces the initializer. Each factory call builds a database and returns an owning storage wrapper. `close()` is idempotent; reads and writes after close fail; reopening creates a fresh instance. The public storage exposes no database-file deletion method: a single instance cannot prove that another explicit owner for the same path is closed, so unlinking would be unsafe. Hosts that intentionally delete app data must coordinate every owner outside this library. This retains safe close/reopen behavior from Issue #33 without promoting its one-shot migration cleanup API into a long-lived backend.
 
+Hosts create one storage per database path. Independently opened Room instances do not propagate
+invalidation Flow updates to one another and concurrent writes can fail with `SQLITE_BUSY`, so the
+README states both the ownership rule and its failure modes. The factory remains instance-owned
+rather than adding a new process-global registry.
+
 ### 5. Publish one aligned v0.1.0 release, with the replacement before the breaking core（ユーザー確認済み: Issue #34 parent v0.1.0）
 
 Every project artifact uses the same v0.1.0 release version. The release workflow publishes `fanbox-persistence-room:0.1.0` first and `fanbox:0.1.0` afterward; it does not combine an already published 0.0.20 core or Fantia artifact with a new optional artifact. If the optional artifact fails to publish, the job stops before the core factory removal is released. If the later core publication fails, the additive optional artifact may already exist but no existing caller is broken. Maven Central cannot atomically publish separate coordinates, so ordering is the fail-safe boundary within one version-aligned release.
@@ -67,6 +72,7 @@ Validation combines:
 - [Android callers lose implicit `Context` availability] → make `Context` a required factory argument and document the one-line dependency/factory/injection path.
 - [The core still appears Room-free only in source while published metadata leaks it transitively] → inspect Gradle dependency metadata for core variants, not only source imports.
 - [Moving internal canonicalization helpers across the module boundary duplicates behavior] → use public `FanboxCookieRecord` values and keep storage normalization inside the optional backend; the core adapter remains the sole request-matching authority.
+- [Duplicated canonicalization drifts between core and the optional backend] → keep a parity test with the core boundary inputs for trimmed/dotted/mixed-case domains and non-rooted paths.
 - [Two explicit instances open the same SQLite file concurrently] → do not expose file deletion; each instance closes only its own database. Document one host-owned storage per lifecycle and explicit close order.
 - [The new persistence artifact fails to publish] → keep every coordinate on v0.1.0, publish the optional artifact before the breaking core coordinate, and rely on workflow fail-fast behavior.
 - [Breaking removal of the old factory surprises callers] → the v0.1.0 issue is explicitly breaking; README shows the replacement artifact and API.

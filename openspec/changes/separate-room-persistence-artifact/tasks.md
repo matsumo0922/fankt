@@ -22,3 +22,10 @@
 - [x] 4.1 Run OpenSpec validation and targeted persistence/core tests.
 - [x] 4.2 Run full test, lint/detekt, build, dependency-report, and publication-task validation under the validation lease with isolated Gradle and Kotlin/Native caches.
 - [x] 4.3 Record Scenario-to-test evidence, validation commands, results, and the validated HEAD SHA for PR review.
+
+## 5. Review Follow-up
+
+- [x] 5.1 Document multiple-owner failure modes and platform-source-set factory usage.
+- [x] 5.2 Add storage canonicalization parity coverage for core boundary inputs.
+- [x] 5.3 Make the persistence boundary task configuration-cache compatible and improve manifest failure diagnostics.
+- [x] 5.4 Record the inherited iOS cache limitation as an operational observation rather than expanding this PR's cache scope.

@@ -112,6 +112,9 @@ place, including the existing v1 and v2 migrations. Each factory call owns a new
 there is no AndroidX Startup initializer, global `Context`, singleton database, or database-file
 deletion API.
 
+The Android and iOS factories are platform APIs and must be called from the corresponding platform
+source set rather than common code.
+
 On Android, pass a `Context` explicitly. The factory uses
 `context.applicationContext.getDatabasePath("fankt.db")`:
 
@@ -143,9 +146,13 @@ try {
 ```
 
 Create one storage for the host lifecycle that needs persistence. Close every `Fanbox` that uses it,
-then close the storage. `close()` is idempotent; storage operations after close fail. A later factory
-call opens a fresh instance over the same database file and restores committed Cookie rows. The
-schema stores legacy records as domain Cookies, so Room-backed records have `hostOnly = false`.
+then close the storage. Do not open multiple storage instances for the same `fankt.db`: their Room
+invalidation trackers do not propagate `cookies` Flow updates between instances, and concurrent
+writes can fail with `SQLITE_BUSY`. `close()` is idempotent; operations started after close fail. A
+Flow obtained before close can instead terminate with an underlying Room exception when collected
+after close. A later factory call opens a fresh instance over the same database file and restores
+committed Cookie rows. The schema stores legacy records as domain Cookies, so Room-backed records
+have `hostOnly = false`.
 
 The v0.1.0 API keeps existing source constructor forms, including `Fanbox()` and positional
 `logLevel`/`ioDispatcher` calls. Its default authentication durability changes from implicit Room

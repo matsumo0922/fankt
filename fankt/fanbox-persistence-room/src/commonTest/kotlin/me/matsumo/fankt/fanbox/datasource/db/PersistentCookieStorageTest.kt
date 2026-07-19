@@ -27,6 +27,30 @@ class PersistentCookieStorageTest {
     }
 
     @Test
+    fun canonicalizationMatchesCoreStorageIdentity() = runBlocking {
+        val dao = FakeCookieDao()
+        val storage = PersistentCookieStorage(dao)
+
+        storage.upsert(
+            record(
+                name = "session",
+                value = "value",
+                domain = " .FANBOX.CC ",
+                path = "index",
+            ),
+        )
+
+        assertEquals("fanbox.cc", dao.state.value.single().domain)
+        assertEquals("/", dao.state.value.single().path)
+        assertEquals("fanbox.cc", storage.snapshot().single().domain)
+        assertEquals("/", storage.snapshot().single().path)
+
+        storage.delete(" .FANBOX.CC ", "index", "session")
+
+        assertTrue(storage.snapshot().isEmpty())
+    }
+
+    @Test
     fun replaceAllUsesOneDaoTransactionEntryPoint() = runBlocking {
         val dao = FakeCookieDao(cookie("old", "value"))
         val storage = PersistentCookieStorage(dao)
@@ -67,8 +91,9 @@ class PersistentCookieStorageTest {
         name: String,
         value: String,
         domain: String = "fanbox.cc",
+        path: String = "/",
         hostOnly: Boolean = false,
-    ) = FanboxCookieRecord(domain, "/", name, value, null, secure = true, hostOnly)
+    ) = FanboxCookieRecord(domain, path, name, value, null, secure = true, hostOnly)
 
     private fun cookie(
         name: String,
