@@ -72,7 +72,7 @@ Validation combines:
 - [Android callers lose implicit `Context` availability] → make `Context` a required factory argument and document the one-line dependency/factory/injection path.
 - [The core still appears Room-free only in source while published metadata leaks it transitively] → inspect Gradle dependency metadata for core variants, not only source imports.
 - [Moving internal canonicalization helpers across the module boundary duplicates behavior] → use public `FanboxCookieRecord` values and keep storage normalization inside the optional backend; the core adapter remains the sole request-matching authority.
-- [Duplicated canonicalization drifts between core and the optional backend] → keep a parity test with the core boundary inputs for trimmed/dotted/mixed-case domains and non-rooted paths.
+- [Duplicated canonicalization drifts between core and the optional backend] → keep paired core and optional-backend tests with the same boundary inputs for trimmed/dotted/mixed-case domains and non-rooted paths.
 - [Two explicit instances open the same SQLite file concurrently] → do not expose file deletion; each instance closes only its own database. Document one host-owned storage per lifecycle and explicit close order.
 - [The new persistence artifact fails to publish] → keep every coordinate on v0.1.0, publish the optional artifact before the breaking core coordinate, and rely on workflow fail-fast behavior.
 - [Breaking removal of the old factory surprises callers] → the v0.1.0 issue is explicitly breaking; README shows the replacement artifact and API.

@@ -1,4 +1,6 @@
 import org.gradle.api.DefaultTask
+import org.gradle.api.artifacts.result.ResolvedComponentResult
+import org.gradle.api.artifacts.result.ResolvedDependencyResult
 import org.gradle.api.file.ConfigurableFileCollection
 import org.gradle.api.provider.ListProperty
 import org.gradle.api.tasks.Input
@@ -7,6 +9,21 @@ import org.gradle.api.tasks.PathSensitive
 import org.gradle.api.tasks.PathSensitivity
 import org.gradle.api.tasks.TaskAction
 import java.util.zip.ZipFile
+
+private fun ResolvedComponentResult.allComponentIdentities(): List<String> {
+    val identities = linkedSetOf<String>()
+    val pending = ArrayDeque<ResolvedComponentResult>()
+    pending.add(this)
+    while (pending.isNotEmpty()) {
+        val component = pending.removeFirst()
+        if (identities.add(component.id.displayName)) {
+            component.dependencies
+                .filterIsInstance<ResolvedDependencyResult>()
+                .forEach { pending.add(it.selected) }
+        }
+    }
+    return identities.toList()
+}
 
 abstract class VerifyPersistenceBoundaryTask : DefaultTask() {
     @get:Input
@@ -89,10 +106,11 @@ tasks.register<VerifyPersistenceBoundaryTask>("verifyPersistenceBoundary") {
 
     inspectedConfigurationNames.set(persistenceBoundaryConfigurations.names.sorted())
     persistenceBoundaryConfigurations.forEach { configuration ->
+        val configurationName = configuration.name
         dependencyIdentities.addAll(
-            configuration.incoming.artifacts.resolvedArtifacts.map { artifacts ->
-                artifacts.map { artifact ->
-                    "${configuration.name}: ${artifact.id.componentIdentifier.displayName.lowercase()}"
+            configuration.incoming.resolutionResult.rootComponent.map { rootComponent ->
+                rootComponent.allComponentIdentities().map { identity ->
+                    "$configurationName: ${identity.lowercase()}"
                 }
             },
         )
