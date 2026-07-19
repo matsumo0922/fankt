@@ -12,14 +12,18 @@ import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.Url
 import io.ktor.http.headersOf
+import io.ktor.utils.io.ByteChannel
+import io.ktor.utils.io.writeFully
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.io.IOException
 import kotlin.coroutines.Continuation
@@ -227,24 +231,34 @@ class FanboxDownloadTest {
 
     @Test
     fun midStreamTransportFailureIsNormalizedAfterDeliveredChunk() = runBlocking {
+        val callbackStarted = CompletableDeferred<Unit>()
+        val transportFailed = CompletableDeferred<Unit>()
         val transportFailure = IOException("mid-stream failure")
+        val fixture = createFixture { request ->
+            val channel = ByteChannel(autoFlush = true)
+            CoroutineScope(request.executionContext).launch {
+                channel.writeFully("first".encodeToByteArray())
+                callbackStarted.await()
+                channel.cancel(transportFailure)
+                transportFailed.complete(Unit)
+            }
+            respond(channel)
+        }
         val chunks = mutableListOf<ByteArray>()
 
         val error = assertFailsWith<FanboxException.Network> {
-            // ByteChannel.cancel races with the next read and can surface as EOF. Model the
-            // already-delivered chunk, then exercise the same policy used around every body read.
-            normalizeDownloadTransportFailure(
-                block = {
-                    chunks += "first".encodeToByteArray()
-                    throw transportFailure
-                },
-                networkFailure = { cause -> FanboxException.Network("download", cause) },
-            )
+            fixture.fanbox.download("https://downloads.fanbox.cc/failing.bin") { chunk ->
+                chunks += chunk
+                callbackStarted.complete(Unit)
+                transportFailed.await()
+            }
         }
 
         assertEquals("download", error.endpoint)
         assertEquals("first", chunks.flatten().decodeToString())
-        assertSame(transportFailure, error.cause)
+        assertSame(transportFailure, assertIs<IOException>(error.cause).deepestCause())
+        assertTrue(fixture.requests.single().executionJob.isCompleted)
+        fixture.fanbox.close()
     }
 
     @Test
@@ -465,6 +479,13 @@ class FanboxDownloadTest {
             offset += chunk.size
         }
         return result
+    }
+
+    private fun Throwable.deepestCause(): Throwable {
+        var current = this
+        while (true) {
+            current = current.cause ?: return current
+        }
     }
 
     private data class Fixture(

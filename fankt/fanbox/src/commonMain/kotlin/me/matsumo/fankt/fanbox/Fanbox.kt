@@ -525,7 +525,12 @@ class Fanbox internal constructor(
                             val read = normalizeDownloadTransport(response.request) {
                                 channel.readAvailable(buffer)
                             }
-                            if (read < 0) break
+                            if (read < 0) {
+                                normalizeDownloadTransport(response.request) {
+                                    channel.closedCause?.let { throw it }
+                                }
+                                break
+                            }
                             if (read == 0) continue
 
                             try {
