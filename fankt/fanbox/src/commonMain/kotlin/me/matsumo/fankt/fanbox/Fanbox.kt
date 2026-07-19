@@ -522,24 +522,26 @@ class Fanbox internal constructor(
                             throw failure
                         }
                         while (true) {
-                            val read = normalizeDownloadTransport(response.request) {
-                                channel.readAvailable(buffer)
-                            }
-                            if (read < 0) {
-                                normalizeDownloadTransport(response.request) {
-                                    channel.closedCause?.let { throw it }
-                                }
-                                break
-                            }
-                            if (read == 0) continue
+                            val chunk = readDownloadChunk(
+                                buffer = buffer,
+                                read = { target -> channel.readAvailable(target) },
+                                closedCause = { channel.closedCause },
+                                networkFailure = { failure ->
+                                    FanboxExceptionFactory.network(
+                                        response.request,
+                                        FanboxDiagnosticSource.Download,
+                                        failure,
+                                    )
+                                },
+                            ) ?: break
 
                             try {
-                                onChunk(buffer.copyOf(read))
+                                onChunk(chunk)
                             } catch (failure: Throwable) {
                                 callbackFailure = failure
                                 throw failure
                             }
-                            deliveredBytes += read
+                            deliveredBytes += chunk.size
                             if (contentLength != null) {
                                 try {
                                     onProgress((deliveredBytes.toDouble() / contentLength).toFloat())
@@ -607,6 +609,29 @@ internal suspend inline fun <T> normalizeDownloadTransportFailure(
     throw failure
 } catch (failure: IOException) {
     throw networkFailure(failure)
+}
+
+internal suspend inline fun readDownloadChunk(
+    buffer: ByteArray,
+    read: suspend (ByteArray) -> Int,
+    closedCause: () -> Throwable?,
+    networkFailure: (IOException) -> FanboxException.Network,
+): ByteArray? {
+    while (true) {
+        val readCount = normalizeDownloadTransportFailure(
+            block = { read(buffer) },
+            networkFailure = networkFailure,
+        )
+        if (readCount < 0) {
+            normalizeDownloadTransportFailure(
+                block = { closedCause()?.let { throw it } },
+                networkFailure = networkFailure,
+            )
+            return null
+        }
+        if (readCount == 0) continue
+        return buffer.copyOf(readCount)
+    }
 }
 
 private fun closeClients(clients: List<HttpClient>): Throwable? {

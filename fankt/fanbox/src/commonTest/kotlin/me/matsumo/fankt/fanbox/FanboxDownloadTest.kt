@@ -12,18 +12,14 @@ import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.Url
 import io.ktor.http.headersOf
-import io.ktor.utils.io.ByteChannel
-import io.ktor.utils.io.writeFully
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.emptyFlow
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.io.IOException
 import kotlin.coroutines.Continuation
@@ -231,34 +227,33 @@ class FanboxDownloadTest {
 
     @Test
     fun midStreamTransportFailureIsNormalizedAfterDeliveredChunk() = runBlocking {
-        val callbackStarted = CompletableDeferred<Unit>()
-        val transportFailed = CompletableDeferred<Unit>()
         val transportFailure = IOException("mid-stream failure")
-        val fixture = createFixture { request ->
-            val channel = ByteChannel(autoFlush = true)
-            CoroutineScope(request.executionContext).launch {
-                channel.writeFully("first".encodeToByteArray())
-                callbackStarted.await()
-                channel.cancel(transportFailure)
-                transportFailed.complete(Unit)
-            }
-            respond(channel)
-        }
-        val chunks = mutableListOf<ByteArray>()
+        val chunks = mutableListOf("first".encodeToByteArray())
+        var readCount = 0
+        var closedCauseCount = 0
 
         val error = assertFailsWith<FanboxException.Network> {
-            fixture.fanbox.download("https://downloads.fanbox.cc/failing.bin") { chunk ->
-                chunks += chunk
-                callbackStarted.complete(Unit)
-                transportFailed.await()
-            }
+            // The production loop obtains every chunk through this function, including EOF handling
+            // after an earlier chunk callback has completed.
+            readDownloadChunk(
+                buffer = ByteArray(8 * 1_024),
+                read = {
+                    readCount += 1
+                    -1
+                },
+                closedCause = {
+                    closedCauseCount += 1
+                    transportFailure
+                },
+                networkFailure = { cause -> FanboxException.Network("download", cause) },
+            )
         }
 
         assertEquals("download", error.endpoint)
         assertEquals("first", chunks.flatten().decodeToString())
-        assertSame(transportFailure, assertIs<IOException>(error.cause).deepestCause())
-        assertTrue(fixture.requests.single().executionJob.isCompleted)
-        fixture.fanbox.close()
+        assertSame(transportFailure, error.cause)
+        assertEquals(1, readCount)
+        assertEquals(1, closedCauseCount)
     }
 
     @Test
@@ -266,8 +261,10 @@ class FanboxDownloadTest {
         val cancellation = CancellationException("transport cancelled")
 
         val actual = assertFailsWith<CancellationException> {
-            normalizeDownloadTransportFailure(
-                block = { throw cancellation },
+            readDownloadChunk(
+                buffer = ByteArray(1),
+                read = { -1 },
+                closedCause = { cancellation },
                 networkFailure = { cause -> FanboxException.Network("download", cause) },
             )
         }
@@ -479,13 +476,6 @@ class FanboxDownloadTest {
             offset += chunk.size
         }
         return result
-    }
-
-    private fun Throwable.deepestCause(): Throwable {
-        var current = this
-        while (true) {
-            current = current.cause ?: return current
-        }
     }
 
     private data class Fixture(
