@@ -63,4 +63,36 @@ jobs:
           distribution: 'temurin'
 
       - name: Run tests
-        run: ./gradlew :fankt:fanbox:testDebugUnitTest
+        run: >-
+          ./gradlew
+          :fankt:fanbox:testDebugUnitTest
+          :fankt:fanbox-persistence-room:testDebugUnitTest
+          :fankt:fanbox:verifyPersistenceBoundary
+
+  ios-test:
+    if: github.event.pull_request.draft == false
+    runs-on: macos-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Validate Gradle Wrapper
+        uses: gradle/actions/wrapper-validation@v4
+
+      - uses: actions/cache@v3
+        with:
+          path: |
+            ~/.konan
+          key: ${{ runner.os }}-${{ hashFiles('**/.lock') }}
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+
+      - name: Run iOS simulator tests
+        run: ./gradlew :fankt:fanbox-persistence-room:iosSimulatorArm64Test

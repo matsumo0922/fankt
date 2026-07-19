@@ -26,6 +26,20 @@ import kotlin.test.assertTrue
 
 class FanboxAuthStorageTest {
     @Test
+    fun canonicalizationDefinesPersistenceIdentityParityVectors() = runBlocking {
+        val storage = InMemoryFanboxCookieStorage()
+
+        storage.upsert(record("session", "value", domain = " .FANBOX.CC ", path = "index"))
+
+        assertEquals("fanbox.cc", storage.snapshot().single().domain)
+        assertEquals("/", storage.snapshot().single().path)
+
+        storage.delete(" .FANBOX.CC ", "index", "session")
+
+        assertTrue(storage.snapshot().isEmpty())
+    }
+
+    @Test
     fun snapshotReturnsCurrentValueWithoutFlowCollection() = runBlocking {
         val storage = InMemoryFanboxCookieStorage(listOf(record("session", "value")))
 

@@ -74,24 +74,24 @@ The authentication adapter SHALL exclude expired Cookies from every request befo
 - **THEN** the request still excludes the expired snapshot value and cleanup retains the refreshed current record
 
 ### Requirement: Explicit legacy Room access
-Until the Room artifact separation is released, fankt SHALL provide an explicit legacy Room-backed `FanboxCookieStorage` factory or equivalent migration bridge that reads Android `getDatabasePath("fankt.db")` or iOS `NSDocumentDirectory/fankt.db` and implements the same storage contract. The bridge SHALL keep schema v3 unchanged, SHALL expose every legacy row with `hostOnly = false`, and SHALL coerce legacy-backend writes to `hostOnly = false` because the schema cannot preserve that distinction. Each bridge SHALL own its database instance, SHALL close it before file deletion, and SHALL permit a later factory call to create a fresh instance after close. Default `Fanbox` construction SHALL NOT select this bridge implicitly.
+The optional `fanbox-persistence-room` artifact SHALL provide an explicit Room-backed `FanboxCookieStorage` factory that reads Android `getDatabasePath("fankt.db")` or iOS `NSDocumentDirectory/fankt.db` and implements the same storage contract. The backend SHALL keep schema v3 unchanged, SHALL expose every legacy row with `hostOnly = false`, and SHALL coerce writes to `hostOnly = false` because the schema cannot preserve that distinction. Each storage SHALL own its database instance and SHALL permit a later factory call to create a fresh instance after close. It SHALL NOT expose database-file deletion because one instance cannot prove that other owners for the same path are closed. The `fanbox` artifact and default `Fanbox` construction SHALL NOT contain or select this backend implicitly.
 
-#### Scenario: Existing database is opened for migration
-- **WHEN** a host explicitly requests the legacy Room storage on a device with existing Cookie rows
-- **THEN** the bridge exposes those rows through `FanboxCookieStorage.cookies` with their original fields unchanged and `hostOnly = false`
+#### Scenario: Existing database is opened explicitly
+- **WHEN** a host adds the optional artifact and explicitly requests Room storage on a device with existing Cookie rows
+- **THEN** the storage exposes those rows through `FanboxCookieStorage.cookies` with their original fields unchanged and `hostOnly = false`
 
-#### Scenario: Legacy write preserves current domain behavior
-- **WHEN** the legacy bridge stores a Cookie record supplied with `hostOnly = true`
+#### Scenario: Room write preserves current domain behavior
+- **WHEN** the Room storage stores a Cookie record supplied with `hostOnly = true`
 - **THEN** it reloads that record with `hostOnly = false` without changing the Room schema version
 
 #### Scenario: Legacy FANBOX session still reaches API host
-- **WHEN** a v1, v2, or v3 fixture contains the existing domain-scoped `FANBOXSESSID` and is opened through the legacy bridge
-- **THEN** the common adapter sends that session to `https://api.fanbox.cc/`
+- **WHEN** a v1, v2, or v3 fixture contains the existing domain-scoped `FANBOXSESSID`, the optional storage opens it, and that storage is injected into `Fanbox`
+- **THEN** the common authentication adapter makes the session available for `https://api.fanbox.cc/`
 
-#### Scenario: New default avoids legacy database
-- **WHEN** a host constructs `Fanbox()` without requesting the legacy bridge
-- **THEN** fankt does not open `fankt.db`
+#### Scenario: Core default avoids legacy database
+- **WHEN** a host depends only on `fanbox` and constructs `Fanbox()`
+- **THEN** fankt does not include Room or open `fankt.db`
 
-#### Scenario: Closed bridge can be reacquired for cleanup retry
-- **WHEN** a legacy bridge closes and a later cleanup retry requests the bridge again in the same process
+#### Scenario: Closed storage can be reacquired
+- **WHEN** one Room storage closes and a later caller explicitly creates storage again in the same process
 - **THEN** the factory returns a fresh usable database instance rather than the closed instance
