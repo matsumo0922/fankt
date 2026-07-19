@@ -46,12 +46,18 @@ internal class FanboxCookiesStorageAdapter(
 
     override fun close(): Unit = Unit
 
-    suspend fun replaceAll(requestUrl: Url, cookies: List<Cookie>) {
+    suspend fun addRecord(record: FanboxCookieRecord) {
         val now = nowEpochMilliseconds()
-        val records = cookies
-            .map { cookie -> cookie.toRecord(requestUrl, now) }
-            .filterNot { record -> record.isExpired(now) }
-        storage.replaceAll(records)
+        if (record.isExpired(now)) {
+            storage.delete(record.domain, record.path, record.name)
+        } else {
+            storage.upsert(record)
+        }
+    }
+
+    suspend fun replaceAll(records: List<FanboxCookieRecord>) {
+        val now = nowEpochMilliseconds()
+        storage.replaceAll(records.filterNot { record -> record.isExpired(now) })
     }
 
     suspend fun overrideFanboxSessionId(sessionId: String) {

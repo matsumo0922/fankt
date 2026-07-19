@@ -14,7 +14,7 @@ import kotlin.time.Duration.Companion.seconds
 
 internal enum class FanboxDiagnosticSource {
     LibraryGenerated,
-    PublicRaw,
+    Download,
 }
 
 internal data class FanboxDiagnosticTarget(
@@ -26,6 +26,7 @@ internal object FanboxExceptionFactory {
     internal const val MAX_RAW_BODY_LENGTH = 2_048
 
     private const val CUSTOM_REQUEST = "custom-request"
+    private const val DOWNLOAD = "download"
     private const val REDACTED = "[REDACTED]"
 
     private val apiEndpoints = setOf(
@@ -74,8 +75,8 @@ internal object FanboxExceptionFactory {
     )
 
     fun target(source: FanboxDiagnosticSource, url: Url): FanboxDiagnosticTarget {
-        if (source == FanboxDiagnosticSource.PublicRaw) {
-            return FanboxDiagnosticTarget(CUSTOM_REQUEST, retainResponseFragment = false)
+        if (source == FanboxDiagnosticSource.Download) {
+            return FanboxDiagnosticTarget(DOWNLOAD, retainResponseFragment = false)
         }
 
         val path = url.encodedPath.trimStart('/')

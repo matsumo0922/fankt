@@ -42,6 +42,20 @@ jobs:
           java-version: '21'
           distribution: 'temurin'
 
+      - name: Verify FANBOX public boundary
+        run: |
+          consumer_repository="$RUNNER_TEMP/fankt-consumer-repository"
+          ./gradlew \
+            :fankt:fanbox:verifyKtorBoundary \
+            :fankt:fanbox:publishKotlinMultiplatformPublicationToMavenLocal \
+            :fankt:fanbox:publishAndroidReleasePublicationToMavenLocal \
+            -Dmaven.repo.local="$consumer_repository" \
+            --no-configuration-cache
+          ./gradlew \
+            -p compatibility-tests/ktor-independent-consumer \
+            verifyKtorSelection \
+            -PfanktRepository="$consumer_repository"
+
       - name: Publish Fanbox Room persistence library to MavenCentral
         run: ./gradlew :fankt:fanbox-persistence-room:publishAndReleaseToMavenCentral --no-configuration-cache
 

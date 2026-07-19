@@ -9,7 +9,7 @@
 - **BREAKING** Replace the deferred Ktor `HttpStatement` download result with a suspend, chunk-streaming fankt API that keeps large media off a mandatory whole-response buffer.
 - Keep URL allowlisting, redirect validation, authentication scoping, progress reporting, exception mapping, and `Fanbox` ownership of download resources intact.
 - Publish Ktor client and engine dependencies as implementation details rather than API dependencies.
-- Add PR and release ABI/publication-metadata gates that prevent Ktor types or API dependencies from returning to the public boundary.
+- Add PR and release gates for compiled ABI, declared dependency scope, and Android publication metadata so Ktor cannot return to the public boundary unnoticed.
 - Document migration of logging, cookies, downloads, and host-owned platform networking.
 
 ## Capabilities

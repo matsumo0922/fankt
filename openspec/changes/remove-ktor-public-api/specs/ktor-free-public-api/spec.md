@@ -15,14 +15,21 @@ Every public or protected declaration in the `me.matsumo.fankt.fanbox` productio
 - **WHEN** a consumer selects a `FanboxLogLevel`
 - **THEN** fankt maps it to internal HTTP logging without exposing the internal logging type
 
-### Requirement: Published API metadata hides Ktor dependencies
-Every published `fanbox` variant SHALL declare Ktor libraries and platform engines as runtime implementation dependencies rather than API dependencies. Automated verification SHALL inspect Gradle module metadata so a Ktor dependency cannot be added to an API dependency set unnoticed.
+### Requirement: Ktor is declared as an implementation dependency
+Every `fanbox` common, hierarchical native, target-specific iOS, and Android source set SHALL declare Ktor libraries and platform engines with Gradle `implementation` rather than `api`. The Android published API variant SHALL contain no Ktor dependency, its runtime variant SHALL retain every required Ktor implementation dependency, and automated verification SHALL inspect both declared source-set dependency scopes and Android Gradle module metadata. KMP/Native compiler-facing publication metadata MAY include implementation KLib dependencies required for linking, but the compiled public ABI SHALL remain Ktor-free.
 
-#### Scenario: Publication metadata is verified
-- **WHEN** the `fanbox` Gradle module metadata for common, Android, and iOS variants is generated
-- **THEN** no API dependency set contains a Ktor module
+#### Scenario: Declared dependency scopes are verified
+- **WHEN** every common, hierarchy, platform, and target-specific source-set API dependency declaration is inspected
+- **THEN** none declares a Ktor module
+
+#### Scenario: Android publication metadata is verified
+- **WHEN** the `fanbox` Android Gradle module metadata is generated
+- **THEN** its API variant contains no Ktor module while its runtime variant retains the required implementation dependencies
+
+#### Scenario: Native publication retains link dependencies without ABI exposure
+- **WHEN** Kotlin/Native publication metadata includes implementation KLib dependencies in a compiler-facing variant
+- **THEN** the checked public ABI still contains no Ktor type
 
 #### Scenario: Consumer chooses a compatible Ktor version
 - **WHEN** a consumer explicitly selects a runtime-compatible Ktor version
-- **THEN** fankt's publication metadata does not force Ktor onto the consumer compile API
-
+- **THEN** dependency resolution can select that version without any fankt public signature requiring Ktor source usage

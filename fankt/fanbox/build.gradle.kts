@@ -1,8 +1,10 @@
+import groovy.json.JsonSlurper
 import org.gradle.api.DefaultTask
 import org.gradle.api.artifacts.result.ResolvedComponentResult
 import org.gradle.api.artifacts.result.ResolvedDependencyResult
 import org.gradle.api.file.ConfigurableFileCollection
 import org.gradle.api.provider.ListProperty
+import org.gradle.api.publish.tasks.GenerateModuleMetadata
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.InputFiles
 import org.gradle.api.tasks.PathSensitive
@@ -78,6 +80,92 @@ abstract class VerifyPersistenceBoundaryTask : DefaultTask() {
     }
 }
 
+abstract class VerifyKtorBoundaryTask : DefaultTask() {
+    @get:Input
+    abstract val apiDependencyDeclarations: ListProperty<String>
+
+    @get:Input
+    abstract val requiredAndroidRuntimeKtorDependencies: ListProperty<String>
+
+    @get:InputFiles
+    @get:PathSensitive(PathSensitivity.RELATIVE)
+    abstract val abiFiles: ConfigurableFileCollection
+
+    @get:InputFiles
+    @get:PathSensitive(PathSensitivity.RELATIVE)
+    abstract val androidModuleMetadata: ConfigurableFileCollection
+
+    @TaskAction
+    fun verify() {
+        val forbiddenApiDeclarations = apiDependencyDeclarations.get().filter { "io.ktor:" in it }
+        check(forbiddenApiDeclarations.isEmpty()) {
+            "Ktor must be an implementation dependency, but API declarations were found:\n" +
+                forbiddenApiDeclarations.joinToString("\n")
+        }
+
+        val checkedAbiFiles = abiFiles.files.filter { it.isFile }
+        check(checkedAbiFiles.isNotEmpty()) {
+            "No checked-in fanbox ABI files were found; run :fankt:fanbox:updateLegacyAbi"
+        }
+        val leakingAbiFiles = checkedAbiFiles.filter { abi -> "io.ktor" in abi.readText() }
+        check(leakingAbiFiles.isEmpty()) {
+            "Ktor types leaked into the public fanbox ABI:\n" +
+                leakingAbiFiles.joinToString("\n") { it.relativeTo(project.projectDir).path }
+        }
+
+        val metadataFiles = androidModuleMetadata.files.filter { it.isFile }
+        check(metadataFiles.isNotEmpty()) { "No Android Gradle module metadata was generated" }
+        val apiViolations = metadataFiles.flatMap { metadataFile ->
+            val metadata = JsonSlurper().parse(metadataFile) as Map<*, *>
+            val variants = metadata["variants"] as? List<*> ?: emptyList<Any>()
+            variants.flatMap variantLoop@{ variantValue ->
+                val variant = variantValue as? Map<*, *> ?: return@variantLoop emptyList()
+                val attributes = variant["attributes"] as? Map<*, *> ?: emptyMap<Any, Any>()
+                if (attributes["org.gradle.usage"] != "java-api") return@variantLoop emptyList()
+                val variantName = variant["name"].toString()
+                val dependencies = variant["dependencies"] as? List<*> ?: emptyList<Any>()
+                dependencies.mapNotNull dependencyLoop@{ dependencyValue ->
+                    val dependency = dependencyValue as? Map<*, *> ?: return@dependencyLoop null
+                    if (dependency["group"] == "io.ktor") {
+                        "${metadataFile.name}: $variantName -> ${dependency["group"]}:${dependency["module"]}"
+                    } else {
+                        null
+                    }
+                }
+            }
+        }
+        check(apiViolations.isEmpty()) {
+            "Ktor dependencies leaked into Android API publication metadata:\n" +
+                apiViolations.joinToString("\n")
+        }
+
+        val publishedRuntimeKtorDependencies = metadataFiles.flatMap { metadataFile ->
+            val metadata = JsonSlurper().parse(metadataFile) as Map<*, *>
+            val variants = metadata["variants"] as? List<*> ?: emptyList<Any>()
+            variants.flatMap variantLoop@{ variantValue ->
+                val variant = variantValue as? Map<*, *> ?: return@variantLoop emptyList()
+                val attributes = variant["attributes"] as? Map<*, *> ?: emptyMap<Any, Any>()
+                if (attributes["org.gradle.usage"] != "java-runtime") return@variantLoop emptyList()
+                val dependencies = variant["dependencies"] as? List<*> ?: emptyList<Any>()
+                dependencies.mapNotNull dependencyLoop@{ dependencyValue ->
+                    val dependency = dependencyValue as? Map<*, *> ?: return@dependencyLoop null
+                    if (dependency["group"] == "io.ktor") {
+                        "${dependency["group"]}:${dependency["module"]}"
+                    } else {
+                        null
+                    }
+                }
+            }
+        }.toSet()
+        val missingRuntimeDependencies =
+            requiredAndroidRuntimeKtorDependencies.get().toSet() - publishedRuntimeKtorDependencies
+        check(missingRuntimeDependencies.isEmpty()) {
+            "Android runtime publication metadata is missing required Ktor dependencies:\n" +
+                missingRuntimeDependencies.joinToString("\n")
+        }
+    }
+}
+
 plugins {
     id("matsumo.primitive.kmp.common")
     id("matsumo.primitive.android.library")
@@ -127,10 +215,15 @@ android {
 }
 
 kotlin {
+    @OptIn(org.jetbrains.kotlin.gradle.dsl.abi.ExperimentalAbiValidation::class)
+    abiValidation {
+        enabled.set(true)
+    }
+
     sourceSets {
         commonMain.dependencies {
             implementation(libs.bundles.infra.api)
-            api(libs.bundles.ktor)
+            implementation(libs.bundles.ktor)
 
             implementation(libs.ktorfit)
             implementation(libs.ksoup)
@@ -142,7 +235,7 @@ kotlin {
         }
 
         androidMain.dependencies {
-            api(libs.ktor.okhttp)
+            implementation(libs.ktor.okhttp)
         }
 
         androidUnitTest.dependencies {
@@ -151,7 +244,58 @@ kotlin {
         }
 
         iosMain.dependencies {
-            api(libs.ktor.darwin)
+            implementation(libs.ktor.darwin)
         }
     }
+}
+
+val sourceSetApiConfigurations = configurations.matching { configuration ->
+    configuration.name.endsWith("MainApi")
+}
+val androidRuntimeImplementationConfigurations = configurations.matching { configuration ->
+    configuration.name == "commonMainImplementation" || configuration.name == "androidMainImplementation"
+}
+val androidMetadataTasks = tasks.withType<GenerateModuleMetadata>().matching {
+    it.name == "generateMetadataFileForAndroidReleasePublication"
+}
+
+val verifyKtorBoundary = tasks.register<VerifyKtorBoundaryTask>("verifyKtorBoundary") {
+    group = "verification"
+    description = "Verifies that Ktor remains outside the public FANBOX API boundary"
+    dependsOn("checkLegacyAbi", androidMetadataTasks)
+
+    abiFiles.from(layout.projectDirectory.dir("api").asFileTree.matching { include("**/*.api") })
+    androidModuleMetadata.from(androidMetadataTasks)
+}
+
+sourceSetApiConfigurations.configureEach {
+    val apiConfiguration = this
+    verifyKtorBoundary.configure {
+        apiDependencyDeclarations.addAll(
+            provider {
+                apiConfiguration.dependencies.map { dependency ->
+                    "${apiConfiguration.name}: ${dependency.group}:${dependency.name}"
+                }
+            },
+        )
+    }
+}
+
+androidRuntimeImplementationConfigurations.configureEach {
+    val implementationConfiguration = this
+    verifyKtorBoundary.configure {
+        requiredAndroidRuntimeKtorDependencies.addAll(
+            provider {
+                implementationConfiguration.dependencies.mapNotNull { dependency ->
+                    dependency.group
+                        ?.takeIf { it == "io.ktor" }
+                        ?.let { group -> "$group:${dependency.name}" }
+                }
+            },
+        )
+    }
+}
+
+tasks.named("check") {
+    dependsOn("verifyKtorBoundary")
 }

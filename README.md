@@ -97,10 +97,11 @@ val fanbox = Fanbox(
 matching uniformly to every backend. Cookie values and CSRF tokens are credentials; storage
 implementations must not log them or include them in telemetry.
 
-`Fanbox.setCookies()` treats a Cookie without `domain` as host-only for the `url` origin. With the
-default `url`, that Cookie belongs only to `www.fanbox.cc` and is not sent to sibling hosts such as
-`api.fanbox.cc`. Set `domain = ".fanbox.cc"` when a Cookie must cross FANBOX subdomains. Use
-`setFanboxSessionId()` for `FANBOXSESSID`; it creates the required domain-scoped session Cookie.
+`Fanbox.setCookies()` accepts `FanboxCookieRecord` values. Each record's required `domain` and
+explicit `hostOnly` fields are the only scope authority: a host-only record for `www.fanbox.cc` is
+not sent to `api.fanbox.cc`. Use `setFanboxSessionId()` for `FANBOXSESSID`; it creates the required
+domain-scoped session Cookie. An expired additive record deletes the matching identity, while an
+atomic reset omits expired records.
 
 The application owns injected stores. `Fanbox.close()` closes only the HTTP clients and does not
 close or clear a store. Passing the same Cookie or token store instance to multiple `Fanbox` clients
@@ -154,17 +155,26 @@ after close. A later factory call opens a fresh instance over the same database 
 committed Cookie rows. The schema stores legacy records as domain Cookies, so Room-backed records
 have `hostOnly = false`.
 
-The v0.1.0 API keeps existing source constructor forms, including `Fanbox()` and positional
-`logLevel`/`ioDispatcher` calls. Its default authentication durability changes from implicit Room
-persistence to process-memory storage, and the constructor's binary signature changes. Consumers
-must perform a clean rebuild and inject persistence before upgrading when restart durability is
-required.
+The v0.1.0 API keeps `Fanbox()` but replaces Ktor-facing constructor and operation types. Use
+`FanboxLogLevel` instead of Ktor `LogLevel`, `FanboxCookieRecord` instead of Ktor `Cookie`, and the
+streaming `download()` callback instead of `HttpStatement`. `getHttpClient()` is removed; create and
+own a separate host client for networking outside the generated FANBOX APIs. When converting a Ktor
+Cookie, convert relative `maxAge` to absolute `expiresAtEpochMilliseconds`. Ktor-only fields such as
+`httpOnly`, extensions, and encoding are not part of the fankt storage record.
 
-`Fanbox` owns its generated clients and the clients returned by `getHttpClient()`. Calls to
-`getHttpClient()` with the same content-negotiation setting return the same shared instance, so do
-not close that client directly. Close the owning `Fanbox` after all requests and deferred download
-statements finish. Calls started after `Fanbox.close()` fail with `IllegalStateException`; Ktor may
-finish the underlying engine shutdown asynchronously.
+Ktor is an implementation dependency and no fankt public signature requires a Ktor type. Android
+publication metadata keeps Ktor out of its compile API. Kotlin/Native metadata still carries the
+implementation KLib dependencies required for linking, but consumers can explicitly select a
+runtime-compatible Ktor version for their own clients. Arbitrarily incompatible Ktor binaries are
+not supported in one runtime graph.
+
+The default authentication durability changes from implicit Room persistence to process-memory
+storage, and constructor binary signatures change. Consumers must perform a clean rebuild and
+inject persistence before upgrading when restart durability is required.
+
+`Fanbox` owns its generated and download clients. Close it after all requests and downloads finish.
+Calls started after `Fanbox.close()` fail with `IllegalStateException`; the HTTP engine may finish
+shutdown asynchronously.
 
 #### Media downloads
 
@@ -172,23 +182,25 @@ Pass the complete media URL returned by FANBOX to `Fanbox.download()` instead of
 path or filename extension:
 
 ```kotlin
-val statement = fanbox.download(image.originalUrl) { progress ->
-    updateDownloadProgress(progress)
-}
-
-statement.execute { response ->
-    consume(response)
-}
+fanbox.download(
+    url = image.originalUrl,
+    onProgress = { progress -> updateDownloadProgress(progress) },
+    onChunk = { bytes -> output.write(bytes) },
+)
 ```
 
 Downloads accept HTTPS URLs on `fanbox.cc` and its subdomains, plus the observed external media
 hosts `pixiv.pximg.net` and `fanbox.pixiv.net`. The same allowlist applies to redirects. Invalid
-initial URLs throw `IllegalArgumentException` when `download()` is called; a redirect to a
-disallowed host throws it when the returned statement is executed. Ktor does not follow an
-HTTPS-to-HTTP downgrade. Network and HTTP failures use `FanboxException`.
-The returned statement uses a shared client owned by `Fanbox`, so execute it before closing the
-owner. The complete port, path, and query are preserved. Progress is `0f` while the response length
-is unknown or zero.
+initial URLs and disallowed redirects throw `IllegalArgumentException` before the rejected
+destination reaches transport. The complete port, path, and query are preserved. `download()` emits
+an initial `0f`, then reads one bounded chunk at a time and waits for `onChunk` before reading the
+next. Positive known-length responses report progress after each chunk callback; unknown or zero
+length never produces a non-finite value.
+
+Network and HTTP failures use `FanboxException`; callback failures and coroutine cancellation
+propagate unchanged. A partial output remains the caller's responsibility, so file consumers should
+write to a temporary path and promote it only after `download()` returns successfully. The response
+is released on success, failure, cancellation, or owner close.
 
 #### Error handling
 
@@ -209,18 +221,18 @@ try {
 
 `statusCode` is `null` when no response was received. For library-owned routes, `rawBody` contains a
 credential-redacted and control-normalized diagnostic fragment of at most 2,048 Kotlin characters.
-It can still contain FANBOX or user data. Unknown generated routes and every request made with
-`Fanbox.getHttpClient()` use endpoint `custom-request` and intentionally set `rawBody` to `null`,
-including requests to a known FANBOX path.
+It can still contain FANBOX or user data. Unknown generated routes retain endpoint
+`custom-request`. Download failures use endpoint `download`. Both intentionally set `rawBody` to
+`null`.
 
 Log only `FanboxException.message` or an explicitly reviewed `rawBody`. The original `cause` is
 preserved for debugging, but its messages are not covered by the bounded or redacted diagnostic
 contract and must not be logged automatically.
 
-The `Fanbox` constructor treats `LogLevel.BODY` as effective `INFO` and `LogLevel.ALL` as effective
-`HEADERS`. The Logging plugin never receives a raw response body. Allowlisted generated-route
-errors use a separate path for a sanitized, control-normalized fragment bounded to 2,048 Kotlin
-characters; custom requests and unknown routes retain no response fragment.
+The `Fanbox` constructor treats `FanboxLogLevel.BODY` as effective `INFO` and
+`FanboxLogLevel.ALL` as effective `HEADERS`. The HTTP logger never receives a raw response body.
+Allowlisted generated-route errors use a separate path for a sanitized, control-normalized fragment
+bounded to 2,048 Kotlin characters; downloads and unknown routes retain no response fragment.
 
 #### Tolerant list responses
 

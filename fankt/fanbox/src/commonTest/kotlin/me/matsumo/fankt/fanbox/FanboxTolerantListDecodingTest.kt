@@ -6,7 +6,6 @@ import io.github.aakira.napier.Napier
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.mock.MockEngine
 import io.ktor.client.engine.mock.respond
-import io.ktor.client.plugins.logging.LogLevel
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.headersOf
@@ -228,7 +227,7 @@ class FanboxTolerantListDecodingTest {
         configureFanboxClient(
             formatter = createFanboxJson(),
             source = FanboxDiagnosticSource.LibraryGenerated,
-            logLevel = LogLevel.NONE,
+            logLevel = FanboxLogLevel.NONE,
         )
     }
 }

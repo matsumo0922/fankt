@@ -3,8 +3,6 @@ package me.matsumo.fankt.fanbox
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.mock.MockEngine
 import io.ktor.client.engine.mock.respond
-import io.ktor.client.request.get
-import io.ktor.client.statement.bodyAsText
 import io.ktor.http.Cookie
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
@@ -100,7 +98,7 @@ class FanboxAuthStorageTest {
         val adapter = FanboxCookiesStorageAdapter(storage)
 
         runCatching {
-            adapter.replaceAll(Url("https://www.fanbox.cc"), listOf(Cookie("new", "value")))
+            adapter.replaceAll(listOf(record("new", "value")))
         }
 
         assertEquals(previous, storage.snapshot())
@@ -221,7 +219,7 @@ class FanboxAuthStorageTest {
         )
         try {
             fanbox.setCookies(
-                cookies = listOf(Cookie("first", "one"), Cookie("second", "two")),
+                cookies = listOf(record("first", "one"), record("second", "two")),
                 reset = true,
             )
 
@@ -229,6 +227,40 @@ class FanboxAuthStorageTest {
             assertEquals(0, storage.clearCalls)
             assertEquals(0, storage.upsertCalls)
             assertEquals(setOf("first", "second"), storage.snapshot().map { it.name }.toSet())
+        } finally {
+            fanbox.close()
+        }
+    }
+
+    @Test
+    fun publicAdditiveExpiredRecordDeletesMatchingIdentity() = runBlocking {
+        val storage = InMemoryFanboxCookieStorage(listOf(record("session", "old")))
+        val fanbox = Fanbox(cookieStorage = storage)
+        try {
+            fanbox.setCookies(listOf(record("session", "expired", expiresAt = 0)))
+
+            assertTrue(storage.snapshot().isEmpty())
+            assertTrue(fanbox.cookies.first().isEmpty())
+        } finally {
+            fanbox.close()
+        }
+    }
+
+    @Test
+    fun publicReplacementAtomicallyOmitsExpiredRecords() = runBlocking {
+        val storage = RecordingMutationStorage()
+        val fanbox = Fanbox(cookieStorage = storage)
+        try {
+            fanbox.setCookies(
+                listOf(
+                    record("live", "value"),
+                    record("expired", "secret", expiresAt = 0),
+                ),
+                reset = true,
+            )
+
+            assertEquals(1, storage.replaceAllCalls)
+            assertEquals(listOf("live"), storage.snapshot().map { it.name })
         } finally {
             fanbox.close()
         }
@@ -273,7 +305,7 @@ class FanboxAuthStorageTest {
         val first = Fanbox(clientFactory = metadataClientFactory("first-token"))
         val second = Fanbox(clientFactory = metadataClientFactory("second-token"))
         try {
-            first.setCookies(listOf(Cookie("first", "value")))
+            first.setCookies(listOf(record("first", "value")))
             first.updateCsrfToken()
 
             assertEquals(listOf("first"), first.cookies.first().map { it.name })
@@ -293,7 +325,7 @@ class FanboxAuthStorageTest {
         val first = Fanbox(cookieStorage = cookies, tokenStore = tokens)
         val second = Fanbox(cookieStorage = cookies, tokenStore = tokens)
         try {
-            first.setCookies(listOf(Cookie("shared", "value")))
+            first.setCookies(listOf(record("shared", "value")))
             tokens.set("shared-token")
 
             assertEquals(listOf("shared"), second.cookies.first().map { it.name })
@@ -308,7 +340,7 @@ class FanboxAuthStorageTest {
     }
 
     @Test
-    fun injectedStoresServeGeneratedRawAndDownloadClientPaths() = runBlocking {
+    fun injectedStoresServeGeneratedAndDownloadClientPaths() = runBlocking {
         val requests = mutableListOf<Triple<String, String?, String?>>()
         val factory = FanboxHttpClientFactory { block ->
             HttpClient(
@@ -340,13 +372,9 @@ class FanboxAuthStorageTest {
 
             fanbox.updateCsrfToken()
             fanbox.likePost(FanboxPostId("fixture"))
-            fanbox.getHttpClient().get("https://api.fanbox.cc/raw-json").bodyAsText()
-            fanbox.getHttpClient(false).get("https://api.fanbox.cc/raw-text").bodyAsText()
-            fanbox.download("https://api.fanbox.cc/media.bin") {}.execute { it.bodyAsText() }
+            fanbox.download("https://api.fanbox.cc/media.bin") {}
 
             assertTrue(requests.any { it.first.endsWith("post.likePost") })
-            assertTrue(requests.any { it.first == "/raw-json" })
-            assertTrue(requests.any { it.first == "/raw-text" })
             assertTrue(requests.any { it.first == "/media.bin" })
             assertTrue(requests.all { it.second == "FANBOXSESSID=session-value" })
             assertTrue(requests.drop(1).all { it.third == "fixture-token" })

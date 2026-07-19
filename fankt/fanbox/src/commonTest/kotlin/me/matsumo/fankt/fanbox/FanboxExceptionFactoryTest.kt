@@ -19,15 +19,15 @@ class FanboxExceptionFactoryTest {
             FanboxDiagnosticSource.LibraryGenerated,
             Url("https://api.fanbox.cc/post.info?secret=query"),
         )
-        val publicRaw = FanboxExceptionFactory.target(
-            FanboxDiagnosticSource.PublicRaw,
+        val download = FanboxExceptionFactory.target(
+            FanboxDiagnosticSource.Download,
             Url("https://api.fanbox.cc/post.info?secret=query"),
         )
 
         assertEquals("post.info", generated.endpoint)
         assertTrue(generated.retainResponseFragment)
-        assertEquals("custom-request", publicRaw.endpoint)
-        assertFalse(publicRaw.retainResponseFragment)
+        assertEquals("download", download.endpoint)
+        assertFalse(download.retainResponseFragment)
     }
 
     @Test

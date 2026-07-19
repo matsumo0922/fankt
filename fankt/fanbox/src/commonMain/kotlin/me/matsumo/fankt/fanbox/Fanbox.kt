@@ -2,17 +2,19 @@ package me.matsumo.fankt.fanbox
 
 import de.jensklingenberg.ktorfit.Ktorfit
 import io.ktor.client.HttpClient
-import io.ktor.client.plugins.logging.LogLevel
-import io.ktor.client.plugins.onDownload
 import io.ktor.client.request.prepareGet
-import io.ktor.client.statement.HttpStatement
-import io.ktor.http.Cookie
-import io.ktor.http.Url
+import io.ktor.client.statement.bodyAsChannel
+import io.ktor.client.statement.request
+import io.ktor.http.HttpHeaders
+import io.ktor.utils.io.readAvailable
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.withContext
+import kotlinx.io.IOException
 import me.matsumo.fankt.fanbox.datasource.createFanboxCreatorApi
 import me.matsumo.fankt.fanbox.datasource.createFanboxPostApi
 import me.matsumo.fankt.fanbox.datasource.createFanboxSearchApi
@@ -48,17 +50,15 @@ import me.matsumo.fankt.fanbox.repository.FanboxUserRepository
 /**
  * Provides access to the pixivFANBOX API.
  *
- * The public [logLevel] maps [LogLevel.BODY] to an effective [LogLevel.INFO] level and
- * [LogLevel.ALL] to an effective [LogLevel.HEADERS] level. The Logging plugin never receives a
+ * The public [logLevel] maps [FanboxLogLevel.BODY] to an effective info level and
+ * [FanboxLogLevel.ALL] to an effective headers-only level. The HTTP logger never receives a
  * raw response body. For allowlisted generated-route errors, a sanitized and bounded diagnostic
- * fragment is retained and logged through a separate path; custom requests and unknown routes
- * retain no response fragment.
+ * fragment is retained and logged through a separate path; downloads and unknown routes retain no
+ * response fragment.
  *
- * This instance owns every [HttpClient] it creates. Call [close] after all requests and deferred
- * [HttpStatement] executions finish. A client returned by [getHttpClient] is shared and owned by
- * this instance; callers must not close it directly. Public operations started after [close]
- * throw [IllegalStateException]. Ktor completes underlying engine shutdown asynchronously after
- * client close is initiated. Callers must not race [close] with requests or another close call.
+ * This instance owns every HTTP client it creates. Call [close] after all requests and downloads
+ * finish. Public operations started after [close] throw [IllegalStateException]. The underlying
+ * engine shutdown completes asynchronously after client close is initiated.
  *
  * Authentication state belongs to the injected [FanboxCookieStorage] and [FanboxTokenStore]. The
  * public constructor creates new in-memory stores for each call by default, so authentication is
@@ -67,14 +67,14 @@ import me.matsumo.fankt.fanbox.repository.FanboxUserRepository
  * provides platform-explicit Room storage without changing this default. [close] does not close or
  * clear injected stores; close this [Fanbox] before closing its host-owned storage.
  *
- * The v0.1.0 constructor remains source-compatible with earlier call forms, but changing default
- * authentication durability and adding default parameters is intentionally binary-incompatible.
- * Consumers must perform a clean rebuild when upgrading.
+ * The v0.1.0 constructor uses [FanboxLogLevel] instead of the HTTP implementation's logging type,
+ * changes default authentication durability, and is intentionally source- and binary-incompatible.
+ * Consumers must migrate the logging argument and perform a clean rebuild when upgrading.
  */
 class Fanbox internal constructor(
     private val dependencies: FanboxDependencies,
     private val clientFactory: FanboxHttpClientFactory,
-    private val logLevel: LogLevel = LogLevel.NONE,
+    private val logLevel: FanboxLogLevel = FanboxLogLevel.NONE,
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
 ) : AutoCloseable {
     private val lifecycle = Job()
@@ -93,7 +93,7 @@ class Fanbox internal constructor(
     val csrfToken get() = requireOpen(dependencies.csrfToken)
 
     constructor(
-        logLevel: LogLevel = LogLevel.NONE,
+        logLevel: FanboxLogLevel = FanboxLogLevel.NONE,
         ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
         cookieStorage: FanboxCookieStorage = InMemoryFanboxCookieStorage(),
         tokenStore: FanboxTokenStore = InMemoryFanboxTokenStore(),
@@ -106,7 +106,7 @@ class Fanbox internal constructor(
 
     internal constructor(
         clientFactory: FanboxHttpClientFactory,
-        logLevel: LogLevel = LogLevel.NONE,
+        logLevel: FanboxLogLevel = FanboxLogLevel.NONE,
         ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
         cookieStorage: FanboxCookieStorage = InMemoryFanboxCookieStorage(),
         tokenStore: FanboxTokenStore = InMemoryFanboxTokenStore(),
@@ -144,8 +144,8 @@ class Fanbox internal constructor(
                 false,
             )
             val downloadClient = buildOwnedClient(
-                source = FanboxDiagnosticSource.PublicRaw,
-                isEnableContentNegotiation = true,
+                source = FanboxDiagnosticSource.Download,
+                isEnableContentNegotiation = false,
                 isDownloadClient = true,
             )
 
@@ -167,7 +167,7 @@ class Fanbox internal constructor(
             val postWithoutContentNegotiation = ktorfitWithoutContentNegotiation.createFanboxPostApi()
             val creatorWithoutContentNegotiation = ktorfitWithoutContentNegotiation.createFanboxCreatorApi()
 
-            val listItemDecoder = FanboxListItemDecoder(formatter, logLevel != LogLevel.NONE)
+            val listItemDecoder = FanboxListItemDecoder(formatter, logLevel != FanboxLogLevel.NONE)
             val postMapper = FanboxPostMapper(listItemDecoder, formatter)
             val creatorMapper = FanboxCreatorMapper(listItemDecoder)
             val searchMapper = me.matsumo.fankt.fanbox.datasource.mapper.FanboxSearchMapper(creatorMapper)
@@ -180,35 +180,12 @@ class Fanbox internal constructor(
                 search = FanboxSearchRepository(searchApi, searchMapper),
                 user = FanboxUserRepository(userApi, userMapper, metadataParser),
                 downloadClient = downloadClient,
-                rawClient = buildOwnedClient(FanboxDiagnosticSource.PublicRaw, true),
-                rawClientWithoutContentNegotiation = buildOwnedClient(FanboxDiagnosticSource.PublicRaw, false),
                 clients = clients,
             )
         } catch (failure: Throwable) {
             closeClients(clients)?.let(failure::addSuppressed)
             throw failure
         }
-    }
-
-    /**
-     * Returns a shared client for custom requests.
-     *
-     * The returned client is owned by this [Fanbox] instance. Callers must not close it. Repeated
-     * calls with the same [isEnableContentNegotiation] value return the same instance.
-     *
-     * Failures from requests made with this client always use endpoint `custom-request` and suppress
-     * response fragments, even when a request targets a library-owned FANBOX path.
-     *
-     * @throws IllegalStateException when this [Fanbox] is closed.
-     */
-    suspend fun getHttpClient(isEnableContentNegotiation: Boolean = true): HttpClient {
-        return requireOpen(
-            if (isEnableContentNegotiation) {
-                resources.rawClient
-            } else {
-                resources.rawClientWithoutContentNegotiation
-            },
-        )
     }
 
     /** Replaces the FANBOX session Cookie and then clears the injected CSRF token on success. */
@@ -222,13 +199,13 @@ class Fanbox internal constructor(
      * Stores [cookies]. Resetting cookies or supplying `FANBOXSESSID` clears the injected
      * CSRF token before replacement-cookie writes; unrelated additive cookies preserve it.
      *
-     * A Cookie without `domain` is host-only for [url]'s origin host and is not sent to sibling
-     * hosts. Supply `domain = ".fanbox.cc"` for a Cookie that must cross FANBOX subdomains, or use
-     * [setFanboxSessionId] for `FANBOXSESSID`.
+     * Each record's [FanboxCookieRecord.domain] and [FanboxCookieRecord.hostOnly] fields are the
+     * sole authority for Cookie scope. Use [setFanboxSessionId] for the conventional cross-subdomain
+     * `FANBOXSESSID` scope. Expired additive records delete their matching identity; expired records
+     * are omitted from an atomic replacement.
      */
     suspend fun setCookies(
-        cookies: List<Cookie>,
-        url: String = "https://www.fanbox.cc",
+        cookies: List<FanboxCookieRecord>,
         reset: Boolean = false,
     ) {
         ensureOpen()
@@ -236,14 +213,13 @@ class Fanbox internal constructor(
             dependencies.clearCsrfToken()
         }
 
-        val requestUrl = Url(url)
         if (reset) {
-            dependencies.replaceCookies(requestUrl, cookies)
+            dependencies.replaceCookies(cookies)
             return
         }
 
         for (cookie in cookies) {
-            dependencies.cookieStorage.addCookie(requestUrl, cookie)
+            dependencies.addCookie(cookie)
         }
     }
 
@@ -495,35 +471,61 @@ class Fanbox internal constructor(
     }
 
     /**
-     * Creates a deferred authenticated media request for [url].
+     * Streams authenticated media from [url] in bounded, ordered chunks.
      *
      * The URL must use HTTPS and target `fanbox.cc`, one of its subdomains,
      * `pixiv.pximg.net`, or `fanbox.pixiv.net`. The same destination check applies to redirects.
-     * The complete port, path, extension, and query are preserved. [onProgress] receives a
-     * downloaded-byte fraction when the response supplies a positive content length, or `0f` while
-     * the length is unknown or zero.
+     * The complete port, path, extension, and query are preserved. [onProgress] receives an initial
+     * `0f`, then downloaded-byte fractions after the matching [onChunk] callback completes when the
+     * response supplies a positive content length. Each chunk is an independent value no larger
+     * than the internal read buffer and the next read waits for [onChunk] to return.
      *
-     * Execute the returned statement before [close]. Execution after owner close fails with Ktor's
-     * closed-client exception rather than a [FanboxException]. Statement execution and
-     * [onProgress] callbacks run on the caller's coroutine context.
+     * Callback failures and cancellation propagate unchanged. The response is released before this
+     * function returns or throws. Callers writing files should write to a temporary destination and
+     * promote it only after this function completes successfully.
      *
      * @throws IllegalArgumentException when [url] or a redirect host is not allowed.
-     * @throws FanboxException when the returned [HttpStatement] is executed and the request otherwise fails.
+     * @throws FanboxException when the request or response transport fails.
      */
     suspend fun download(
         url: String,
-        onProgress: (Float) -> Unit,
-    ): HttpStatement {
+        onProgress: (Float) -> Unit = {},
+        onChunk: suspend (ByteArray) -> Unit,
+    ) {
         val client = downloadClient
         val validatedUrl = parseFanboxDownloadUrl(url)
-        return client.prepareGet(validatedUrl.toString()) {
-            onDownload { bytesReceivedTotal, contentLength ->
-                val progress = contentLength
+        val downloadJob = requireNotNull(currentCoroutineContext()[Job])
+        val closeHandle = lifecycle.invokeOnCompletion {
+            downloadJob.cancel(CancellationException("Fanbox is closed"))
+        }
+        try {
+            client.prepareGet(validatedUrl.toString()).execute { response ->
+                val contentLength = response.headers[HttpHeaders.ContentLength]
+                    ?.toLongOrNull()
                     ?.takeIf { it > 0L }
-                    ?.let { bytesReceivedTotal.toFloat() / it }
-                    ?: 0f
-                onProgress(progress)
+                val channel = normalizeDownloadTransport(response.request) {
+                    response.bodyAsChannel()
+                }
+                val buffer = ByteArray(DOWNLOAD_CHUNK_SIZE)
+                var deliveredBytes = 0L
+
+                onProgress(0f)
+                while (true) {
+                    val read = normalizeDownloadTransport(response.request) {
+                        channel.readAvailable(buffer)
+                    }
+                    if (read < 0) break
+                    if (read == 0) continue
+
+                    onChunk(buffer.copyOf(read))
+                    deliveredBytes += read
+                    if (contentLength != null) {
+                        onProgress((deliveredBytes.toDouble() / contentLength).toFloat())
+                    }
+                }
             }
+        } finally {
+            closeHandle.dispose()
         }
     }
 
@@ -548,10 +550,23 @@ private data class FanboxResources(
     val search: FanboxSearchRepository,
     val user: FanboxUserRepository,
     val downloadClient: HttpClient,
-    val rawClient: HttpClient,
-    val rawClientWithoutContentNegotiation: HttpClient,
     val clients: List<HttpClient>,
 )
+
+private const val DOWNLOAD_CHUNK_SIZE: Int = 8 * 1_024
+
+private suspend inline fun <T> normalizeDownloadTransport(
+    request: io.ktor.client.request.HttpRequest,
+    block: suspend () -> T,
+): T = try {
+    block()
+} catch (failure: CancellationException) {
+    throw failure
+} catch (failure: FanboxException) {
+    throw failure
+} catch (failure: IOException) {
+    throw FanboxExceptionFactory.network(request, FanboxDiagnosticSource.Download, failure)
+}
 
 private fun closeClients(clients: List<HttpClient>): Throwable? {
     var failure: Throwable? = null

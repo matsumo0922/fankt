@@ -7,29 +7,38 @@ import io.ktor.client.engine.mock.respond
 import io.ktor.client.engine.mock.respondRedirect
 import io.ktor.client.plugins.cookies.AcceptAllCookiesStorage
 import io.ktor.client.request.HttpRequestData
-import io.ktor.client.statement.bodyAsText
 import io.ktor.http.Cookie
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.Url
 import io.ktor.http.headersOf
+import io.ktor.utils.io.ByteChannel
+import io.ktor.utils.io.writeFully
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import kotlinx.io.IOException
 import kotlin.test.Test
+import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertIs
-import kotlin.test.assertNotNull
 import kotlin.test.assertNull
+import kotlin.test.assertSame
 import kotlin.test.assertTrue
 
 class FanboxDownloadTest {
 
     @Test
-    fun exactNonJpegUrlIsDeferredAndReportsProgressThroughPublicPath() = runBlocking {
+    fun exactNonJpegUrlStreamsAndReportsProgressThroughPublicPath() = runBlocking {
         val payload = "fixture-payload"
         val fixture = createFixture {
             respond(
@@ -38,19 +47,60 @@ class FanboxDownloadTest {
             )
         }
         val progress = mutableListOf<Float>()
+        val chunks = mutableListOf<ByteArray>()
         val url = "https://downloads.fanbox.cc/files/post/123/archive.zip?download=1"
 
-        val statement = fixture.fanbox.download(url, progress::add)
-        assertTrue(fixture.requests.isEmpty())
+        fixture.fanbox.download(url, progress::add, chunks::add)
 
-        assertEquals(payload, statement.execute { response -> response.bodyAsText() })
-
+        assertEquals(payload, chunks.flatten().decodeToString())
         assertEquals(1, fixture.requests.size)
         assertEquals(url, fixture.requests.single().url.toString())
         assertEquals("fixture-token", fixture.requests.single().csrfToken)
         assertTrue(fixture.requests.single().cookie.orEmpty().contains("FANBOXSESSID=fixture-session"))
-        assertEquals(1f, progress.last())
-        assertEquals(5, fixture.clients.size)
+        assertEquals(listOf(0f, 1f), progress)
+        assertEquals(3, fixture.clients.size)
+        assertTrue(fixture.requests.single().executionJob.isCompleted)
+        fixture.fanbox.close()
+    }
+
+    @Test
+    fun boundedOrderedChunksWaitForSlowConsumer() = runBlocking {
+        val payload = ByteArray(20_000) { index -> (index % 251).toByte() }
+        val fixture = createFixture {
+            respond(
+                content = payload,
+                headers = headersOf(HttpHeaders.ContentLength, payload.size.toString()),
+            )
+        }
+        val callbackStarted = CompletableDeferred<Unit>()
+        val releaseCallback = CompletableDeferred<Unit>()
+        val chunks = mutableListOf<ByteArray>()
+        val progress = mutableListOf<Pair<Float, Int>>()
+
+        val download = async {
+            fixture.fanbox.download(
+                url = "https://downloads.fanbox.cc/large.bin",
+                onProgress = { value -> progress += value to chunks.size },
+            ) { chunk ->
+                chunks += chunk
+                if (chunks.size == 1) {
+                    callbackStarted.complete(Unit)
+                    releaseCallback.await()
+                }
+            }
+        }
+
+        callbackStarted.await()
+        assertEquals(1, chunks.size)
+        releaseCallback.complete(Unit)
+        download.await()
+
+        assertTrue(chunks.size > 1)
+        assertTrue(chunks.all { it.isNotEmpty() && it.size <= 8 * 1_024 })
+        assertContentEquals(payload, chunks.flatten())
+        assertEquals(0f to 0, progress.first())
+        assertTrue(progress.drop(1).all { (_, deliveredChunkCount) -> deliveredChunkCount > 0 })
+        assertEquals(1f, progress.last().first)
         fixture.fanbox.close()
     }
 
@@ -58,8 +108,8 @@ class FanboxDownloadTest {
     fun observedExternalHostsOmitCsrfAndFanboxCookies() = runBlocking {
         val fixture = createFixture()
 
-        fixture.fanbox.download("https://pixiv.pximg.net/image.png") {}.execute { it.bodyAsText() }
-        fixture.fanbox.download("https://fanbox.pixiv.net/images/entry/file.gif") {}.execute { it.bodyAsText() }
+        fixture.fanbox.download("https://pixiv.pximg.net/image.png") {}
+        fixture.fanbox.download("https://fanbox.pixiv.net/images/entry/file.gif") {}
 
         assertEquals(listOf("pixiv.pximg.net", "fanbox.pixiv.net"), fixture.requests.map { it.url.host })
         fixture.requests.forEach { request ->
@@ -98,49 +148,45 @@ class FanboxDownloadTest {
     fun allowedHostMatchingIsCaseInsensitive() = runBlocking {
         val fixture = createFixture()
 
-        fixture.fanbox.download("https://DOWNLOADS.FANBOX.CC/file.psd") {}.execute { it.bodyAsText() }
+        fixture.fanbox.download("https://DOWNLOADS.FANBOX.CC/file.psd") {}
 
         assertTrue(fixture.requests.single().url.host.equals("downloads.fanbox.cc", ignoreCase = true))
         fixture.fanbox.close()
     }
 
     @Test
-    fun zeroContentLengthReportsZeroProgress() = runBlocking {
-        val fixture = createFixture {
-            respond(
-                content = "",
-                headers = headersOf(HttpHeaders.ContentLength, "0"),
-            )
+    fun zeroAndUnknownContentLengthOnlyReportInitialZero() = runBlocking {
+        val zeroFixture = createFixture {
+            respond(content = "", headers = headersOf(HttpHeaders.ContentLength, "0"))
         }
-        val progress = mutableListOf<Float>()
+        val zeroProgress = mutableListOf<Float>()
+        zeroFixture.fanbox.download("https://downloads.fanbox.cc/empty", zeroProgress::add) {}
+        assertEquals(listOf(0f), zeroProgress)
+        zeroFixture.fanbox.close()
 
-        fixture.fanbox.download("https://downloads.fanbox.cc/empty", progress::add)
-            .execute { it.bodyAsText() }
-
-        assertTrue(progress.isNotEmpty())
-        assertTrue(progress.all { it == 0f })
-        fixture.fanbox.close()
+        val unknownFixture = createFixture { respond(content = "unknown") }
+        val unknownProgress = mutableListOf<Float>()
+        unknownFixture.fanbox.download("https://downloads.fanbox.cc/unknown", unknownProgress::add) {}
+        assertEquals(listOf(0f), unknownProgress)
+        unknownFixture.fanbox.close()
     }
 
     @Test
-    fun redirectOutsideAllowlistIsRejectedBeforeSecondTransportAndCancelsPriorCall() = runBlocking {
-        var firstRequestJob: Job? = null
+    fun redirectOutsideAllowlistIsRejectedBeforeSecondTransportAndReleasesPriorCall() = runBlocking {
         val fixture = createFixture { request ->
             if (request.url.host == "downloads.fanbox.cc") {
-                firstRequestJob = request.executionContext
                 respondRedirect("https://evil.example/file.zip")
             } else {
                 error("Disallowed redirect reached transport: ${request.url}")
             }
         }
-        val statement = fixture.fanbox.download("https://downloads.fanbox.cc/file.zip") {}
 
         assertFailsWith<IllegalArgumentException> {
-            statement.execute { it.bodyAsText() }
+            fixture.fanbox.download("https://downloads.fanbox.cc/file.zip") {}
         }
 
         assertEquals(listOf("downloads.fanbox.cc"), fixture.requests.map { it.url.host })
-        assertTrue(firstRequestJob?.isCancelled == true)
+        assertTrue(fixture.requests.single().executionJob.isCompleted)
         fixture.fanbox.close()
     }
 
@@ -153,11 +199,11 @@ class FanboxDownloadTest {
                 respond("redirected")
             }
         }
+        val chunks = mutableListOf<ByteArray>()
 
-        val body = fixture.fanbox.download("https://downloads.fanbox.cc/original.png") {}
-            .execute { it.bodyAsText() }
+        fixture.fanbox.download("https://downloads.fanbox.cc/original.png", onChunk = chunks::add)
 
-        assertEquals("redirected", body)
+        assertEquals("redirected", chunks.flatten().decodeToString())
         assertEquals(listOf("downloads.fanbox.cc", "pixiv.pximg.net"), fixture.requests.map { it.url.host })
         assertEquals("fixture-token", fixture.requests.first().csrfToken)
         assertNull(fixture.requests.last().csrfToken)
@@ -166,33 +212,111 @@ class FanboxDownloadTest {
     }
 
     @Test
-    fun downloadHttpFailureUsesPublicExceptionWithoutResponseFragment() = runBlocking {
+    fun downloadHttpFailureUsesDownloadDiagnosticWithoutResponseFragment() = runBlocking {
         val fixture = createFixture { respond("download denied", HttpStatusCode.Forbidden) }
-        val statement = fixture.fanbox.download("https://downloads.fanbox.cc/private.zip") {}
 
         val error = assertFailsWith<FanboxException.Forbidden> {
-            statement.execute { it.bodyAsText() }
+            fixture.fanbox.download("https://downloads.fanbox.cc/private.zip") {}
         }
 
-        assertEquals("custom-request", error.endpoint)
+        assertEquals("download", error.endpoint)
         assertNull(error.rawBody)
         assertEquals(1, fixture.requests.size)
         fixture.fanbox.close()
     }
 
     @Test
-    fun ownerClosePreventsDeferredDownloadFromReachingTransport() = runBlocking {
-        val fixture = createFixture()
-        val statement = fixture.fanbox.download("https://downloads.fanbox.cc/file.zip") {}
+    fun midStreamTransportFailureIsNormalizedAfterDeliveredChunk() = runBlocking {
+        val firstChunkDelivered = CompletableDeferred<Unit>()
+        val transportFailure = IOException("mid-stream failure")
+        val fixture = createFixture { request ->
+            val channel = ByteChannel(autoFlush = true)
+            CoroutineScope(request.executionContext).launch {
+                channel.writeFully("first".encodeToByteArray())
+                firstChunkDelivered.await()
+                channel.cancel(transportFailure)
+            }
+            respond(channel)
+        }
+        val chunks = mutableListOf<ByteArray>()
 
+        val error = assertFailsWith<FanboxException.Network> {
+            fixture.fanbox.download("https://downloads.fanbox.cc/failing.bin") { chunk ->
+                chunks += chunk
+                firstChunkDelivered.complete(Unit)
+            }
+        }
+
+        assertEquals("download", error.endpoint)
+        assertEquals("first", chunks.flatten().decodeToString())
+        assertIs<IOException>(error.cause)
+        assertTrue(fixture.requests.single().executionJob.isCompleted)
+        fixture.fanbox.close()
+    }
+
+    @Test
+    fun callbackFailureKeepsIdentityAndStopsProgressBeforeChunkCompletion() = runBlocking {
+        val fixture = createFixture {
+            respond(content = "payload", headers = headersOf(HttpHeaders.ContentLength, "7"))
+        }
+        val callbackFailure = IllegalStateException("consumer failed")
+        val progress = mutableListOf<Float>()
+
+        val actual = assertFailsWith<IllegalStateException> {
+            fixture.fanbox.download("https://downloads.fanbox.cc/file.bin", progress::add) {
+                throw callbackFailure
+            }
+        }
+
+        assertSame(callbackFailure, actual)
+        assertEquals(listOf(0f), progress)
+        assertTrue(fixture.requests.single().executionJob.isCompleted)
+        fixture.fanbox.close()
+    }
+
+    @Test
+    fun callbackCancellationKeepsIdentityAndReleasesResponse() = runBlocking {
+        val fixture = createFixture()
+        val cancellation = CancellationException("consumer cancelled")
+
+        val actual = assertFailsWith<CancellationException> {
+            fixture.fanbox.download("https://downloads.fanbox.cc/file.bin") {
+                throw cancellation
+            }
+        }
+
+        assertSame(cancellation, actual)
+        assertTrue(fixture.requests.single().executionJob.isCompleted)
+        fixture.fanbox.close()
+    }
+
+    @Test
+    fun ownerClosePreventsNewDownloadWork() = runBlocking {
+        val fixture = createFixture()
         fixture.fanbox.close()
 
-        assertNotNull(runCatching { statement.execute { it.bodyAsText() } }.exceptionOrNull())
-        assertTrue(fixture.requests.isEmpty())
         assertFailsWith<IllegalStateException> {
             fixture.fanbox.download("https://downloads.fanbox.cc/after-close.zip") {}
         }
-        Unit
+        assertTrue(fixture.requests.isEmpty())
+    }
+
+    @Test
+    fun ownerCloseCancelsActiveDownloadAndReleasesResponse() = runBlocking {
+        val callbackStarted = CompletableDeferred<Unit>()
+        val fixture = createFixture()
+        val download = async {
+            fixture.fanbox.download("https://downloads.fanbox.cc/file.bin") {
+                callbackStarted.complete(Unit)
+                awaitCancellation()
+            }
+        }
+
+        callbackStarted.await()
+        fixture.fanbox.close()
+
+        assertFailsWith<CancellationException> { download.await() }
+        assertTrue(fixture.requests.single().executionJob.isCompleted)
     }
 
     @Test
@@ -248,7 +372,8 @@ class FanboxDownloadTest {
             setCsrfToken = { latestToken.value = it },
             clearCsrfToken = { latestToken.value = null },
             overrideFanboxSessionId = {},
-            replaceCookies = { _, _ -> },
+            addCookie = {},
+            replaceCookies = {},
         )
 
         return Fixture(
@@ -266,7 +391,18 @@ class FanboxDownloadTest {
         url = url,
         csrfToken = headers[FANBOX_CSRF_HEADER],
         cookie = headers[HttpHeaders.Cookie],
+        executionJob = executionContext,
     )
+
+    private fun List<ByteArray>.flatten(): ByteArray {
+        val result = ByteArray(sumOf(ByteArray::size))
+        var offset = 0
+        forEach { chunk ->
+            chunk.copyInto(result, offset)
+            offset += chunk.size
+        }
+        return result
+    }
 
     private data class Fixture(
         val fanbox: Fanbox,
@@ -278,5 +414,6 @@ class FanboxDownloadTest {
         val url: Url,
         val csrfToken: String?,
         val cookie: String?,
+        val executionJob: Job,
     )
 }

@@ -46,13 +46,15 @@ This deliberately removes deferred request ownership. A whole-body convenience A
 
 The download client will use a download-specific diagnostic source rather than the removed raw-client `custom-request` label, so public `FanboxException.endpoint` values do not refer to a deleted API.
 
-### Verify the compiled and published boundaries（agent 仮決め）
+### Verify the compiled and declared boundaries（agent 仮決め）
 
-Kotlin Gradle Plugin 2.2.10's experimental ABI validation is the first candidate for checked-in public ABI dumps for the supported `fanbox` targets. Task 3.2 must prove Android and iOS Gradle integration before the change relies on it; if a target is unsupported, the fallback is a deterministic target compiler/KLib ABI dump committed and checked by the same boundary task. A verification task will fail when any dump contains `io.ktor`. Publication verification will generate Gradle module metadata and inspect API dependency sets, failing when any Ktor module appears there. Task inputs will be provider-backed so verification remains compatible with the repository's configuration-cache policy. Source-text scanning alone is insufficient because inferred signatures and type aliases can leak dependencies without an obvious declaration.
+Kotlin Gradle Plugin 2.2.10's experimental ABI validation is the first candidate for checked-in public ABI dumps for the supported `fanbox` targets. Task 3.2 must prove Android and iOS Gradle integration before the change relies on it; if a target is unsupported, the fallback is a deterministic target compiler/KLib ABI dump committed and checked by the same boundary task. A verification task will fail when any dump contains `io.ktor`. A provider-backed dependency-scope check will fail if common, Android, or iOS source-set API declarations contain Ktor, and generated Android Gradle module metadata will be checked to keep Ktor out of its API variant. Source-text scanning alone is insufficient because inferred signatures and type aliases can leak dependencies without an obvious declaration.
 
-PR CI will run the common/Android ABI and metadata gate, while the existing macOS job will run the iOS ABI and iOS publication-metadata gates. The release workflow will rerun the complete boundary gate before any publication step. A consumer fixture will resolve the locally published module metadata from an isolated repository rather than use a project dependency, ensuring it exercises the actual published API variants.
+Generated metadata establishes an important platform distinction: Android separates API and runtime variants, but KMP/Native compiler-facing metadata publishes implementation KLib dependencies because downstream linking needs them. Therefore KMP/Native publication metadata is not used as proof of source API exposure; every hierarchy and target-specific source set's declared Gradle scope plus compiled ABI are the enforceable boundary. Android metadata verification checks both directions: Ktor is absent from its API variant and all required implementation modules remain in its runtime variant. Verification task inputs remain provider-backed so the repository's configuration-cache policy is preserved.
 
-Ktor common and engine dependencies move to `implementation`. This removes them from the consumer compile API and lets a consumer explicitly select a compatible runtime version; it does not promise that incompatible Ktor binaries can coexist.
+PR CI will run the declared-scope, Android ABI, and Android metadata gate, while the existing macOS job will run the iOS ABI gate. The release workflow will rerun the complete boundary gate before any publication step. A consumer fixture will resolve the locally published module metadata from an isolated repository rather than use a project dependency, explicitly select a compatible Ktor version, and compile without using Ktor in any fankt signature.
+
+Ktor common and engine dependencies move to `implementation`. On Android this removes them from the published compile API; on Kotlin/Native they remain compiler/link dependencies in Gradle metadata even though no fankt public signature uses them. Consumers can explicitly select a compatible resolved version, but incompatible Ktor binaries are not promised to coexist.
 
 ## Risks / Trade-offs
 
@@ -60,7 +62,7 @@ Ktor common and engine dependencies move to `implementation`. This removes them 
 - [Callback failures are accidentally wrapped as network failures] -> Keep callback execution outside transport-normalization catches or explicitly rethrow the callback failure; add identity-preserving tests.
 - [Redirect or authentication behavior changes during download rewrite] -> Retain the dedicated configured client and existing request/redirect plugins; port the issue #32 tests to the new execution shape.
 - [An inferred or platform-specific Ktor signature escapes review] -> Generate ABI for supported targets and scan the checked-in ABI boundary in CI.
-- [Gradle metadata uses variant-specific dependency sets] -> Inspect generated `.module` variants rather than relying only on source dependency declarations or Maven POM scopes.
+- [Kotlin/Native metadata represents implementation dependencies as compiler API dependencies] -> Verify declared source-set scope and compiled ABI for Native; reserve publication API-metadata exclusion for Android where API/runtime variants are distinct.
 - [Consumers interpret `implementation` as arbitrary version compatibility] -> State runtime compatibility precisely in README migration guidance and test only a known-compatible consumer-selected version.
 - [One PR spans API, streaming, and build gates] -> Keep the v0.1.0 breaking boundary atomic, organize implementation as separately reviewable commits, and require focused streaming plus boundary validation before the aggregate suite.
 - [Close or disk failure leaves a partial consumer file] -> Propagate cancellation/callback failure and document that callers should write to a temporary destination and promote it only after `download` returns.
@@ -68,9 +70,9 @@ Ktor common and engine dependencies move to `implementation`. This removes them 
 ## Migration Plan
 
 1. Introduce `FanboxLogLevel`, change cookie signatures to `FanboxCookieRecord`, remove raw-client access, and replace download execution in one breaking commit series.
-2. Move Ktor declarations to `implementation`, enable ABI validation, generate the intended v0.1.0 baseline, and add publication checks to PR and release CI.
+2. Move Ktor declarations to `implementation`, enable ABI validation, generate the intended v0.1.0 baseline, and add declared-scope plus Android publication checks to PR and release CI.
 3. Update repository consumers, tests, README, and KDoc together.
-4. Validate common, Android, iOS, locally published metadata, and a consumer compile fixture before publishing v0.1.0; the release workflow blocks publication until the same boundary checks pass.
+4. Validate common, Android, iOS, Android publication metadata, declared scopes, and a locally published consumer compile fixture before publishing v0.1.0; the release workflow blocks publication until the same boundary checks pass.
 5. External consumers migrate logging/cookies/downloads and own any general-purpose HTTP clients before adopting v0.1.0.
 
 Rollback before publication is a source revert. After v0.1.0 publication, fixes must preserve the new Ktor-free boundary; restoring the Ktor-exposing v0.0.x signatures would require a separate compatibility release decision.
