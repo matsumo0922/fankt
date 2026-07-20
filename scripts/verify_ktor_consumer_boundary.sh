@@ -30,4 +30,9 @@ verify_consumer() {
 }
 
 verify_consumer
-verify_consumer
+second_run_log="$consumer_repository/second-consumer-run.log"
+verify_consumer 2>&1 | tee "$second_run_log"
+if ! grep -Fq "Reusing configuration cache." "$second_run_log"; then
+    echo "configuration cache was not reused on the second consumer verification" >&2
+    exit 1
+fi

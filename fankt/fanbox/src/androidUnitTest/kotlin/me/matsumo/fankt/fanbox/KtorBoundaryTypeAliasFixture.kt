@@ -7,4 +7,5 @@ import io.ktor.client.HttpClient
 
 public typealias AndroidKtorClientAlias = HttpClient
 
-public typealias AndroidStdlibInstantAlias = kotlin.time.Instant
+// kotlinx-datetime is absent by design, so this proxy proves the generic forbidden-marker path.
+public typealias AndroidGenericMarkerProxyAlias = kotlin.time.Instant

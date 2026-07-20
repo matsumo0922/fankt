@@ -24,10 +24,10 @@ Every public or protected FANBOX declaration SHALL use `kotlin.time.Instant` for
 - **THEN** each owning source or compiler boundary explicitly opts in to `ExperimentalTime` rather than suppressing or bypassing the error-level marker
 
 ### Requirement: fankt does not publish kotlinx-datetime
-The fankt version catalog, dependency bundles, and `fanbox` source sets SHALL declare no `kotlinx-datetime` dependency when production has no remaining calendar or time-zone use. Android and Kotlin Multiplatform publication metadata and the isolated consumer compile/runtime graphs SHALL contain no `org.jetbrains.kotlinx:kotlinx-datetime` module.
+The `infra-api` dependency bundle and `fanbox` source sets SHALL declare no `kotlinx-datetime` dependency when FANBOX production has no remaining calendar or time-zone use. Unrelated repository consumers MAY select a normal `kotlinx-datetime` catalog entry independently. Android and Kotlin Multiplatform publication metadata and the isolated consumer compile/runtime graphs SHALL contain no `org.jetbrains.kotlinx:kotlinx-datetime` module.
 
 #### Scenario: Declared datetime dependency is absent
-- **WHEN** the version catalog, bundles, and every `fanbox` source-set dependency declaration are inspected
+- **WHEN** the expanded `infra-api` bundle and every `fanbox` source-set dependency declaration are inspected
 - **THEN** no compatibility or normal `kotlinx-datetime` dependency is declared
 
 #### Scenario: Published metadata is independent from datetime
@@ -37,6 +37,10 @@ The fankt version catalog, dependency bundles, and `fanbox` source sets SHALL de
 #### Scenario: Isolated consumer uses stdlib Instant
 - **WHEN** a consumer explicitly opts in and compiles a `FanboxPost.publishedDatetime` usage and `FanboxPost.serializer()` against the isolated publication without declaring kotlinx-datetime
 - **THEN** compilation succeeds with `kotlin.time.Instant` and no kotlinx-datetime component resolves on compile or runtime classpaths
+
+#### Scenario: Isolated consumer reuses the configuration cache
+- **WHEN** the isolated consumer verification runs twice with the same publication repository and arguments
+- **THEN** the second invocation reports configuration-cache reuse and the verification fails if reuse is not observed
 
 ### Requirement: PixiView migration is explicit and compilable
 The v0.1.0 migration documentation SHALL state that PixiView and equivalent Kotlin 2.2 consumers accept fankt model timestamps as the error-level `ExperimentalTime` `kotlin.time.Instant`, explicitly opt in, remove `toStdlibInstant()` compatibility bridges, and retain or select a normal non-compat `kotlinx-datetime` artifact only for their own remaining calendar or time-zone APIs. All four known PixiView bridge calls SHALL compile against the isolated fankt candidate after those mechanical edits.
