@@ -317,14 +317,22 @@ abstract class VerifyKtorBoundaryTask : DefaultTask() {
                 forbiddenApiDeclarations.joinToString("\n")
         }
 
-        val datetimeDependencyDeclarations = fanboxDependencyDeclarations.get().filter {
+        val collectedFanboxDependencyDeclarations = fanboxDependencyDeclarations.get()
+        check(collectedFanboxDependencyDeclarations.isNotEmpty()) {
+            "No FANBOX source set dependency declarations were collected"
+        }
+        val datetimeDependencyDeclarations = collectedFanboxDependencyDeclarations.filter {
             DATETIME_MODULE in it
         }
         check(datetimeDependencyDeclarations.isEmpty()) {
             "FANBOX source sets still declare kotlinx-datetime dependencies:\n" +
                 datetimeDependencyDeclarations.joinToString("\n")
         }
-        val datetimeInfraApiDependencies = infraApiBundleDependencies.get().filter {
+        val collectedInfraApiBundleDependencies = infraApiBundleDependencies.get()
+        check(collectedInfraApiBundleDependencies.isNotEmpty()) {
+            "The infra-api bundle resolved to no dependencies"
+        }
+        val datetimeInfraApiDependencies = collectedInfraApiBundleDependencies.filter {
             DATETIME_MODULE in it
         }
         check(datetimeInfraApiDependencies.isEmpty()) {
@@ -334,8 +342,11 @@ abstract class VerifyKtorBoundaryTask : DefaultTask() {
 
         // This literal scan is an early supplemental signal; dependency, ABI, and metadata gates
         // below enforce the complete published boundary.
-        val deprecatedDatetimeSourceViolations = productionKotlinFiles.files
-            .filter { it.isFile }
+        val productionKotlinSourceFiles = productionKotlinFiles.files.filter(File::isFile)
+        check(productionKotlinSourceFiles.isNotEmpty()) {
+            "No production Kotlin sources were scanned"
+        }
+        val deprecatedDatetimeSourceViolations = productionKotlinSourceFiles
             .filter { source -> source.readText().containsDeprecatedDatetimeType() }
         check(deprecatedDatetimeSourceViolations.isEmpty()) {
             "Deprecated kotlinx-datetime Instant or Clock remains in production source:\n" +
