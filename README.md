@@ -302,6 +302,12 @@ WIP (Work in Progress)
 A [sample app](./composeApp/) with a Swagger UI-like interface is available.  
 You can test API results by inputting the required parameters.
 
+## Continuous integration
+
+Pull requests run Detekt and Android unit tests in one Ubuntu job. Documentation-only changes skip
+the job. The library release workflow verifies the published FANBOX boundary before publishing;
+it remains on macOS because the Kotlin Multiplatform publication includes Apple targets.
+
 ## Contributing golden fixtures
 
 The `:fankt:fanbox` golden tests keep anonymized endpoint responses as Kotlin raw strings under
