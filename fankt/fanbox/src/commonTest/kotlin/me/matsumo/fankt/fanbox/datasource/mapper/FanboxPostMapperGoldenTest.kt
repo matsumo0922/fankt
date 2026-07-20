@@ -1,6 +1,7 @@
+@file:OptIn(kotlin.time.ExperimentalTime::class)
+
 package me.matsumo.fankt.fanbox.datasource.mapper
 
-import kotlinx.datetime.Instant
 import me.matsumo.fankt.fanbox.domain.FanboxCursor
 import me.matsumo.fankt.fanbox.domain.PageCursorInfo
 import me.matsumo.fankt.fanbox.domain.PageOffsetInfo
@@ -8,6 +9,7 @@ import me.matsumo.fankt.fanbox.domain.entity.FanboxCreatorPostItemsEntity
 import me.matsumo.fankt.fanbox.domain.entity.FanboxCreatorPostsPaginateEntity
 import me.matsumo.fankt.fanbox.domain.entity.FanboxPostCommentListEntity
 import me.matsumo.fankt.fanbox.domain.entity.FanboxPostDetailEntity
+import me.matsumo.fankt.fanbox.domain.entity.FanboxPostEntity
 import me.matsumo.fankt.fanbox.domain.entity.FanboxPostListEntity
 import me.matsumo.fankt.fanbox.domain.model.FanboxComment
 import me.matsumo.fankt.fanbox.domain.model.FanboxCover
@@ -24,8 +26,35 @@ import me.matsumo.fankt.fanbox.fixture.decodeFixture
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
+import kotlin.time.Instant
 
 class FanboxPostMapperGoldenTest {
+
+    @Test
+    fun postTimestampsParseExplicitOffsetsAsStdlibInstants() {
+        val actual = FanboxPostMapper().map(
+            FanboxPostEntity(
+                commentCount = 0,
+                cover = null,
+                creatorId = "fixture-creator",
+                excerpt = "Fixture excerpt",
+                feeRequired = 0,
+                hasAdultContent = false,
+                id = "fixture-post",
+                isLiked = false,
+                isRestricted = false,
+                likeCount = 0,
+                publishedDatetime = "2025-01-02T03:04:05+09:00",
+                tags = emptyList(),
+                title = "Fixture post",
+                updatedDatetime = "2025-01-02T03:05:06-04:00",
+                user = null,
+            ),
+        )
+
+        assertEquals(Instant.parse("2025-01-02T03:04:05+09:00"), actual.publishedDatetime)
+        assertEquals(Instant.parse("2025-01-02T03:05:06-04:00"), actual.updatedDatetime)
+    }
 
     @Test
     fun actualDerivedTextFragmentsPreserveMetadataAndEmptyParagraphOrder() {

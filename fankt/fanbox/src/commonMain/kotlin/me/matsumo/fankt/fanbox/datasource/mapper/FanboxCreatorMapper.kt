@@ -1,6 +1,7 @@
+@file:OptIn(kotlin.time.ExperimentalTime::class)
+
 package me.matsumo.fankt.fanbox.datasource.mapper
 
-import kotlinx.datetime.Instant
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.decodeFromJsonElement
 import me.matsumo.fankt.fanbox.FanboxListItemDecoder
@@ -22,6 +23,7 @@ import me.matsumo.fankt.fanbox.domain.model.FanboxUser
 import me.matsumo.fankt.fanbox.domain.model.id.FanboxCreatorId
 import me.matsumo.fankt.fanbox.domain.model.id.FanboxPlanId
 import me.matsumo.fankt.fanbox.domain.model.id.FanboxUserId
+import kotlin.time.Instant
 
 internal class FanboxCreatorMapper(
     private val listItemDecoder: FanboxListItemDecoder = FanboxListItemDecoder(),

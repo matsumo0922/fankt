@@ -1,10 +1,12 @@
+@file:OptIn(kotlin.time.ExperimentalTime::class)
+
 package me.matsumo.fankt.fanbox.domain.model
 
-import kotlinx.datetime.Instant
 import kotlinx.serialization.Serializable
 import me.matsumo.fankt.fanbox.domain.model.id.FanboxCommentId
 import me.matsumo.fankt.fanbox.domain.model.id.FanboxCreatorId
 import me.matsumo.fankt.fanbox.domain.model.id.FanboxPostId
+import kotlin.time.Instant
 
 @Serializable
 sealed interface FanboxBell {

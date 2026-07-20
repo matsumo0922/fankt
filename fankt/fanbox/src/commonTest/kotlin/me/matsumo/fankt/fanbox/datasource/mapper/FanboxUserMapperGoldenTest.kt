@@ -1,6 +1,7 @@
+@file:OptIn(kotlin.time.ExperimentalTime::class)
+
 package me.matsumo.fankt.fanbox.datasource.mapper
 
-import kotlinx.datetime.Instant
 import me.matsumo.fankt.fanbox.domain.PageNumberInfo
 import me.matsumo.fankt.fanbox.domain.entity.FanboxBellListEntity
 import me.matsumo.fankt.fanbox.domain.entity.FanboxNewsLettersEntity
@@ -23,6 +24,7 @@ import me.matsumo.fankt.fanbox.fixture.FanboxUserJsonFixtures
 import me.matsumo.fankt.fanbox.fixture.decodeFixture
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.time.Instant
 
 class FanboxUserMapperGoldenTest {
 
