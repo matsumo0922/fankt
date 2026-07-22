@@ -6,5 +6,11 @@ import kotlinx.serialization.Serializable
 @Serializable
 internal data class FanboxCreatorPostsPaginateEntity(
     @SerialName("body")
-    val body: List<String>,
-)
+    val body: Body,
+) {
+    @Serializable
+    data class Body(
+        @SerialName("pageUrls")
+        val pageUrls: List<String>,
+    )
+}

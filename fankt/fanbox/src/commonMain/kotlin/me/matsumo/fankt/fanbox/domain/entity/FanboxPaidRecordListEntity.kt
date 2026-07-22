@@ -6,10 +6,16 @@ import kotlinx.serialization.Serializable
 @Serializable
 internal data class FanboxPaidRecordListEntity(
     @SerialName("body")
-    val body: List<Body>,
+    val body: Body,
 ) {
     @Serializable
     data class Body(
+        @SerialName("payments")
+        val payments: List<Payment>,
+    )
+
+    @Serializable
+    data class Payment(
         @SerialName("creator")
         val creator: FanboxCreatorEntity,
         @SerialName("id")

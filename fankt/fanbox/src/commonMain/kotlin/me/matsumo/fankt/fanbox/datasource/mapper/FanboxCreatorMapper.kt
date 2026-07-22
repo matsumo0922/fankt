@@ -81,7 +81,7 @@ internal class FanboxCreatorMapper {
     }
 
     fun map(entity: FanboxCreatorPlanListEntity): List<FanboxCreatorPlan> {
-        return entity.body.map {
+        return entity.body.plans.map {
             with(it) {
                 FanboxCreatorPlan(
                     coverImageUrl = coverImageUrl,

@@ -6,10 +6,16 @@ import kotlinx.serialization.Serializable
 @Serializable
 internal data class FanboxCreatorPlanListEntity(
     @SerialName("body")
-    val body: List<Body>,
+    val body: Body,
 ) {
     @Serializable
     data class Body(
+        @SerialName("plans")
+        val plans: List<Plan>,
+    )
+
+    @Serializable
+    data class Plan(
         @SerialName("coverImageUrl")
         val coverImageUrl: String?,
         @SerialName("creatorId")

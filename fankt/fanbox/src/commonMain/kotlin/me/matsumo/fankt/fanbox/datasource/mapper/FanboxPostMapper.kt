@@ -38,7 +38,7 @@ internal class FanboxPostMapper {
 
     fun map(entity: FanboxCreatorPostItemsEntity, nextCursor: FanboxCursor?): PageCursorInfo<FanboxPost> {
         return PageCursorInfo(
-            contents = entity.body.map { map(it) },
+            contents = entity.body.posts.map { map(it) },
             cursor = nextCursor,
         )
     }
@@ -263,6 +263,6 @@ internal class FanboxPostMapper {
     }
 
     fun map(entity: FanboxCreatorPostsPaginateEntity): List<FanboxCursor> {
-        return entity.body.map { it.translateToCursor() }
+        return entity.body.pageUrls.map { it.translateToCursor() }
     }
 }
