@@ -136,16 +136,16 @@ internal class FanboxPostRepository(
 
     suspend fun addComment(
         postId: FanboxPostId,
-        rootCommentId: FanboxCommentId,
-        parentCommentId: FanboxCommentId,
+        rootCommentId: FanboxCommentId?,
+        parentCommentId: FanboxCommentId?,
         comment: String,
     ) = withContext(ioDispatcher) {
         fanboxPostApiWithoutContentNegotiation.addComment(
             TextContent(
                 text = buildJsonObject {
                     put("postId", postId.toString())
-                    put("rootCommentId", rootCommentId.toString())
-                    put("parentCommentId", parentCommentId.toString())
+                    rootCommentId?.let { put("rootCommentId", it.toString()) }
+                    parentCommentId?.let { put("parentCommentId", it.toString()) }
                     put("body", comment)
                 }.toString(),
                 contentType = ContentType.Application.Json,

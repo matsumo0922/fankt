@@ -309,8 +309,6 @@ private fun getDefaultValue(paramName: String): String? {
         "creatorId" -> "rosumerii"
         "userId" -> "67345848"
         "postId" -> "8909488"
-        "rootCommentId" -> "0"
-        "parentCommentId" -> "0"
         else -> null
     }
 }
