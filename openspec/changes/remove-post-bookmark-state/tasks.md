@@ -6,13 +6,13 @@
 
 ## 2. ドメインモデルの純化
 
-- [ ] 2.1 `FanboxPostDetail` から `isBookmarked` を削除し、公開プロパティが不変であることを確認する
-- [ ] 2.2 `FanboxPostMapper` から `isBookmarked = false` の設定を削除する
-- [ ] 2.3 `FanboxPostMapperGoldenTest` の fixture と `FanboxTimestampSerializationTest` を含む serialization test から Bookmark 状態を削除する
+- [x] 2.1 `FanboxPostDetail` から `isBookmarked` を削除し、公開プロパティが不変であることを確認する
+- [x] 2.2 `FanboxPostMapper` から `isBookmarked = false` の設定を削除する
+- [x] 2.3 `FanboxPostMapperGoldenTest` の fixture と `FanboxTimestampSerializationTest` を含む serialization test から Bookmark 状態を削除する
 
 ## 3. 互換性と検証
 
-- [ ] 3.1 Android/KLIB の API dump を再生成し、`isBookmarked` の削除差分を確認する
-- [ ] 3.2 fanbox module の unit test、公開 API 検証、detekt を実行する
-- [ ] 3.3 README と docs を `isBookmarked`、`FanboxPostDetail`、Bookmark で検索し、影響する記述を現在の仕様へ更新する
+- [x] 3.1 Android/KLIB の API dump を再生成し、`isBookmarked` の削除差分を確認する
+- [x] 3.2 fanbox module の unit test、公開 API 検証、detekt を実行する
+- [x] 3.3 README と docs を `isBookmarked`、`FanboxPostDetail`、Bookmark で検索し、影響する記述を現在の仕様へ更新する
 - [ ] 3.4 fankt のリリースと PixiView の依存更新順を連動 PR に記録し、旧 PixiView が破壊的版を参照しないことを確認する

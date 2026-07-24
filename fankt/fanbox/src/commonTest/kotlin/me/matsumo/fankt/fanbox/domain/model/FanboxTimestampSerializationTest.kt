@@ -61,7 +61,6 @@ class FanboxTimestampSerializationTest {
             hasAdultContent = false,
             imageForShare = "",
             isLiked = false,
-            isBookmarked = false,
             isRestricted = false,
             likeCount = 0,
             tags = emptyList(),
