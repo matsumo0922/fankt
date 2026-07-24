@@ -20,7 +20,7 @@ data class FanboxCreatorDetail(
     val profileLinks: List<ProfileLink>,
     val user: FanboxUser?,
 ) {
-    val supportingBrowserUrl get() = "https://www.fanbox.cc/creators/supporting/@${user?.creatorId}"
+    val supportingBrowserUrl get() = "https://www.fanbox.cc/creators/supporting/@${user?.creatorId?.value}"
 
     /** A profile item classified from the `creator.get` item type. */
     @Serializable

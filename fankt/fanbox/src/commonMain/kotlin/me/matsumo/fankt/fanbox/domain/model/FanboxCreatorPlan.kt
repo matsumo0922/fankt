@@ -14,6 +14,6 @@ data class FanboxCreatorPlan(
     val paymentMethod: FanboxPaymentMethod,
     val user: FanboxUser?,
 ) {
-    val planBrowserUrl get() = "https://www.fanbox.cc/@${user?.creatorId}/plans/$id"
-    val supportingBrowserUrl get() = "https://www.fanbox.cc/creators/supporting/@${user?.creatorId}"
+    val planBrowserUrl get() = "https://www.fanbox.cc/@${user?.creatorId?.value}/plans/${id.value}"
+    val supportingBrowserUrl get() = "https://www.fanbox.cc/creators/supporting/@${user?.creatorId?.value}"
 }

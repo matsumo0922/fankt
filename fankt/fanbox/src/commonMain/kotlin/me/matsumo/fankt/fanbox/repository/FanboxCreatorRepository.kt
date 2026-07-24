@@ -75,7 +75,9 @@ internal class FanboxCreatorRepository(
     suspend fun followCreator(userId: FanboxUserId) = withContext(ioDispatcher) {
         fanboxCreatorApiWithoutContentNegotiation.followCreator(
             TextContent(
-                text = buildJsonObject { put("creatorUserId", userId.toString()) }.toString(),
+                // creatorUserId must stay a JSON string; userId.value is a Long and would
+                // otherwise serialize as a JSON number and break the follow.create wire shape.
+                text = buildJsonObject { put("creatorUserId", userId.value.toString()) }.toString(),
                 contentType = ContentType.Application.Json,
             ),
         )
@@ -84,7 +86,8 @@ internal class FanboxCreatorRepository(
     suspend fun unfollowCreator(userId: FanboxUserId) = withContext(ioDispatcher) {
         fanboxCreatorApiWithoutContentNegotiation.unfollowCreator(
             TextContent(
-                text = buildJsonObject { put("creatorUserId", userId.toString()) }.toString(),
+                // See followCreator: creatorUserId must stay a JSON string.
+                text = buildJsonObject { put("creatorUserId", userId.value.toString()) }.toString(),
                 contentType = ContentType.Application.Json,
             ),
         )
