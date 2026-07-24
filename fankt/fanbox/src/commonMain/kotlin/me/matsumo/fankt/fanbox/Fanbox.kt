@@ -329,8 +329,17 @@ class Fanbox internal constructor(
         post.likeComment(commentId)
     }
 
-    /** @throws FanboxException when the FANBOX request fails. */
-    suspend fun addComment(postId: FanboxPostId, rootCommentId: FanboxCommentId, parentCommentId: FanboxCommentId, body: String) {
+    /**
+     * Adds a comment to a post. Pass null for both comment IDs when creating a root comment.
+     *
+     * @throws FanboxException when the FANBOX request fails.
+     */
+    suspend fun addComment(
+        postId: FanboxPostId,
+        rootCommentId: FanboxCommentId?,
+        parentCommentId: FanboxCommentId?,
+        body: String,
+    ) {
         post.addComment(postId, rootCommentId, parentCommentId, body)
     }
 
