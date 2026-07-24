@@ -60,4 +60,3 @@ Android と KLIB の公開 API dump は 7 種の ID の value class 形状を反
 #### Scenario: ABI dump を検証する
 - **WHEN** 公開 API 検証を実行する
 - **THEN** dump に `uniqueValue`、`EMPTY`、data class の `copy` または `component1` が存在せず、検証が成功する
-
