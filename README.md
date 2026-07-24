@@ -26,8 +26,8 @@ Compatible with Kotlin Multiplatform (KMP) and usable on Android and iOS.
 
 ### Download
 
-Fankt is available on Maven Central.  
-Add the library to your project using the following code:
+Released Fankt libraries are available on Maven Central. Fantia is not released on Maven Central.
+Add the released libraries to your project using the following code:
 
 ```kotlin
 repositories {
@@ -38,7 +38,6 @@ dependencies {
     implementation("me.matsumo.fankt:fanbox:$version")
     // Add only when Room-backed FANBOX session persistence is required.
     implementation("me.matsumo.fankt:fanbox-persistence-room:$version")
-    implementation("me.matsumo.fankt:fantia:$version")
 }
 ```
 
