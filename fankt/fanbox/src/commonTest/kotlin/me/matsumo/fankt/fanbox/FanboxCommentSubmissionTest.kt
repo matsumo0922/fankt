@@ -4,6 +4,8 @@ import io.ktor.client.HttpClient
 import io.ktor.client.engine.mock.MockEngine
 import io.ktor.client.engine.mock.respond
 import io.ktor.client.plugins.cookies.AcceptAllCookiesStorage
+import io.ktor.http.ContentType
+import io.ktor.http.HttpMethod
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.content.OutgoingContent
 import kotlinx.coroutines.Dispatchers
@@ -32,7 +34,12 @@ class FanboxCommentSubmissionTest {
                 body = "root comment",
             )
 
-            val body = fixture.requestBodies.single().let(Json::parseToJsonElement).jsonObject
+            val request = fixture.requests.single()
+            val body = Json.parseToJsonElement(request.body).jsonObject
+            assertEquals(2, request.clientIndex)
+            assertEquals(HttpMethod.Post, request.method)
+            assertEquals("/post.addComment", request.path)
+            assertEquals(ContentType.Application.Json, request.contentType)
             assertEquals("post-id", body.getValue("postId").jsonPrimitive.content)
             assertEquals("root comment", body.getValue("body").jsonPrimitive.content)
             assertFalse("rootCommentId" in body)
@@ -53,7 +60,9 @@ class FanboxCommentSubmissionTest {
                 body = "reply comment",
             )
 
-            val body = fixture.requestBodies.single().let(Json::parseToJsonElement).jsonObject
+            val request = fixture.requests.single()
+            val body = Json.parseToJsonElement(request.body).jsonObject
+            assertEquals(2, request.clientIndex)
             assertEquals("root-id", body.getValue("rootCommentId").jsonPrimitive.content)
             assertEquals("parent-id", body.getValue("parentCommentId").jsonPrimitive.content)
         } finally {
@@ -62,12 +71,20 @@ class FanboxCommentSubmissionTest {
     }
 
     private fun createFixture(): Fixture {
-        val requestBodies = mutableListOf<String>()
+        val requests = mutableListOf<CapturedRequest>()
+        var clientCount = 0
         val clientFactory = FanboxHttpClientFactory { block ->
+            val clientIndex = clientCount++
             HttpClient(
                 MockEngine { request ->
                     val body = request.body as OutgoingContent.ByteArrayContent
-                    requestBodies += body.bytes().decodeToString()
+                    requests += CapturedRequest(
+                        clientIndex = clientIndex,
+                        method = request.method,
+                        path = request.url.encodedPath,
+                        contentType = body.contentType,
+                        body = body.bytes().decodeToString(),
+                    )
                     respond(content = "", status = HttpStatusCode.OK)
                 },
                 block,
@@ -91,12 +108,20 @@ class FanboxCommentSubmissionTest {
                 clientFactory = clientFactory,
                 ioDispatcher = Dispatchers.Default,
             ),
-            requestBodies = requestBodies,
+            requests = requests,
         )
     }
 
     private data class Fixture(
         val fanbox: Fanbox,
-        val requestBodies: List<String>,
+        val requests: List<CapturedRequest>,
+    )
+
+    private data class CapturedRequest(
+        val clientIndex: Int,
+        val method: HttpMethod,
+        val path: String,
+        val contentType: ContentType?,
+        val body: String,
     )
 }

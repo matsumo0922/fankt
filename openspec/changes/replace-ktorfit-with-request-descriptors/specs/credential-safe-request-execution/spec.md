@@ -43,15 +43,19 @@ The executor SHALL validate the complete request destination and method before r
 - **THEN** the request contains the same matching cookies and default origin, referer, and user-agent headers as the existing client path
 
 ### Requirement: Redirects cannot escape the trusted policy
-Descriptor execution SHALL disable unvalidated automatic redirects. Every redirect target and resulting method SHALL be revalidated against the original endpoint policy before a redirected request is sent or credentials are attached.
+Descriptor execution SHALL disable unvalidated automatic redirects. GET redirect targets and resulting methods SHALL be revalidated against the original endpoint policy before a redirected request is sent or credentials are attached. Every POST redirect with status 301, 302, 307, or 308 SHALL be rejected before a second credential lookup or request send.
 
 #### Scenario: Cross-origin redirect is rejected
 - **WHEN** an allowed descriptor response redirects to an origin outside its endpoint policy
 - **THEN** the redirect is rejected before a redirected request or credential lookup occurs
 
 #### Scenario: Redirect method violates policy
-- **WHEN** a redirect would change or preserve a method that does not equal the endpoint policy method
+- **WHEN** a GET redirect would result in a method that does not equal the endpoint policy method
 - **THEN** the redirect is rejected before the next request is sent
+
+#### Scenario: POST redirect is rejected
+- **WHEN** an accepted POST receives a 301, 302, 307, or 308 redirect response
+- **THEN** the redirect is rejected before a second credential lookup or request is sent
 
 ### Requirement: One executor owns normal FANBOX HTTP execution
 All descriptor-based API and homepage requests SHALL pass through one owned executor and its raw-response path. The executor SHALL use one raw-body request client with common default headers and SHALL NOT require endpoint-specific ContentNegotiation client variants. The download streaming client SHALL remain a separate bounded path because it consumes arbitrary allowlisted media URLs incrementally.

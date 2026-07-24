@@ -32,6 +32,7 @@ class FanboxCreatorPostsPaginationTest {
                 listOf("post.paginateCreator"),
                 fixture.requestUrls.map(Url::encodedPath).map { it.substringAfterLast('/') },
             )
+            assertEquals(listOf(2), fixture.requestClientIndexes)
         } finally {
             fixture.fanbox.close()
         }
@@ -76,10 +77,14 @@ class FanboxCreatorPostsPaginationTest {
 
     private fun createFixture(paginationBody: String): Fixture {
         val requestUrls = mutableListOf<Url>()
+        val requestClientIndexes = mutableListOf<Int>()
+        var clientCount = 0
         val clientFactory = FanboxHttpClientFactory { block ->
+            val clientIndex = clientCount++
             HttpClient(
                 MockEngine { request ->
                     requestUrls += request.url
+                    requestClientIndexes += clientIndex
                     val body = when {
                         request.url.encodedPath.endsWith("post.paginateCreator") -> paginationBody
                         request.url.encodedPath.endsWith("post.listCreator") -> FanboxPostJsonFixtures.postListCreatorEmpty
@@ -113,6 +118,7 @@ class FanboxCreatorPostsPaginationTest {
                 ioDispatcher = Dispatchers.Default,
             ),
             requestUrls = requestUrls,
+            requestClientIndexes = requestClientIndexes,
         )
     }
 
@@ -131,6 +137,7 @@ class FanboxCreatorPostsPaginationTest {
     private data class Fixture(
         val fanbox: Fanbox,
         val requestUrls: List<Url>,
+        val requestClientIndexes: List<Int>,
     )
 
     private companion object {

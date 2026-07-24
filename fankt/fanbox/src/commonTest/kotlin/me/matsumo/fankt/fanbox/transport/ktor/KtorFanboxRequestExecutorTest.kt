@@ -1,5 +1,6 @@
 package me.matsumo.fankt.fanbox.transport.ktor
 
+import de.jensklingenberg.ktorfit.Ktorfit
 import io.ktor.client.engine.mock.MockEngine
 import io.ktor.client.engine.mock.respond
 import io.ktor.client.plugins.cookies.CookiesStorage
@@ -28,6 +29,7 @@ import me.matsumo.fankt.fanbox.FanboxLogLevel
 import me.matsumo.fankt.fanbox.buildFanboxExecutorHttpClient
 import me.matsumo.fankt.fanbox.buildHttpClient
 import me.matsumo.fankt.fanbox.createFanboxJson
+import me.matsumo.fankt.fanbox.datasource.createFanboxPostApi
 import me.matsumo.fankt.fanbox.endpoint.FanboxEndpointId
 import me.matsumo.fankt.fanbox.endpoint.FanboxEndpointIds
 import me.matsumo.fankt.fanbox.endpoint.FanboxEndpoints
@@ -366,40 +368,13 @@ class KtorFanboxRequestExecutorTest {
     }
 
     @Test
-    fun postRedirectsPreserveCurrentEffectiveMethodRules() = runBlocking {
-        listOf(HttpStatusCode.TemporaryRedirect, HttpStatusCode.PermanentRedirect).forEach { redirectStatus ->
-            var requestCount = 0
-            val bodies = mutableListOf<String>()
-            val client = executorClient(
-                engine = MockEngine { request ->
-                    requestCount += 1
-                    val content = assertIs<OutgoingContent.ByteArrayContent>(request.body)
-                    bodies += content.bytes().decodeToString()
-                    if (requestCount == 1) {
-                        respond("redirect", redirectStatus, headersOf(HttpHeaders.Location, "/post.likePost"))
-                    } else {
-                        assertEquals(HttpMethod.Post, request.method)
-                        respond("", HttpStatusCode.OK)
-                    }
-                },
-            )
-            try {
-                KtorFanboxRequestExecutor(client).execute(
-                    RequestDescriptor(
-                        FanboxEndpointIds.postLikePost,
-                        "post.likePost",
-                        FanboxHttpMethod.POST,
-                        jsonBody = """{"postId":"1"}""",
-                    ),
-                )
-                assertEquals(2, requestCount, redirectStatus.toString())
-                assertEquals(listOf("""{"postId":"1"}""", """{"postId":"1"}"""), bodies)
-            } finally {
-                client.close()
-            }
-        }
-
-        listOf(HttpStatusCode.MovedPermanently, HttpStatusCode.Found).forEach { redirectStatus ->
+    fun postRedirectsAreRejectedBeforeSecondCredentialLookupOrSend() = runBlocking {
+        listOf(
+            HttpStatusCode.MovedPermanently,
+            HttpStatusCode.Found,
+            HttpStatusCode.TemporaryRedirect,
+            HttpStatusCode.PermanentRedirect,
+        ).forEach { redirectStatus ->
             var requestCount = 0
             var tokenReads = 0
             val client = executorClient(
@@ -427,6 +402,64 @@ class KtorFanboxRequestExecutorTest {
                 assertEquals(1, tokenReads, redirectStatus.toString())
             } finally {
                 client.close()
+            }
+        }
+    }
+
+    @Test
+    fun generatedAndExecutorPostRedirectsBothStopAfterFirstRequest() = runBlocking {
+        listOf(
+            HttpStatusCode.MovedPermanently,
+            HttpStatusCode.Found,
+            HttpStatusCode.TemporaryRedirect,
+            HttpStatusCode.PermanentRedirect,
+        ).forEach { redirectStatus ->
+            var generatedRequestCount = 0
+            var executorRequestCount = 0
+            val generatedClient = buildHttpClient(
+                formatter = createFanboxJson(),
+                cookieStorage = CountingCookiesStorage(),
+                source = FanboxDiagnosticSource.LibraryGenerated,
+                csrfTokenProvider = { "token" },
+                isEnableContentNegotiation = false,
+                engine = MockEngine {
+                    generatedRequestCount += 1
+                    respond("redirect", redirectStatus, headersOf(HttpHeaders.Location, "/post.likePost"))
+                },
+            )
+            val generatedApi = Ktorfit.Builder()
+                .baseUrl("https://api.fanbox.cc/")
+                .httpClient(generatedClient)
+                .build()
+                .createFanboxPostApi()
+            val executorClient = executorClient(
+                engine = MockEngine {
+                    executorRequestCount += 1
+                    respond("redirect", redirectStatus, headersOf(HttpHeaders.Location, "/post.likePost"))
+                },
+            )
+            try {
+                assertNotNull(
+                    runCatching {
+                        generatedApi.likePost(TextContent("{}", ContentType.Application.Json))
+                    }.exceptionOrNull(),
+                    redirectStatus.toString(),
+                )
+                assertFailsWith<InvalidRequestDescriptorException> {
+                    KtorFanboxRequestExecutor(executorClient).execute(
+                        RequestDescriptor(
+                            FanboxEndpointIds.postLikePost,
+                            "post.likePost",
+                            FanboxHttpMethod.POST,
+                            jsonBody = "{}",
+                        ),
+                    )
+                }
+                assertEquals(1, generatedRequestCount, redirectStatus.toString())
+                assertEquals(1, executorRequestCount, redirectStatus.toString())
+            } finally {
+                generatedClient.close()
+                executorClient.close()
             }
         }
     }

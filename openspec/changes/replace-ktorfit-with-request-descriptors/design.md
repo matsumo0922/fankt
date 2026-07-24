@@ -123,7 +123,7 @@ executor の処理順を固定する。
 
 transport adapter が検証済み request に `x-csrf-token` を明示設定している場合は、token store の default 値で上書きしない。descriptor 自体には header を持たせず、現行 client plugin の non-overwrite semantics だけを維持する。
 
-Ktor の unvalidated automatic redirect は無効化する。redirect は Location を解決した後、元 endpoint policy の exact origin と method を再検証し、成功した hop にだけ credential を付与する。cross-origin、HTTPS downgrade、userinfo、method mismatch、unknown/malformed Location は redirected request の前に拒否する。redirect loop は bounded hop count で拒否する。
+Ktor の unvalidated automatic redirect は無効化する。GET redirect は Location を解決した後、元 endpoint policy の exact origin と method を再検証し、成功した hop にだけ credential を付与する。cross-origin、HTTPS downgrade、userinfo、method mismatch、unknown/malformed Location は redirected request の前に拒否し、redirect loop は bounded hop count で拒否する。POST redirect は generated client の実効挙動と揃え、301/302/307/308 の全てを 2 回目の credential lookup または request send 前に拒否する。
 
 validation failure は internal `InvalidRequestDescriptorException` とし、network、Cookie storage、token store のどれにも触れない。公開 `Fanbox` API は library-produced descriptor しか使わないため通常発生せず、将来 host bridge が untrusted descriptor を受けるときの fail-closed boundary になる。
 
@@ -154,7 +154,7 @@ Gradle verification は対象 source tree の import を scan し、`io.ktor`、
 - **[query/body wire drift]** Ktorfit の encode と pure builder が異なる可能性がある → 全 endpoint の descriptor golden test と既存 MockEngine testで decoded query、JSON value type、null omission を比較してから generated API を削除する。
 - **[response behavior drift]** raw body の read timing、schema mismatch、Retry-After、tolerant decode が変わる可能性がある → #15 fixtures、HTTP exception tests、tolerant callback tests を parser/executor 経路へ移し、old/new differential test を migration stage 中だけ保持する。
 - **[credential leakage]** malicious path または redirect が trusted origin を脱出する可能性がある → trusted origin を descriptor に含めず、credential lookup 前と各 redirect hop 前に exact policy validation を行う。
-- **[redirect wire drift]** 現行 Ktor automatic redirect に依存する endpoint があると明示 handling への移行で挙動が変わる → 同一 origin・同一 allowed method の redirect は explicit handler で追従し、cross-origin/downgrade/method-change だけを security requirement に従い拒否する。MockEngine で 301/302/307/308 の現行実効 method と parity を固定する。
+- **[redirect wire drift]** 現行 Ktor automatic redirect に依存する endpoint があると明示 handling への移行で挙動が変わる → GET の同一 origin・同一 allowed method redirect だけを explicit handler で追従し、POST redirect は 301/302/307/308 の全てを拒否する。MockEngine と一時的な generated/executor differential assertion で現行実効挙動との parity を固定する。
 - **[security metadata duplication]** builder と policy がずれる可能性がある → 独立を維持したまま exhaustive coverage test で全 ID と method を照合し、unknown ID は常に拒否する。
 - **[manual URL/HTTP-date parser defect]** Ktor utility 撤去で edge case を落とす可能性がある → 使用範囲を cursor/host/Retry-After に限定し、現行 behavior と encoded/malformed fixtures を固定する。
 - **[mixed migration graph]** stage 3〜4 で Ktorfit と executor が一時共存し client graph が複雑になる → repository 単位で ownership を分け、同じ operation が二重送信されない構成 test を置き、共存は 2 stage に限定する。
@@ -204,7 +204,7 @@ clean-context の Opus falsifier による初回 code-aware pass は blocking 0 
 - **ContentNegotiation client variant（反例前提を無効化）**: executor は raw body だけを返すため CN variant は不要である。default headers/Cookie/CSRF は endpoint policy ではなく単一 request client の共通設定として維持する。
 - **mixed graph auth state（反例前提を無効化 + 設計強化）**: 現行の全 client は同じ `FanboxDependencies.cookieStorage` adapter と `getCsrfToken` provider を共有する。新 executor も同じ instance を受け取り、metadata refresh→executor POST の回帰テストで観測する。
 
-先行 pass の non-blocking 指摘も、mapper 全体の Ktor URL 除去、explicit CSRF header non-overwrite、portable core の internal 化、homepage exact `GET /`、PR 2 executor client の owned-list 登録として反映済みである。redirect は同一 origin・allowed method の現行挙動を explicit handler で維持し、cross-origin/downgrade/method-changeだけを拒否する。
+先行 pass の non-blocking 指摘も、mapper 全体の Ktor URL 除去、explicit CSRF header non-overwrite、portable core の internal 化、homepage exact `GET /`、PR 2 executor client の owned-list 登録として反映済みである。redirect は GET の同一 origin・allowed method の現行挙動を explicit handler で維持し、cross-origin/downgrade/method-change と全 POST redirect を拒否する。
 
 実装前 gate は、Opus closure pass の blocking 0 と `openspec validate` 成功により成立する。
 

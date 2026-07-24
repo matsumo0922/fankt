@@ -6,6 +6,7 @@ import io.ktor.client.engine.mock.respond
 import io.ktor.client.plugins.cookies.AcceptAllCookiesStorage
 import io.ktor.client.plugins.cookies.CookiesStorage
 import io.ktor.client.request.get
+import io.ktor.http.Headers
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.headersOf
@@ -16,8 +17,11 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
+import me.matsumo.fankt.fanbox.domain.model.id.FanboxCreatorId
 import me.matsumo.fankt.fanbox.domain.model.id.FanboxPostId
+import me.matsumo.fankt.fanbox.fixture.FanboxCreatorJsonFixtures
 import me.matsumo.fankt.fanbox.fixture.FanboxMetadataHtmlFixtures
+import me.matsumo.fankt.fanbox.fixture.FanboxPaymentJsonFixtures
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
@@ -57,6 +61,7 @@ class FanboxCsrfTokenUpdateTest {
         val fixture = createFixture(
             latestToken = latestToken,
             metadataToken = { nextToken },
+            metadataSetCookie = "metadata-session=refreshed; Domain=.fanbox.cc; Path=/; Secure",
             setCsrfToken = { token -> latestToken.value = token },
         )
         val initialClients = fixture.clients.toList()
@@ -66,6 +71,7 @@ class FanboxCsrfTokenUpdateTest {
         fixture.fanbox.likePost(FanboxPostId("100"))
 
         assertEquals("first-token", fixture.postHeaders.last())
+        assertEquals("metadata-session=refreshed", fixture.postCookies.last())
         assertEquals(4, fixture.clients.size)
         initialClients.zip(fixture.clients).forEach { (before, after) -> assertSame(before, after) }
 
@@ -228,16 +234,32 @@ class FanboxCsrfTokenUpdateTest {
     }
 
     @Test
-    fun constructionOwnsExecutorWhilePublicPostStillUsesGeneratedClient() = runBlocking {
-        val requestCounts = mutableListOf<Int>()
+    fun mixedGraphRoutesPostOnceThroughExecutorAndKeepsOtherRepositoriesGenerated() = runBlocking {
+        val requestsByClient = mutableListOf<MutableList<String>>()
         val clients = mutableListOf<HttpClient>()
         val clientFactory = FanboxHttpClientFactory { block ->
-            val clientIndex = requestCounts.size
-            requestCounts += 0
+            val clientIndex = requestsByClient.size
+            requestsByClient.add(mutableListOf())
             HttpClient(
-                MockEngine {
-                    requestCounts[clientIndex] += 1
-                    respond("", HttpStatusCode.OK)
+                MockEngine { request ->
+                    val route = request.url.encodedPath.removePrefix("/")
+                    requestsByClient[clientIndex] += route
+                    val content = when {
+                        request.url.host == "www.fanbox.cc" -> FanboxMetadataHtmlFixtures.home
+                        route == "creator.get" -> FanboxCreatorJsonFixtures.actualCreatorGet
+                        route == "tag.search" -> """{"body":[]}"""
+                        route == "payment.listPaid" -> FanboxPaymentJsonFixtures.paidRecords
+                        route == "post.likePost" -> ""
+                        else -> error("Unexpected request: ${request.url}")
+                    }
+                    respond(
+                        content = content,
+                        status = HttpStatusCode.OK,
+                        headers = headersOf(
+                            HttpHeaders.ContentType,
+                            if (request.url.host == "www.fanbox.cc") "text/html; charset=UTF-8" else "application/json",
+                        ),
+                    )
                 },
                 block,
             ).also(clients::add)
@@ -249,10 +271,20 @@ class FanboxCsrfTokenUpdateTest {
         )
 
         try {
-            fanbox.likePost(FanboxPostId("generated-only"))
+            fanbox.getCreatorDetail(FanboxCreatorId("fixture-creator-1"))
+            fanbox.searchTags("fixture")
+            fanbox.getPaidRecords()
+            fanbox.getMetadata()
+            fanbox.likePost(FanboxPostId("executor-only"))
 
             assertEquals(4, clients.size)
-            assertEquals(listOf(0, 1, 0, 0), requestCounts)
+            assertEquals(
+                listOf("creator.get", "tag.search", "payment.listPaid", ""),
+                requestsByClient[0],
+            )
+            assertEquals(emptyList(), requestsByClient[1])
+            assertEquals(listOf("post.likePost"), requestsByClient[2])
+            assertEquals(emptyList(), requestsByClient[3])
         } finally {
             fanbox.close()
         }
@@ -319,6 +351,7 @@ class FanboxCsrfTokenUpdateTest {
     private fun createFixture(
         latestToken: MutableStateFlow<String?>,
         metadataToken: () -> String = { "fixture-token" },
+        metadataSetCookie: String? = null,
         getCsrfToken: suspend () -> String? = { latestToken.value },
         setCsrfToken: suspend (String) -> Unit = { latestToken.value = it },
         cookieStorage: CookiesStorage = AcceptAllCookiesStorage(),
@@ -328,6 +361,7 @@ class FanboxCsrfTokenUpdateTest {
     ): FanboxFixture {
         val clients = mutableListOf<HttpClient>()
         val postHeaders = mutableListOf<String?>()
+        val postCookies = mutableListOf<String?>()
         var requestCount = 0
         val clientFactory = FanboxHttpClientFactory { block ->
             HttpClient(
@@ -337,11 +371,15 @@ class FanboxCsrfTokenUpdateTest {
                         request.url.host == "www.fanbox.cc" -> respond(
                             content = FanboxMetadataHtmlFixtures.home.replace("fixture-token", metadataToken()),
                             status = HttpStatusCode.OK,
-                            headers = headersOf(HttpHeaders.ContentType, "text/html; charset=UTF-8"),
+                            headers = Headers.build {
+                                append(HttpHeaders.ContentType, "text/html; charset=UTF-8")
+                                metadataSetCookie?.let { append(HttpHeaders.SetCookie, it) }
+                            },
                         )
 
                         request.url.encodedPath.endsWith("post.likePost") -> {
                             postHeaders += request.headers["x-csrf-token"]
+                            postCookies += request.headers[HttpHeaders.Cookie]
                             respond("", HttpStatusCode.OK)
                         }
 
@@ -375,6 +413,7 @@ class FanboxCsrfTokenUpdateTest {
             ),
             clients = clients,
             postHeaders = postHeaders,
+            postCookies = postCookies,
             requestCount = { requestCount },
         )
     }
@@ -413,6 +452,7 @@ class FanboxCsrfTokenUpdateTest {
         val fanbox: Fanbox,
         val clients: List<HttpClient>,
         val postHeaders: List<String?>,
+        val postCookies: List<String?>,
         val requestCount: () -> Int,
     )
 }

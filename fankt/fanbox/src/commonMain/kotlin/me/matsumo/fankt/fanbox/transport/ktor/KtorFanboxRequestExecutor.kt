@@ -87,18 +87,20 @@ internal class KtorFanboxRequestExecutor(
                 }
             }.execute { response ->
                 if (response.status.isHandledRedirect()) {
+                    if (method == FanboxHttpMethod.POST) {
+                        throw InvalidRequestDescriptorException("FANBOX POST redirects are not supported")
+                    }
                     if (redirectCount >= maxRedirects) {
                         throw InvalidRequestDescriptorException("FANBOX redirect limit exceeded")
                     }
-                    val redirectedMethod = response.status.redirectedMethod(method)
                     return@execute ResponseOutcome.Redirect(
                         url = FanboxDescriptorValidator.validateRedirect(
                             currentUrl = url,
                             location = response.headers[HttpHeaders.Location],
-                            redirectedMethod = redirectedMethod,
+                            redirectedMethod = method,
                             policy = policy,
                         ),
-                        method = redirectedMethod,
+                        method = method,
                     )
                 }
 
@@ -164,18 +166,6 @@ internal class KtorFanboxRequestExecutor(
     }
 
     private fun HttpStatusCode.isHandledRedirect(): Boolean = value in HANDLED_REDIRECT_STATUS_CODES
-
-    private fun HttpStatusCode.redirectedMethod(currentMethod: FanboxHttpMethod): FanboxHttpMethod = when (value) {
-        HttpStatusCode.MovedPermanently.value,
-        HttpStatusCode.Found.value,
-        -> if (currentMethod == FanboxHttpMethod.POST) FanboxHttpMethod.GET else currentMethod
-
-        HttpStatusCode.TemporaryRedirect.value,
-        HttpStatusCode.PermanentRedirect.value,
-        -> currentMethod
-
-        else -> error("Unsupported redirect status: $value")
-    }
 
     private companion object {
         const val DEFAULT_MAX_REDIRECTS = 5

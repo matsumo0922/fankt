@@ -1,59 +1,50 @@
 package me.matsumo.fankt.fanbox.repository
 
-import io.ktor.http.ContentType
-import io.ktor.http.HttpStatusCode
-import io.ktor.http.content.TextContent
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.withContext
-import kotlinx.serialization.SerializationException
-import kotlinx.serialization.json.buildJsonObject
-import kotlinx.serialization.json.put
-import me.matsumo.fankt.fanbox.FanboxExceptionFactory
 import me.matsumo.fankt.fanbox.FanboxTolerantResult
-import me.matsumo.fankt.fanbox.datasource.FanboxPostApi
-import me.matsumo.fankt.fanbox.datasource.mapper.FanboxPostMapper
 import me.matsumo.fankt.fanbox.domain.FanboxCursor
 import me.matsumo.fankt.fanbox.domain.PageCursorInfo
 import me.matsumo.fankt.fanbox.domain.model.id.FanboxCommentId
 import me.matsumo.fankt.fanbox.domain.model.id.FanboxCreatorId
 import me.matsumo.fankt.fanbox.domain.model.id.FanboxPostId
+import me.matsumo.fankt.fanbox.endpoint.FanboxEndpoints
+import me.matsumo.fankt.fanbox.response.FanboxDiagnosticSink
+import me.matsumo.fankt.fanbox.response.FanboxResponses
+import me.matsumo.fankt.fanbox.transport.FanboxRequestExecutor
 
 internal class FanboxPostRepository(
-    private val fanboxPostApi: FanboxPostApi,
-    private val fanboxPostApiWithoutContentNegotiation: FanboxPostApi,
-    private val fanboxPostMapper: FanboxPostMapper,
+    private val requestExecutor: FanboxRequestExecutor,
+    private val diagnosticSink: FanboxDiagnosticSink = FanboxDiagnosticSink.none,
+    private val includeRawFragment: Boolean = false,
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
 ) {
 
     suspend fun getHomePosts(cursor: FanboxCursor?) = withContext(ioDispatcher) {
-        fanboxPostApi.getHomePosts(
-            loadSize = cursor?.limit?.toString() ?: LOAD_SIZE,
-            firstPublishedDatetime = cursor?.firstPublishedDatetime,
-            maxPublishedDatetime = cursor?.maxPublishedDatetime,
-            firstId = cursor?.firstId,
-            maxId = cursor?.maxId,
-        ).let {
-            fanboxPostMapper.map(it, "post.listHome")
-        }
+        val response = requestExecutor.execute(FanboxEndpoints.homePosts(cursor))
+        FanboxResponses.homePosts(
+            body = response.bodyText,
+            statusCode = response.statusCode,
+            diagnosticSink = diagnosticSink,
+            includeRawFragment = includeRawFragment,
+        )
     }
 
     suspend fun getSupportedPosts(cursor: FanboxCursor?) = withContext(ioDispatcher) {
-        fanboxPostApi.getSupportedPosts(
-            loadSize = cursor?.limit?.toString() ?: LOAD_SIZE,
-            firstPublishedDatetime = cursor?.firstPublishedDatetime,
-            maxPublishedDatetime = cursor?.maxPublishedDatetime,
-            firstId = cursor?.firstId,
-            maxId = cursor?.maxId,
-        ).let {
-            fanboxPostMapper.map(it, "post.listSupporting")
-        }
+        val response = requestExecutor.execute(FanboxEndpoints.supportingPosts(cursor))
+        FanboxResponses.supportingPosts(
+            body = response.bodyText,
+            statusCode = response.statusCode,
+            diagnosticSink = diagnosticSink,
+            includeRawFragment = includeRawFragment,
+        )
     }
 
     suspend fun getCreatorPosts(creatorId: FanboxCreatorId, cursor: FanboxCursor?, nextCursor: FanboxCursor?) = withContext(ioDispatcher) {
         val (currentCursor, resolvedNextCursor) = if (cursor == null) {
-            val pagination = getCreatorPostsPagination(creatorId)
+            val pagination = fetchCreatorPostsPagination(creatorId)
             val firstCursor = pagination.firstOrNull()
                 ?: return@withContext FanboxTolerantResult(
                     value = PageCursorInfo(contents = emptyList(), cursor = null),
@@ -64,74 +55,48 @@ internal class FanboxPostRepository(
             cursor to nextCursor
         }
 
-        fanboxPostApi.getCreatorPosts(
-            creatorId = creatorId.value,
-            loadSize = currentCursor.limit?.toString() ?: LOAD_SIZE,
-            firstPublishedDatetime = currentCursor.firstPublishedDatetime,
-            maxPublishedDatetime = currentCursor.maxPublishedDatetime,
-            firstId = currentCursor.firstId,
-            maxId = currentCursor.maxId,
-        ).let {
-            fanboxPostMapper.map(it, resolvedNextCursor, "post.listCreator")
-        }
+        val response = requestExecutor.execute(FanboxEndpoints.creatorPosts(creatorId, currentCursor))
+        FanboxResponses.creatorPosts(
+            body = response.bodyText,
+            nextCursor = resolvedNextCursor,
+            statusCode = response.statusCode,
+            diagnosticSink = diagnosticSink,
+            includeRawFragment = includeRawFragment,
+        )
     }
 
     suspend fun getCreatorPostsPagination(creatorId: FanboxCreatorId) = withContext(ioDispatcher) {
-        fanboxPostApi.getCreatorPostsPagination(creatorId.value).let {
-            fanboxPostMapper.map(it)
-        }
+        fetchCreatorPostsPagination(creatorId)
     }
 
     suspend fun getPostDetail(postId: FanboxPostId) = withContext(ioDispatcher) {
-        val entity = fanboxPostApi.getPostDetail(postId.value)
-        try {
-            fanboxPostMapper.map(entity)
-        } catch (failure: SerializationException) {
-            throw FanboxExceptionFactory.schemaMismatch(
-                statusCode = HttpStatusCode.OK.value,
-                html = entity.body.post.body?.toString().orEmpty(),
-                endpoint = "post.info",
-                cause = failure,
-            )
-        }
+        val response = requestExecutor.execute(FanboxEndpoints.postDetail(postId))
+        FanboxResponses.postDetail(response.bodyText, response.statusCode)
     }
 
     suspend fun getPostComment(postId: FanboxPostId, offset: Int) = withContext(ioDispatcher) {
-        fanboxPostApi.getPostComment(
-            postId = postId.value,
-            offset = offset,
-            loadSize = LOAD_SIZE,
-        ).let {
-            fanboxPostMapper.map(it, "post.getComments")
-        }
+        val response = requestExecutor.execute(FanboxEndpoints.postComments(postId, offset))
+        FanboxResponses.postComments(
+            body = response.bodyText,
+            statusCode = response.statusCode,
+            diagnosticSink = diagnosticSink,
+            includeRawFragment = includeRawFragment,
+        )
     }
 
     suspend fun getPostFromQuery(query: String, creatorId: FanboxCreatorId?, page: Int) = withContext(ioDispatcher) {
-        fanboxPostApi.getPostFromQuery(
-            query = query,
-            creatorId = creatorId?.value,
-            page = page,
-        ).let {
-            fanboxPostMapper.map(it)
-        }
+        val response = requestExecutor.execute(FanboxEndpoints.taggedPosts(query, creatorId, page))
+        FanboxResponses.taggedPosts(response.bodyText, response.statusCode)
     }
 
     suspend fun likePost(postId: FanboxPostId) = withContext(ioDispatcher) {
-        fanboxPostApiWithoutContentNegotiation.likePost(
-            TextContent(
-                text = buildJsonObject { put("postId", postId.value) }.toString(),
-                contentType = ContentType.Application.Json,
-            ),
-        )
+        val response = requestExecutor.execute(FanboxEndpoints.likePost(postId))
+        FanboxResponses.likePost(response.bodyText)
     }
 
     suspend fun likeComment(commentId: FanboxCommentId) = withContext(ioDispatcher) {
-        fanboxPostApiWithoutContentNegotiation.likeComment(
-            TextContent(
-                text = buildJsonObject { put("commentId", commentId.value) }.toString(),
-                contentType = ContentType.Application.Json,
-            ),
-        )
+        val response = requestExecutor.execute(FanboxEndpoints.likeComment(commentId))
+        FanboxResponses.likeComment(response.bodyText)
     }
 
     suspend fun addComment(
@@ -140,29 +105,19 @@ internal class FanboxPostRepository(
         parentCommentId: FanboxCommentId?,
         comment: String,
     ) = withContext(ioDispatcher) {
-        fanboxPostApiWithoutContentNegotiation.addComment(
-            TextContent(
-                text = buildJsonObject {
-                    put("postId", postId.value)
-                    rootCommentId?.let { put("rootCommentId", it.value) }
-                    parentCommentId?.let { put("parentCommentId", it.value) }
-                    put("body", comment)
-                }.toString(),
-                contentType = ContentType.Application.Json,
-            ),
+        val response = requestExecutor.execute(
+            FanboxEndpoints.addComment(postId, rootCommentId, parentCommentId, comment),
         )
+        FanboxResponses.addComment(response.bodyText)
     }
 
     suspend fun deleteComment(commentId: FanboxCommentId) = withContext(ioDispatcher) {
-        fanboxPostApiWithoutContentNegotiation.deleteComment(
-            TextContent(
-                text = buildJsonObject { put("commentId", commentId.value) }.toString(),
-                contentType = ContentType.Application.Json,
-            ),
-        )
+        val response = requestExecutor.execute(FanboxEndpoints.deleteComment(commentId))
+        FanboxResponses.deleteComment(response.bodyText)
     }
 
-    companion object {
-        private const val LOAD_SIZE = "20"
+    private suspend fun fetchCreatorPostsPagination(creatorId: FanboxCreatorId): List<FanboxCursor> {
+        val response = requestExecutor.execute(FanboxEndpoints.creatorPostsPagination(creatorId))
+        return FanboxResponses.creatorPostsPagination(response.bodyText, response.statusCode)
     }
 }

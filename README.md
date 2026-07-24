@@ -180,10 +180,13 @@ known migration covers payment grouping, the common formatting extension, and bo
 extensions. Consumers that still need calendar or time-zone APIs should select a normal
 non-compat `kotlinx-datetime` artifact independently; fankt no longer publishes that dependency.
 
-`Fanbox` owns its generated API clients, internal descriptor-executor client, and download client.
-Public operations still use the generated APIs during this migration stage. Close `Fanbox` after all
-requests and downloads finish. Calls started after `Fanbox.close()` fail with
-`IllegalStateException`; the HTTP engine may finish shutdown asynchronously.
+`Fanbox` owns generated API clients for creator, search, user, and homepage operations, one shared
+internal descriptor-executor client for post operations, and the download client. Post list, detail,
+comment, and like operations use the descriptor → executor → parser path during this migration stage;
+the remaining repositories continue to use generated APIs. Both paths share the injected Cookie
+storage and request-time CSRF token provider. Close `Fanbox` after all requests and downloads finish.
+Calls started after `Fanbox.close()` fail with `IllegalStateException`; the HTTP engine may finish
+shutdown asynchronously.
 
 #### Media downloads
 
