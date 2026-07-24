@@ -49,22 +49,6 @@ class FanboxFailureInterpreterTest {
         assertNull(FanboxFailureInterpreter.parseRetryAfter("Fri, 31 Dec 9999 23:59:59 GMT", Long.MIN_VALUE))
     }
 
-    @Test
-    fun targetClassificationUsesOnlyHostAndAllowlistedPath() {
-        assertEquals(
-            FanboxDiagnosticTarget("post.info", true),
-            FanboxFailureInterpreter.target(false, "https://API.FANBOX.CC/post.info?secret=value"),
-        )
-        assertEquals(
-            FanboxDiagnosticTarget("custom-request", false),
-            FanboxFailureInterpreter.target(false, "https://api.fanbox.cc/private/route"),
-        )
-        assertEquals(
-            FanboxDiagnosticTarget("download", false),
-            FanboxFailureInterpreter.target(true, "https://api.fanbox.cc/post.info"),
-        )
-    }
-
     private fun failure(statusCode: Int): FanboxException = FanboxFailureInterpreter.httpFailure(
         endpoint = "post.info",
         statusCode = statusCode,

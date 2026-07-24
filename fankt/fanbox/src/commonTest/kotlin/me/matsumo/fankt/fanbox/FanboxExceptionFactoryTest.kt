@@ -1,6 +1,5 @@
 package me.matsumo.fankt.fanbox
 
-import io.ktor.http.Url
 import io.ktor.http.toHttpDate
 import io.ktor.util.date.GMTDate
 import kotlin.test.Test
@@ -12,45 +11,6 @@ import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
 class FanboxExceptionFactoryTest {
-
-    @Test
-    fun sourcePolicyOverridesAllowlistedUrl() {
-        val generated = FanboxExceptionFactory.target(
-            FanboxDiagnosticSource.LibraryGenerated,
-            Url("https://api.fanbox.cc/post.info?secret=query"),
-        )
-        val download = FanboxExceptionFactory.target(
-            FanboxDiagnosticSource.Download,
-            Url("https://api.fanbox.cc/post.info?secret=query"),
-        )
-
-        assertEquals("post.info", generated.endpoint)
-        assertTrue(generated.retainResponseFragment)
-        assertEquals("download", download.endpoint)
-        assertFalse(download.retainResponseFragment)
-    }
-
-    @Test
-    fun generatedUnknownRouteFailsClosed() {
-        val target = FanboxExceptionFactory.target(
-            FanboxDiagnosticSource.LibraryGenerated,
-            Url("https://api.fanbox.cc/private/secret-segment?token=query-secret"),
-        )
-
-        assertEquals("custom-request", target.endpoint)
-        assertFalse(target.retainResponseFragment)
-    }
-
-    @Test
-    fun homepageUsesStableLabel() {
-        assertEquals(
-            "homepage",
-            FanboxExceptionFactory.target(
-                FanboxDiagnosticSource.LibraryGenerated,
-                Url("https://www.fanbox.cc/?token=secret"),
-            ).endpoint,
-        )
-    }
 
     @Test
     fun fragmentIsRedactedNormalizedThenBounded() {

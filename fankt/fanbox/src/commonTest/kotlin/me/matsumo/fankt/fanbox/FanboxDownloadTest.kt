@@ -63,7 +63,7 @@ class FanboxDownloadTest {
         assertEquals("fixture-token", fixture.requests.single().csrfToken)
         assertTrue(fixture.requests.single().cookie.orEmpty().contains("FANBOXSESSID=fixture-session"))
         assertEquals(listOf(0f, 1f), progress)
-        assertEquals(4, fixture.clients.size)
+        assertEquals(2, fixture.clients.size)
         assertTrue(fixture.requests.single().executionJob.isCompleted)
         fixture.fanbox.close()
     }

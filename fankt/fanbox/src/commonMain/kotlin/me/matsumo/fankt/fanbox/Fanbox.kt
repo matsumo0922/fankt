@@ -1,12 +1,9 @@
 package me.matsumo.fankt.fanbox
 
-import de.jensklingenberg.ktorfit.Ktorfit
 import io.github.aakira.napier.Napier
 import io.ktor.client.HttpClient
-import io.ktor.client.request.HttpRequest
 import io.ktor.client.request.prepareGet
 import io.ktor.client.statement.bodyAsChannel
-import io.ktor.client.statement.request
 import io.ktor.http.HttpHeaders
 import io.ktor.utils.io.readAvailable
 import kotlinx.coroutines.CancellationException
@@ -19,13 +16,6 @@ import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.yield
 import kotlinx.io.IOException
-import me.matsumo.fankt.fanbox.datasource.createFanboxCreatorApi
-import me.matsumo.fankt.fanbox.datasource.createFanboxSearchApi
-import me.matsumo.fankt.fanbox.datasource.createFanboxUserApi
-import me.matsumo.fankt.fanbox.datasource.mapper.FanboxCreatorMapper
-import me.matsumo.fankt.fanbox.datasource.mapper.FanboxPostMapper
-import me.matsumo.fankt.fanbox.datasource.mapper.FanboxUserMapper
-import me.matsumo.fankt.fanbox.datasource.parser.FanboxMetadataParser
 import me.matsumo.fankt.fanbox.domain.FanboxCursor
 import me.matsumo.fankt.fanbox.domain.PageCursorInfo
 import me.matsumo.fankt.fanbox.domain.PageNumberInfo
@@ -84,7 +74,6 @@ class Fanbox internal constructor(
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
 ) : AutoCloseable {
     private val lifecycle = Job()
-    private val formatter = createFanboxJson()
     private val resources = buildResources()
 
     private val post get() = requireOpen(resources.post)
@@ -126,23 +115,6 @@ class Fanbox internal constructor(
     private fun buildResources(): FanboxResources {
         val clients = mutableListOf<HttpClient>()
 
-        fun buildOwnedClient(
-            source: FanboxDiagnosticSource,
-            isEnableContentNegotiation: Boolean,
-            isDownloadClient: Boolean = false,
-        ): HttpClient {
-            return buildHttpClient(
-                formatter = formatter,
-                cookieStorage = dependencies.cookieStorage,
-                source = source,
-                csrfTokenProvider = dependencies.getCsrfToken,
-                logLevel = logLevel,
-                isEnableContentNegotiation = isEnableContentNegotiation,
-                isDownloadClient = isDownloadClient,
-                clientFactory = clientFactory,
-            ).also(clients::add)
-        }
-
         fun buildOwnedExecutorClient(): HttpClient = buildFanboxExecutorHttpClient(
             cookieStorage = dependencies.cookieStorage,
             csrfTokenProvider = dependencies.getCsrfToken,
@@ -150,60 +122,45 @@ class Fanbox internal constructor(
             clientFactory = clientFactory,
         ).also(clients::add)
 
+        fun buildOwnedDownloadClient(): HttpClient = buildFanboxDownloadHttpClient(
+            cookieStorage = dependencies.cookieStorage,
+            csrfTokenProvider = dependencies.getCsrfToken,
+            logLevel = logLevel,
+            clientFactory = clientFactory,
+        ).also(clients::add)
+
         try {
-            val apiClient = buildOwnedClient(FanboxDiagnosticSource.LibraryGenerated, true)
-            val apiWithoutContentNegotiationClient = buildOwnedClient(
-                FanboxDiagnosticSource.LibraryGenerated,
-                false,
-            )
             val requestExecutor = KtorFanboxRequestExecutor(
                 client = buildOwnedExecutorClient(),
                 logLevel = logLevel,
             )
-            val downloadClient = buildOwnedClient(
-                source = FanboxDiagnosticSource.Download,
-                isEnableContentNegotiation = false,
-                isDownloadClient = true,
-            )
-
-            val ktorfit = Ktorfit.Builder()
-                .baseUrl("https://api.fanbox.cc/")
-                .httpClient(apiClient)
-                .build()
-
-            val ktorfitWithoutContentNegotiation = Ktorfit.Builder()
-                .baseUrl("https://api.fanbox.cc/")
-                .httpClient(apiWithoutContentNegotiationClient)
-                .build()
-
-            val creatorApi = ktorfit.createFanboxCreatorApi()
-            val searchApi = ktorfit.createFanboxSearchApi()
-            val userApi = ktorfit.createFanboxUserApi()
-
-            val creatorWithoutContentNegotiation = ktorfitWithoutContentNegotiation.createFanboxCreatorApi()
-
+            val downloadClient = buildOwnedDownloadClient()
             val diagnosticSink = FanboxDiagnosticSink { message -> Napier.w { message } }
-            val listItemDecoder = FanboxListItemDecoder(
-                formatter = formatter,
-                includeRawFragment = logLevel != FanboxLogLevel.NONE,
-                diagnosticSink = diagnosticSink,
-            )
-            val postMapper = FanboxPostMapper(listItemDecoder, formatter)
-            val creatorMapper = FanboxCreatorMapper(listItemDecoder)
-            val searchMapper = me.matsumo.fankt.fanbox.datasource.mapper.FanboxSearchMapper(creatorMapper)
-            val userMapper = FanboxUserMapper(postMapper, creatorMapper, listItemDecoder)
-            val metadataParser = FanboxMetadataParser(formatter)
+            val includeRawFragment = logLevel != FanboxLogLevel.NONE
 
             return FanboxResources(
                 post = FanboxPostRepository(
                     requestExecutor = requestExecutor,
                     diagnosticSink = diagnosticSink,
-                    includeRawFragment = logLevel != FanboxLogLevel.NONE,
+                    includeRawFragment = includeRawFragment,
                     ioDispatcher = ioDispatcher,
                 ),
-                creator = FanboxCreatorRepository(creatorApi, creatorWithoutContentNegotiation, creatorMapper),
-                search = FanboxSearchRepository(searchApi, searchMapper),
-                user = FanboxUserRepository(userApi, userMapper, metadataParser),
+                creator = FanboxCreatorRepository(
+                    requestExecutor = requestExecutor,
+                    diagnosticSink = diagnosticSink,
+                    includeRawFragment = includeRawFragment,
+                    ioDispatcher = ioDispatcher,
+                ),
+                search = FanboxSearchRepository(
+                    requestExecutor = requestExecutor,
+                    ioDispatcher = ioDispatcher,
+                ),
+                user = FanboxUserRepository(
+                    requestExecutor = requestExecutor,
+                    diagnosticSink = diagnosticSink,
+                    includeRawFragment = includeRawFragment,
+                    ioDispatcher = ioDispatcher,
+                ),
                 requestExecutor = requestExecutor,
                 downloadClient = downloadClient,
                 clients = clients,
@@ -543,7 +500,7 @@ class Fanbox internal constructor(
                         val contentLength = response.headers[HttpHeaders.ContentLength]
                             ?.toLongOrNull()
                             ?.takeIf { it > 0L }
-                        val channel = normalizeDownloadTransport(response.request) {
+                        val channel = normalizeDownloadTransport {
                             response.bodyAsChannel()
                         }
                         val buffer = ByteArray(DOWNLOAD_CHUNK_SIZE)
@@ -561,11 +518,7 @@ class Fanbox internal constructor(
                                 read = { target -> channel.readAvailable(target) },
                                 closedCause = { channel.closedCause },
                                 networkFailure = { failure ->
-                                    FanboxExceptionFactory.network(
-                                        response.request,
-                                        FanboxDiagnosticSource.Download,
-                                        failure,
-                                    )
+                                    FanboxExceptionFactory.downloadNetwork(failure)
                                 },
                             ) ?: break
 
@@ -628,12 +581,11 @@ private data class FanboxResources(
 private const val DOWNLOAD_CHUNK_SIZE: Int = 64 * 1_024
 
 private suspend inline fun <T> normalizeDownloadTransport(
-    request: HttpRequest,
     block: suspend () -> T,
 ): T = normalizeDownloadTransportFailure(
     block = block,
     networkFailure = { failure ->
-        FanboxExceptionFactory.network(request, FanboxDiagnosticSource.Download, failure)
+        FanboxExceptionFactory.downloadNetwork(failure)
     },
 )
 

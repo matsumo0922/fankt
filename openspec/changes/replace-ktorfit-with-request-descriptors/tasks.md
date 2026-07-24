@@ -36,14 +36,14 @@
 
 ## 4. PR 4 — Remaining repository migration and generated API removal
 
-- [ ] 4.1 Migrate creator detail/list/plan/featured-tag GET operations and follow create/delete POST operations to descriptor → executor → parser
-- [ ] 4.2 Migrate creator/tag search operations to descriptor → executor → parser
-- [ ] 4.3 Migrate supporting plan strict/tolerant, payment, newsletter, bell, and homepage metadata operations to descriptor → executor → parser
-- [ ] 4.4 Update `Fanbox.buildResources()` and repository constructors to own one normal request executor/client plus the separate download client
-- [ ] 4.5 Delete the four fanbox Ktorfit interfaces, generated `createFanbox*Api` calls, ContentNegotiation split, and obsolete Ktor schema-mismatch plugin code
-- [ ] 4.6 Replace annotation-based `FanboxRouteDriftTest` with exhaustive endpoint builder, trusted policy, parser-mode, diagnostic-label, 29-operation, and 28-route inventory checks
-- [ ] 4.7 Update request-time CSRF, lifecycle, download inventory, creator/search/user, storage, fixture, and MockEngine tests for the final executor graph
-- [ ] 4.8 Run all fanbox tests, Android unit tests, boundary fixtures, lifecycle/download tests, detekt, ABI checks, and `git diff --check`
+- [x] 4.1 Migrate creator detail/list/plan/featured-tag GET operations and follow create/delete POST operations to descriptor → executor → parser
+- [x] 4.2 Migrate creator/tag search operations to descriptor → executor → parser
+- [x] 4.3 Migrate supporting plan strict/tolerant, payment, newsletter, bell, and homepage metadata operations to descriptor → executor → parser
+- [x] 4.4 Update `Fanbox.buildResources()` and repository constructors to own one normal request executor/client plus the separate download client
+- [x] 4.5 Delete the four fanbox Ktorfit interfaces, generated `createFanbox*Api` calls, ContentNegotiation split, and obsolete Ktor schema-mismatch plugin code
+- [x] 4.6 Replace annotation-based `FanboxRouteDriftTest` with exhaustive endpoint builder, trusted policy, parser-mode, diagnostic-label, 29-operation, and 28-route inventory checks
+- [x] 4.7 Update request-time CSRF, lifecycle, download inventory, creator/search/user, storage, fixture, and MockEngine tests for the final executor graph
+- [x] 4.8 Run all fanbox tests, Android unit tests, boundary fixtures, lifecycle/download tests, detekt, ABI checks, and `git diff --check`
 
 ## 5. PR 5 — Fanbox build cleanup and final verification
 

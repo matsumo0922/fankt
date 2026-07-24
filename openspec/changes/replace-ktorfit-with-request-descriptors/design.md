@@ -1,8 +1,8 @@
 ## Context
 
-`Fanbox` は公開 suspend API を `FanboxPostRepository`、`FanboxCreatorRepository`、`FanboxSearchRepository`、`FanboxUserRepository` へ委譲し、各 repository は 4 個の Ktorfit interface から生成された API を呼び出している。29 route 宣言は 28 unique route を表し、`plan.listSupporting` だけが strict/tolerant decode 用に重複する。`Fanbox.buildResources()` は ContentNegotiation 有り、POST 用の ContentNegotiation 無し、download 用の 3 個の Ktor client を構築する。
+`Fanbox` は公開 suspend API を `FanboxPostRepository`、`FanboxCreatorRepository`、`FanboxSearchRepository`、`FanboxUserRepository` へ委譲し、全 repository が portable descriptor を構築して 1 個の shared executor から raw response を受け取り、endpoint-specific parser で domain model へ変換する。request operation は 29、unique route は 28 であり、`plan.listSupporting` だけが同じ descriptor に strict/tolerant の 2 parser mode を持つ。`Fanbox.buildResources()` は normal request 用 client/executor と streaming download 用 client を 1 個ずつ構築する。
 
-現在は request の path/query/body が Ktorfit annotation と repository 内の `TextContent` に、JSON decode が Ktor ContentNegotiation に埋め込まれている。mapper は概ね純粋だが、cursor/host 抽出に `io.ktor.http.Url` を使い、tolerant list decoder は Napier を直接呼ぶ。`FanboxExceptionFactory` も Ktor request/response と HTTP date parser に依存する。この構成では endpoint 定義と response 解釈を Kotlin/JS/Zipline guest へ持ち運べず、untrusted descriptor に host credential を付与する際の送信先境界も表現できない。
+request の path/query/body は `FanboxEndpoints` の純関数、JSON/HTML decode は `FanboxResponses`、credential-safe HTTP 実行は Ktor executor に分離されている。cursor/host 抽出、failure interpretation、tolerant list diagnostics を含む portable boundary は Ktor、Room、Napier に依存しない。download は complete media URL、streaming、redirect credential 規則が異なるため descriptor executor へ統合せず独立した client を使う。
 
 #33〜#37 により auth storage 注入、Room 分離、公開 API の Ktor 型排除、stdlib time、domain model 純化が完了している。#38 は既存 `Fanbox` API と wire behavior を維持したまま、request/response core と Ktor executor を分離する最後の構造変更である。
 

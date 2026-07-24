@@ -8,44 +8,7 @@ import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.Instant
 
-internal data class FanboxDiagnosticTarget(
-    val endpoint: String,
-    val retainResponseFragment: Boolean,
-)
-
 internal object FanboxFailureInterpreter {
-    private const val CUSTOM_REQUEST = "custom-request"
-    private const val DOWNLOAD = "download"
-
-    private val apiEndpoints = setOf(
-        "bell.list",
-        "creator.get",
-        "creator.listFollowing",
-        "creator.listPixiv",
-        "creator.listRecommended",
-        "creator.search",
-        "follow.create",
-        "follow.delete",
-        "legacy/support/creator",
-        "newsletter.list",
-        "payment.listPaid",
-        "payment.listUnpaid",
-        "plan.listCreator",
-        "plan.listSupporting",
-        "post.addComment",
-        "post.deleteComment",
-        "post.getComments",
-        "post.info",
-        "post.likeComment",
-        "post.likePost",
-        "post.listCreator",
-        "post.listHome",
-        "post.listSupporting",
-        "post.listTagged",
-        "post.paginateCreator",
-        "tag.getFeatured",
-        "tag.search",
-    )
     private val HTTP_DATE = Regex(
         "^[A-Za-z]{3}, (\\d{2}) ([A-Za-z]{3}) (\\d{4}) (\\d{2}):(\\d{2}):(\\d{2}) GMT$",
     )
@@ -63,23 +26,6 @@ internal object FanboxFailureInterpreter {
         "Nov" to 11,
         "Dec" to 12,
     )
-
-    fun target(isDownload: Boolean, url: String): FanboxDiagnosticTarget {
-        if (isDownload) return FanboxDiagnosticTarget(DOWNLOAD, retainResponseFragment = false)
-
-        val parts = runCatching { FanboxUrlParts.parse(url) }.getOrNull()
-            ?: return FanboxDiagnosticTarget(CUSTOM_REQUEST, retainResponseFragment = false)
-        val path = parts.encodedPath.trimStart('/')
-        return when {
-            parts.host.equals("api.fanbox.cc", ignoreCase = true) && path in apiEndpoints ->
-                FanboxDiagnosticTarget(path, retainResponseFragment = true)
-
-            parts.host.equals("www.fanbox.cc", ignoreCase = true) && path.isEmpty() ->
-                FanboxDiagnosticTarget("homepage", retainResponseFragment = true)
-
-            else -> FanboxDiagnosticTarget(CUSTOM_REQUEST, retainResponseFragment = false)
-        }
-    }
 
     fun httpFailure(
         endpoint: String,
