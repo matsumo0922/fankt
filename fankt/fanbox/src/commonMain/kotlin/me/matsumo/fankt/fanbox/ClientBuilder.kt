@@ -116,6 +116,25 @@ internal fun buildHttpClient(
     }
 }
 
+internal fun buildFanboxExecutorHttpClient(
+    cookieStorage: CookiesStorage,
+    csrfTokenProvider: suspend () -> String? = { null },
+    logLevel: FanboxLogLevel = FanboxLogLevel.NONE,
+    clientFactory: FanboxHttpClientFactory = DefaultFanboxHttpClientFactory,
+    engine: HttpClientEngine? = null,
+): HttpClient {
+    val configure: HttpClientConfig<*>.() -> Unit = {
+        configureFanboxLogging(logLevel)
+        configureFanboxAuthenticatedRequest(cookieStorage, csrfTokenProvider, isDownloadClient = false)
+        followRedirects = false
+    }
+    return if (engine == null) {
+        clientFactory.create(configure)
+    } else {
+        HttpClient(engine, configure)
+    }
+}
+
 private fun HttpClientConfig<*>.configureFanboxHttpClient(
     formatter: Json,
     cookieStorage: CookiesStorage,
@@ -131,7 +150,14 @@ private fun HttpClientConfig<*>.configureFanboxHttpClient(
         logLevel = logLevel,
         isEnableContentNegotiation = isEnableContentNegotiation,
     )
+    configureFanboxAuthenticatedRequest(cookieStorage, csrfTokenProvider, isDownloadClient)
+}
 
+private fun HttpClientConfig<*>.configureFanboxAuthenticatedRequest(
+    cookieStorage: CookiesStorage,
+    csrfTokenProvider: suspend () -> String?,
+    isDownloadClient: Boolean,
+) {
     install(HttpCookies) {
         storage = cookieStorage
     }
@@ -163,19 +189,7 @@ internal fun HttpClientConfig<*>.configureFanboxClient(
     logLevel: FanboxLogLevel = FanboxLogLevel.NONE,
     isEnableContentNegotiation: Boolean = true,
 ) {
-    install(Logging) {
-        level = logLevel.toInternalLogLevel()
-        logger = object : Logger {
-            override fun log(message: String) {
-                Napier.d(message)
-            }
-        }
-        sanitizeHeader { header ->
-            header.equals(HttpHeaders.Cookie, ignoreCase = true) ||
-                header.equals(FANBOX_CSRF_HEADER, ignoreCase = true) ||
-                header.equals(HttpHeaders.Authorization, ignoreCase = true)
-        }
-    }
+    configureFanboxLogging(logLevel)
 
     if (isEnableContentNegotiation) {
         install(ContentNegotiation) {
@@ -220,6 +234,22 @@ internal fun HttpClientConfig<*>.configureFanboxClient(
                 }
                 cause is IOException -> throw FanboxExceptionFactory.network(request, source, cause)
             }
+        }
+    }
+}
+
+private fun HttpClientConfig<*>.configureFanboxLogging(logLevel: FanboxLogLevel) {
+    install(Logging) {
+        level = logLevel.toInternalLogLevel()
+        logger = object : Logger {
+            override fun log(message: String) {
+                Napier.d(message)
+            }
+        }
+        sanitizeHeader { header ->
+            header.equals(HttpHeaders.Cookie, ignoreCase = true) ||
+                header.equals(FANBOX_CSRF_HEADER, ignoreCase = true) ||
+                header.equals(HttpHeaders.Authorization, ignoreCase = true)
         }
     }
 }

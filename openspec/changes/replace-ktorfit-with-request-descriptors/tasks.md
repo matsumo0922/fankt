@@ -15,15 +15,15 @@
 
 ## 2. PR 2 — Credential-safe Ktor executor
 
-- [ ] 2.1 Add internal raw response and `FanboxRequestExecutor` contracts that expose only primitive status, headers, and body text to repositories
-- [ ] 2.2 Add an exhaustive host-owned endpoint policy mapping every endpoint ID to exact HTTPS origin, allowed method, and credential behavior
-- [ ] 2.3 Implement relative-path and final-URL validation that rejects scheme, authority, userinfo, query/fragment injection, traversal segments, unknown IDs, and method mismatches before storage access; allow empty path only for homepage and normalize it to exact `GET https://www.fanbox.cc/`
-- [ ] 2.4 Implement one raw-body Ktor request client for both GET and POST without ContentNegotiation variants; encode query values once and preserve common origin, referer, user-agent, shared Cookie storage, request-time CSRF provider, and explicit `x-csrf-token` non-overwrite behavior
-- [ ] 2.5 Disable automatic redirects and implement bounded redirect handling that preserves current effective behavior for same-origin redirects while revalidating exact origin and allowed method before every redirected request and credential lookup; cover 301/302/307/308
-- [ ] 2.6 Connect non-success responses, network errors, cancellation, schema mismatches, sanitized fragments, and Retry-After values to the pure failure interpreter
-- [ ] 2.7 Wire the unused executor alongside the generated APIs without changing public operation routing; register its client in the `Fanbox` owned-client list immediately, reuse the exact same `FanboxDependencies.cookieStorage` and `getCsrfToken` provider as generated clients, and verify construction-failure and repeated-close cleanup
-- [ ] 2.8 Add MockEngine tests proving accepted API requests, exact homepage `GET /`, validation-before-credential ordering, disallowed origins/methods/paths, redirect escape rejection, latest-token resolution, explicit-token non-overwrite, and executor-client close
-- [ ] 2.9 Run executor security tests, lifecycle tests, existing exception/CSRF/storage tests, detekt, and `git diff --check`
+- [x] 2.1 Add internal raw response and `FanboxRequestExecutor` contracts that expose only primitive status, headers, and body text to repositories
+- [x] 2.2 Add an exhaustive host-owned endpoint policy mapping every endpoint ID to exact HTTPS origin, allowed method, and credential behavior
+- [x] 2.3 Implement relative-path and final-URL validation that rejects scheme, authority, userinfo, query/fragment injection, traversal segments, unknown IDs, and method mismatches before storage access; allow empty path only for homepage and normalize it to exact `GET https://www.fanbox.cc/`
+- [x] 2.4 Implement one raw-body Ktor request client for both GET and POST without ContentNegotiation variants; encode query values once and preserve common origin, referer, user-agent, shared Cookie storage, request-time CSRF provider, and explicit `x-csrf-token` non-overwrite behavior
+- [x] 2.5 Disable automatic redirects and implement bounded redirect handling that preserves current effective behavior for same-origin redirects while revalidating exact origin and allowed method before every redirected request and credential lookup; cover 301/302/307/308
+- [x] 2.6 Connect non-success responses, network errors, cancellation, schema mismatches, sanitized fragments, and Retry-After values to the pure failure interpreter
+- [x] 2.7 Wire the unused executor alongside the generated APIs without changing public operation routing; register its client in the `Fanbox` owned-client list immediately, reuse the exact same `FanboxDependencies.cookieStorage` and `getCsrfToken` provider as generated clients, and verify construction-failure and repeated-close cleanup
+- [x] 2.8 Add MockEngine tests proving accepted API requests, exact homepage `GET /`, validation-before-credential ordering, disallowed origins/methods/paths, redirect escape rejection, latest-token resolution, explicit-token non-overwrite, and executor-client close
+- [x] 2.9 Run executor security tests, lifecycle tests, existing exception/CSRF/storage tests, detekt, and `git diff --check`
 
 ## 3. PR 3 — Post repository migration
 
