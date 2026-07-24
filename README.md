@@ -180,13 +180,18 @@ known migration covers payment grouping, the common formatting extension, and bo
 extensions. Consumers that still need calendar or time-zone APIs should select a normal
 non-compat `kotlinx-datetime` artifact independently; fankt no longer publishes that dependency.
 
-`Fanbox` routes every non-download operation through an internal portable request descriptor, one
-shared raw-response executor client, and an endpoint-specific response parser. The executor validates
-the endpoint policy, HTTPS origin, method, relative path, and redirect destination before resolving the
-injected Cookie storage or request-time CSRF token. The streaming download client remains separate
-because it accepts complete allowlisted media URLs and consumes response bodies incrementally. Close
-`Fanbox` after all requests and downloads finish. Calls started after `Fanbox.close()` fail with
-`IllegalStateException`; the HTTP engine may finish shutdown asynchronously.
+`Fanbox` keeps request builders, serializable descriptors, response parsers, cursor/host extraction,
+and failure interpretation in an internal portable core without Ktor, Room, or Napier imports. Every
+non-download operation passes one descriptor through one raw-response Ktor executor and then through
+its endpoint-specific parser. The `:fankt:fanbox` module contains no Ktorfit endpoint or KSP-generated
+API; Ktor remains only inside the internal transport implementation.
+
+Before reading the injected Cookie storage or request-time CSRF token, the executor resolves the
+host-owned endpoint policy and validates the method, relative path, exact HTTPS origin, and redirect
+destination. The streaming download client remains separate because it accepts complete allowlisted
+media URLs and consumes response bodies incrementally. Close `Fanbox` after all requests and downloads
+finish. Calls started after `Fanbox.close()` fail with `IllegalStateException`; the HTTP engine may
+finish shutdown asynchronously.
 
 #### Media downloads
 
@@ -233,10 +238,10 @@ try {
 }
 ```
 
-`statusCode` is `null` when no response was received. For library-owned routes, `rawBody` contains a
-credential-redacted and control-normalized diagnostic fragment of at most 2,048 Kotlin characters.
-It can still contain FANBOX or user data. Unknown generated routes retain endpoint
-`custom-request`. Download failures use endpoint `download`. Both intentionally set `rawBody` to
+`statusCode` is `null` when no response was received. For library-owned descriptor routes,
+`rawBody` contains a credential-redacted and control-normalized diagnostic fragment of at most 2,048
+Kotlin characters. It can still contain FANBOX or user data. Each normal request reports its stable
+endpoint descriptor ID. Download failures use endpoint `download` and intentionally set `rawBody` to
 `null`.
 
 Log only `FanboxException.message` or an explicitly reviewed `rawBody`. The original `cause` is
@@ -245,8 +250,8 @@ contract and must not be logged automatically.
 
 The `Fanbox` constructor treats `FanboxLogLevel.BODY` as effective `INFO` and
 `FanboxLogLevel.ALL` as effective `HEADERS`. The HTTP logger never receives a raw response body.
-Allowlisted generated-route errors use a separate path for a sanitized, control-normalized fragment
-bounded to 2,048 Kotlin characters; downloads and unknown routes retain no response fragment.
+Library-owned descriptor-route errors use a separate path for a sanitized, control-normalized fragment
+bounded to 2,048 Kotlin characters; downloads retain no response fragment.
 
 #### Tolerant list responses
 

@@ -47,11 +47,11 @@
 
 ## 5. PR 5 — Fanbox build cleanup and final verification
 
-- [ ] 5.1 Remove the Ktorfit convention plugin, runtime dependency, and Ktorfit KSP processor from `:fankt:fanbox` only
-- [ ] 5.2 Make every sources/publication task retain a mandatory dependency on `kspCommonMainKotlinMetadata` when that task exists and skip only modules where the task is absent
-- [ ] 5.3 Verify Fantia and Room persistence modules retain their required Ktorfit/Room KSP plugins and processors, that generated metadata tasks complete before every sources artifact, and that generated sources remain included
-- [ ] 5.4 Confirm descriptor/parser symbols remain absent from API dumps and all pre-existing `Fanbox` operations and domain model signatures remain compatible
-- [ ] 5.5 Update README with the current portable request/response core, internal Ktor executor boundary, credential validation order, and separate download path
-- [ ] 5.6 Search README and `docs/` for Ktorfit, generated API, CSRF client graph, route inventory, and request/response boundary descriptions and correct all stale statements in this PR
-- [ ] 5.7 Run fanbox `allTests`, Android unit tests, detekt, Ktor/persistence/import boundary gates, legacy ABI checks, compatibility tests, publication task configuration, Fantia build checks, and `git diff --check`
-- [ ] 5.8 Confirm the final source and dependency inventories contain no fanbox Ktorfit annotation, generated API symbol, or Ktorfit processor dependency and validate the OpenSpec change
+- [x] 5.1 Remove the Ktorfit convention plugin, runtime dependency, and Ktorfit KSP processor from `:fankt:fanbox` only
+- [x] 5.2 Make every sources/publication task retain a mandatory dependency on `kspCommonMainKotlinMetadata` when that task exists and skip only modules where the task is absent
+- [x] 5.3 Verify Fantia and Room persistence modules retain their required Ktorfit/Room KSP plugins and processors, that generated metadata tasks complete before every sources artifact, and that generated sources remain included
+- [x] 5.4 Confirm descriptor/parser symbols remain absent from API dumps and all pre-existing `Fanbox` operations and domain model signatures remain compatible
+- [x] 5.5 Update README with the current portable request/response core, internal Ktor executor boundary, credential validation order, and separate download path
+- [x] 5.6 Search README and `docs/` for Ktorfit, generated API, CSRF client graph, route inventory, and request/response boundary descriptions and correct all stale statements in this PR
+- [x] 5.7 Run fanbox `allTests`, Android unit tests, detekt, Ktor/persistence/import boundary gates, legacy ABI checks, compatibility tests, publication task configuration, Fantia build checks, and `git diff --check`
+- [x] 5.8 Confirm the final source and dependency inventories contain no fanbox Ktorfit annotation, generated API symbol, or Ktorfit processor dependency and validate the OpenSpec change
