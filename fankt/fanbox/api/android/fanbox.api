@@ -1065,18 +1065,17 @@ public final class me/matsumo/fankt/fanbox/domain/model/FanboxPost$Companion {
 
 public final class me/matsumo/fankt/fanbox/domain/model/FanboxPostDetail {
 	public static final field Companion Lme/matsumo/fankt/fanbox/domain/model/FanboxPostDetail$Companion;
-	public fun <init> (Lme/matsumo/fankt/fanbox/domain/model/id/FanboxPostId;Ljava/lang/String;Lme/matsumo/fankt/fanbox/domain/model/FanboxPostDetail$Body;Ljava/lang/String;ILjava/lang/String;IZLjava/lang/String;ZZZILjava/util/List;Lkotlin/time/Instant;Lkotlin/time/Instant;Lme/matsumo/fankt/fanbox/domain/model/FanboxPostDetail$OtherPost;Lme/matsumo/fankt/fanbox/domain/model/FanboxPostDetail$OtherPost;Lme/matsumo/fankt/fanbox/domain/model/FanboxUser;)V
+	public fun <init> (Lme/matsumo/fankt/fanbox/domain/model/id/FanboxPostId;Ljava/lang/String;Lme/matsumo/fankt/fanbox/domain/model/FanboxPostDetail$Body;Ljava/lang/String;ILjava/lang/String;IZLjava/lang/String;ZZILjava/util/List;Lkotlin/time/Instant;Lkotlin/time/Instant;Lme/matsumo/fankt/fanbox/domain/model/FanboxPostDetail$OtherPost;Lme/matsumo/fankt/fanbox/domain/model/FanboxPostDetail$OtherPost;Lme/matsumo/fankt/fanbox/domain/model/FanboxUser;)V
 	public final fun component1 ()Lme/matsumo/fankt/fanbox/domain/model/id/FanboxPostId;
 	public final fun component10 ()Z
 	public final fun component11 ()Z
-	public final fun component12 ()Z
-	public final fun component13 ()I
-	public final fun component14 ()Ljava/util/List;
+	public final fun component12 ()I
+	public final fun component13 ()Ljava/util/List;
+	public final fun component14 ()Lkotlin/time/Instant;
 	public final fun component15 ()Lkotlin/time/Instant;
-	public final fun component16 ()Lkotlin/time/Instant;
+	public final fun component16 ()Lme/matsumo/fankt/fanbox/domain/model/FanboxPostDetail$OtherPost;
 	public final fun component17 ()Lme/matsumo/fankt/fanbox/domain/model/FanboxPostDetail$OtherPost;
-	public final fun component18 ()Lme/matsumo/fankt/fanbox/domain/model/FanboxPostDetail$OtherPost;
-	public final fun component19 ()Lme/matsumo/fankt/fanbox/domain/model/FanboxUser;
+	public final fun component18 ()Lme/matsumo/fankt/fanbox/domain/model/FanboxUser;
 	public final fun component2 ()Ljava/lang/String;
 	public final fun component3 ()Lme/matsumo/fankt/fanbox/domain/model/FanboxPostDetail$Body;
 	public final fun component4 ()Ljava/lang/String;
@@ -1085,8 +1084,8 @@ public final class me/matsumo/fankt/fanbox/domain/model/FanboxPostDetail {
 	public final fun component7 ()I
 	public final fun component8 ()Z
 	public final fun component9 ()Ljava/lang/String;
-	public final fun copy (Lme/matsumo/fankt/fanbox/domain/model/id/FanboxPostId;Ljava/lang/String;Lme/matsumo/fankt/fanbox/domain/model/FanboxPostDetail$Body;Ljava/lang/String;ILjava/lang/String;IZLjava/lang/String;ZZZILjava/util/List;Lkotlin/time/Instant;Lkotlin/time/Instant;Lme/matsumo/fankt/fanbox/domain/model/FanboxPostDetail$OtherPost;Lme/matsumo/fankt/fanbox/domain/model/FanboxPostDetail$OtherPost;Lme/matsumo/fankt/fanbox/domain/model/FanboxUser;)Lme/matsumo/fankt/fanbox/domain/model/FanboxPostDetail;
-	public static synthetic fun copy$default (Lme/matsumo/fankt/fanbox/domain/model/FanboxPostDetail;Lme/matsumo/fankt/fanbox/domain/model/id/FanboxPostId;Ljava/lang/String;Lme/matsumo/fankt/fanbox/domain/model/FanboxPostDetail$Body;Ljava/lang/String;ILjava/lang/String;IZLjava/lang/String;ZZZILjava/util/List;Lkotlin/time/Instant;Lkotlin/time/Instant;Lme/matsumo/fankt/fanbox/domain/model/FanboxPostDetail$OtherPost;Lme/matsumo/fankt/fanbox/domain/model/FanboxPostDetail$OtherPost;Lme/matsumo/fankt/fanbox/domain/model/FanboxUser;ILjava/lang/Object;)Lme/matsumo/fankt/fanbox/domain/model/FanboxPostDetail;
+	public final fun copy (Lme/matsumo/fankt/fanbox/domain/model/id/FanboxPostId;Ljava/lang/String;Lme/matsumo/fankt/fanbox/domain/model/FanboxPostDetail$Body;Ljava/lang/String;ILjava/lang/String;IZLjava/lang/String;ZZILjava/util/List;Lkotlin/time/Instant;Lkotlin/time/Instant;Lme/matsumo/fankt/fanbox/domain/model/FanboxPostDetail$OtherPost;Lme/matsumo/fankt/fanbox/domain/model/FanboxPostDetail$OtherPost;Lme/matsumo/fankt/fanbox/domain/model/FanboxUser;)Lme/matsumo/fankt/fanbox/domain/model/FanboxPostDetail;
+	public static synthetic fun copy$default (Lme/matsumo/fankt/fanbox/domain/model/FanboxPostDetail;Lme/matsumo/fankt/fanbox/domain/model/id/FanboxPostId;Ljava/lang/String;Lme/matsumo/fankt/fanbox/domain/model/FanboxPostDetail$Body;Ljava/lang/String;ILjava/lang/String;IZLjava/lang/String;ZZILjava/util/List;Lkotlin/time/Instant;Lkotlin/time/Instant;Lme/matsumo/fankt/fanbox/domain/model/FanboxPostDetail$OtherPost;Lme/matsumo/fankt/fanbox/domain/model/FanboxPostDetail$OtherPost;Lme/matsumo/fankt/fanbox/domain/model/FanboxUser;ILjava/lang/Object;)Lme/matsumo/fankt/fanbox/domain/model/FanboxPostDetail;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getBody ()Lme/matsumo/fankt/fanbox/domain/model/FanboxPostDetail$Body;
 	public final fun getBrowserUrl ()Ljava/lang/String;
@@ -1106,10 +1105,8 @@ public final class me/matsumo/fankt/fanbox/domain/model/FanboxPostDetail {
 	public final fun getUpdatedDatetime ()Lkotlin/time/Instant;
 	public final fun getUser ()Lme/matsumo/fankt/fanbox/domain/model/FanboxUser;
 	public fun hashCode ()I
-	public final fun isBookmarked ()Z
 	public final fun isLiked ()Z
 	public final fun isRestricted ()Z
-	public final fun setBookmarked (Z)V
 	public fun toString ()Ljava/lang/String;
 }
 

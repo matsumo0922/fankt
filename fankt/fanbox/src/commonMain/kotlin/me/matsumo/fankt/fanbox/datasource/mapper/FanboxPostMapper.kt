@@ -125,7 +125,6 @@ internal class FanboxPostMapper(
             publishedDatetime = Instant.parse(post.publishedDatetime),
             updatedDatetime = Instant.parse(post.updatedDatetime),
             isLiked = post.isLiked,
-            isBookmarked = false,
             likeCount = post.likeCount,
             coverImageUrl = post.coverImageUrl,
             commentCount = post.commentCount,
