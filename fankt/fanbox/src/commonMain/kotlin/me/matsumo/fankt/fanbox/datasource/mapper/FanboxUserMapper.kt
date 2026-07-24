@@ -2,7 +2,6 @@
 
 package me.matsumo.fankt.fanbox.datasource.mapper
 
-import io.ktor.http.Url
 import me.matsumo.fankt.fanbox.FanboxListItemDecoder
 import me.matsumo.fankt.fanbox.FanboxTolerantResult
 import me.matsumo.fankt.fanbox.domain.PageNumberInfo
@@ -23,6 +22,7 @@ import me.matsumo.fankt.fanbox.domain.model.id.FanboxCreatorId
 import me.matsumo.fankt.fanbox.domain.model.id.FanboxNewsLetterId
 import me.matsumo.fankt.fanbox.domain.model.id.FanboxPostId
 import me.matsumo.fankt.fanbox.domain.model.id.FanboxUserId
+import me.matsumo.fankt.fanbox.response.FanboxUrlParts
 import kotlin.time.Instant
 
 internal class FanboxUserMapper(
@@ -110,7 +110,7 @@ internal class FanboxUserMapper(
         return FanboxTolerantResult(
             value = PageNumberInfo(
                 contents = decoded.value,
-                nextPage = entity.body.nextUrl?.let { Url(it).parameters["page"]?.toIntOrNull() },
+                nextPage = entity.body.nextUrl?.let { FanboxUrlParts.parse(it).queryValue("page")?.toIntOrNull() },
             ),
             mismatches = decoded.mismatches,
         )

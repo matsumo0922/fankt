@@ -1,17 +1,17 @@
 ## 1. PR 1 — Portable request and response core
 
-- [ ] 1.1 Add serializable internal `FanboxEndpointId`, `FanboxHttpMethod`, `FanboxQueryParameter`, and `RequestDescriptor` value types and verify that the public ABI remains unchanged
-- [ ] 1.2 Define stable endpoint ID constants and separate complete inventories for 29 request operations, 28 unique request routes, and 29 response decode operations, including one shared `plan.listSupporting` descriptor with explicit strict/tolerant parsers
-- [ ] 1.3 Implement and test pure `FanboxEndpoints` builders for post GET operations and pagination query omission/encoding
-- [ ] 1.4 Implement and test pure `FanboxEndpoints` builders for like/comment POST operations, including JSON value types and nullable parent-ID omission
-- [ ] 1.5 Implement and test pure `FanboxEndpoints` builders for creator/follow, search, plan/payment/newsletter/bell, and homepage operations
-- [ ] 1.6 Add a Ktor-free URL/query/host parser and migrate `FanboxCursor`, `Platform.fromUrl`, `FanboxPostMapper` pagination extraction, and `FanboxUserMapper` pagination extraction while preserving encoded-value behavior
-- [ ] 1.7 Add endpoint-specific `FanboxResponses` JSON/HTML parsers that reuse the production `Json`, entities, metadata parser, and mappers, with separate strict and tolerant `plan.listSupporting` functions bound by repository overload
-- [ ] 1.8 Split `FanboxExceptionFactory` into primitive pure failure/sanitization/Retry-After logic and a temporary Ktor adapter without changing public exception semantics
-- [ ] 1.9 Replace direct Napier use in `FanboxListItemDecoder` with an injected default-no-op diagnostic sink and preserve mismatch callbacks, index paths, redaction, and bounded fragments
-- [ ] 1.10 Add golden response, malformed URL/query, HTTP-date, schema-mismatch, and tolerant-decode tests for the pure core
-- [ ] 1.11 Add a source import verification task that rejects Ktor, Room, and Napier imports from the endpoint/response/mapper/parser portable boundary
-- [ ] 1.12 Run fanbox common tests, Android unit tests, detekt, ABI checks, import gates, and `git diff --check` with runtime repositories still using Ktorfit
+- [x] 1.1 Add serializable internal `FanboxEndpointId`, `FanboxHttpMethod`, `FanboxQueryParameter`, and `RequestDescriptor` value types and verify that the public ABI remains unchanged
+- [x] 1.2 Define stable endpoint ID constants and separate complete inventories for 29 request operations, 28 unique request routes, and 29 response decode operations, including one shared `plan.listSupporting` descriptor with explicit strict/tolerant parsers
+- [x] 1.3 Implement and test pure `FanboxEndpoints` builders for post GET operations and pagination query omission/encoding
+- [x] 1.4 Implement and test pure `FanboxEndpoints` builders for like/comment POST operations, including JSON value types and nullable parent-ID omission
+- [x] 1.5 Implement and test pure `FanboxEndpoints` builders for creator/follow, search, plan/payment/newsletter/bell, and homepage operations
+- [x] 1.6 Add a Ktor-free URL/query/host parser and migrate `FanboxCursor`, `Platform.fromUrl`, `FanboxPostMapper` pagination extraction, and `FanboxUserMapper` pagination extraction while preserving encoded-value behavior
+- [x] 1.7 Add endpoint-specific `FanboxResponses` JSON/HTML parsers that reuse the production `Json`, entities, metadata parser, and mappers, with separate strict and tolerant `plan.listSupporting` functions bound by repository overload
+- [x] 1.8 Split `FanboxExceptionFactory` into primitive pure failure/sanitization/Retry-After logic and a temporary Ktor adapter without changing public exception semantics
+- [x] 1.9 Replace direct Napier use in `FanboxListItemDecoder` with an injected default-no-op diagnostic sink and preserve mismatch callbacks, index paths, redaction, and bounded fragments
+- [x] 1.10 Add golden response, malformed URL/query, HTTP-date, schema-mismatch, and tolerant-decode tests for the pure core
+- [x] 1.11 Add a source import verification task that rejects Ktor, Room, and Napier imports from the endpoint/response/mapper/parser portable boundary
+- [x] 1.12 Run fanbox common tests, Android unit tests, detekt, ABI checks, import gates, and `git diff --check` with runtime repositories still using Ktorfit
 
 ## 2. PR 2 — Credential-safe Ktor executor
 

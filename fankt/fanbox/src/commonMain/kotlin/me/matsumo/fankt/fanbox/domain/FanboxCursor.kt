@@ -1,7 +1,7 @@
 package me.matsumo.fankt.fanbox.domain
 
-import io.ktor.http.Url
 import kotlinx.serialization.Serializable
+import me.matsumo.fankt.fanbox.response.FanboxUrlParts
 
 /**
  * ページング用のカーソル
@@ -18,15 +18,15 @@ data class FanboxCursor(
 )
 
 internal fun String.translateToCursor(): FanboxCursor {
-    // nextUrl のクエリ値は URL エンコード済みのため、Url でパースしてデコードした値を取得する。
-    // 手動分割では値をデコードできず、リクエスト時に再エンコードされて二重エンコードになる。
-    val parameters = Url(this).parameters
+    // nextUrl のクエリ値は URL エンコード済みのため、一度だけデコードした値を取得する。
+    // 次ページ URL 自体は実行せず、既知の endpoint descriptor を再構築するために使う。
+    val url = FanboxUrlParts.parse(this)
 
     return FanboxCursor(
-        firstPublishedDatetime = parameters["firstPublishedDatetime"],
-        maxPublishedDatetime = parameters["maxPublishedDatetime"],
-        firstId = parameters["firstId"],
-        maxId = parameters["maxId"],
-        limit = parameters["limit"]?.toInt(),
+        firstPublishedDatetime = url.queryValue("firstPublishedDatetime"),
+        maxPublishedDatetime = url.queryValue("maxPublishedDatetime"),
+        firstId = url.queryValue("firstId"),
+        maxId = url.queryValue("maxId"),
+        limit = url.queryValue("limit")?.toInt(),
     )
 }

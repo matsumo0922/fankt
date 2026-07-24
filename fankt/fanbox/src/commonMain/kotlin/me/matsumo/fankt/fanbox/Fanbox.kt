@@ -1,6 +1,7 @@
 package me.matsumo.fankt.fanbox
 
 import de.jensklingenberg.ktorfit.Ktorfit
+import io.github.aakira.napier.Napier
 import io.ktor.client.HttpClient
 import io.ktor.client.request.HttpRequest
 import io.ktor.client.request.prepareGet
@@ -49,6 +50,7 @@ import me.matsumo.fankt.fanbox.repository.FanboxCreatorRepository
 import me.matsumo.fankt.fanbox.repository.FanboxPostRepository
 import me.matsumo.fankt.fanbox.repository.FanboxSearchRepository
 import me.matsumo.fankt.fanbox.repository.FanboxUserRepository
+import me.matsumo.fankt.fanbox.response.FanboxDiagnosticSink
 
 /**
  * Provides access to the pixivFANBOX API.
@@ -170,7 +172,11 @@ class Fanbox internal constructor(
             val postWithoutContentNegotiation = ktorfitWithoutContentNegotiation.createFanboxPostApi()
             val creatorWithoutContentNegotiation = ktorfitWithoutContentNegotiation.createFanboxCreatorApi()
 
-            val listItemDecoder = FanboxListItemDecoder(formatter, logLevel != FanboxLogLevel.NONE)
+            val listItemDecoder = FanboxListItemDecoder(
+                formatter = formatter,
+                includeRawFragment = logLevel != FanboxLogLevel.NONE,
+                diagnosticSink = FanboxDiagnosticSink { message -> Napier.w { message } },
+            )
             val postMapper = FanboxPostMapper(listItemDecoder, formatter)
             val creatorMapper = FanboxCreatorMapper(listItemDecoder)
             val searchMapper = me.matsumo.fankt.fanbox.datasource.mapper.FanboxSearchMapper(creatorMapper)

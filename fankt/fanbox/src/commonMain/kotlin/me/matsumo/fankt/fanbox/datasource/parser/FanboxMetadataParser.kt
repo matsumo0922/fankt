@@ -3,8 +3,8 @@ package me.matsumo.fankt.fanbox.datasource.parser
 import com.fleeksoft.ksoup.Ksoup
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.Json
-import me.matsumo.fankt.fanbox.FanboxExceptionFactory
 import me.matsumo.fankt.fanbox.domain.entity.FanboxMetaDataEntity
+import me.matsumo.fankt.fanbox.response.FanboxFailureInterpreter
 
 internal class FanboxMetadataParser(
     private val formatter: Json,
@@ -16,9 +16,9 @@ internal class FanboxMetadataParser(
     ): FanboxMetaDataEntity {
         val document = Ksoup.parse(html)
         val metadata = document.select("meta[name=metadata]").first()?.attr("content")
-            ?: throw FanboxExceptionFactory.schemaMismatch(
+            ?: throw FanboxFailureInterpreter.schemaMismatch(
                 statusCode = statusCode,
-                html = html,
+                body = html,
                 endpoint = endpoint,
                 cause = null,
             )
@@ -26,9 +26,9 @@ internal class FanboxMetadataParser(
         return try {
             formatter.decodeFromString(FanboxMetaDataEntity.serializer(), metadata)
         } catch (cause: SerializationException) {
-            throw FanboxExceptionFactory.schemaMismatch(
+            throw FanboxFailureInterpreter.schemaMismatch(
                 statusCode = statusCode,
-                html = html,
+                body = html,
                 endpoint = endpoint,
                 cause = cause,
             )
