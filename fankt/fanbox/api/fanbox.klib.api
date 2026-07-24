@@ -261,199 +261,6 @@ final class <#A: kotlin/Any?> me.matsumo.fankt.fanbox.domain/PageOffsetInfo { //
     }
 }
 
-final class me.matsumo.fankt.fanbox.domain.model.id/FanboxCommentId { // me.matsumo.fankt.fanbox.domain.model.id/FanboxCommentId|null[0]
-    constructor <init>(kotlin/String) // me.matsumo.fankt.fanbox.domain.model.id/FanboxCommentId.<init>|<init>(kotlin.String){}[0]
-
-    final val uniqueValue // me.matsumo.fankt.fanbox.domain.model.id/FanboxCommentId.uniqueValue|{}uniqueValue[0]
-        final fun <get-uniqueValue>(): kotlin/String // me.matsumo.fankt.fanbox.domain.model.id/FanboxCommentId.uniqueValue.<get-uniqueValue>|<get-uniqueValue>(){}[0]
-    final val value // me.matsumo.fankt.fanbox.domain.model.id/FanboxCommentId.value|{}value[0]
-        final fun <get-value>(): kotlin/String // me.matsumo.fankt.fanbox.domain.model.id/FanboxCommentId.value.<get-value>|<get-value>(){}[0]
-
-    final fun component1(): kotlin/String // me.matsumo.fankt.fanbox.domain.model.id/FanboxCommentId.component1|component1(){}[0]
-    final fun copy(kotlin/String = ...): me.matsumo.fankt.fanbox.domain.model.id/FanboxCommentId // me.matsumo.fankt.fanbox.domain.model.id/FanboxCommentId.copy|copy(kotlin.String){}[0]
-    final fun equals(kotlin/Any?): kotlin/Boolean // me.matsumo.fankt.fanbox.domain.model.id/FanboxCommentId.equals|equals(kotlin.Any?){}[0]
-    final fun hashCode(): kotlin/Int // me.matsumo.fankt.fanbox.domain.model.id/FanboxCommentId.hashCode|hashCode(){}[0]
-    final fun toString(): kotlin/String // me.matsumo.fankt.fanbox.domain.model.id/FanboxCommentId.toString|toString(){}[0]
-
-    final object $serializer : kotlinx.serialization.internal/GeneratedSerializer<me.matsumo.fankt.fanbox.domain.model.id/FanboxCommentId> { // me.matsumo.fankt.fanbox.domain.model.id/FanboxCommentId.$serializer|null[0]
-        final val descriptor // me.matsumo.fankt.fanbox.domain.model.id/FanboxCommentId.$serializer.descriptor|{}descriptor[0]
-            final fun <get-descriptor>(): kotlinx.serialization.descriptors/SerialDescriptor // me.matsumo.fankt.fanbox.domain.model.id/FanboxCommentId.$serializer.descriptor.<get-descriptor>|<get-descriptor>(){}[0]
-
-        final fun childSerializers(): kotlin/Array<kotlinx.serialization/KSerializer<*>> // me.matsumo.fankt.fanbox.domain.model.id/FanboxCommentId.$serializer.childSerializers|childSerializers(){}[0]
-        final fun deserialize(kotlinx.serialization.encoding/Decoder): me.matsumo.fankt.fanbox.domain.model.id/FanboxCommentId // me.matsumo.fankt.fanbox.domain.model.id/FanboxCommentId.$serializer.deserialize|deserialize(kotlinx.serialization.encoding.Decoder){}[0]
-        final fun serialize(kotlinx.serialization.encoding/Encoder, me.matsumo.fankt.fanbox.domain.model.id/FanboxCommentId) // me.matsumo.fankt.fanbox.domain.model.id/FanboxCommentId.$serializer.serialize|serialize(kotlinx.serialization.encoding.Encoder;me.matsumo.fankt.fanbox.domain.model.id.FanboxCommentId){}[0]
-    }
-
-    final object Companion { // me.matsumo.fankt.fanbox.domain.model.id/FanboxCommentId.Companion|null[0]
-        final val EMPTY // me.matsumo.fankt.fanbox.domain.model.id/FanboxCommentId.Companion.EMPTY|{}EMPTY[0]
-            final fun <get-EMPTY>(): me.matsumo.fankt.fanbox.domain.model.id/FanboxCommentId // me.matsumo.fankt.fanbox.domain.model.id/FanboxCommentId.Companion.EMPTY.<get-EMPTY>|<get-EMPTY>(){}[0]
-
-        final fun serializer(): kotlinx.serialization/KSerializer<me.matsumo.fankt.fanbox.domain.model.id/FanboxCommentId> // me.matsumo.fankt.fanbox.domain.model.id/FanboxCommentId.Companion.serializer|serializer(){}[0]
-    }
-}
-
-final class me.matsumo.fankt.fanbox.domain.model.id/FanboxCreatorId { // me.matsumo.fankt.fanbox.domain.model.id/FanboxCreatorId|null[0]
-    constructor <init>(kotlin/String) // me.matsumo.fankt.fanbox.domain.model.id/FanboxCreatorId.<init>|<init>(kotlin.String){}[0]
-
-    final val value // me.matsumo.fankt.fanbox.domain.model.id/FanboxCreatorId.value|{}value[0]
-        final fun <get-value>(): kotlin/String // me.matsumo.fankt.fanbox.domain.model.id/FanboxCreatorId.value.<get-value>|<get-value>(){}[0]
-
-    final fun component1(): kotlin/String // me.matsumo.fankt.fanbox.domain.model.id/FanboxCreatorId.component1|component1(){}[0]
-    final fun copy(kotlin/String = ...): me.matsumo.fankt.fanbox.domain.model.id/FanboxCreatorId // me.matsumo.fankt.fanbox.domain.model.id/FanboxCreatorId.copy|copy(kotlin.String){}[0]
-    final fun equals(kotlin/Any?): kotlin/Boolean // me.matsumo.fankt.fanbox.domain.model.id/FanboxCreatorId.equals|equals(kotlin.Any?){}[0]
-    final fun hashCode(): kotlin/Int // me.matsumo.fankt.fanbox.domain.model.id/FanboxCreatorId.hashCode|hashCode(){}[0]
-    final fun toString(): kotlin/String // me.matsumo.fankt.fanbox.domain.model.id/FanboxCreatorId.toString|toString(){}[0]
-
-    final object $serializer : kotlinx.serialization.internal/GeneratedSerializer<me.matsumo.fankt.fanbox.domain.model.id/FanboxCreatorId> { // me.matsumo.fankt.fanbox.domain.model.id/FanboxCreatorId.$serializer|null[0]
-        final val descriptor // me.matsumo.fankt.fanbox.domain.model.id/FanboxCreatorId.$serializer.descriptor|{}descriptor[0]
-            final fun <get-descriptor>(): kotlinx.serialization.descriptors/SerialDescriptor // me.matsumo.fankt.fanbox.domain.model.id/FanboxCreatorId.$serializer.descriptor.<get-descriptor>|<get-descriptor>(){}[0]
-
-        final fun childSerializers(): kotlin/Array<kotlinx.serialization/KSerializer<*>> // me.matsumo.fankt.fanbox.domain.model.id/FanboxCreatorId.$serializer.childSerializers|childSerializers(){}[0]
-        final fun deserialize(kotlinx.serialization.encoding/Decoder): me.matsumo.fankt.fanbox.domain.model.id/FanboxCreatorId // me.matsumo.fankt.fanbox.domain.model.id/FanboxCreatorId.$serializer.deserialize|deserialize(kotlinx.serialization.encoding.Decoder){}[0]
-        final fun serialize(kotlinx.serialization.encoding/Encoder, me.matsumo.fankt.fanbox.domain.model.id/FanboxCreatorId) // me.matsumo.fankt.fanbox.domain.model.id/FanboxCreatorId.$serializer.serialize|serialize(kotlinx.serialization.encoding.Encoder;me.matsumo.fankt.fanbox.domain.model.id.FanboxCreatorId){}[0]
-    }
-
-    final object Companion { // me.matsumo.fankt.fanbox.domain.model.id/FanboxCreatorId.Companion|null[0]
-        final fun serializer(): kotlinx.serialization/KSerializer<me.matsumo.fankt.fanbox.domain.model.id/FanboxCreatorId> // me.matsumo.fankt.fanbox.domain.model.id/FanboxCreatorId.Companion.serializer|serializer(){}[0]
-    }
-}
-
-final class me.matsumo.fankt.fanbox.domain.model.id/FanboxNewsLetterId { // me.matsumo.fankt.fanbox.domain.model.id/FanboxNewsLetterId|null[0]
-    constructor <init>(kotlin/String) // me.matsumo.fankt.fanbox.domain.model.id/FanboxNewsLetterId.<init>|<init>(kotlin.String){}[0]
-
-    final val uniqueValue // me.matsumo.fankt.fanbox.domain.model.id/FanboxNewsLetterId.uniqueValue|{}uniqueValue[0]
-        final fun <get-uniqueValue>(): kotlin/String // me.matsumo.fankt.fanbox.domain.model.id/FanboxNewsLetterId.uniqueValue.<get-uniqueValue>|<get-uniqueValue>(){}[0]
-    final val value // me.matsumo.fankt.fanbox.domain.model.id/FanboxNewsLetterId.value|{}value[0]
-        final fun <get-value>(): kotlin/String // me.matsumo.fankt.fanbox.domain.model.id/FanboxNewsLetterId.value.<get-value>|<get-value>(){}[0]
-
-    final fun component1(): kotlin/String // me.matsumo.fankt.fanbox.domain.model.id/FanboxNewsLetterId.component1|component1(){}[0]
-    final fun copy(kotlin/String = ...): me.matsumo.fankt.fanbox.domain.model.id/FanboxNewsLetterId // me.matsumo.fankt.fanbox.domain.model.id/FanboxNewsLetterId.copy|copy(kotlin.String){}[0]
-    final fun equals(kotlin/Any?): kotlin/Boolean // me.matsumo.fankt.fanbox.domain.model.id/FanboxNewsLetterId.equals|equals(kotlin.Any?){}[0]
-    final fun hashCode(): kotlin/Int // me.matsumo.fankt.fanbox.domain.model.id/FanboxNewsLetterId.hashCode|hashCode(){}[0]
-    final fun toString(): kotlin/String // me.matsumo.fankt.fanbox.domain.model.id/FanboxNewsLetterId.toString|toString(){}[0]
-
-    final object $serializer : kotlinx.serialization.internal/GeneratedSerializer<me.matsumo.fankt.fanbox.domain.model.id/FanboxNewsLetterId> { // me.matsumo.fankt.fanbox.domain.model.id/FanboxNewsLetterId.$serializer|null[0]
-        final val descriptor // me.matsumo.fankt.fanbox.domain.model.id/FanboxNewsLetterId.$serializer.descriptor|{}descriptor[0]
-            final fun <get-descriptor>(): kotlinx.serialization.descriptors/SerialDescriptor // me.matsumo.fankt.fanbox.domain.model.id/FanboxNewsLetterId.$serializer.descriptor.<get-descriptor>|<get-descriptor>(){}[0]
-
-        final fun childSerializers(): kotlin/Array<kotlinx.serialization/KSerializer<*>> // me.matsumo.fankt.fanbox.domain.model.id/FanboxNewsLetterId.$serializer.childSerializers|childSerializers(){}[0]
-        final fun deserialize(kotlinx.serialization.encoding/Decoder): me.matsumo.fankt.fanbox.domain.model.id/FanboxNewsLetterId // me.matsumo.fankt.fanbox.domain.model.id/FanboxNewsLetterId.$serializer.deserialize|deserialize(kotlinx.serialization.encoding.Decoder){}[0]
-        final fun serialize(kotlinx.serialization.encoding/Encoder, me.matsumo.fankt.fanbox.domain.model.id/FanboxNewsLetterId) // me.matsumo.fankt.fanbox.domain.model.id/FanboxNewsLetterId.$serializer.serialize|serialize(kotlinx.serialization.encoding.Encoder;me.matsumo.fankt.fanbox.domain.model.id.FanboxNewsLetterId){}[0]
-    }
-
-    final object Companion { // me.matsumo.fankt.fanbox.domain.model.id/FanboxNewsLetterId.Companion|null[0]
-        final fun serializer(): kotlinx.serialization/KSerializer<me.matsumo.fankt.fanbox.domain.model.id/FanboxNewsLetterId> // me.matsumo.fankt.fanbox.domain.model.id/FanboxNewsLetterId.Companion.serializer|serializer(){}[0]
-    }
-}
-
-final class me.matsumo.fankt.fanbox.domain.model.id/FanboxPlanId { // me.matsumo.fankt.fanbox.domain.model.id/FanboxPlanId|null[0]
-    constructor <init>(kotlin/String) // me.matsumo.fankt.fanbox.domain.model.id/FanboxPlanId.<init>|<init>(kotlin.String){}[0]
-
-    final val value // me.matsumo.fankt.fanbox.domain.model.id/FanboxPlanId.value|{}value[0]
-        final fun <get-value>(): kotlin/String // me.matsumo.fankt.fanbox.domain.model.id/FanboxPlanId.value.<get-value>|<get-value>(){}[0]
-
-    final fun component1(): kotlin/String // me.matsumo.fankt.fanbox.domain.model.id/FanboxPlanId.component1|component1(){}[0]
-    final fun copy(kotlin/String = ...): me.matsumo.fankt.fanbox.domain.model.id/FanboxPlanId // me.matsumo.fankt.fanbox.domain.model.id/FanboxPlanId.copy|copy(kotlin.String){}[0]
-    final fun equals(kotlin/Any?): kotlin/Boolean // me.matsumo.fankt.fanbox.domain.model.id/FanboxPlanId.equals|equals(kotlin.Any?){}[0]
-    final fun hashCode(): kotlin/Int // me.matsumo.fankt.fanbox.domain.model.id/FanboxPlanId.hashCode|hashCode(){}[0]
-    final fun toString(): kotlin/String // me.matsumo.fankt.fanbox.domain.model.id/FanboxPlanId.toString|toString(){}[0]
-
-    final object $serializer : kotlinx.serialization.internal/GeneratedSerializer<me.matsumo.fankt.fanbox.domain.model.id/FanboxPlanId> { // me.matsumo.fankt.fanbox.domain.model.id/FanboxPlanId.$serializer|null[0]
-        final val descriptor // me.matsumo.fankt.fanbox.domain.model.id/FanboxPlanId.$serializer.descriptor|{}descriptor[0]
-            final fun <get-descriptor>(): kotlinx.serialization.descriptors/SerialDescriptor // me.matsumo.fankt.fanbox.domain.model.id/FanboxPlanId.$serializer.descriptor.<get-descriptor>|<get-descriptor>(){}[0]
-
-        final fun childSerializers(): kotlin/Array<kotlinx.serialization/KSerializer<*>> // me.matsumo.fankt.fanbox.domain.model.id/FanboxPlanId.$serializer.childSerializers|childSerializers(){}[0]
-        final fun deserialize(kotlinx.serialization.encoding/Decoder): me.matsumo.fankt.fanbox.domain.model.id/FanboxPlanId // me.matsumo.fankt.fanbox.domain.model.id/FanboxPlanId.$serializer.deserialize|deserialize(kotlinx.serialization.encoding.Decoder){}[0]
-        final fun serialize(kotlinx.serialization.encoding/Encoder, me.matsumo.fankt.fanbox.domain.model.id/FanboxPlanId) // me.matsumo.fankt.fanbox.domain.model.id/FanboxPlanId.$serializer.serialize|serialize(kotlinx.serialization.encoding.Encoder;me.matsumo.fankt.fanbox.domain.model.id.FanboxPlanId){}[0]
-    }
-
-    final object Companion { // me.matsumo.fankt.fanbox.domain.model.id/FanboxPlanId.Companion|null[0]
-        final fun serializer(): kotlinx.serialization/KSerializer<me.matsumo.fankt.fanbox.domain.model.id/FanboxPlanId> // me.matsumo.fankt.fanbox.domain.model.id/FanboxPlanId.Companion.serializer|serializer(){}[0]
-    }
-}
-
-final class me.matsumo.fankt.fanbox.domain.model.id/FanboxPostId { // me.matsumo.fankt.fanbox.domain.model.id/FanboxPostId|null[0]
-    constructor <init>(kotlin/String) // me.matsumo.fankt.fanbox.domain.model.id/FanboxPostId.<init>|<init>(kotlin.String){}[0]
-
-    final val uniqueValue // me.matsumo.fankt.fanbox.domain.model.id/FanboxPostId.uniqueValue|{}uniqueValue[0]
-        final fun <get-uniqueValue>(): kotlin/String // me.matsumo.fankt.fanbox.domain.model.id/FanboxPostId.uniqueValue.<get-uniqueValue>|<get-uniqueValue>(){}[0]
-    final val value // me.matsumo.fankt.fanbox.domain.model.id/FanboxPostId.value|{}value[0]
-        final fun <get-value>(): kotlin/String // me.matsumo.fankt.fanbox.domain.model.id/FanboxPostId.value.<get-value>|<get-value>(){}[0]
-
-    final fun component1(): kotlin/String // me.matsumo.fankt.fanbox.domain.model.id/FanboxPostId.component1|component1(){}[0]
-    final fun copy(kotlin/String = ...): me.matsumo.fankt.fanbox.domain.model.id/FanboxPostId // me.matsumo.fankt.fanbox.domain.model.id/FanboxPostId.copy|copy(kotlin.String){}[0]
-    final fun equals(kotlin/Any?): kotlin/Boolean // me.matsumo.fankt.fanbox.domain.model.id/FanboxPostId.equals|equals(kotlin.Any?){}[0]
-    final fun hashCode(): kotlin/Int // me.matsumo.fankt.fanbox.domain.model.id/FanboxPostId.hashCode|hashCode(){}[0]
-    final fun toString(): kotlin/String // me.matsumo.fankt.fanbox.domain.model.id/FanboxPostId.toString|toString(){}[0]
-
-    final object $serializer : kotlinx.serialization.internal/GeneratedSerializer<me.matsumo.fankt.fanbox.domain.model.id/FanboxPostId> { // me.matsumo.fankt.fanbox.domain.model.id/FanboxPostId.$serializer|null[0]
-        final val descriptor // me.matsumo.fankt.fanbox.domain.model.id/FanboxPostId.$serializer.descriptor|{}descriptor[0]
-            final fun <get-descriptor>(): kotlinx.serialization.descriptors/SerialDescriptor // me.matsumo.fankt.fanbox.domain.model.id/FanboxPostId.$serializer.descriptor.<get-descriptor>|<get-descriptor>(){}[0]
-
-        final fun childSerializers(): kotlin/Array<kotlinx.serialization/KSerializer<*>> // me.matsumo.fankt.fanbox.domain.model.id/FanboxPostId.$serializer.childSerializers|childSerializers(){}[0]
-        final fun deserialize(kotlinx.serialization.encoding/Decoder): me.matsumo.fankt.fanbox.domain.model.id/FanboxPostId // me.matsumo.fankt.fanbox.domain.model.id/FanboxPostId.$serializer.deserialize|deserialize(kotlinx.serialization.encoding.Decoder){}[0]
-        final fun serialize(kotlinx.serialization.encoding/Encoder, me.matsumo.fankt.fanbox.domain.model.id/FanboxPostId) // me.matsumo.fankt.fanbox.domain.model.id/FanboxPostId.$serializer.serialize|serialize(kotlinx.serialization.encoding.Encoder;me.matsumo.fankt.fanbox.domain.model.id.FanboxPostId){}[0]
-    }
-
-    final object Companion { // me.matsumo.fankt.fanbox.domain.model.id/FanboxPostId.Companion|null[0]
-        final fun serializer(): kotlinx.serialization/KSerializer<me.matsumo.fankt.fanbox.domain.model.id/FanboxPostId> // me.matsumo.fankt.fanbox.domain.model.id/FanboxPostId.Companion.serializer|serializer(){}[0]
-    }
-}
-
-final class me.matsumo.fankt.fanbox.domain.model.id/FanboxPostItemId { // me.matsumo.fankt.fanbox.domain.model.id/FanboxPostItemId|null[0]
-    constructor <init>(kotlin/String) // me.matsumo.fankt.fanbox.domain.model.id/FanboxPostItemId.<init>|<init>(kotlin.String){}[0]
-
-    final val uniqueValue // me.matsumo.fankt.fanbox.domain.model.id/FanboxPostItemId.uniqueValue|{}uniqueValue[0]
-        final fun <get-uniqueValue>(): kotlin/String // me.matsumo.fankt.fanbox.domain.model.id/FanboxPostItemId.uniqueValue.<get-uniqueValue>|<get-uniqueValue>(){}[0]
-    final val value // me.matsumo.fankt.fanbox.domain.model.id/FanboxPostItemId.value|{}value[0]
-        final fun <get-value>(): kotlin/String // me.matsumo.fankt.fanbox.domain.model.id/FanboxPostItemId.value.<get-value>|<get-value>(){}[0]
-
-    final fun component1(): kotlin/String // me.matsumo.fankt.fanbox.domain.model.id/FanboxPostItemId.component1|component1(){}[0]
-    final fun copy(kotlin/String = ...): me.matsumo.fankt.fanbox.domain.model.id/FanboxPostItemId // me.matsumo.fankt.fanbox.domain.model.id/FanboxPostItemId.copy|copy(kotlin.String){}[0]
-    final fun equals(kotlin/Any?): kotlin/Boolean // me.matsumo.fankt.fanbox.domain.model.id/FanboxPostItemId.equals|equals(kotlin.Any?){}[0]
-    final fun hashCode(): kotlin/Int // me.matsumo.fankt.fanbox.domain.model.id/FanboxPostItemId.hashCode|hashCode(){}[0]
-    final fun toString(): kotlin/String // me.matsumo.fankt.fanbox.domain.model.id/FanboxPostItemId.toString|toString(){}[0]
-
-    final object $serializer : kotlinx.serialization.internal/GeneratedSerializer<me.matsumo.fankt.fanbox.domain.model.id/FanboxPostItemId> { // me.matsumo.fankt.fanbox.domain.model.id/FanboxPostItemId.$serializer|null[0]
-        final val descriptor // me.matsumo.fankt.fanbox.domain.model.id/FanboxPostItemId.$serializer.descriptor|{}descriptor[0]
-            final fun <get-descriptor>(): kotlinx.serialization.descriptors/SerialDescriptor // me.matsumo.fankt.fanbox.domain.model.id/FanboxPostItemId.$serializer.descriptor.<get-descriptor>|<get-descriptor>(){}[0]
-
-        final fun childSerializers(): kotlin/Array<kotlinx.serialization/KSerializer<*>> // me.matsumo.fankt.fanbox.domain.model.id/FanboxPostItemId.$serializer.childSerializers|childSerializers(){}[0]
-        final fun deserialize(kotlinx.serialization.encoding/Decoder): me.matsumo.fankt.fanbox.domain.model.id/FanboxPostItemId // me.matsumo.fankt.fanbox.domain.model.id/FanboxPostItemId.$serializer.deserialize|deserialize(kotlinx.serialization.encoding.Decoder){}[0]
-        final fun serialize(kotlinx.serialization.encoding/Encoder, me.matsumo.fankt.fanbox.domain.model.id/FanboxPostItemId) // me.matsumo.fankt.fanbox.domain.model.id/FanboxPostItemId.$serializer.serialize|serialize(kotlinx.serialization.encoding.Encoder;me.matsumo.fankt.fanbox.domain.model.id.FanboxPostItemId){}[0]
-    }
-
-    final object Companion { // me.matsumo.fankt.fanbox.domain.model.id/FanboxPostItemId.Companion|null[0]
-        final fun serializer(): kotlinx.serialization/KSerializer<me.matsumo.fankt.fanbox.domain.model.id/FanboxPostItemId> // me.matsumo.fankt.fanbox.domain.model.id/FanboxPostItemId.Companion.serializer|serializer(){}[0]
-    }
-}
-
-final class me.matsumo.fankt.fanbox.domain.model.id/FanboxUserId { // me.matsumo.fankt.fanbox.domain.model.id/FanboxUserId|null[0]
-    constructor <init>(kotlin/Long) // me.matsumo.fankt.fanbox.domain.model.id/FanboxUserId.<init>|<init>(kotlin.Long){}[0]
-
-    final val value // me.matsumo.fankt.fanbox.domain.model.id/FanboxUserId.value|{}value[0]
-        final fun <get-value>(): kotlin/Long // me.matsumo.fankt.fanbox.domain.model.id/FanboxUserId.value.<get-value>|<get-value>(){}[0]
-
-    final fun component1(): kotlin/Long // me.matsumo.fankt.fanbox.domain.model.id/FanboxUserId.component1|component1(){}[0]
-    final fun copy(kotlin/Long = ...): me.matsumo.fankt.fanbox.domain.model.id/FanboxUserId // me.matsumo.fankt.fanbox.domain.model.id/FanboxUserId.copy|copy(kotlin.Long){}[0]
-    final fun equals(kotlin/Any?): kotlin/Boolean // me.matsumo.fankt.fanbox.domain.model.id/FanboxUserId.equals|equals(kotlin.Any?){}[0]
-    final fun hashCode(): kotlin/Int // me.matsumo.fankt.fanbox.domain.model.id/FanboxUserId.hashCode|hashCode(){}[0]
-    final fun toString(): kotlin/String // me.matsumo.fankt.fanbox.domain.model.id/FanboxUserId.toString|toString(){}[0]
-
-    final object $serializer : kotlinx.serialization.internal/GeneratedSerializer<me.matsumo.fankt.fanbox.domain.model.id/FanboxUserId> { // me.matsumo.fankt.fanbox.domain.model.id/FanboxUserId.$serializer|null[0]
-        final val descriptor // me.matsumo.fankt.fanbox.domain.model.id/FanboxUserId.$serializer.descriptor|{}descriptor[0]
-            final fun <get-descriptor>(): kotlinx.serialization.descriptors/SerialDescriptor // me.matsumo.fankt.fanbox.domain.model.id/FanboxUserId.$serializer.descriptor.<get-descriptor>|<get-descriptor>(){}[0]
-
-        final fun childSerializers(): kotlin/Array<kotlinx.serialization/KSerializer<*>> // me.matsumo.fankt.fanbox.domain.model.id/FanboxUserId.$serializer.childSerializers|childSerializers(){}[0]
-        final fun deserialize(kotlinx.serialization.encoding/Decoder): me.matsumo.fankt.fanbox.domain.model.id/FanboxUserId // me.matsumo.fankt.fanbox.domain.model.id/FanboxUserId.$serializer.deserialize|deserialize(kotlinx.serialization.encoding.Decoder){}[0]
-        final fun serialize(kotlinx.serialization.encoding/Encoder, me.matsumo.fankt.fanbox.domain.model.id/FanboxUserId) // me.matsumo.fankt.fanbox.domain.model.id/FanboxUserId.$serializer.serialize|serialize(kotlinx.serialization.encoding.Encoder;me.matsumo.fankt.fanbox.domain.model.id.FanboxUserId){}[0]
-    }
-
-    final object Companion { // me.matsumo.fankt.fanbox.domain.model.id/FanboxUserId.Companion|null[0]
-        final fun serializer(): kotlinx.serialization/KSerializer<me.matsumo.fankt.fanbox.domain.model.id/FanboxUserId> // me.matsumo.fankt.fanbox.domain.model.id/FanboxUserId.Companion.serializer|serializer(){}[0]
-    }
-}
-
 final class me.matsumo.fankt.fanbox.domain.model/FanboxComment { // me.matsumo.fankt.fanbox.domain.model/FanboxComment|null[0]
     constructor <init>(kotlin/String, kotlin.time/Instant, me.matsumo.fankt.fanbox.domain.model.id/FanboxCommentId, kotlin/Boolean, kotlin/Boolean, kotlin/Int, me.matsumo.fankt.fanbox.domain.model.id/FanboxCommentId, me.matsumo.fankt.fanbox.domain.model.id/FanboxCommentId, kotlin.collections/List<me.matsumo.fankt.fanbox.domain.model/FanboxComment>, me.matsumo.fankt.fanbox.domain.model/FanboxUser?) // me.matsumo.fankt.fanbox.domain.model/FanboxComment.<init>|<init>(kotlin.String;kotlin.time.Instant;me.matsumo.fankt.fanbox.domain.model.id.FanboxCommentId;kotlin.Boolean;kotlin.Boolean;kotlin.Int;me.matsumo.fankt.fanbox.domain.model.id.FanboxCommentId;me.matsumo.fankt.fanbox.domain.model.id.FanboxCommentId;kotlin.collections.List<me.matsumo.fankt.fanbox.domain.model.FanboxComment>;me.matsumo.fankt.fanbox.domain.model.FanboxUser?){}[0]
 
@@ -2150,6 +1957,174 @@ final class me.matsumo.fankt.fanbox/InMemoryFanboxTokenStore : me.matsumo.fankt.
 
     final suspend fun get(): kotlin/String? // me.matsumo.fankt.fanbox/InMemoryFanboxTokenStore.get|get(){}[0]
     final suspend fun set(kotlin/String?) // me.matsumo.fankt.fanbox/InMemoryFanboxTokenStore.set|set(kotlin.String?){}[0]
+}
+
+final value class me.matsumo.fankt.fanbox.domain.model.id/FanboxCommentId { // me.matsumo.fankt.fanbox.domain.model.id/FanboxCommentId|null[0]
+    constructor <init>(kotlin/String) // me.matsumo.fankt.fanbox.domain.model.id/FanboxCommentId.<init>|<init>(kotlin.String){}[0]
+
+    final val value // me.matsumo.fankt.fanbox.domain.model.id/FanboxCommentId.value|{}value[0]
+        final fun <get-value>(): kotlin/String // me.matsumo.fankt.fanbox.domain.model.id/FanboxCommentId.value.<get-value>|<get-value>(){}[0]
+
+    final fun equals(kotlin/Any?): kotlin/Boolean // me.matsumo.fankt.fanbox.domain.model.id/FanboxCommentId.equals|equals(kotlin.Any?){}[0]
+    final fun hashCode(): kotlin/Int // me.matsumo.fankt.fanbox.domain.model.id/FanboxCommentId.hashCode|hashCode(){}[0]
+    final fun toString(): kotlin/String // me.matsumo.fankt.fanbox.domain.model.id/FanboxCommentId.toString|toString(){}[0]
+
+    final object $serializer : kotlinx.serialization.internal/GeneratedSerializer<me.matsumo.fankt.fanbox.domain.model.id/FanboxCommentId> { // me.matsumo.fankt.fanbox.domain.model.id/FanboxCommentId.$serializer|null[0]
+        final val descriptor // me.matsumo.fankt.fanbox.domain.model.id/FanboxCommentId.$serializer.descriptor|{}descriptor[0]
+            final fun <get-descriptor>(): kotlinx.serialization.descriptors/SerialDescriptor // me.matsumo.fankt.fanbox.domain.model.id/FanboxCommentId.$serializer.descriptor.<get-descriptor>|<get-descriptor>(){}[0]
+
+        final fun childSerializers(): kotlin/Array<kotlinx.serialization/KSerializer<*>> // me.matsumo.fankt.fanbox.domain.model.id/FanboxCommentId.$serializer.childSerializers|childSerializers(){}[0]
+        final fun deserialize(kotlinx.serialization.encoding/Decoder): me.matsumo.fankt.fanbox.domain.model.id/FanboxCommentId // me.matsumo.fankt.fanbox.domain.model.id/FanboxCommentId.$serializer.deserialize|deserialize(kotlinx.serialization.encoding.Decoder){}[0]
+        final fun serialize(kotlinx.serialization.encoding/Encoder, me.matsumo.fankt.fanbox.domain.model.id/FanboxCommentId) // me.matsumo.fankt.fanbox.domain.model.id/FanboxCommentId.$serializer.serialize|serialize(kotlinx.serialization.encoding.Encoder;me.matsumo.fankt.fanbox.domain.model.id.FanboxCommentId){}[0]
+    }
+
+    final object Companion { // me.matsumo.fankt.fanbox.domain.model.id/FanboxCommentId.Companion|null[0]
+        final fun serializer(): kotlinx.serialization/KSerializer<me.matsumo.fankt.fanbox.domain.model.id/FanboxCommentId> // me.matsumo.fankt.fanbox.domain.model.id/FanboxCommentId.Companion.serializer|serializer(){}[0]
+    }
+}
+
+final value class me.matsumo.fankt.fanbox.domain.model.id/FanboxCreatorId { // me.matsumo.fankt.fanbox.domain.model.id/FanboxCreatorId|null[0]
+    constructor <init>(kotlin/String) // me.matsumo.fankt.fanbox.domain.model.id/FanboxCreatorId.<init>|<init>(kotlin.String){}[0]
+
+    final val value // me.matsumo.fankt.fanbox.domain.model.id/FanboxCreatorId.value|{}value[0]
+        final fun <get-value>(): kotlin/String // me.matsumo.fankt.fanbox.domain.model.id/FanboxCreatorId.value.<get-value>|<get-value>(){}[0]
+
+    final fun equals(kotlin/Any?): kotlin/Boolean // me.matsumo.fankt.fanbox.domain.model.id/FanboxCreatorId.equals|equals(kotlin.Any?){}[0]
+    final fun hashCode(): kotlin/Int // me.matsumo.fankt.fanbox.domain.model.id/FanboxCreatorId.hashCode|hashCode(){}[0]
+    final fun toString(): kotlin/String // me.matsumo.fankt.fanbox.domain.model.id/FanboxCreatorId.toString|toString(){}[0]
+
+    final object $serializer : kotlinx.serialization.internal/GeneratedSerializer<me.matsumo.fankt.fanbox.domain.model.id/FanboxCreatorId> { // me.matsumo.fankt.fanbox.domain.model.id/FanboxCreatorId.$serializer|null[0]
+        final val descriptor // me.matsumo.fankt.fanbox.domain.model.id/FanboxCreatorId.$serializer.descriptor|{}descriptor[0]
+            final fun <get-descriptor>(): kotlinx.serialization.descriptors/SerialDescriptor // me.matsumo.fankt.fanbox.domain.model.id/FanboxCreatorId.$serializer.descriptor.<get-descriptor>|<get-descriptor>(){}[0]
+
+        final fun childSerializers(): kotlin/Array<kotlinx.serialization/KSerializer<*>> // me.matsumo.fankt.fanbox.domain.model.id/FanboxCreatorId.$serializer.childSerializers|childSerializers(){}[0]
+        final fun deserialize(kotlinx.serialization.encoding/Decoder): me.matsumo.fankt.fanbox.domain.model.id/FanboxCreatorId // me.matsumo.fankt.fanbox.domain.model.id/FanboxCreatorId.$serializer.deserialize|deserialize(kotlinx.serialization.encoding.Decoder){}[0]
+        final fun serialize(kotlinx.serialization.encoding/Encoder, me.matsumo.fankt.fanbox.domain.model.id/FanboxCreatorId) // me.matsumo.fankt.fanbox.domain.model.id/FanboxCreatorId.$serializer.serialize|serialize(kotlinx.serialization.encoding.Encoder;me.matsumo.fankt.fanbox.domain.model.id.FanboxCreatorId){}[0]
+    }
+
+    final object Companion { // me.matsumo.fankt.fanbox.domain.model.id/FanboxCreatorId.Companion|null[0]
+        final fun serializer(): kotlinx.serialization/KSerializer<me.matsumo.fankt.fanbox.domain.model.id/FanboxCreatorId> // me.matsumo.fankt.fanbox.domain.model.id/FanboxCreatorId.Companion.serializer|serializer(){}[0]
+    }
+}
+
+final value class me.matsumo.fankt.fanbox.domain.model.id/FanboxNewsLetterId { // me.matsumo.fankt.fanbox.domain.model.id/FanboxNewsLetterId|null[0]
+    constructor <init>(kotlin/String) // me.matsumo.fankt.fanbox.domain.model.id/FanboxNewsLetterId.<init>|<init>(kotlin.String){}[0]
+
+    final val value // me.matsumo.fankt.fanbox.domain.model.id/FanboxNewsLetterId.value|{}value[0]
+        final fun <get-value>(): kotlin/String // me.matsumo.fankt.fanbox.domain.model.id/FanboxNewsLetterId.value.<get-value>|<get-value>(){}[0]
+
+    final fun equals(kotlin/Any?): kotlin/Boolean // me.matsumo.fankt.fanbox.domain.model.id/FanboxNewsLetterId.equals|equals(kotlin.Any?){}[0]
+    final fun hashCode(): kotlin/Int // me.matsumo.fankt.fanbox.domain.model.id/FanboxNewsLetterId.hashCode|hashCode(){}[0]
+    final fun toString(): kotlin/String // me.matsumo.fankt.fanbox.domain.model.id/FanboxNewsLetterId.toString|toString(){}[0]
+
+    final object $serializer : kotlinx.serialization.internal/GeneratedSerializer<me.matsumo.fankt.fanbox.domain.model.id/FanboxNewsLetterId> { // me.matsumo.fankt.fanbox.domain.model.id/FanboxNewsLetterId.$serializer|null[0]
+        final val descriptor // me.matsumo.fankt.fanbox.domain.model.id/FanboxNewsLetterId.$serializer.descriptor|{}descriptor[0]
+            final fun <get-descriptor>(): kotlinx.serialization.descriptors/SerialDescriptor // me.matsumo.fankt.fanbox.domain.model.id/FanboxNewsLetterId.$serializer.descriptor.<get-descriptor>|<get-descriptor>(){}[0]
+
+        final fun childSerializers(): kotlin/Array<kotlinx.serialization/KSerializer<*>> // me.matsumo.fankt.fanbox.domain.model.id/FanboxNewsLetterId.$serializer.childSerializers|childSerializers(){}[0]
+        final fun deserialize(kotlinx.serialization.encoding/Decoder): me.matsumo.fankt.fanbox.domain.model.id/FanboxNewsLetterId // me.matsumo.fankt.fanbox.domain.model.id/FanboxNewsLetterId.$serializer.deserialize|deserialize(kotlinx.serialization.encoding.Decoder){}[0]
+        final fun serialize(kotlinx.serialization.encoding/Encoder, me.matsumo.fankt.fanbox.domain.model.id/FanboxNewsLetterId) // me.matsumo.fankt.fanbox.domain.model.id/FanboxNewsLetterId.$serializer.serialize|serialize(kotlinx.serialization.encoding.Encoder;me.matsumo.fankt.fanbox.domain.model.id.FanboxNewsLetterId){}[0]
+    }
+
+    final object Companion { // me.matsumo.fankt.fanbox.domain.model.id/FanboxNewsLetterId.Companion|null[0]
+        final fun serializer(): kotlinx.serialization/KSerializer<me.matsumo.fankt.fanbox.domain.model.id/FanboxNewsLetterId> // me.matsumo.fankt.fanbox.domain.model.id/FanboxNewsLetterId.Companion.serializer|serializer(){}[0]
+    }
+}
+
+final value class me.matsumo.fankt.fanbox.domain.model.id/FanboxPlanId { // me.matsumo.fankt.fanbox.domain.model.id/FanboxPlanId|null[0]
+    constructor <init>(kotlin/String) // me.matsumo.fankt.fanbox.domain.model.id/FanboxPlanId.<init>|<init>(kotlin.String){}[0]
+
+    final val value // me.matsumo.fankt.fanbox.domain.model.id/FanboxPlanId.value|{}value[0]
+        final fun <get-value>(): kotlin/String // me.matsumo.fankt.fanbox.domain.model.id/FanboxPlanId.value.<get-value>|<get-value>(){}[0]
+
+    final fun equals(kotlin/Any?): kotlin/Boolean // me.matsumo.fankt.fanbox.domain.model.id/FanboxPlanId.equals|equals(kotlin.Any?){}[0]
+    final fun hashCode(): kotlin/Int // me.matsumo.fankt.fanbox.domain.model.id/FanboxPlanId.hashCode|hashCode(){}[0]
+    final fun toString(): kotlin/String // me.matsumo.fankt.fanbox.domain.model.id/FanboxPlanId.toString|toString(){}[0]
+
+    final object $serializer : kotlinx.serialization.internal/GeneratedSerializer<me.matsumo.fankt.fanbox.domain.model.id/FanboxPlanId> { // me.matsumo.fankt.fanbox.domain.model.id/FanboxPlanId.$serializer|null[0]
+        final val descriptor // me.matsumo.fankt.fanbox.domain.model.id/FanboxPlanId.$serializer.descriptor|{}descriptor[0]
+            final fun <get-descriptor>(): kotlinx.serialization.descriptors/SerialDescriptor // me.matsumo.fankt.fanbox.domain.model.id/FanboxPlanId.$serializer.descriptor.<get-descriptor>|<get-descriptor>(){}[0]
+
+        final fun childSerializers(): kotlin/Array<kotlinx.serialization/KSerializer<*>> // me.matsumo.fankt.fanbox.domain.model.id/FanboxPlanId.$serializer.childSerializers|childSerializers(){}[0]
+        final fun deserialize(kotlinx.serialization.encoding/Decoder): me.matsumo.fankt.fanbox.domain.model.id/FanboxPlanId // me.matsumo.fankt.fanbox.domain.model.id/FanboxPlanId.$serializer.deserialize|deserialize(kotlinx.serialization.encoding.Decoder){}[0]
+        final fun serialize(kotlinx.serialization.encoding/Encoder, me.matsumo.fankt.fanbox.domain.model.id/FanboxPlanId) // me.matsumo.fankt.fanbox.domain.model.id/FanboxPlanId.$serializer.serialize|serialize(kotlinx.serialization.encoding.Encoder;me.matsumo.fankt.fanbox.domain.model.id.FanboxPlanId){}[0]
+    }
+
+    final object Companion { // me.matsumo.fankt.fanbox.domain.model.id/FanboxPlanId.Companion|null[0]
+        final fun serializer(): kotlinx.serialization/KSerializer<me.matsumo.fankt.fanbox.domain.model.id/FanboxPlanId> // me.matsumo.fankt.fanbox.domain.model.id/FanboxPlanId.Companion.serializer|serializer(){}[0]
+    }
+}
+
+final value class me.matsumo.fankt.fanbox.domain.model.id/FanboxPostId { // me.matsumo.fankt.fanbox.domain.model.id/FanboxPostId|null[0]
+    constructor <init>(kotlin/String) // me.matsumo.fankt.fanbox.domain.model.id/FanboxPostId.<init>|<init>(kotlin.String){}[0]
+
+    final val value // me.matsumo.fankt.fanbox.domain.model.id/FanboxPostId.value|{}value[0]
+        final fun <get-value>(): kotlin/String // me.matsumo.fankt.fanbox.domain.model.id/FanboxPostId.value.<get-value>|<get-value>(){}[0]
+
+    final fun equals(kotlin/Any?): kotlin/Boolean // me.matsumo.fankt.fanbox.domain.model.id/FanboxPostId.equals|equals(kotlin.Any?){}[0]
+    final fun hashCode(): kotlin/Int // me.matsumo.fankt.fanbox.domain.model.id/FanboxPostId.hashCode|hashCode(){}[0]
+    final fun toString(): kotlin/String // me.matsumo.fankt.fanbox.domain.model.id/FanboxPostId.toString|toString(){}[0]
+
+    final object $serializer : kotlinx.serialization.internal/GeneratedSerializer<me.matsumo.fankt.fanbox.domain.model.id/FanboxPostId> { // me.matsumo.fankt.fanbox.domain.model.id/FanboxPostId.$serializer|null[0]
+        final val descriptor // me.matsumo.fankt.fanbox.domain.model.id/FanboxPostId.$serializer.descriptor|{}descriptor[0]
+            final fun <get-descriptor>(): kotlinx.serialization.descriptors/SerialDescriptor // me.matsumo.fankt.fanbox.domain.model.id/FanboxPostId.$serializer.descriptor.<get-descriptor>|<get-descriptor>(){}[0]
+
+        final fun childSerializers(): kotlin/Array<kotlinx.serialization/KSerializer<*>> // me.matsumo.fankt.fanbox.domain.model.id/FanboxPostId.$serializer.childSerializers|childSerializers(){}[0]
+        final fun deserialize(kotlinx.serialization.encoding/Decoder): me.matsumo.fankt.fanbox.domain.model.id/FanboxPostId // me.matsumo.fankt.fanbox.domain.model.id/FanboxPostId.$serializer.deserialize|deserialize(kotlinx.serialization.encoding.Decoder){}[0]
+        final fun serialize(kotlinx.serialization.encoding/Encoder, me.matsumo.fankt.fanbox.domain.model.id/FanboxPostId) // me.matsumo.fankt.fanbox.domain.model.id/FanboxPostId.$serializer.serialize|serialize(kotlinx.serialization.encoding.Encoder;me.matsumo.fankt.fanbox.domain.model.id.FanboxPostId){}[0]
+    }
+
+    final object Companion { // me.matsumo.fankt.fanbox.domain.model.id/FanboxPostId.Companion|null[0]
+        final fun serializer(): kotlinx.serialization/KSerializer<me.matsumo.fankt.fanbox.domain.model.id/FanboxPostId> // me.matsumo.fankt.fanbox.domain.model.id/FanboxPostId.Companion.serializer|serializer(){}[0]
+    }
+}
+
+final value class me.matsumo.fankt.fanbox.domain.model.id/FanboxPostItemId { // me.matsumo.fankt.fanbox.domain.model.id/FanboxPostItemId|null[0]
+    constructor <init>(kotlin/String) // me.matsumo.fankt.fanbox.domain.model.id/FanboxPostItemId.<init>|<init>(kotlin.String){}[0]
+
+    final val value // me.matsumo.fankt.fanbox.domain.model.id/FanboxPostItemId.value|{}value[0]
+        final fun <get-value>(): kotlin/String // me.matsumo.fankt.fanbox.domain.model.id/FanboxPostItemId.value.<get-value>|<get-value>(){}[0]
+
+    final fun equals(kotlin/Any?): kotlin/Boolean // me.matsumo.fankt.fanbox.domain.model.id/FanboxPostItemId.equals|equals(kotlin.Any?){}[0]
+    final fun hashCode(): kotlin/Int // me.matsumo.fankt.fanbox.domain.model.id/FanboxPostItemId.hashCode|hashCode(){}[0]
+    final fun toString(): kotlin/String // me.matsumo.fankt.fanbox.domain.model.id/FanboxPostItemId.toString|toString(){}[0]
+
+    final object $serializer : kotlinx.serialization.internal/GeneratedSerializer<me.matsumo.fankt.fanbox.domain.model.id/FanboxPostItemId> { // me.matsumo.fankt.fanbox.domain.model.id/FanboxPostItemId.$serializer|null[0]
+        final val descriptor // me.matsumo.fankt.fanbox.domain.model.id/FanboxPostItemId.$serializer.descriptor|{}descriptor[0]
+            final fun <get-descriptor>(): kotlinx.serialization.descriptors/SerialDescriptor // me.matsumo.fankt.fanbox.domain.model.id/FanboxPostItemId.$serializer.descriptor.<get-descriptor>|<get-descriptor>(){}[0]
+
+        final fun childSerializers(): kotlin/Array<kotlinx.serialization/KSerializer<*>> // me.matsumo.fankt.fanbox.domain.model.id/FanboxPostItemId.$serializer.childSerializers|childSerializers(){}[0]
+        final fun deserialize(kotlinx.serialization.encoding/Decoder): me.matsumo.fankt.fanbox.domain.model.id/FanboxPostItemId // me.matsumo.fankt.fanbox.domain.model.id/FanboxPostItemId.$serializer.deserialize|deserialize(kotlinx.serialization.encoding.Decoder){}[0]
+        final fun serialize(kotlinx.serialization.encoding/Encoder, me.matsumo.fankt.fanbox.domain.model.id/FanboxPostItemId) // me.matsumo.fankt.fanbox.domain.model.id/FanboxPostItemId.$serializer.serialize|serialize(kotlinx.serialization.encoding.Encoder;me.matsumo.fankt.fanbox.domain.model.id.FanboxPostItemId){}[0]
+    }
+
+    final object Companion { // me.matsumo.fankt.fanbox.domain.model.id/FanboxPostItemId.Companion|null[0]
+        final fun serializer(): kotlinx.serialization/KSerializer<me.matsumo.fankt.fanbox.domain.model.id/FanboxPostItemId> // me.matsumo.fankt.fanbox.domain.model.id/FanboxPostItemId.Companion.serializer|serializer(){}[0]
+    }
+}
+
+final value class me.matsumo.fankt.fanbox.domain.model.id/FanboxUserId { // me.matsumo.fankt.fanbox.domain.model.id/FanboxUserId|null[0]
+    constructor <init>(kotlin/Long) // me.matsumo.fankt.fanbox.domain.model.id/FanboxUserId.<init>|<init>(kotlin.Long){}[0]
+
+    final val value // me.matsumo.fankt.fanbox.domain.model.id/FanboxUserId.value|{}value[0]
+        final fun <get-value>(): kotlin/Long // me.matsumo.fankt.fanbox.domain.model.id/FanboxUserId.value.<get-value>|<get-value>(){}[0]
+
+    final fun equals(kotlin/Any?): kotlin/Boolean // me.matsumo.fankt.fanbox.domain.model.id/FanboxUserId.equals|equals(kotlin.Any?){}[0]
+    final fun hashCode(): kotlin/Int // me.matsumo.fankt.fanbox.domain.model.id/FanboxUserId.hashCode|hashCode(){}[0]
+    final fun toString(): kotlin/String // me.matsumo.fankt.fanbox.domain.model.id/FanboxUserId.toString|toString(){}[0]
+
+    final object $serializer : kotlinx.serialization.internal/GeneratedSerializer<me.matsumo.fankt.fanbox.domain.model.id/FanboxUserId> { // me.matsumo.fankt.fanbox.domain.model.id/FanboxUserId.$serializer|null[0]
+        final val descriptor // me.matsumo.fankt.fanbox.domain.model.id/FanboxUserId.$serializer.descriptor|{}descriptor[0]
+            final fun <get-descriptor>(): kotlinx.serialization.descriptors/SerialDescriptor // me.matsumo.fankt.fanbox.domain.model.id/FanboxUserId.$serializer.descriptor.<get-descriptor>|<get-descriptor>(){}[0]
+
+        final fun childSerializers(): kotlin/Array<kotlinx.serialization/KSerializer<*>> // me.matsumo.fankt.fanbox.domain.model.id/FanboxUserId.$serializer.childSerializers|childSerializers(){}[0]
+        final fun deserialize(kotlinx.serialization.encoding/Decoder): me.matsumo.fankt.fanbox.domain.model.id/FanboxUserId // me.matsumo.fankt.fanbox.domain.model.id/FanboxUserId.$serializer.deserialize|deserialize(kotlinx.serialization.encoding.Decoder){}[0]
+        final fun serialize(kotlinx.serialization.encoding/Encoder, me.matsumo.fankt.fanbox.domain.model.id/FanboxUserId) // me.matsumo.fankt.fanbox.domain.model.id/FanboxUserId.$serializer.serialize|serialize(kotlinx.serialization.encoding.Encoder;me.matsumo.fankt.fanbox.domain.model.id.FanboxUserId){}[0]
+    }
+
+    final object Companion { // me.matsumo.fankt.fanbox.domain.model.id/FanboxUserId.Companion|null[0]
+        final fun serializer(): kotlinx.serialization/KSerializer<me.matsumo.fankt.fanbox.domain.model.id/FanboxUserId> // me.matsumo.fankt.fanbox.domain.model.id/FanboxUserId.Companion.serializer|serializer(){}[0]
+    }
 }
 
 sealed class me.matsumo.fankt.fanbox/FanboxException : kotlin/Exception { // me.matsumo.fankt.fanbox/FanboxException|null[0]

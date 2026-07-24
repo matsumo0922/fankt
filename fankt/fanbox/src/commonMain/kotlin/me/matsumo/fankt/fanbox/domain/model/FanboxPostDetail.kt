@@ -29,7 +29,7 @@ data class FanboxPostDetail(
     val prevPost: OtherPost?,
     val user: FanboxUser?,
 ) {
-    val browserUrl get() = "https://www.fanbox.cc/@${user?.creatorId}/posts/$id"
+    val browserUrl get() = "https://www.fanbox.cc/@${user?.creatorId?.value}/posts/${id.value}"
 
     @Serializable
     sealed interface Body {

@@ -77,7 +77,7 @@ internal class FanboxPostRepository(
     }
 
     suspend fun getCreatorPostsPagination(creatorId: FanboxCreatorId) = withContext(ioDispatcher) {
-        fanboxPostApi.getCreatorPostsPagination(creatorId.toString()).let {
+        fanboxPostApi.getCreatorPostsPagination(creatorId.value).let {
             fanboxPostMapper.map(it)
         }
     }
@@ -119,7 +119,7 @@ internal class FanboxPostRepository(
     suspend fun likePost(postId: FanboxPostId) = withContext(ioDispatcher) {
         fanboxPostApiWithoutContentNegotiation.likePost(
             TextContent(
-                text = buildJsonObject { put("postId", postId.toString()) }.toString(),
+                text = buildJsonObject { put("postId", postId.value) }.toString(),
                 contentType = ContentType.Application.Json,
             ),
         )
@@ -128,7 +128,7 @@ internal class FanboxPostRepository(
     suspend fun likeComment(commentId: FanboxCommentId) = withContext(ioDispatcher) {
         fanboxPostApiWithoutContentNegotiation.likeComment(
             TextContent(
-                text = buildJsonObject { put("commentId", commentId.toString()) }.toString(),
+                text = buildJsonObject { put("commentId", commentId.value) }.toString(),
                 contentType = ContentType.Application.Json,
             ),
         )
@@ -143,9 +143,9 @@ internal class FanboxPostRepository(
         fanboxPostApiWithoutContentNegotiation.addComment(
             TextContent(
                 text = buildJsonObject {
-                    put("postId", postId.toString())
-                    rootCommentId?.let { put("rootCommentId", it.toString()) }
-                    parentCommentId?.let { put("parentCommentId", it.toString()) }
+                    put("postId", postId.value)
+                    rootCommentId?.let { put("rootCommentId", it.value) }
+                    parentCommentId?.let { put("parentCommentId", it.value) }
                     put("body", comment)
                 }.toString(),
                 contentType = ContentType.Application.Json,
@@ -156,7 +156,7 @@ internal class FanboxPostRepository(
     suspend fun deleteComment(commentId: FanboxCommentId) = withContext(ioDispatcher) {
         fanboxPostApiWithoutContentNegotiation.deleteComment(
             TextContent(
-                text = buildJsonObject { put("commentId", commentId.toString()) }.toString(),
+                text = buildJsonObject { put("commentId", commentId.value) }.toString(),
                 contentType = ContentType.Application.Json,
             ),
         )

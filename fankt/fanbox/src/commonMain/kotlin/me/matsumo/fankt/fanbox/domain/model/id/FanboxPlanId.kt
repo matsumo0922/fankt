@@ -1,8 +1,8 @@
 package me.matsumo.fankt.fanbox.domain.model.id
 
 import kotlinx.serialization.Serializable
+import kotlin.jvm.JvmInline
 
 @Serializable
-data class FanboxPlanId(val value: String) {
-    override fun toString(): String = value
-}
+@JvmInline
+value class FanboxPlanId(val value: String)
