@@ -55,6 +55,3 @@ jobs:
 
       - name: Publish Fanbox library to MavenCentral
         run: ./gradlew :fankt:fanbox:publishAndReleaseToMavenCentral --no-configuration-cache
-
-      - name: Publish Fantia library to MavenCentral
-        run: ./gradlew :fankt:fantia:publishAndReleaseToMavenCentral --no-configuration-cache
