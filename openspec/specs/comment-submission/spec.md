@@ -1,8 +1,11 @@
 # comment-submission Specification
 
 ## Purpose
-TBD - created by archiving change make-comment-parent-ids-nullable. Update Purpose after archive.
+
+FANBOX へのルートコメントと返信コメントの投稿契約を定義し、存在する親コメント ID だけを `post.addComment` リクエストへ送信する。
+
 ## Requirements
+
 ### Requirement: ルートコメント投稿
 ライブラリはルートコメント投稿時に、存在しない親コメント ID の番兵値を要求してはならず、`rootCommentId` と `parentCommentId` が null の場合は両プロパティを FANBOX API リクエストから省略しなければならない（SHALL）。
 
