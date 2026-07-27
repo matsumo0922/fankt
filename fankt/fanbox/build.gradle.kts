@@ -3,12 +3,14 @@ import org.gradle.api.DefaultTask
 import org.gradle.api.artifacts.result.ResolvedComponentResult
 import org.gradle.api.artifacts.result.ResolvedDependencyResult
 import org.gradle.api.file.ConfigurableFileCollection
+import org.gradle.api.file.DirectoryProperty
 import org.gradle.api.file.RegularFileProperty
 import org.gradle.api.provider.ListProperty
 import org.gradle.api.publish.tasks.GenerateModuleMetadata
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.InputFile
 import org.gradle.api.tasks.InputFiles
+import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.PathSensitive
 import org.gradle.api.tasks.PathSensitivity
 import org.gradle.api.tasks.TaskAction
@@ -658,6 +660,38 @@ abstract class VerifyKtorBoundaryTask : DefaultTask() {
     }
 }
 
+abstract class VerifyPortableImportBoundaryTask : DefaultTask() {
+    @get:InputFiles
+    @get:PathSensitive(PathSensitivity.RELATIVE)
+    abstract val portableSourceFiles: ConfigurableFileCollection
+
+    @get:Input
+    abstract val forbiddenImportRoots: ListProperty<String>
+
+    @get:Internal
+    abstract val projectDirectory: DirectoryProperty
+
+    @TaskAction
+    fun verify() {
+        val sourceFiles = portableSourceFiles.files.filter(File::isFile)
+        check(sourceFiles.isNotEmpty()) { "No portable FANBOX core sources were scanned" }
+        val roots = forbiddenImportRoots.get()
+        val importPattern = Regex("^\\s*import\\s+(\\S+)")
+        val baseDirectory = projectDirectory.get().asFile
+        val violations = sourceFiles.flatMap { source ->
+            source.readLines().mapNotNull { line ->
+                val importedName = importPattern.find(line)?.groupValues?.get(1)
+                importedName
+                    ?.takeIf { name -> roots.any { root -> name == root || name.startsWith("$root.") } }
+                    ?.let { name -> "${source.relativeTo(baseDirectory).path}: import $name" }
+            }
+        }.sorted()
+        check(violations.isEmpty()) {
+            "Forbidden imports in the portable FANBOX core:\n${violations.joinToString("\n")}"
+        }
+    }
+}
+
 abstract class VerifyKtorTypeAliasFixtureTask : DefaultTask() {
     @get:InputFiles
     @get:PathSensitive(PathSensitivity.RELATIVE)
@@ -887,6 +921,31 @@ sourceSetDependencyConfigurations.configureEach {
     }
 }
 
+val verifyPortableImportBoundary = tasks.register<VerifyPortableImportBoundaryTask>(
+    "verifyPortableImportBoundary",
+) {
+    group = "verification"
+    description = "Rejects Ktor, Room, and Napier imports from the portable FANBOX core"
+    projectDirectory.set(layout.projectDirectory)
+    portableSourceFiles.from(
+        layout.projectDirectory.dir("src").asFileTree.matching {
+            include(
+                "*Main/kotlin/me/matsumo/fankt/fanbox/endpoint/**/*.kt",
+                "*Main/kotlin/me/matsumo/fankt/fanbox/response/**/*.kt",
+                "*Main/kotlin/me/matsumo/fankt/fanbox/datasource/mapper/**/*.kt",
+                "*Main/kotlin/me/matsumo/fankt/fanbox/datasource/parser/**/*.kt",
+            )
+        },
+    )
+    forbiddenImportRoots.set(
+        listOf(
+            "io.ktor",
+            "androidx.room",
+            "io.github.aakira.napier",
+        ),
+    )
+}
+
 tasks.named("check") {
-    dependsOn("verifyKtorBoundary")
+    dependsOn("verifyKtorBoundary", verifyPortableImportBoundary)
 }

@@ -1,9 +1,9 @@
 package me.matsumo.fankt.fanbox.domain.model
 
-import io.ktor.http.Url
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import me.matsumo.fankt.fanbox.domain.model.id.FanboxCreatorId
+import me.matsumo.fankt.fanbox.response.FanboxUrlParts
 
 @Serializable
 data class FanboxCreatorDetail(
@@ -96,7 +96,7 @@ data class FanboxCreatorDetail(
 
         companion object {
             fun fromUrl(url: String): Platform {
-                val hostname = Url(url).host.lowercase()
+                val hostname = FanboxUrlParts.parse(url).host.orEmpty().lowercase()
 
                 return when {
                     "booth.pm" in hostname -> BOOTH

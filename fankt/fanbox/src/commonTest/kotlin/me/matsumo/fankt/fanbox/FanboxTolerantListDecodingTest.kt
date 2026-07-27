@@ -1,8 +1,6 @@
 package me.matsumo.fankt.fanbox
 
 import de.jensklingenberg.ktorfit.Ktorfit
-import io.github.aakira.napier.Antilog
-import io.github.aakira.napier.Napier
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.mock.MockEngine
 import io.ktor.client.engine.mock.respond
@@ -16,12 +14,12 @@ import me.matsumo.fankt.fanbox.datasource.mapper.FanboxCreatorMapper
 import me.matsumo.fankt.fanbox.datasource.mapper.FanboxPostMapper
 import me.matsumo.fankt.fanbox.datasource.mapper.FanboxUserMapper
 import me.matsumo.fankt.fanbox.fixture.FanboxTolerantListJsonFixtures
+import me.matsumo.fankt.fanbox.response.FanboxDiagnosticSink
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
-import io.github.aakira.napier.LogLevel as NapierLogLevel
 
 class FanboxTolerantListDecodingTest {
 
@@ -171,40 +169,34 @@ class FanboxTolerantListDecodingTest {
     @Test
     fun rawFragmentIsDefaultPrivateAndLoggingOptInIsBoundedAndRedacted() {
         val logs = mutableListOf<String>()
-        val antilog = object : Antilog() {
-            override fun performLog(
-                priority: NapierLogLevel,
-                tag: String?,
-                throwable: Throwable?,
-                message: String?,
-            ) {
-                message?.let(logs::add)
-            }
-        }
-        Napier.base(antilog)
+        val formatter = createFanboxJson()
+        val entity = formatter.decodeFromString<me.matsumo.fankt.fanbox.domain.entity.FanboxPostListEntity>(
+            FanboxTolerantListJsonFixtures.timelineMixed,
+        )
+        FanboxPostMapper(
+            FanboxListItemDecoder(
+                formatter = formatter,
+                includeRawFragment = false,
+                diagnosticSink = FanboxDiagnosticSink(logs::add),
+            ),
+        ).map(entity, "post.listHome")
+        val privateLog = logs.last()
+        assertTrue("endpoint: post.listHome" in privateLog)
+        assertTrue("indexPath: [1]" in privateLog)
+        assertFalse("private item content" in privateLog)
+        assertFalse("fixture-credential" in privateLog)
 
-        try {
-            val formatter = createFanboxJson()
-            val entity = formatter.decodeFromString<me.matsumo.fankt.fanbox.domain.entity.FanboxPostListEntity>(
-                FanboxTolerantListJsonFixtures.timelineMixed,
-            )
-            FanboxPostMapper(FanboxListItemDecoder(formatter, includeRawFragment = false))
-                .map(entity, "post.listHome")
-            val privateLog = logs.last()
-            assertTrue("endpoint: post.listHome" in privateLog)
-            assertTrue("indexPath: [1]" in privateLog)
-            assertFalse("private item content" in privateLog)
-            assertFalse("fixture-credential" in privateLog)
-
-            FanboxPostMapper(FanboxListItemDecoder(formatter, includeRawFragment = true))
-                .map(entity, "post.listHome")
-            val diagnosticLog = logs.last()
-            assertTrue("[REDACTED]" in diagnosticLog)
-            assertFalse("fixture-credential-must-be-redacted" in diagnosticLog)
-            assertTrue(diagnosticLog.length <= FanboxExceptionFactory.MAX_RAW_BODY_LENGTH + 128)
-        } finally {
-            Napier.takeLogarithm(antilog)
-        }
+        FanboxPostMapper(
+            FanboxListItemDecoder(
+                formatter = formatter,
+                includeRawFragment = true,
+                diagnosticSink = FanboxDiagnosticSink(logs::add),
+            ),
+        ).map(entity, "post.listHome")
+        val diagnosticLog = logs.last()
+        assertTrue("[REDACTED]" in diagnosticLog)
+        assertFalse("fixture-credential-must-be-redacted" in diagnosticLog)
+        assertTrue(diagnosticLog.length <= FanboxExceptionFactory.MAX_RAW_BODY_LENGTH + 128)
     }
 
     private fun ktorfit(client: HttpClient): Ktorfit = Ktorfit.Builder()
