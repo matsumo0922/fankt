@@ -66,7 +66,7 @@ class FanboxCsrfTokenUpdateTest {
         fixture.fanbox.likePost(FanboxPostId("100"))
 
         assertEquals("first-token", fixture.postHeaders.last())
-        assertEquals(3, fixture.clients.size)
+        assertEquals(4, fixture.clients.size)
         initialClients.zip(fixture.clients).forEach { (before, after) -> assertSame(before, after) }
 
         nextToken = "second-token"
@@ -74,7 +74,7 @@ class FanboxCsrfTokenUpdateTest {
         fixture.fanbox.likePost(FanboxPostId("101"))
 
         assertEquals(listOf("first-token", "second-token"), fixture.postHeaders)
-        assertEquals(3, fixture.clients.size)
+        assertEquals(4, fixture.clients.size)
         initialClients.zip(fixture.clients).forEach { (before, after) -> assertSame(before, after) }
         fixture.fanbox.close()
     }
@@ -109,7 +109,7 @@ class FanboxCsrfTokenUpdateTest {
         fixture.fanbox.likePost(FanboxPostId("102"))
 
         assertEquals("first-token", fixture.postHeaders.last())
-        assertEquals(3, fixture.clients.size)
+        assertEquals(4, fixture.clients.size)
         fixture.fanbox.close()
     }
 
@@ -228,6 +228,37 @@ class FanboxCsrfTokenUpdateTest {
     }
 
     @Test
+    fun constructionOwnsExecutorWhilePublicPostStillUsesGeneratedClient() = runBlocking {
+        val requestCounts = mutableListOf<Int>()
+        val clients = mutableListOf<HttpClient>()
+        val clientFactory = FanboxHttpClientFactory { block ->
+            val clientIndex = requestCounts.size
+            requestCounts += 0
+            HttpClient(
+                MockEngine {
+                    requestCounts[clientIndex] += 1
+                    respond("", HttpStatusCode.OK)
+                },
+                block,
+            ).also(clients::add)
+        }
+        val fanbox = Fanbox(
+            dependencies = createDependencies(MutableStateFlow("token")),
+            clientFactory = clientFactory,
+            ioDispatcher = Dispatchers.Default,
+        )
+
+        try {
+            fanbox.likePost(FanboxPostId("generated-only"))
+
+            assertEquals(4, clients.size)
+            assertEquals(listOf(0, 1, 0, 0), requestCounts)
+        } finally {
+            fanbox.close()
+        }
+    }
+
+    @Test
     fun closeRejectsOwnedClientsAndPublicEntryPointsAndIsIdempotent() = runBlocking {
         val fixture = createFixture(MutableStateFlow(null))
         val clients = fixture.clients.toList()
@@ -235,7 +266,7 @@ class FanboxCsrfTokenUpdateTest {
         fixture.fanbox.close()
         fixture.fanbox.close()
 
-        assertEquals(3, clients.size)
+        assertEquals(4, clients.size)
         clients.forEach { client ->
             val requestCountBefore = fixture.requestCount()
             val failure = runCatching { client.get("https://api.fanbox.cc/after-close") }.exceptionOrNull()
@@ -258,7 +289,7 @@ class FanboxCsrfTokenUpdateTest {
         var requestCount = 0
         val factory = FanboxHttpClientFactory { block ->
             factoryCalls += 1
-            if (factoryCalls == 3) error("factory failure")
+            if (factoryCalls == 4) error("factory failure")
             HttpClient(
                 MockEngine {
                     requestCount += 1
@@ -276,8 +307,8 @@ class FanboxCsrfTokenUpdateTest {
             )
         }
 
-        assertEquals(3, factoryCalls)
-        assertEquals(2, clients.size)
+        assertEquals(4, factoryCalls)
+        assertEquals(3, clients.size)
         clients.forEach { client ->
             val failure = runCatching { client.get("https://api.fanbox.cc/after-failure") }.exceptionOrNull()
             assertNotNull(failure)

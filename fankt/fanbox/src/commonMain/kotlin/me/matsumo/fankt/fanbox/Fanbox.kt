@@ -51,6 +51,8 @@ import me.matsumo.fankt.fanbox.repository.FanboxPostRepository
 import me.matsumo.fankt.fanbox.repository.FanboxSearchRepository
 import me.matsumo.fankt.fanbox.repository.FanboxUserRepository
 import me.matsumo.fankt.fanbox.response.FanboxDiagnosticSink
+import me.matsumo.fankt.fanbox.transport.FanboxRequestExecutor
+import me.matsumo.fankt.fanbox.transport.ktor.KtorFanboxRequestExecutor
 
 /**
  * Provides access to the pixivFANBOX API.
@@ -142,11 +144,22 @@ class Fanbox internal constructor(
             ).also(clients::add)
         }
 
+        fun buildOwnedExecutorClient(): HttpClient = buildFanboxExecutorHttpClient(
+            cookieStorage = dependencies.cookieStorage,
+            csrfTokenProvider = dependencies.getCsrfToken,
+            logLevel = logLevel,
+            clientFactory = clientFactory,
+        ).also(clients::add)
+
         try {
             val apiClient = buildOwnedClient(FanboxDiagnosticSource.LibraryGenerated, true)
             val apiWithoutContentNegotiationClient = buildOwnedClient(
                 FanboxDiagnosticSource.LibraryGenerated,
                 false,
+            )
+            val requestExecutor = KtorFanboxRequestExecutor(
+                client = buildOwnedExecutorClient(),
+                logLevel = logLevel,
             )
             val downloadClient = buildOwnedClient(
                 source = FanboxDiagnosticSource.Download,
@@ -188,6 +201,7 @@ class Fanbox internal constructor(
                 creator = FanboxCreatorRepository(creatorApi, creatorWithoutContentNegotiation, creatorMapper),
                 search = FanboxSearchRepository(searchApi, searchMapper),
                 user = FanboxUserRepository(userApi, userMapper, metadataParser),
+                requestExecutor = requestExecutor,
                 downloadClient = downloadClient,
                 clients = clients,
             )
@@ -603,6 +617,7 @@ private data class FanboxResources(
     val creator: FanboxCreatorRepository,
     val search: FanboxSearchRepository,
     val user: FanboxUserRepository,
+    val requestExecutor: FanboxRequestExecutor,
     val downloadClient: HttpClient,
     val clients: List<HttpClient>,
 )
