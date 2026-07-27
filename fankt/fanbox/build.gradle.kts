@@ -740,7 +740,6 @@ plugins {
     id("matsumo.primitive.android.common")
     id("matsumo.primitive.kmp.android")
     id("matsumo.primitive.kmp.ios")
-    id("matsumo.primitive.ktorfit")
     id("matsumo.primitive.detekt")
     id("matsumo.primitive.maven.publish")
 }
@@ -795,8 +794,6 @@ kotlin {
 
             implementation(libs.bundles.infra.api)
             implementation(libs.bundles.ktor)
-
-            implementation(libs.ktorfit)
             implementation(libs.ksoup)
         }
 

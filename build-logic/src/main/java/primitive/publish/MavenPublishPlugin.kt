@@ -30,10 +30,11 @@ class MavenPublishPlugin : Plugin<Project> {
                 version = libs.version("versionName")
             }
 
-            afterEvaluate {
-                tasks.filter { it.name.contains("SourcesJar", true) }.forEach {
-                    it.dependsOn("kspCommonMainKotlinMetadata")
-                }
+            val kspCommonMainKotlinMetadata = tasks.matching {
+                it.name == "kspCommonMainKotlinMetadata"
+            }
+            tasks.matching { it.name.contains("SourcesJar", ignoreCase = true) }.configureEach {
+                dependsOn(kspCommonMainKotlinMetadata)
             }
 
             configureDokka()
