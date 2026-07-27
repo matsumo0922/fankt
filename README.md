@@ -157,7 +157,7 @@ have `hostOnly = false`.
 The v0.1.0 API keeps `Fanbox()` but replaces Ktor-facing constructor and operation types. Use
 `FanboxLogLevel` instead of Ktor `LogLevel`, `FanboxCookieRecord` instead of Ktor `Cookie`, and the
 streaming `download()` callback instead of `HttpStatement`. `getHttpClient()` is removed; create and
-own a separate host client for networking outside the generated FANBOX APIs. When converting a Ktor
+own a separate host client for networking outside the FANBOX API operations. When converting a Ktor
 Cookie, convert relative `maxAge` to absolute `expiresAtEpochMilliseconds`. Ktor-only fields such as
 `httpOnly`, extensions, and encoding are not part of the fankt storage record.
 
@@ -179,13 +179,13 @@ known migration covers payment grouping, the common formatting extension, and bo
 extensions. Consumers that still need calendar or time-zone APIs should select a normal
 non-compat `kotlinx-datetime` artifact independently; fankt no longer publishes that dependency.
 
-`Fanbox` owns generated API clients for creator, search, user, and homepage operations, one shared
-internal descriptor-executor client for post operations, and the download client. Post list, detail,
-comment, and like operations use the descriptor → executor → parser path during this migration stage;
-the remaining repositories continue to use generated APIs. Both paths share the injected Cookie
-storage and request-time CSRF token provider. Close `Fanbox` after all requests and downloads finish.
-Calls started after `Fanbox.close()` fail with `IllegalStateException`; the HTTP engine may finish
-shutdown asynchronously.
+`Fanbox` routes every non-download operation through an internal portable request descriptor, one
+shared raw-response executor client, and an endpoint-specific response parser. The executor validates
+the endpoint policy, HTTPS origin, method, relative path, and redirect destination before resolving the
+injected Cookie storage or request-time CSRF token. The streaming download client remains separate
+because it accepts complete allowlisted media URLs and consumes response bodies incrementally. Close
+`Fanbox` after all requests and downloads finish. Calls started after `Fanbox.close()` fail with
+`IllegalStateException`; the HTTP engine may finish shutdown asynchronously.
 
 #### Media downloads
 

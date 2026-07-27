@@ -1,65 +1,62 @@
 package me.matsumo.fankt.fanbox.repository
 
-import io.ktor.client.statement.bodyAsText
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.withContext
-import me.matsumo.fankt.fanbox.datasource.FanboxUserApi
-import me.matsumo.fankt.fanbox.datasource.mapper.FanboxUserMapper
-import me.matsumo.fankt.fanbox.datasource.parser.FanboxMetadataParser
+import me.matsumo.fankt.fanbox.endpoint.FanboxEndpoints
+import me.matsumo.fankt.fanbox.response.FanboxDiagnosticSink
+import me.matsumo.fankt.fanbox.response.FanboxResponses
+import me.matsumo.fankt.fanbox.transport.FanboxRequestExecutor
 
 internal class FanboxUserRepository(
-    private val fanboxUserApi: FanboxUserApi,
-    private val fanboxUserMapper: FanboxUserMapper,
-    private val fanboxMetadataParser: FanboxMetadataParser,
+    private val requestExecutor: FanboxRequestExecutor,
+    private val diagnosticSink: FanboxDiagnosticSink = FanboxDiagnosticSink.none,
+    private val includeRawFragment: Boolean = false,
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
 ) {
     suspend fun getSupportedPlans() = withContext(ioDispatcher) {
-        fanboxUserApi.getSupportedPlans().let {
-            fanboxUserMapper.map(it)
-        }
+        val response = requestExecutor.execute(FanboxEndpoints.supportingPlans())
+        FanboxResponses.supportingPlansStrict(response.bodyText, response.statusCode)
     }
 
     suspend fun getSupportedPlansTolerant() = withContext(ioDispatcher) {
-        fanboxUserApi.getSupportedPlansTolerant().let {
-            fanboxUserMapper.map(it, "plan.listSupporting")
-        }
+        val response = requestExecutor.execute(FanboxEndpoints.supportingPlans())
+        FanboxResponses.supportingPlansTolerant(
+            body = response.bodyText,
+            statusCode = response.statusCode,
+            diagnosticSink = diagnosticSink,
+            includeRawFragment = includeRawFragment,
+        )
     }
 
     suspend fun getPaidRecords() = withContext(ioDispatcher) {
-        fanboxUserApi.getPaidRecords().let {
-            fanboxUserMapper.map(it)
-        }
+        val response = requestExecutor.execute(FanboxEndpoints.paidRecords())
+        FanboxResponses.paidRecords(response.bodyText, response.statusCode)
     }
 
     suspend fun getUnpaidRecords() = withContext(ioDispatcher) {
-        fanboxUserApi.getUnpaidRecords().let {
-            fanboxUserMapper.map(it)
-        }
+        val response = requestExecutor.execute(FanboxEndpoints.unpaidRecords())
+        FanboxResponses.unpaidRecords(response.bodyText, response.statusCode)
     }
 
     suspend fun getNewsLetters() = withContext(ioDispatcher) {
-        fanboxUserApi.getNewsLetters().let {
-            fanboxUserMapper.map(it)
-        }
+        val response = requestExecutor.execute(FanboxEndpoints.newsletters())
+        FanboxResponses.newsletters(response.bodyText, response.statusCode)
     }
 
     suspend fun getBells(page: Int) = withContext(ioDispatcher) {
-        fanboxUserApi.getBells(page).let {
-            fanboxUserMapper.map(it, "bell.list")
-        }
+        val response = requestExecutor.execute(FanboxEndpoints.bells(page))
+        FanboxResponses.bells(
+            body = response.bodyText,
+            statusCode = response.statusCode,
+            diagnosticSink = diagnosticSink,
+            includeRawFragment = includeRawFragment,
+        )
     }
 
     suspend fun getMetadata() = withContext(ioDispatcher) {
-        fanboxUserApi.getHomePage().let { response ->
-            val data = fanboxMetadataParser.parse(
-                html = response.bodyAsText(),
-                statusCode = response.status.value,
-                endpoint = "homepage",
-            )
-
-            fanboxUserMapper.map(data)
-        }
+        val response = requestExecutor.execute(FanboxEndpoints.homepage())
+        FanboxResponses.homepage(response.bodyText, response.statusCode)
     }
 }

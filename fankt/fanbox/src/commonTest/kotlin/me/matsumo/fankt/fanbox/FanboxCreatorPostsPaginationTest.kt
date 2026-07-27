@@ -32,7 +32,7 @@ class FanboxCreatorPostsPaginationTest {
                 listOf("post.paginateCreator"),
                 fixture.requestUrls.map(Url::encodedPath).map { it.substringAfterLast('/') },
             )
-            assertEquals(listOf(2), fixture.requestClientIndexes)
+            assertEquals(listOf(0), fixture.requestClientIndexes)
         } finally {
             fixture.fanbox.close()
         }

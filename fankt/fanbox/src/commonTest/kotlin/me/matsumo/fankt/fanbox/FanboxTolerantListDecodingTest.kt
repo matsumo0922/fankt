@@ -1,6 +1,5 @@
 package me.matsumo.fankt.fanbox
 
-import de.jensklingenberg.ktorfit.Ktorfit
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.mock.MockEngine
 import io.ktor.client.engine.mock.respond
@@ -12,10 +11,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.runBlocking
-import me.matsumo.fankt.fanbox.datasource.createFanboxUserApi
 import me.matsumo.fankt.fanbox.datasource.mapper.FanboxCreatorMapper
 import me.matsumo.fankt.fanbox.datasource.mapper.FanboxPostMapper
-import me.matsumo.fankt.fanbox.datasource.mapper.FanboxUserMapper
 import me.matsumo.fankt.fanbox.domain.model.id.FanboxPostId
 import me.matsumo.fankt.fanbox.fixture.FanboxTolerantListJsonFixtures
 import me.matsumo.fankt.fanbox.response.FanboxDiagnosticSink
@@ -38,28 +35,26 @@ class FanboxTolerantListDecodingTest {
             assertEquals(listOf("tolerant-post-1", "tolerant-post-2"), result.contents.map { it.id.value })
             assertEquals(listOf(FanboxListItemSchemaMismatch("post.listHome", listOf(1))), mismatches)
             assertEquals(3, result.cursor?.limit)
-            assertEquals(listOf(2), requests)
+            assertEquals(listOf(0), requests)
         } finally {
             fanbox.close()
         }
     }
 
     @Test
-    fun productionBellApiKeepsTwoValidBellsAndSkipsKnownTypeWithMissingField() = runBlocking {
-        val formatter = createFanboxJson()
-        val client = mockClient(FanboxTolerantListJsonFixtures.bellMixed)
+    fun productionBellExecutorKeepsTwoValidBellsAndSkipsKnownTypeWithMissingField() = runBlocking {
+        val requests = mutableListOf<Int>()
+        val fanbox = productionFanbox(FanboxTolerantListJsonFixtures.bellMixed, requests)
+        val mismatches = mutableListOf<FanboxListItemSchemaMismatch>()
         try {
-            val api = ktorfit(client).createFanboxUserApi()
-            val postMapper = FanboxPostMapper(FanboxListItemDecoder(formatter))
-            val creatorMapper = FanboxCreatorMapper(FanboxListItemDecoder(formatter))
-            val mapper = FanboxUserMapper(postMapper, creatorMapper, FanboxListItemDecoder(formatter))
-            val result = mapper.map(api.getBells(), "bell.list")
+            val result = fanbox.getBells(page = 0, onItemSchemaMismatch = mismatches::add)
 
-            assertEquals(2, result.value.contents.size)
-            assertEquals(listOf(FanboxListItemSchemaMismatch("bell.list", listOf(1))), result.mismatches)
-            assertEquals(2, result.value.nextPage)
+            assertEquals(2, result.contents.size)
+            assertEquals(listOf(FanboxListItemSchemaMismatch("bell.list", listOf(1))), mismatches)
+            assertEquals(2, result.nextPage)
+            assertEquals(listOf(0), requests)
         } finally {
-            client.close()
+            fanbox.close()
         }
     }
 
@@ -78,7 +73,7 @@ class FanboxTolerantListDecodingTest {
             assertEquals(1, result.contents.size)
             assertEquals(listOf("reply-1", "reply-2"), result.contents.single().replies.map { it.id.value })
             assertEquals(listOf(FanboxListItemSchemaMismatch("post.getComments", listOf(0, 1))), mismatches)
-            assertEquals(listOf(2), requests)
+            assertEquals(listOf(0), requests)
         } finally {
             fanbox.close()
         }
@@ -86,50 +81,47 @@ class FanboxTolerantListDecodingTest {
 
     @Test
     fun strictSupportingPlansKeepsActualResponseStatusWhileTolerantRouteReturnsPartialResult() = runBlocking {
-        val formatter = createFanboxJson()
-        val client = mockClient(
+        val requests = mutableListOf<Int>()
+        val fanbox = productionFanbox(
             body = FanboxTolerantListJsonFixtures.supportingPlansMixed,
+            requestClientIndexes = requests,
             status = HttpStatusCode.PartialContent,
         )
+        val mismatches = mutableListOf<FanboxListItemSchemaMismatch>()
         try {
-            val api = ktorfit(client).createFanboxUserApi()
-            val strictFailure = assertFailsWith<FanboxException.SchemaMismatch> { api.getSupportedPlans() }
+            val strictFailure = assertFailsWith<FanboxException.SchemaMismatch> { fanbox.getSupportedPlans() }
             assertEquals(HttpStatusCode.PartialContent.value, strictFailure.statusCode)
 
-            val tolerant = FanboxCreatorMapper(FanboxListItemDecoder(formatter)).map(
-                api.getSupportedPlansTolerant(),
-                "plan.listSupporting",
-            )
-            assertEquals(listOf("tolerant-plan-1", "tolerant-plan-2"), tolerant.value.map { it.id.value })
-            assertEquals(listOf(FanboxListItemSchemaMismatch("plan.listSupporting", listOf(1))), tolerant.mismatches)
+            val tolerant = fanbox.getSupportedPlans(mismatches::add)
+            assertEquals(listOf("tolerant-plan-1", "tolerant-plan-2"), tolerant.map { it.id.value })
+            assertEquals(listOf(FanboxListItemSchemaMismatch("plan.listSupporting", listOf(1))), mismatches)
+            assertEquals(listOf(0, 0), requests)
         } finally {
-            client.close()
+            fanbox.close()
         }
     }
 
     @Test
     fun strictSupportingPlansConvertsDomainMappingDriftToSchemaMismatch() = runBlocking {
-        val formatter = createFanboxJson()
-        val client = mockClient(
+        val requests = mutableListOf<Int>()
+        val fanbox = productionFanbox(
             body = FanboxTolerantListJsonFixtures.supportingPlanInvalidUserId,
+            requestClientIndexes = requests,
             status = HttpStatusCode.PartialContent,
         )
+        val mismatches = mutableListOf<FanboxListItemSchemaMismatch>()
         try {
-            val api = ktorfit(client).createFanboxUserApi()
-
-            val failure = assertFailsWith<FanboxException.SchemaMismatch> { api.getSupportedPlans() }
+            val failure = assertFailsWith<FanboxException.SchemaMismatch> { fanbox.getSupportedPlans() }
 
             assertEquals(HttpStatusCode.PartialContent.value, failure.statusCode)
             assertEquals("plan.listSupporting", failure.endpoint)
 
-            val tolerant = FanboxCreatorMapper(FanboxListItemDecoder(formatter)).map(
-                api.getSupportedPlansTolerant(),
-                "plan.listSupporting",
-            )
-            assertTrue(tolerant.value.isEmpty())
-            assertEquals(listOf(FanboxListItemSchemaMismatch("plan.listSupporting", listOf(0))), tolerant.mismatches)
+            val tolerant = fanbox.getSupportedPlans(mismatches::add)
+            assertTrue(tolerant.isEmpty())
+            assertEquals(listOf(FanboxListItemSchemaMismatch("plan.listSupporting", listOf(0))), mismatches)
+            assertEquals(listOf(0, 0), requests)
         } finally {
-            client.close()
+            fanbox.close()
         }
     }
 
@@ -211,7 +203,11 @@ class FanboxTolerantListDecodingTest {
         assertTrue(diagnosticLog.length <= FanboxExceptionFactory.MAX_RAW_BODY_LENGTH + 128)
     }
 
-    private fun productionFanbox(body: String, requestClientIndexes: MutableList<Int>): Fanbox {
+    private fun productionFanbox(
+        body: String,
+        requestClientIndexes: MutableList<Int>,
+        status: HttpStatusCode = HttpStatusCode.OK,
+    ): Fanbox {
         var clientCount = 0
         val clientFactory = FanboxHttpClientFactory { block ->
             val clientIndex = clientCount++
@@ -220,7 +216,7 @@ class FanboxTolerantListDecodingTest {
                     requestClientIndexes += clientIndex
                     respond(
                         content = body,
-                        status = HttpStatusCode.OK,
+                        status = status,
                         headers = headersOf(HttpHeaders.ContentType, "application/json"),
                     )
                 },
@@ -242,30 +238,6 @@ class FanboxTolerantListDecodingTest {
             ),
             clientFactory = clientFactory,
             ioDispatcher = Dispatchers.Default,
-        )
-    }
-
-    private fun ktorfit(client: HttpClient): Ktorfit = Ktorfit.Builder()
-        .baseUrl("https://api.fanbox.cc/")
-        .httpClient(client)
-        .build()
-
-    private fun mockClient(
-        body: String,
-        status: HttpStatusCode = HttpStatusCode.OK,
-    ): HttpClient = HttpClient(
-        MockEngine {
-            respond(
-                content = body,
-                status = status,
-                headers = headersOf(HttpHeaders.ContentType, "application/json"),
-            )
-        },
-    ) {
-        configureFanboxClient(
-            formatter = createFanboxJson(),
-            source = FanboxDiagnosticSource.LibraryGenerated,
-            logLevel = FanboxLogLevel.NONE,
         )
     }
 }

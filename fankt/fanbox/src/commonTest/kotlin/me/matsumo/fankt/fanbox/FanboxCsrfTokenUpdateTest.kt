@@ -72,7 +72,7 @@ class FanboxCsrfTokenUpdateTest {
 
         assertEquals("first-token", fixture.postHeaders.last())
         assertEquals("metadata-session=refreshed", fixture.postCookies.last())
-        assertEquals(4, fixture.clients.size)
+        assertEquals(2, fixture.clients.size)
         initialClients.zip(fixture.clients).forEach { (before, after) -> assertSame(before, after) }
 
         nextToken = "second-token"
@@ -80,7 +80,7 @@ class FanboxCsrfTokenUpdateTest {
         fixture.fanbox.likePost(FanboxPostId("101"))
 
         assertEquals(listOf("first-token", "second-token"), fixture.postHeaders)
-        assertEquals(4, fixture.clients.size)
+        assertEquals(2, fixture.clients.size)
         initialClients.zip(fixture.clients).forEach { (before, after) -> assertSame(before, after) }
         fixture.fanbox.close()
     }
@@ -115,7 +115,7 @@ class FanboxCsrfTokenUpdateTest {
         fixture.fanbox.likePost(FanboxPostId("102"))
 
         assertEquals("first-token", fixture.postHeaders.last())
-        assertEquals(4, fixture.clients.size)
+        assertEquals(2, fixture.clients.size)
         fixture.fanbox.close()
     }
 
@@ -234,7 +234,7 @@ class FanboxCsrfTokenUpdateTest {
     }
 
     @Test
-    fun mixedGraphRoutesPostOnceThroughExecutorAndKeepsOtherRepositoriesGenerated() = runBlocking {
+    fun finalGraphRoutesEveryRepositoryOnceThroughSharedExecutor() = runBlocking {
         val requestsByClient = mutableListOf<MutableList<String>>()
         val clients = mutableListOf<HttpClient>()
         val clientFactory = FanboxHttpClientFactory { block ->
@@ -277,14 +277,12 @@ class FanboxCsrfTokenUpdateTest {
             fanbox.getMetadata()
             fanbox.likePost(FanboxPostId("executor-only"))
 
-            assertEquals(4, clients.size)
+            assertEquals(2, clients.size)
             assertEquals(
-                listOf("creator.get", "tag.search", "payment.listPaid", ""),
+                listOf("creator.get", "tag.search", "payment.listPaid", "", "post.likePost"),
                 requestsByClient[0],
             )
             assertEquals(emptyList(), requestsByClient[1])
-            assertEquals(listOf("post.likePost"), requestsByClient[2])
-            assertEquals(emptyList(), requestsByClient[3])
         } finally {
             fanbox.close()
         }
@@ -298,7 +296,7 @@ class FanboxCsrfTokenUpdateTest {
         fixture.fanbox.close()
         fixture.fanbox.close()
 
-        assertEquals(4, clients.size)
+        assertEquals(2, clients.size)
         clients.forEach { client ->
             val requestCountBefore = fixture.requestCount()
             val failure = runCatching { client.get("https://api.fanbox.cc/after-close") }.exceptionOrNull()
@@ -321,7 +319,7 @@ class FanboxCsrfTokenUpdateTest {
         var requestCount = 0
         val factory = FanboxHttpClientFactory { block ->
             factoryCalls += 1
-            if (factoryCalls == 4) error("factory failure")
+            if (factoryCalls == 2) error("factory failure")
             HttpClient(
                 MockEngine {
                     requestCount += 1
@@ -339,8 +337,8 @@ class FanboxCsrfTokenUpdateTest {
             )
         }
 
-        assertEquals(4, factoryCalls)
-        assertEquals(3, clients.size)
+        assertEquals(2, factoryCalls)
+        assertEquals(1, clients.size)
         clients.forEach { client ->
             val failure = runCatching { client.get("https://api.fanbox.cc/after-failure") }.exceptionOrNull()
             assertNotNull(failure)

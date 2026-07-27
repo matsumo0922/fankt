@@ -36,7 +36,7 @@ class FanboxCommentSubmissionTest {
 
             val request = fixture.requests.single()
             val body = Json.parseToJsonElement(request.body).jsonObject
-            assertEquals(2, request.clientIndex)
+            assertEquals(0, request.clientIndex)
             assertEquals(HttpMethod.Post, request.method)
             assertEquals("/post.addComment", request.path)
             assertEquals(ContentType.Application.Json, request.contentType)
@@ -62,7 +62,7 @@ class FanboxCommentSubmissionTest {
 
             val request = fixture.requests.single()
             val body = Json.parseToJsonElement(request.body).jsonObject
-            assertEquals(2, request.clientIndex)
+            assertEquals(0, request.clientIndex)
             assertEquals("root-id", body.getValue("rootCommentId").jsonPrimitive.content)
             assertEquals("parent-id", body.getValue("parentCommentId").jsonPrimitive.content)
         } finally {
