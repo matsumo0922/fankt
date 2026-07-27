@@ -27,12 +27,12 @@
 
 ## 3. PR 3 — Post repository migration
 
-- [ ] 3.1 Migrate post list, creator list/pagination, tagged list, info, and comments GET operations to descriptor → executor → parser
-- [ ] 3.2 Migrate post/comment like and comment add/delete POST operations to descriptor → executor while preserving Unit responses and exact JSON bodies
-- [ ] 3.3 Preserve post cursor extraction, empty pagination, tolerant comment decoding, mismatch callbacks, and endpoint-specific typed failures on the new path
-- [ ] 3.4 Move post MockEngine and fixture tests from generated API setup to executor setup and add temporary old/new wire differential assertions where needed
-- [ ] 3.5 Verify the mixed graph sends each post operation exactly once, leaves creator/search/user on Ktorfit, shares Cookie/CSRF state across metadata refresh and executor POST, and closes both generated and executor-owned clients safely
-- [ ] 3.6 Run post golden tests, comment submission tests, pagination tests, tolerant decoding tests, HTTP exception tests, lifecycle tests, all fanbox tests, detekt, and `git diff --check`
+- [x] 3.1 Migrate post list, creator list/pagination, tagged list, info, and comments GET operations to descriptor → executor → parser
+- [x] 3.2 Migrate post/comment like and comment add/delete POST operations to descriptor → executor while preserving Unit responses and exact JSON bodies
+- [x] 3.3 Preserve post cursor extraction, empty pagination, tolerant comment decoding, mismatch callbacks, and endpoint-specific typed failures on the new path
+- [x] 3.4 Move post MockEngine and fixture tests from generated API setup to executor setup and add temporary old/new wire differential assertions where needed
+- [x] 3.5 Verify the mixed graph sends each post operation exactly once, leaves creator/search/user on Ktorfit, shares Cookie/CSRF state across metadata refresh and executor POST, and closes both generated and executor-owned clients safely
+- [x] 3.6 Run post golden tests, comment submission tests, pagination tests, tolerant decoding tests, HTTP exception tests, lifecycle tests, all fanbox tests, detekt, and `git diff --check`
 
 ## 4. PR 4 — Remaining repository migration and generated API removal
 

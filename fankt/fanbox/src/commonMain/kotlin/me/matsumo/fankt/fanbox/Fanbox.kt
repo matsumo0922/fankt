@@ -20,7 +20,6 @@ import kotlinx.coroutines.withContext
 import kotlinx.coroutines.yield
 import kotlinx.io.IOException
 import me.matsumo.fankt.fanbox.datasource.createFanboxCreatorApi
-import me.matsumo.fankt.fanbox.datasource.createFanboxPostApi
 import me.matsumo.fankt.fanbox.datasource.createFanboxSearchApi
 import me.matsumo.fankt.fanbox.datasource.createFanboxUserApi
 import me.matsumo.fankt.fanbox.datasource.mapper.FanboxCreatorMapper
@@ -59,8 +58,8 @@ import me.matsumo.fankt.fanbox.transport.ktor.KtorFanboxRequestExecutor
  *
  * The public [logLevel] maps [FanboxLogLevel.BODY] to an effective info level and
  * [FanboxLogLevel.ALL] to an effective headers-only level. The HTTP logger never receives a
- * raw response body. For allowlisted generated-route errors, a sanitized and bounded diagnostic
- * fragment is retained and logged through a separate path; downloads and unknown routes retain no
+ * raw response body. For library-owned API errors, a sanitized and bounded diagnostic fragment is
+ * retained and logged through a separate path; downloads and unknown routes retain no
  * response fragment.
  *
  * This instance owns every HTTP client it creates. Call [close] after all requests and downloads
@@ -177,18 +176,17 @@ class Fanbox internal constructor(
                 .httpClient(apiWithoutContentNegotiationClient)
                 .build()
 
-            val postApi = ktorfit.createFanboxPostApi()
             val creatorApi = ktorfit.createFanboxCreatorApi()
             val searchApi = ktorfit.createFanboxSearchApi()
             val userApi = ktorfit.createFanboxUserApi()
 
-            val postWithoutContentNegotiation = ktorfitWithoutContentNegotiation.createFanboxPostApi()
             val creatorWithoutContentNegotiation = ktorfitWithoutContentNegotiation.createFanboxCreatorApi()
 
+            val diagnosticSink = FanboxDiagnosticSink { message -> Napier.w { message } }
             val listItemDecoder = FanboxListItemDecoder(
                 formatter = formatter,
                 includeRawFragment = logLevel != FanboxLogLevel.NONE,
-                diagnosticSink = FanboxDiagnosticSink { message -> Napier.w { message } },
+                diagnosticSink = diagnosticSink,
             )
             val postMapper = FanboxPostMapper(listItemDecoder, formatter)
             val creatorMapper = FanboxCreatorMapper(listItemDecoder)
@@ -197,7 +195,12 @@ class Fanbox internal constructor(
             val metadataParser = FanboxMetadataParser(formatter)
 
             return FanboxResources(
-                post = FanboxPostRepository(postApi, postWithoutContentNegotiation, postMapper),
+                post = FanboxPostRepository(
+                    requestExecutor = requestExecutor,
+                    diagnosticSink = diagnosticSink,
+                    includeRawFragment = logLevel != FanboxLogLevel.NONE,
+                    ioDispatcher = ioDispatcher,
+                ),
                 creator = FanboxCreatorRepository(creatorApi, creatorWithoutContentNegotiation, creatorMapper),
                 search = FanboxSearchRepository(searchApi, searchMapper),
                 user = FanboxUserRepository(userApi, userMapper, metadataParser),

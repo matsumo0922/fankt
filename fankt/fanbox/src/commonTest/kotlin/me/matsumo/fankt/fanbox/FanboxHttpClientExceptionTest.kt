@@ -16,12 +16,15 @@ import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.headersOf
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.io.IOException
 import kotlinx.serialization.Serializable
 import me.matsumo.fankt.fanbox.datasource.createFanboxPostApi
+import me.matsumo.fankt.fanbox.domain.model.id.FanboxPostId
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
 import kotlin.test.assertIs
 import kotlin.test.assertNotNull
@@ -40,6 +43,44 @@ class FanboxHttpClientExceptionTest {
         assertIs<FanboxException.Unauthorized>(error)
         assertEquals(401, error.statusCode)
         assertEquals("post.info", error.endpoint)
+    }
+
+    @Test
+    fun postRepositoryHttpFailureUsesExecutorEndpointTyping() = runBlocking {
+        val fanbox = publicPostFanbox(
+            status = HttpStatusCode.Forbidden,
+            body = """{"error":"forbidden"}""",
+        )
+        try {
+            val failure = assertFailsWith<FanboxException.Forbidden> {
+                fanbox.getPostDetail(FanboxPostId("1"))
+            }
+
+            assertEquals(403, failure.statusCode)
+            assertEquals("post.info", failure.endpoint)
+            assertEquals("""{"error":"forbidden"}""", failure.rawBody)
+        } finally {
+            fanbox.close()
+        }
+    }
+
+    @Test
+    fun postRepositorySchemaMismatchUsesEntireExecutorRawBody() = runBlocking {
+        val secret = "fixture-secret"
+        val body = """{"csrfToken":"$secret","unexpected":true}"""
+        val fanbox = publicPostFanbox(HttpStatusCode.OK, body)
+        try {
+            val failure = assertFailsWith<FanboxException.SchemaMismatch> {
+                fanbox.getPostDetail(FanboxPostId("1"))
+            }
+
+            assertEquals(200, failure.statusCode)
+            assertEquals("post.info", failure.endpoint)
+            assertTrue("[REDACTED]" in failure.rawBody.orEmpty())
+            assertFalse(secret in failure.rawBody.orEmpty())
+        } finally {
+            fanbox.close()
+        }
     }
 
     @Test
@@ -265,6 +306,25 @@ class FanboxHttpClientExceptionTest {
         } finally {
             Napier.takeLogarithm(antilog)
         }
+    }
+
+    private fun publicPostFanbox(status: HttpStatusCode, body: String): Fanbox {
+        val clientFactory = FanboxHttpClientFactory { block ->
+            HttpClient(
+                MockEngine {
+                    respond(
+                        content = body,
+                        status = status,
+                        headers = headersOf(HttpHeaders.ContentType, ContentType.Application.Json.toString()),
+                    )
+                },
+                block,
+            )
+        }
+        return Fanbox(
+            clientFactory = clientFactory,
+            ioDispatcher = Dispatchers.Default,
+        )
     }
 
     private suspend fun requestFailure(

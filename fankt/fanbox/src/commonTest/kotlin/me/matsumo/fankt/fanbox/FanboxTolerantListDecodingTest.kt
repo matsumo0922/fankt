@@ -4,15 +4,19 @@ import de.jensklingenberg.ktorfit.Ktorfit
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.mock.MockEngine
 import io.ktor.client.engine.mock.respond
+import io.ktor.client.plugins.cookies.AcceptAllCookiesStorage
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.headersOf
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.runBlocking
-import me.matsumo.fankt.fanbox.datasource.createFanboxPostApi
 import me.matsumo.fankt.fanbox.datasource.createFanboxUserApi
 import me.matsumo.fankt.fanbox.datasource.mapper.FanboxCreatorMapper
 import me.matsumo.fankt.fanbox.datasource.mapper.FanboxPostMapper
 import me.matsumo.fankt.fanbox.datasource.mapper.FanboxUserMapper
+import me.matsumo.fankt.fanbox.domain.model.id.FanboxPostId
 import me.matsumo.fankt.fanbox.fixture.FanboxTolerantListJsonFixtures
 import me.matsumo.fankt.fanbox.response.FanboxDiagnosticSink
 import kotlin.test.Test
@@ -24,19 +28,19 @@ import kotlin.test.assertTrue
 class FanboxTolerantListDecodingTest {
 
     @Test
-    fun productionHomeApiKeepsTwoValidPostsAndSkipsOneBrokenItem() = runBlocking {
-        val formatter = createFanboxJson()
-        val client = mockClient(FanboxTolerantListJsonFixtures.timelineMixed)
+    fun productionHomeExecutorKeepsTwoValidPostsAndReportsOneBrokenItem() = runBlocking {
+        val requests = mutableListOf<Int>()
+        val fanbox = productionFanbox(FanboxTolerantListJsonFixtures.timelineMixed, requests)
+        val mismatches = mutableListOf<FanboxListItemSchemaMismatch>()
         try {
-            val api = ktorfit(client).createFanboxPostApi()
-            val entity = api.getHomePosts("3", null, null, null, null)
-            val result = FanboxPostMapper(FanboxListItemDecoder(formatter)).map(entity, "post.listHome")
+            val result = fanbox.getHomePosts(cursor = null, onItemSchemaMismatch = mismatches::add)
 
-            assertEquals(listOf("tolerant-post-1", "tolerant-post-2"), result.value.contents.map { it.id.value })
-            assertEquals(listOf(FanboxListItemSchemaMismatch("post.listHome", listOf(1))), result.mismatches)
-            assertEquals(3, result.value.cursor?.limit)
+            assertEquals(listOf("tolerant-post-1", "tolerant-post-2"), result.contents.map { it.id.value })
+            assertEquals(listOf(FanboxListItemSchemaMismatch("post.listHome", listOf(1))), mismatches)
+            assertEquals(3, result.cursor?.limit)
+            assertEquals(listOf(2), requests)
         } finally {
-            client.close()
+            fanbox.close()
         }
     }
 
@@ -60,16 +64,24 @@ class FanboxTolerantListDecodingTest {
     }
 
     @Test
-    fun brokenNestedReplyKeepsRootAndSiblingReplies() {
-        val formatter = createFanboxJson()
-        val entity = formatter.decodeFromString<me.matsumo.fankt.fanbox.domain.entity.FanboxPostCommentListEntity>(
-            FanboxTolerantListJsonFixtures.commentsWithBrokenReply,
-        )
-        val result = FanboxPostMapper(FanboxListItemDecoder(formatter)).map(entity, "post.getComments")
+    fun productionCommentExecutorKeepsRootAndSiblingRepliesAndReportsNestedPath() = runBlocking {
+        val requests = mutableListOf<Int>()
+        val fanbox = productionFanbox(FanboxTolerantListJsonFixtures.commentsWithBrokenReply, requests)
+        val mismatches = mutableListOf<FanboxListItemSchemaMismatch>()
+        try {
+            val result = fanbox.getPostComment(
+                postId = FanboxPostId("fixture-post"),
+                offset = 0,
+                onItemSchemaMismatch = mismatches::add,
+            )
 
-        assertEquals(1, result.value.contents.size)
-        assertEquals(listOf("reply-1", "reply-2"), result.value.contents.single().replies.map { it.id.value })
-        assertEquals(listOf(FanboxListItemSchemaMismatch("post.getComments", listOf(0, 1))), result.mismatches)
+            assertEquals(1, result.contents.size)
+            assertEquals(listOf("reply-1", "reply-2"), result.contents.single().replies.map { it.id.value })
+            assertEquals(listOf(FanboxListItemSchemaMismatch("post.getComments", listOf(0, 1))), mismatches)
+            assertEquals(listOf(2), requests)
+        } finally {
+            fanbox.close()
+        }
     }
 
     @Test
@@ -197,6 +209,40 @@ class FanboxTolerantListDecodingTest {
         assertTrue("[REDACTED]" in diagnosticLog)
         assertFalse("fixture-credential-must-be-redacted" in diagnosticLog)
         assertTrue(diagnosticLog.length <= FanboxExceptionFactory.MAX_RAW_BODY_LENGTH + 128)
+    }
+
+    private fun productionFanbox(body: String, requestClientIndexes: MutableList<Int>): Fanbox {
+        var clientCount = 0
+        val clientFactory = FanboxHttpClientFactory { block ->
+            val clientIndex = clientCount++
+            HttpClient(
+                MockEngine {
+                    requestClientIndexes += clientIndex
+                    respond(
+                        content = body,
+                        status = HttpStatusCode.OK,
+                        headers = headersOf(HttpHeaders.ContentType, "application/json"),
+                    )
+                },
+                block,
+            )
+        }
+        val csrfToken = MutableStateFlow<String?>(null)
+        return Fanbox(
+            dependencies = FanboxDependencies(
+                cookieStorage = AcceptAllCookiesStorage(),
+                cookies = emptyFlow(),
+                csrfToken = csrfToken,
+                getCsrfToken = { csrfToken.value },
+                setCsrfToken = { csrfToken.value = it },
+                clearCsrfToken = { csrfToken.value = null },
+                overrideFanboxSessionId = {},
+                addCookie = {},
+                replaceCookies = {},
+            ),
+            clientFactory = clientFactory,
+            ioDispatcher = Dispatchers.Default,
+        )
     }
 
     private fun ktorfit(client: HttpClient): Ktorfit = Ktorfit.Builder()
