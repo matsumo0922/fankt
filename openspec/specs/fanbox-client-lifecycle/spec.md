@@ -2,14 +2,13 @@
 
 ## Purpose
 Fanbox owns a bounded, stable HTTP client graph and releases it deterministically when the owning instance is closed.
-
 ## Requirements
 ### Requirement: Fanbox releases its HTTP resources
-`Fanbox` SHALL implement `AutoCloseable`, SHALL invoke `close()` on every internal HTTP client it owns when `Fanbox.close()` is called, and SHALL make sequential repeated close calls safe. Internal engine shutdown completes according to the HTTP implementation's asynchronous close contract.
+`Fanbox` SHALL implement `AutoCloseable`, SHALL invoke `close()` on every internal HTTP client it owns when `Fanbox.close()` is called, and SHALL make sequential repeated close calls safe. The descriptor executor and repositories SHALL reject new work after close. Internal engine shutdown completes according to the HTTP implementation's asynchronous close contract.
 
-#### Scenario: Close releases generated and download clients
+#### Scenario: Close releases executor and download clients
 - **WHEN** `close()` is called on an open `Fanbox` instance
-- **THEN** close is invoked on all generated-API and download clients before `Fanbox.close()` returns, and none accepts a new request afterward
+- **THEN** close is invoked on the executor-owned request client and download client before `Fanbox.close()` returns, and neither accepts a new request afterward
 
 #### Scenario: Repeated close
 - **WHEN** `close()` is called more than once

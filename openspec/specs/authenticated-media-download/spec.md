@@ -2,7 +2,6 @@
 
 ## Purpose
 FANBOX media downloads use complete API-provided URLs through an owned shared client while enforcing an authenticated destination boundary.
-
 ## Requirements
 ### Requirement: Fanbox.download destinations are allowlisted
 
@@ -113,10 +112,8 @@ FANBOX media downloads use complete API-provided URLs through an owned shared cl
 - **THEN** the public `download` operation preserves the delivered chunk, releases the response, and throws `FanboxException.Network` with endpoint `download`
 
 ### Requirement: Extension-specific download APIs are removed
-
-The public `Fanbox` API SHALL expose one URL-based chunk-streaming `download` operation instead of `downloadPostFile`, `downloadPostImage`, and `downloadPostThumbnailImage`, and production source SHALL contain no generated `FanboxDownloadApi` route declarations. Trace: issue #32 download API removal checklist.
+The public `Fanbox` API SHALL expose one URL-based chunk-streaming `download` operation instead of `downloadPostFile`, `downloadPostImage`, and `downloadPostThumbnailImage`. Production source SHALL contain no endpoint descriptor, repository route, or generated declaration that reconstructs an extension-specific download URL. Trace: issue #32 download API removal checklist.
 
 #### Scenario: Public download operation inventory
-
-- **WHEN** the production `Fanbox` download API surface and generated route declarations are inspected
+- **WHEN** the production `Fanbox` download API surface and descriptor/route inventory are inspected
 - **THEN** only the URL-based public download operation remains and no `.jpg` download route is declared
