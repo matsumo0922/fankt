@@ -14,9 +14,13 @@ import io.ktor.http.Url
 import io.ktor.http.content.OutgoingContent
 import io.ktor.http.content.TextContent
 import io.ktor.http.headersOf
+import io.ktor.utils.io.ByteReadChannel
+import io.ktor.utils.io.InternalAPI
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.runBlocking
+import kotlinx.io.Buffer
 import kotlinx.io.IOException
+import kotlinx.io.Source
 import me.matsumo.fankt.fanbox.FANBOX_CSRF_HEADER
 import me.matsumo.fankt.fanbox.FanboxDiagnosticSource
 import me.matsumo.fankt.fanbox.FanboxException
@@ -31,6 +35,7 @@ import me.matsumo.fankt.fanbox.endpoint.FanboxHttpMethod
 import me.matsumo.fankt.fanbox.endpoint.FanboxQueryParameter
 import me.matsumo.fankt.fanbox.endpoint.RequestDescriptor
 import me.matsumo.fankt.fanbox.endpoint.fanboxUniqueRequestRoutes
+import me.matsumo.fankt.fanbox.response.FanboxDiagnostics
 import me.matsumo.fankt.fanbox.transport.FanboxCredentialBehavior
 import me.matsumo.fankt.fanbox.transport.InvalidRequestDescriptorException
 import me.matsumo.fankt.fanbox.transport.TrustedFanboxEndpointPolicy
@@ -38,8 +43,10 @@ import kotlin.test.Test
 import kotlin.test.assertContains
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
+import kotlin.test.assertFalse
 import kotlin.test.assertIs
 import kotlin.test.assertNotNull
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 import kotlin.time.Duration.Companion.seconds
 
@@ -490,6 +497,159 @@ class KtorFanboxRequestExecutorTest {
     }
 
     @Test
+    fun nonSuccessBodyReadFailureKeepsStatusTypedFailures() = runBlocking {
+        val unauthorizedClient = executorClient(
+            engine = MockEngine {
+                respond(
+                    content = FailingContentChannel(
+                        content = "partial unauthorized body".encodeToByteArray(),
+                        failure = IOException("body read failure"),
+                    ),
+                    status = HttpStatusCode.Unauthorized,
+                )
+            },
+        )
+        try {
+            val error = assertFailsWith<FanboxException.Unauthorized> {
+                KtorFanboxRequestExecutor(unauthorizedClient).execute(
+                    RequestDescriptor(FanboxEndpointIds.postInfo, "post.info", FanboxHttpMethod.GET),
+                )
+            }
+            assertEquals(401, error.statusCode)
+            assertNull(error.rawBody)
+        } finally {
+            unauthorizedClient.close()
+        }
+
+        val rateLimitedClient = executorClient(
+            engine = MockEngine {
+                respond(
+                    content = FailingContentChannel(
+                        content = "partial rate limit body".encodeToByteArray(),
+                        failure = IOException("body read failure"),
+                    ),
+                    status = HttpStatusCode.TooManyRequests,
+                    headers = headersOf(HttpHeaders.RetryAfter, "45"),
+                )
+            },
+        )
+        try {
+            val error = assertFailsWith<FanboxException.RateLimited> {
+                KtorFanboxRequestExecutor(rateLimitedClient).execute(
+                    RequestDescriptor(FanboxEndpointIds.postInfo, "post.info", FanboxHttpMethod.GET),
+                )
+            }
+            assertEquals(429, error.statusCode)
+            assertEquals(45.seconds, error.retryAfter)
+            assertNull(error.rawBody)
+        } finally {
+            rateLimitedClient.close()
+        }
+    }
+
+    @Test
+    fun readableNonSuccessBodyKeepsSanitizedBoundedDiagnostic() = runBlocking {
+        val secret = "response-secret"
+        val omittedTail = "must-not-survive-bounding"
+        val body = """{"csrfToken":"$secret"}""" +
+            "x".repeat(FanboxDiagnostics.MAX_FRAGMENT_LENGTH) +
+            omittedTail
+        val client = executorClient(
+            engine = MockEngine { respond(body, HttpStatusCode.Forbidden) },
+        )
+        try {
+            val error = assertFailsWith<FanboxException.Forbidden> {
+                KtorFanboxRequestExecutor(client).execute(
+                    RequestDescriptor(FanboxEndpointIds.postInfo, "post.info", FanboxHttpMethod.GET),
+                )
+            }
+            val rawBody = assertNotNull(error.rawBody)
+            assertEquals(FanboxDiagnostics.MAX_FRAGMENT_LENGTH, rawBody.length)
+            assertContains(rawBody, "[REDACTED]")
+            assertFalse(secret in rawBody)
+            assertFalse(omittedTail in rawBody)
+        } finally {
+            client.close()
+        }
+    }
+
+    @Test
+    fun redirectsAreValidatedWithoutReadingResponseBody() = runBlocking {
+        val crossOriginBody = FailingContentChannel(failure = IOException("redirect body was read"))
+        val crossOriginClient = executorClient(
+            engine = MockEngine {
+                respond(
+                    content = crossOriginBody,
+                    status = HttpStatusCode.Found,
+                    headers = headersOf(HttpHeaders.Location, "https://evil.example/steal"),
+                )
+            },
+        )
+        try {
+            assertFailsWith<InvalidRequestDescriptorException> {
+                KtorFanboxRequestExecutor(crossOriginClient).execute(
+                    RequestDescriptor(FanboxEndpointIds.postInfo, "post.info", FanboxHttpMethod.GET),
+                )
+            }
+            assertEquals(0, crossOriginBody.readAttempts)
+        } finally {
+            crossOriginClient.close()
+        }
+
+        val methodChangingBody = FailingContentChannel(failure = IOException("redirect body was read"))
+        val methodChangingClient = executorClient(
+            engine = MockEngine {
+                respond(
+                    content = methodChangingBody,
+                    status = HttpStatusCode.Found,
+                    headers = headersOf(HttpHeaders.Location, "/post.likePost"),
+                )
+            },
+        )
+        try {
+            assertFailsWith<InvalidRequestDescriptorException> {
+                KtorFanboxRequestExecutor(methodChangingClient).execute(
+                    RequestDescriptor(
+                        FanboxEndpointIds.postLikePost,
+                        "post.likePost",
+                        FanboxHttpMethod.POST,
+                        jsonBody = "{}",
+                    ),
+                )
+            }
+            assertEquals(0, methodChangingBody.readAttempts)
+        } finally {
+            methodChangingClient.close()
+        }
+    }
+
+    @Test
+    fun cancellationDuringDiagnosticBodyReadPropagates() = runBlocking {
+        val cancellation = CancellationException("body read cancelled")
+        val client = executorClient(
+            engine = MockEngine {
+                respond(
+                    content = FailingContentChannel(
+                        content = "partial body".encodeToByteArray(),
+                        failure = cancellation,
+                    ),
+                    status = HttpStatusCode.InternalServerError,
+                )
+            },
+        )
+        try {
+            val error = assertFailsWith<CancellationException> {
+                KtorFanboxRequestExecutor(client).execute(
+                    RequestDescriptor(FanboxEndpointIds.postInfo, "post.info", FanboxHttpMethod.GET),
+                )
+            }
+            assertEquals(cancellation.message, error.message)
+        } finally {
+            client.close()
+        }
+    }
+
+    @Test
     fun nonSuccessNetworkAndCancellationUseExistingFailureSemantics() = runBlocking {
         val rateLimitedClient = executorClient(
             engine = MockEngine {
@@ -582,6 +742,36 @@ class KtorFanboxRequestExecutorTest {
         val contentType: String,
         val body: List<Byte>,
     )
+
+    @OptIn(InternalAPI::class)
+    private class FailingContentChannel(
+        content: ByteArray = ByteArray(0),
+        private val failure: Throwable,
+    ) : ByteReadChannel {
+        private val buffer = Buffer().apply { write(content) }
+        private var failed = false
+
+        var readAttempts: Int = 0
+            private set
+
+        override val closedCause: Throwable?
+            get() = failure.takeIf { failed }
+
+        override val isClosedForRead: Boolean
+            get() = failed
+
+        override val readBuffer: Source
+            get() = buffer
+
+        override suspend fun awaitContent(min: Int): Boolean {
+            if (buffer.size >= min) return true
+            readAttempts += 1
+            failed = true
+            throw failure
+        }
+
+        override fun cancel(cause: Throwable?) = Unit
+    }
 
     private class CountingCookiesStorage : CookiesStorage {
         var reads: Int = 0
