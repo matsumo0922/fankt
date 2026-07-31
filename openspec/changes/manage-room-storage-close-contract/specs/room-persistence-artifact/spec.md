@@ -20,7 +20,7 @@ The storage API SHALL NOT delete the database file or its SQLite sidecars becaus
 - **THEN** the later storage owns a new open database instance and can read the persisted rows
 
 #### Scenario: Close is the first terminal event for a live collection
-- **WHEN** a host is collecting a `Flow` obtained from the storage, that collection has already observed a value, the collecting coroutine is active, its collector has thrown nothing, no upstream failure has reached that collection, and the storage is closed
+- **WHEN** a host is collecting a `Flow` obtained from the storage, that collection has already observed a value, and the storage is closed while the collecting coroutine stays active, its collector throws nothing, and no upstream failure reaches that collection, until the collection observes the close
 - **THEN** that collection terminates with `IllegalStateException` rather than an underlying database exception or an indefinite suspension
 
 #### Scenario: Captured Flow is first collected after close
@@ -28,8 +28,8 @@ The storage API SHALL NOT delete the database file or its SQLite sidecars becaus
 - **THEN** that collection fails with `IllegalStateException` without subscribing to the underlying database Flow
 
 #### Scenario: Live collection through Fanbox terminates at close
-- **WHEN** a host is collecting `Fanbox.cookies` for a `Fanbox` injected with the storage, that collection has already observed a value, its coroutine is still active, its collector has thrown nothing, no upstream failure has reached that collection, and the storage is closed while that `Fanbox` is still open
-- **THEN** close is the first terminal event for that collection and it terminates with `IllegalStateException`
+- **WHEN** a host is collecting `Fanbox.cookies` for a `Fanbox` injected with the storage, that collection has already observed a value, and the storage is closed while that `Fanbox` is still open, with the collecting coroutine staying active, its collector throwing nothing, and no upstream failure reaching that collection, until the collection observes the close
+- **THEN** close is the first terminal event to reach that collection and it terminates with `IllegalStateException`
 
 #### Scenario: A collection's own terminal event wins over close
 - **WHEN** a collection of a storage `Flow` is cancelled, or its collector throws, and the collection has not yet observed the close

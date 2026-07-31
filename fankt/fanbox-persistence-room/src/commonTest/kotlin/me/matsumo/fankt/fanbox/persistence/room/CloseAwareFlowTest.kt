@@ -5,6 +5,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.async
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -14,6 +15,8 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
+import kotlinx.coroutines.yield
+import kotlin.coroutines.coroutineContext
 import kotlin.coroutines.cancellation.CancellationException
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -155,6 +158,36 @@ class CloseAwareFlowTest {
         }
         assertTrue(!closeSignal.isCompleted)
     }
+
+    /**
+     * Pins the documented window for a cancellation, mirroring
+     * [collectorFailureRaisedAfterCloseStillWins].
+     *
+     * Unlike a collector failure, this outcome does not depend on the composition: once the
+     * collecting coroutine is cancelled, structured concurrency reports that cancellation whatever
+     * the flow throws. The test records that the contract matches what coroutines already guarantee,
+     * so a later change cannot document a different cause here without failing.
+     */
+    @Test
+    fun collectionCancellationAfterCloseBeforeObservationStillWins() = runBlocking {
+        val upstream = MutableSharedFlow<Int>(replay = 1)
+        val closeSignal = CompletableDeferred<Unit>()
+        val collection: Deferred<Throwable?> = async(start = CoroutineStart.UNDISPATCHED) {
+            runCatching {
+                closeAwareFlow(upstream, closeSignal).collect {
+                    closeSignal.complete(Unit)
+                    coroutineContext.cancel(CancellationException("host cancelled"))
+                    yield()
+                }
+            }.exceptionOrNull()
+        }
+
+        upstream.emit(1)
+
+        val failure = checkNotNull(collection.awaitOutcome()) { "The collection completed without failing" }
+        assertIs<CancellationException>(failure)
+        assertTrue(closeSignal.isCompleted)
+    }
 }
 
 private class UpstreamFailure : RuntimeException("upstream failed")
@@ -189,7 +222,16 @@ private fun <T> CoroutineScope.collectOutcome(
 }
 
 private suspend fun Deferred<Throwable?>.awaitFailure(): Throwable =
-    checkNotNull(withTimeout(TIMEOUT_MILLISECONDS) { await() }) { "The collection completed without failing" }
+    checkNotNull(awaitOutcome()) { "The collection completed without failing" }
+
+/**
+ * Waits for the captured outcome without rethrowing a cancellation of this child itself, so a test
+ * can assert on a cause that cancelled the collection from the inside.
+ */
+private suspend fun Deferred<Throwable?>.awaitOutcome(): Throwable? {
+    withTimeout(TIMEOUT_MILLISECONDS) { join() }
+    return runCatching { getCompleted() }.fold(onSuccess = { it }, onFailure = { it })
+}
 
 private suspend fun <T> Channel<T>.receiveWithTimeout(): T =
     withTimeout(TIMEOUT_MILLISECONDS) { receive() }

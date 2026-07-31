@@ -68,8 +68,9 @@ public class RoomFanboxCookieStorage internal constructor(
     /**
      * Closes the owned database. A later call does nothing.
      *
-     * Completing the close signal linearizes the close for every observer before the database itself
-     * closes, so a collection started afterwards cannot reach the database.
+     * Completing the close signal marks this storage closed before the database itself closes, so a
+     * collection started afterwards cannot reach the database. A collection already running observes
+     * that signal on its own turn, as described on this class.
      */
     override fun close() {
         if (!closeSignal.complete(Unit)) return
