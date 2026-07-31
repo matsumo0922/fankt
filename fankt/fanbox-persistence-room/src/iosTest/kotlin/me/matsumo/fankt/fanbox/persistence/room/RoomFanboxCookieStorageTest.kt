@@ -16,6 +16,15 @@ class RoomFanboxCookieStorageTest {
         )
     }
 
+    @Test
+    fun terminatesCollectionsAtCloseAndOutlivesClientCycles() {
+        verifyRoomStorageCloseContract(
+            cleanupFixture = ::cleanupFixture,
+            createFixture = ::createFixture,
+            createStorage = ::createRoomFanboxCookieStorage,
+        )
+    }
+
     private fun createFixture(version: Int) {
         val connection = BundledSQLiteDriver().open(roomFanboxDatabasePath())
         try {
