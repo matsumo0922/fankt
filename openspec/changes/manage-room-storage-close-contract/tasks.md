@@ -59,6 +59,6 @@
 
 ## 4. Validation
 
-- [ ] 4.1 Run the full verification suite for the affected modules, including
+- [x] 4.1 Run the full verification suite for the affected modules, including
       `:fankt:fanbox:verifyPersistenceBoundary` as the evidence that the core artifact carries no
       database, through the validation lease. Record the command, result, scope, and HEAD SHA.
