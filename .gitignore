@@ -46,6 +46,7 @@ gradle/keystore/release.keystore
 
 # Kotlin
 .kotlin
+kotlin-js-store/
 
 # Sandbox stuff
 _sandbox
