@@ -82,6 +82,25 @@ class FanboxBellReadStateTest {
         }
     }
 
+    @Test
+    fun everyOverloadForwardsTheRequestedReadStateToTheRequest() = runBlocking {
+        val fixture = createFixture()
+        val callback: (FanboxListItemSchemaMismatch) -> Unit = { }
+        try {
+            fixture.fanbox.getBells(0)
+            fixture.fanbox.getBells(0, true)
+            fixture.fanbox.getBells(0, callback)
+            fixture.fanbox.getBells(0, callback, true)
+
+            assertEquals(
+                listOf("1", "0", "1", "0"),
+                fixture.requestUrls.map { it.parameters["skipConvertUnreadNotification"] },
+            )
+        } finally {
+            fixture.fanbox.close()
+        }
+    }
+
     private fun createFixture(): Fixture {
         val requestUrls = mutableListOf<Url>()
         val clientFactory = FanboxHttpClientFactory { block ->
