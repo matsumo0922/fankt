@@ -231,6 +231,9 @@ abstract class VerifyPersistenceBoundaryTask : DefaultTask() {
         check(configurationNames.any { it.matches(Regex("ios.*CompileKlibraries")) }) {
             "iOS dependency configurations were not inspected"
         }
+        check("jsCompileClasspath" in configurationNames) {
+            "Kotlin/JS dependency configuration was not inspected"
+        }
 
         val forbiddenMarkers = listOf(
             "androidx.room:",
@@ -751,6 +754,7 @@ val persistenceBoundaryConfigurations = configurations.matching { configuration 
     } else {
         configuration.name == "androidReleaseCompileClasspath" ||
             configuration.name == "commonMainResolvableDependenciesMetadata" ||
+            configuration.name == "jsCompileClasspath" ||
             configuration.name.matches(Regex("ios.*CompileKlibraries"))
     }
 }
@@ -848,6 +852,7 @@ val publicationMetadataTasks = tasks.withType<GenerateModuleMetadata>()
 val requiredPublicationMetadataTasks = buildList {
     add("generateMetadataFileForAndroidReleasePublication")
     add("generateMetadataFileForKotlinMultiplatformPublication")
+    add("generateMetadataFileForJsPublication")
     if (System.getProperty("os.name").startsWith("Mac", ignoreCase = true)) {
         add("generateMetadataFileForIosArm64Publication")
         add("generateMetadataFileForIosSimulatorArm64Publication")
@@ -940,16 +945,11 @@ val verifyPortableImportBoundary = tasks.register<VerifyPortableImportBoundaryTa
     "verifyPortableImportBoundary",
 ) {
     group = "verification"
-    description = "Rejects Ktor, Room, and Napier imports from the portable FANBOX core"
+    description = "Rejects Ktor, Room, Napier, Ksoup, and JVM-only imports from the portable FANBOX core"
     projectDirectory.set(layout.projectDirectory)
     portableSourceFiles.from(
         layout.projectDirectory.dir("src").asFileTree.matching {
-            include(
-                "*Main/kotlin/me/matsumo/fankt/fanbox/endpoint/**/*.kt",
-                "*Main/kotlin/me/matsumo/fankt/fanbox/response/**/*.kt",
-                "*Main/kotlin/me/matsumo/fankt/fanbox/datasource/mapper/**/*.kt",
-                "*Main/kotlin/me/matsumo/fankt/fanbox/datasource/parser/**/*.kt",
-            )
+            include("commonMain/kotlin/me/matsumo/fankt/fanbox/**/*.kt")
         },
     )
     forbiddenImportRoots.set(
@@ -957,6 +957,9 @@ val verifyPortableImportBoundary = tasks.register<VerifyPortableImportBoundaryTa
             "io.ktor",
             "androidx.room",
             "io.github.aakira.napier",
+            "com.fleeksoft.ksoup",
+            "java",
+            "javax",
         ),
     )
 }
