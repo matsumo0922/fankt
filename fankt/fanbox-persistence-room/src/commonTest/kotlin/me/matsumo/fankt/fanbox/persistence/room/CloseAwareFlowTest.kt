@@ -4,6 +4,7 @@ import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.async
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.channels.Channel
@@ -16,8 +17,8 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
 import kotlinx.coroutines.yield
-import kotlin.coroutines.coroutineContext
 import kotlin.coroutines.cancellation.CancellationException
+import kotlin.coroutines.coroutineContext
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
@@ -228,6 +229,7 @@ private suspend fun Deferred<Throwable?>.awaitFailure(): Throwable =
  * Waits for the captured outcome without rethrowing a cancellation of this child itself, so a test
  * can assert on a cause that cancelled the collection from the inside.
  */
+@OptIn(ExperimentalCoroutinesApi::class)
 private suspend fun Deferred<Throwable?>.awaitOutcome(): Throwable? {
     withTimeout(TIMEOUT_MILLISECONDS) { join() }
     return runCatching { getCompleted() }.fold(onSuccess = { it }, onFailure = { it })
