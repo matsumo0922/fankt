@@ -10,7 +10,14 @@ offer a JavaScript client; see the platform table below.
 ## Status
 
 #### :white_check_mark: pixivFANBOX
-  - All features are fully functional.
+  - Article, image, file, text, video, and entry posts are mapped to typed models, including embed,
+    URL embed, header, and style information.
+  - An unrecognized post type or article block is preserved as an `Unknown` variant carrying the raw
+    JSON, so a FANBOX schema change drops no data.
+  - A list response tolerates a malformed item: the remaining items decode and each skipped item is
+    reported to the caller.
+  - Cloudflare challenge responses are not detected or classified. They surface as ordinary HTTP
+    failures.
 #### :construction: Fantia
   - Currently under development.
   - Please wait for the official release.
@@ -387,6 +394,10 @@ privacy risk but cannot prove detection of arbitrary personal information in unk
 known identity and free-form fields therefore always use whole-value replacement.
 
 ## License
+
+fankt is licensed under CC BY-NC 4.0. Creative Commons does not recommend its licenses for software,
+and this project accepts that trade-off to keep the noncommercial restriction rather than adopting a
+software-oriented noncommercial license.
 
 ```text
 Copyright 2025 daichi-matsumoto
