@@ -167,7 +167,7 @@ class CloseAwareFlowTest {
      * Unlike a collector failure, this outcome does not depend on the composition: once the
      * collecting coroutine is cancelled, structured concurrency reports that cancellation whatever
      * the flow throws. The test records that the contract matches what coroutines already guarantee,
-     * so a later change cannot document a different cause here without failing.
+     * so the tested runtime outcome stays explicit.
      */
     @Test
     fun collectionCancellationAfterCloseBeforeObservationStillWins() = runBlocking {

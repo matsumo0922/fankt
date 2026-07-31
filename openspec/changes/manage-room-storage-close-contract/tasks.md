@@ -42,8 +42,8 @@
       `IllegalStateException`.
 - [x] 2.4c Add unit tests asserting that a collection which raises its own terminal event after close
       is linearized, but before it observes the close, still determines the observed cause. Cover both
-      a collector failure and a cancellation, so a later change that rewrites only one of them when
-      the signal is complete cannot pass.
+      a collector failure and a cancellation, recording the documented runtime outcome for each side
+      of the unobserved-close window.
 - [x] 2.4b Extract the upstream cause selection as its own internal function and test it directly for
       both signal states. Driving it through the composition cannot distinguish a rewritten upstream
       failure from one produced by the close termination branch, so without this a missing rewrite can
