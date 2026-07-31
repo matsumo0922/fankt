@@ -9,6 +9,9 @@
       backend failure arriving after the signal into the same `IllegalStateException`, and rethrow a
       backend failure observed while the signal is incomplete. Do not intercept the collecting job's
       cancellation or a downstream collector failure.
+- [ ] 1.3 Extract that composition as an internal function taking the upstream `Flow` and the close
+      signal, so it can be driven by a substitute upstream in tests. `RoomFanboxCookieStorage` calls
+      it with the backend `Flow` and its own signal, and no public signature changes.
 
 ## 2. Verification
 
@@ -19,12 +22,24 @@
       unsubscribed or stale Flow.
 - [ ] 2.2 Extend the contract so that a `Flow` captured from the storage before close and first
       collected after close fails with `IllegalStateException`.
+- [ ] 2.2a Add a unit test over the internal composition from 1.3 that drives it with a substitute
+      upstream counting its subscriptions, asserting that a collection started after the signal
+      completes fails with `IllegalStateException` and never subscribes to that upstream. Without
+      this, 2.2 passes even when the collection-start guard is missing.
 - [ ] 2.3 Extend the contract so that a collection of `Fanbox.cookies` for a `Fanbox` injected with
       the storage terminates with `IllegalStateException` when the storage is closed while that
       `Fanbox` is still open.
-- [ ] 2.4 Extend the contract so that repeatedly creating and closing `Fanbox` instances over one
-      injected storage leaves a collection established before those cycles live, and leaves the
-      storage able to read and write after the last `Fanbox` closes.
+- [ ] 2.4 Extend the contract so that after repeatedly creating and closing `Fanbox` instances over
+      one injected storage, a Cookie record written through that storage is observed within a timeout
+      by a collection established before those cycles, and the storage still reads and writes after
+      the last `Fanbox` closes. Observing the new value, rather than an active `Job`, is what
+      distinguishes a live collection from one suspended forever.
+- [ ] 2.4a Add unit tests over the internal composition from 1.3 asserting that a failure thrown by
+      the collector propagates unchanged, and that cancelling the collecting coroutine before the
+      close signal completes surfaces `CancellationException` rather than `IllegalStateException`.
+      Assert with the same substitute upstream that a failure delivered while the signal is
+      incomplete propagates unchanged, and one delivered after it completes becomes
+      `IllegalStateException`.
 - [ ] 2.5 Structure every new collection assertion so a thrown `IllegalStateException` cannot cancel
       the enclosing `runBlocking` scope before it is asserted: collect in a child that captures its
       outcome as a value, use `CompletableDeferred` rather than polling as the start barrier, and

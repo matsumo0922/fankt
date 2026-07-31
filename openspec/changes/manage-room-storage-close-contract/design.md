@@ -130,6 +130,20 @@ Three parts, each covering a distinct window:
 
 Attribution: agent 仮決め.
 
+### Extract the composition so its precedence rules are directly testable
+
+The interesting behavior is precedence between terminal events, and Room cannot be made to fail on
+demand from a contract test. The composition is therefore an internal function of `(upstream, close
+signal)`, and `RoomFanboxCookieStorage` supplies the backend `Flow` and its own signal. Unit tests
+drive it with a substitute upstream that counts subscriptions and emits failures on demand, which is
+what makes "does not subscribe when already closed", "collector failure propagates unchanged",
+"cancellation is not rewritten", and "failure while open is not rewritten" observable rather than
+assumed. The Android/iOS contract test still exercises the real Room path for the scenarios that can
+be driven end to end. This mirrors `PersistentCookieStorageTest`, which already tests internals
+through a fake DAO.
+
+Attribution: agent 仮決め.
+
 ### Do not support close from a context that cannot progress with the query dispatcher
 
 Room's `CloseBarrier.close()` spins until every registered blocker is released, and
@@ -151,11 +165,13 @@ Attribution: agent 仮決め — 人間確認事項（任意 dispatcher での c
 ### Prove the repeated-client property by what it actually shows
 
 A host-visible test cannot count open `RoomDatabase` instances, so it is not evidence for "exactly
-one instance". What it does show is that `Fanbox` create/close cycles neither close the injected
-storage nor terminate a collection established before them — that is, `Fanbox.close()` does not reach
-into host-owned storage. The stronger property, that a `Fanbox` cannot open a database at all, is
-proven by `:fankt:fanbox:verifyPersistenceBoundary` over the published Android, iOS, and JS
-dependency graphs and the merged Android manifest.
+one instance". What it does show is that `Fanbox` create/close cycles do not reach into host-owned
+storage: after the cycles, a record written through the storage still reaches a collection
+established before them. Asserting that the collection's `Job` is merely active would not distinguish
+a working collection from one suspended forever, so the assertion is a delivered value under a
+timeout. The stronger property, that a `Fanbox` cannot open a database at all, is proven by
+`:fankt:fanbox:verifyPersistenceBoundary` over the published Android, iOS, and JS dependency graphs
+and the merged Android manifest.
 
 Attribution: agent 仮決め.
 

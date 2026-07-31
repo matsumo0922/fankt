@@ -21,23 +21,23 @@ The storage API SHALL NOT delete the database file or its SQLite sidecars becaus
 
 #### Scenario: Captured Flow is first collected after close
 - **WHEN** a host obtains a `Flow` from the storage before close and starts collecting it only after close
-- **THEN** that collection fails with `IllegalStateException` without reading the database
+- **THEN** that collection fails with `IllegalStateException` without subscribing to the underlying database Flow
 
 #### Scenario: Live collection through Fanbox terminates at close
-- **WHEN** a host is collecting `Fanbox.cookies` for a `Fanbox` injected with the storage, that collection has already observed a value, and the storage is closed while that `Fanbox` is still open
-- **THEN** that collection terminates with `IllegalStateException`
+- **WHEN** a host is collecting `Fanbox.cookies` for a `Fanbox` injected with the storage, that collection has already observed a value, its coroutine is still active, its collector has thrown nothing, and the storage is closed while that `Fanbox` is still open
+- **THEN** close is the first terminal event for that collection and it terminates with `IllegalStateException`
 
 #### Scenario: An earlier terminal event wins over close
 - **WHEN** a collection of a storage `Flow` is cancelled, or its collector throws, before the storage close is linearized
 - **THEN** that cancellation or collector failure is the observed cause and close does not replace it
 
 #### Scenario: Failure while open is not rewritten
-- **WHEN** the database fails while the storage is still open
-- **THEN** the collection observes that database failure unchanged
+- **WHEN** the storage's Flow composition receives an upstream failure while the close signal is incomplete
+- **THEN** the collection observes that failure unchanged rather than as a close failure
 
 #### Scenario: Storage outlives repeated client cycles
-- **WHEN** a host repeatedly creates and closes `Fanbox` instances that share one injected Room storage
-- **THEN** those cycles neither close the storage nor terminate a collection established before them, and the storage still reads and writes committed rows after the last `Fanbox` closes
+- **WHEN** a host repeatedly creates and closes `Fanbox` instances that share one injected Room storage, and then writes a new Cookie record through that storage
+- **THEN** a collection established before those cycles observes the new record, and the storage still reads and writes committed rows after the last `Fanbox` closes
 
 #### Scenario: Core artifact carries no database
 - **WHEN** the published core `fanbox` dependency and manifest boundary check runs for its Android, iOS, and JS variants
