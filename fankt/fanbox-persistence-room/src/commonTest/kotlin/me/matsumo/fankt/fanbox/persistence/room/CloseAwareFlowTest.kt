@@ -117,6 +117,28 @@ class CloseAwareFlowTest {
     }
 
     @Test
+    fun collectorFailureRaisedAfterCloseStillWins() = runBlocking {
+        val upstream = MutableSharedFlow<Int>(replay = 1)
+        val closeSignal = CompletableDeferred<Unit>()
+        val collection: Deferred<Throwable?> = async(start = CoroutineStart.UNDISPATCHED) {
+            runCatching {
+                closeAwareFlow(upstream, closeSignal).collect {
+                    // Close is linearized here, but this collector keeps the collection's turn and
+                    // raises its own terminal event before the collection can observe the close.
+                    closeSignal.complete(Unit)
+                    throw CollectorFailure()
+                }
+            }.exceptionOrNull()
+        }
+
+        upstream.emit(1)
+
+        val failure = collection.awaitFailure()
+        assertIs<CollectorFailure>(failure)
+        assertTrue(closeSignal.isCompleted)
+    }
+
+    @Test
     fun collectionCancellationBeforeCloseIsNotReportedAsClosed() = runBlocking {
         val upstream = MutableSharedFlow<Int>(replay = 1)
         val closeSignal = CompletableDeferred<Unit>()

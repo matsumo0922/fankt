@@ -19,11 +19,16 @@ import me.matsumo.fankt.fanbox.domain.model.db.FanktDatabase
  * close fail with [IllegalStateException].
  *
  * A collection of [cookies] terminates with [IllegalStateException] when [close] is the first
- * terminal event for it, and a [Flow] obtained before close fails the same way when it is first
- * collected after close. An earlier terminal event wins instead: cancelling the collecting coroutine
- * surfaces its cancellation, an exception thrown by the collector itself propagates unchanged, and a
- * database failure observed while this storage is still open propagates unchanged. [close] does not
- * wait for a collection to unwind.
+ * terminal event to reach it, and a [Flow] obtained before close fails the same way when it is first
+ * collected after close. A terminal event raised inside the collection wins instead: cancelling the
+ * collecting coroutine surfaces its cancellation, an exception thrown by the collector itself
+ * propagates unchanged, and a database failure delivered while this storage is still open propagates
+ * unchanged. [close] does not wait for a collection to unwind.
+ *
+ * [close] neither suspends nor preempts a running collector, so a collector that throws, or a
+ * cancellation that arrives, after close but before that collection observes the close still
+ * determines the observed cause. Reporting close instead would have to discard the host's own
+ * exception or swallow a cancellation. Do not depend on the cause in that window.
  *
  * Do not call [close] from a coroutine context that cannot make progress concurrently with this
  * storage's query dispatcher, such as a single-parallelism dispatcher also passed as the storage's

@@ -68,8 +68,16 @@ Attribution: agent 仮決め — 人間確認事項（`IllegalStateException` �
 completion is the linearization point: before it the storage is open for every observer, after it
 closed.
 
-The contract only claims the cause when close is the first terminal event for that collection. It
-does not claim it when:
+"First" is measured at the collection, not at the clock. `close()` does not suspend and does not
+preempt a running collector, so between completing the signal and the collection observing it there
+is a window where the collection can still raise its own terminal event. Winning that window would
+require catching the collector's exception, or catching `CancellationException`, and reporting close
+instead — discarding the host's exception in the first case and breaking structured cancellation in
+the second. Both are worse than the window, so the contract states the window instead of closing it,
+and the KDoc and README tell hosts not to depend on the cause there.
+
+The contract only claims the cause when close is the first terminal event to reach that collection.
+It does not claim it when:
 
 - the collecting coroutine is cancelled independently — `CancellationException` must propagate for
   structured concurrency to work, and `Flow.catch` does not intercept the collecting job's own

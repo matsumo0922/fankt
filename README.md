@@ -167,10 +167,15 @@ records have `hostOnly = false`.
 Closing the storage terminates a collection of its `cookies`, directly or through `Fanbox.cookies`,
 with `IllegalStateException`. A Flow obtained before close fails the same way when it is first
 collected after close, without reaching the database. That cause applies when close is the first
-terminal event for the collection: cancelling the collecting coroutine surfaces its cancellation, an
-exception thrown by the collector propagates unchanged, and a database failure observed while the
-storage is still open propagates unchanged. `close()` returns without waiting for a collection to
-unwind.
+terminal event to reach the collection: cancelling the collecting coroutine surfaces its
+cancellation, an exception thrown by the collector propagates unchanged, and a database failure
+delivered while the storage is still open propagates unchanged. `close()` returns without waiting for
+a collection to unwind.
+
+Because `close()` neither suspends nor preempts a running collector, a collector that throws — or a
+cancellation that arrives — after `close()` returns but before that collection observes the close
+still determines the observed cause. Reporting close instead would have to discard your own exception
+or swallow a cancellation, so do not depend on the cause in that window.
 
 Creating and closing `Fanbox` instances does not close the injected storage, so one storage serves any
 number of client lifecycles and stays usable until the host closes it.

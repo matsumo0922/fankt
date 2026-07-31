@@ -3,7 +3,11 @@
 ### Requirement: Owned lifecycle
 Each explicitly created Room storage SHALL own one separately closeable database instance. Operations started after close SHALL fail, close SHALL be idempotent, and a later explicit creation for the same path SHALL return a fresh usable instance.
 
-Close SHALL be linearized at one observable point, after which the storage is closed for every observer. When close is the first terminal event for a collection of a `Flow` obtained from the storage, that collection SHALL terminate with `IllegalStateException`. A collection that starts after close SHALL fail the same way before it reaches the database. When another terminal event precedes close for that collection — cancellation of the collecting coroutine, a failure thrown by the collector itself, or a database failure observed while the storage is still open — that earlier event SHALL be the observed cause and SHALL be propagated unchanged.
+Close SHALL be linearized at one observable point, after which every operation the storage itself starts SHALL fail and no collection SHALL newly reach the database.
+
+A collection of a `Flow` obtained from the storage SHALL terminate with `IllegalStateException` when close is the first terminal event to reach that collection, and a collection that starts after close SHALL fail the same way before it reaches the database. When another terminal event reaches the collection first — cancellation of the collecting coroutine, a failure thrown by the collector itself, or an upstream failure delivered while the close signal is incomplete — that event SHALL be the observed cause and SHALL be propagated unchanged.
+
+Because close does not suspend and does not preempt a running collector, a terminal event raised inside the collection after close is linearized but before the collection observes the close SHALL still be the observed cause. The storage SHALL NOT intercept a collector's own exception or the collecting coroutine's cancellation in order to report close instead, because doing so would discard the host's exception and break structured cancellation. Documentation SHALL state that a host must not depend on the observed cause in that window.
 
 Closing SHALL NOT require a collection to have unwound first, and close SHALL NOT suspend. Close SHALL NOT be called from a coroutine context whose dispatcher cannot make progress concurrently with the storage's query dispatcher, and documentation SHALL state that restriction.
 
@@ -27,9 +31,13 @@ The storage API SHALL NOT delete the database file or its SQLite sidecars becaus
 - **WHEN** a host is collecting `Fanbox.cookies` for a `Fanbox` injected with the storage, that collection has already observed a value, its coroutine is still active, its collector has thrown nothing, no upstream failure has reached that collection, and the storage is closed while that `Fanbox` is still open
 - **THEN** close is the first terminal event for that collection and it terminates with `IllegalStateException`
 
-#### Scenario: An earlier terminal event wins over close
-- **WHEN** a collection of a storage `Flow` is cancelled, or its collector throws, before the storage close is linearized
-- **THEN** that cancellation or collector failure is the observed cause and close does not replace it
+#### Scenario: A collection's own terminal event wins over close
+- **WHEN** a collection of a storage `Flow` is cancelled, or its collector throws, and the collection has not yet observed the close
+- **THEN** that cancellation or collector failure is the observed cause and close does not replace it, whether or not close has already been linearized
+
+#### Scenario: The unobserved-close window is documented
+- **WHEN** a host reads the close guidance
+- **THEN** it states that a terminal event raised inside a collection after close is linearized but before that collection observes the close is still the observed cause, so the host must not depend on the cause in that window
 
 #### Scenario: Failure while open is not rewritten
 - **WHEN** the storage's Flow composition receives an upstream failure while the close signal is incomplete

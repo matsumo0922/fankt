@@ -40,6 +40,9 @@
       Assert with the same substitute upstream that a failure delivered while the signal is
       incomplete propagates unchanged, and one delivered after it completes becomes
       `IllegalStateException`.
+- [x] 2.4c Add a unit test asserting that a collector which raises its own terminal event after close
+      is linearized, but before the collection observes the close, still determines the observed
+      cause. This pins the documented window rather than leaving it to scheduling.
 - [x] 2.4b Extract the upstream cause selection as its own internal function and test it directly for
       both signal states. Driving it through the composition cannot distinguish a rewritten upstream
       failure from one produced by the close termination branch, so without this a missing rewrite can
