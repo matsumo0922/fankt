@@ -740,6 +740,7 @@ plugins {
     id("matsumo.primitive.android.common")
     id("matsumo.primitive.kmp.android")
     id("matsumo.primitive.kmp.ios")
+    id("matsumo.primitive.kmp.js")
     id("matsumo.primitive.detekt")
     id("matsumo.primitive.maven.publish")
 }
