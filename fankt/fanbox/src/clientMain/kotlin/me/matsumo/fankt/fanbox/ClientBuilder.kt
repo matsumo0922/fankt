@@ -1,3 +1,5 @@
+@file:OptIn(kotlin.time.ExperimentalTime::class)
+
 package me.matsumo.fankt.fanbox
 
 import io.github.aakira.napier.Napier
@@ -13,10 +15,13 @@ import io.ktor.client.plugins.logging.LogLevel
 import io.ktor.client.plugins.logging.Logger
 import io.ktor.client.plugins.logging.Logging
 import io.ktor.client.request.header
+import io.ktor.client.statement.HttpResponse
 import io.ktor.http.HttpHeaders
 import io.ktor.http.isSuccess
 import kotlinx.coroutines.CancellationException
 import kotlinx.io.IOException
+import me.matsumo.fankt.fanbox.response.FanboxFailureInterpreter
+import kotlin.time.Clock
 
 internal fun interface FanboxHttpClientFactory {
     fun create(block: HttpClientConfig<*>.() -> Unit): HttpClient
@@ -110,12 +115,20 @@ private fun HttpClientConfig<*>.configureFanboxAuthenticatedRequest(
     }
 }
 
+private fun fanboxDownloadFailure(response: HttpResponse): FanboxException = FanboxFailureInterpreter.httpFailure(
+    endpoint = FanboxExceptionFactory.DOWNLOAD_ENDPOINT,
+    statusCode = response.status.value,
+    rawBody = null,
+    retryAfter = response.headers[HttpHeaders.RetryAfter],
+    nowEpochMilliseconds = Clock.System.now().toEpochMilliseconds(),
+)
+
 private fun HttpClientConfig<*>.configureDownloadFailures(logLevel: FanboxLogLevel) {
     HttpResponseValidator {
         validateResponse { response ->
             if (response.status.isSuccess()) return@validateResponse
 
-            val failure = FanboxExceptionFactory.fromDownloadHttpResponse(response)
+            val failure = fanboxDownloadFailure(response)
             if (logLevel != FanboxLogLevel.NONE) {
                 failure.rawBody?.let { body -> Napier.d { "FANBOX response: $body" } }
             }
