@@ -7,9 +7,10 @@ Targets remain Android and iOS. The existing CI acts as the regression gate for 
 - [ ] 1.3 Move `Fanbox.kt`, `ClientBuilder.kt`, `FanboxDependencies.kt`, `FanboxCookiesStorageAdapter.kt`, and `FanboxDownloadDestination.kt` to `clientMain` without changing their contents
 - [ ] 1.4 Move `transport/ktor/**` and the four `repository/**` files to `clientMain` without changing their contents
 - [ ] 1.5 Split `FanboxExceptionFactory` so that `fromDownloadHttpResponse` moves to `clientMain` against the download implementation while the remaining pure delegations stay in `commonMain`, and confirm the download failure semantics are unchanged
-- [ ] 1.6 Split metadata parsing so that `commonMain` holds the metadata JSON decoder and the extraction contract, and `clientMain` holds the Ksoup implementation that locates the `meta[name=metadata]` content, preserving the existing missing-element and malformed-JSON schema mismatch behavior
-- [ ] 1.7 Move the thirteen MockEngine-dependent tests from `commonTest` to `clientTest`, keeping the `fixture/**` helpers in `commonTest`
-- [ ] 1.8 Run Android and iOS builds, `:fankt:fanbox:testDebugUnitTest`, detekt, ABI checks, and the three boundary verification tasks, and confirm the ABI dumps are unchanged
+- [ ] 1.6 Introduce a `FanboxMetadataExtractor` function type in `commonMain`, make `FanboxResponses.homepage` take it as a parameter with no default, keep the metadata JSON decoding and both schema mismatch paths in `commonMain`, and move only the Ksoup element lookup to `clientMain` with the homepage caller supplying it
+- [ ] 1.7 Rewrite the metadata decoding and schema mismatch assertions of `FanboxMetadataParserGoldenTest` to feed extracted JSON directly and keep them in `commonTest`, move the Ksoup HTML extraction assertion to `clientTest`, and keep the `FanboxResponsesTest` homepage case in `commonTest` by supplying a test extractor
+- [ ] 1.8 Move the thirteen MockEngine-dependent tests from `commonTest` to `clientTest`, keeping the `fixture/**` helpers in `commonTest`
+- [ ] 1.9 Run Android and iOS builds, `:fankt:fanbox:testDebugUnitTest`, detekt, ABI checks, and the three boundary verification tasks, and confirm the ABI dumps are unchanged
 
 ## 2. PR 2 — Kotlin/JS target
 

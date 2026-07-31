@@ -1,23 +1,27 @@
 ## MODIFIED Requirements
 
 ### Requirement: Successful responses are parsed without transport types
-The FANBOX core SHALL provide endpoint-specific pure functions that decode a raw JSON response string through the production JSON configuration and existing entity-to-domain mapping rules. Homepage metadata SHALL be decoded from the raw metadata JSON string extracted from the homepage document, through a pure function that requires no HTML parser. Extracting that string from an HTML document SHALL be performed outside the portable core by an implementation the core receives. Response parsing MUST NOT require `HttpResponse`, `HttpRequest`, or another Ktor type.
+The FANBOX core SHALL provide endpoint-specific pure functions that decode a raw JSON response string through the production JSON configuration and existing entity-to-domain mapping rules. Homepage metadata SHALL be decoded from the metadata JSON string obtained from the homepage document, through a pure function that requires no HTML parser. Locating that string inside an HTML document SHALL be performed by an extractor the homepage parser receives from its caller, so that the core holds the decoding and both failure paths while only the HTML element lookup lives outside it. Response parsing MUST NOT require `HttpResponse`, `HttpRequest`, or another Ktor type.
 
 #### Scenario: JSON response becomes the existing model
 - **WHEN** a supported endpoint parser receives a successful golden JSON fixture
 - **THEN** it returns the same domain model that the existing generated API and mapper path returns
 
 #### Scenario: Homepage HTML becomes metadata
-- **WHEN** the homepage metadata extractor receives HTML containing the FANBOX metadata element and passes the extracted content to the core decoder
+- **WHEN** the homepage parser is given HTML containing the FANBOX metadata element together with the Ksoup-backed extractor
 - **THEN** the result is the same metadata model as the existing homepage repository path
 
 #### Scenario: Extracted metadata JSON is decoded by the core
-- **WHEN** the core metadata decoder receives the metadata JSON string from a homepage golden fixture
+- **WHEN** the homepage parser receives the metadata JSON string from an extractor
 - **THEN** it returns the same metadata model without using an HTML parser
 
 #### Scenario: Missing metadata element is classified
-- **WHEN** a homepage document contains no FANBOX metadata element
-- **THEN** the caller receives the existing `FanboxException.SchemaMismatch` semantics with the homepage endpoint and sanitized bounded fragment
+- **WHEN** the extractor finds no FANBOX metadata element in a homepage document
+- **THEN** the core raises the existing `FanboxException.SchemaMismatch` semantics with the homepage endpoint and sanitized bounded fragment
+
+#### Scenario: Malformed metadata JSON redacts the CSRF token
+- **WHEN** the homepage parser receives a metadata JSON string that cannot be decoded
+- **THEN** the raised `FanboxException.SchemaMismatch` carries the homepage endpoint and contains the CSRF token in neither its raw body nor its message
 
 #### Scenario: Invalid successful response is classified
 - **WHEN** a successful HTTP response body cannot be decoded for its endpoint

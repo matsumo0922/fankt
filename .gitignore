@@ -40,6 +40,7 @@ gradle/keystore/release.keystore
 
 # Gradle cache
 .gradle
+.gradle-home/
 .gradle-user-home/
 .konan/
 

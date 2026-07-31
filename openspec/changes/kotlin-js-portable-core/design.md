@@ -65,6 +65,8 @@ commonMain            portable core（endpoint / response / mapper / entity / do
 
 `applyDefaultHierarchyTemplate()` は android + ios を束ねる既定の group を持たないため、この source set は明示的に宣言する。名前は `clientMain` とする。「HTTP client を持つ実装」という役割を表し、既定テンプレートの予約名（`nativeMain` / `appleMain` など）と衝突しない。
 
+この構成が Kotlin 2.2.10 で成立することは、最小プロジェクトの実ビルドで確認済みである。`applyDefaultHierarchyTemplate()` と手書き `clientMain`（`androidMain` / `iosMain` が `dependsOn`）、および `js(IR) { nodejs(); binaries.library() }` を同時に宣言した状態で `compileKotlinJs` と JVM 側コンパイルが成功し、`commonMain` の `internal` 宣言を `clientMain` から参照できることも併せて確認した。
+
 **代替案**: `commonMain` を portable core 専用にせず、非 portable コードを `androidMain` と `iosMain` に重複配置する。棄却理由は、`Fanbox.kt` 660 行を含む 10 ファイル超が二重管理になり、Phase 1〜2 で積み上げた挙動の一貫性が壊れやすいこと。
 
 **代替案**: portable core を別 Gradle module（`:fankt:fanbox-core`）へ切り出し、それだけに JS ターゲットを与える。棄却理由は、`internal` 可視性が module を跨げないため、descriptor / endpoint builder / parser / entity といった現在 `internal` の型を軒並み `public` にせざるを得ず、公開 API が実装詳細で膨れること。これは #35 と #38 で public API を絞ってきた方向と逆行する。#39 の受け入れ条件は `:fankt:fanbox:jsTest` であり artifact 分割は要求されていない。ただし将来 Zipline guest の bundle サイズが問題になった場合の選択肢としては残る。
@@ -81,18 +83,28 @@ commonMain            portable core（endpoint / response / mapper / entity / do
 
 理由は 2 つある。第一に、Ksoup は HTML パーサ一式であり Zipline guest の bundle サイズに対して重い。第二に、#39 の記述どおり host 側 bridge の責務として整理する方が、#104 の「guest は request 組み立てと response 解釈に徹する」設計と整合する。
 
-構成は次のとおりとする。
+ただし単純な移動は成立しない。反証で次が判明した。
 
-- `commonMain`: メタデータ抽出の contract（HTML 文字列から `FanboxMetaDataEntity` を得る関数型）と、抽出済み JSON 文字列を entity へデコードする純関数。後者が schema mismatch 例外を出す既存の挙動を持つ。
-- `clientMain`: Ksoup で `meta[name=metadata]` の `content` を取り出し、上記の純関数へ渡す実装。
+`FanboxResponses.homepage()`（`response/FanboxResponses.kt:319`）が `FanboxMetadataParser(formatter).parse(body, statusCode, "homepage")` を直接構築して呼んでおり、しかも他の endpoint parser と同じ `withMappers` の形で並んでいる。`FanboxResponses` は endpoint 別 parser の集約点として commonMain に残す対象なので、parser を丸ごと `clientMain` へ移すと `FanboxResponses` が二分される。
 
-これにより「JSON デコードと例外変換」は JS でテストでき、「HTML から該当 meta タグを取り出す」だけが JS 非対応側に残る。正規表現ベースの軽量抽出への置き換えは、#104 で bundle サイズが問題になった時点で `clientMain` 側の実装差し替えとして検討すればよく、本 change では扱わない。
+したがって「移動」ではなく「抽出処理の注入」とする。
+
+- `commonMain`: HTML 文字列から metadata JSON 文字列を取り出す関数型 `FanboxMetadataExtractor`、抽出済み JSON を `FanboxMetaDataEntity` へデコードする純関数、および抽出失敗時とデコード失敗時の schema mismatch 例外。`FanboxResponses.homepage()` は extractor を引数で受け取り、既定値を持たない。
+- `clientMain`: Ksoup で `meta[name=metadata]` の `content` を取り出す `FanboxMetadataExtractor` の実装。`FanboxResponses.homepage()` の呼び出し元（homepage を叩く repository）がこれを渡す。
+
+既存の 3 つの挙動（正常系のマッピング、meta 要素なし時の `SchemaMismatch`、不正 JSON 時の csrfToken 秘匿）はいずれも維持する。前者 2 つのうち「meta 要素なし」は extractor が null を返した場合として commonMain 側で例外化するため、**JS でもテストできる**。Ksoup に残るのは「HTML から該当要素を見つける」ことだけになる。
+
+テストは次のように分かれる。`FanboxMetadataParserGoldenTest` の 3 テストのうち、デコードと例外の検証は抽出済み JSON を直接渡す形へ書き換えて `commonTest` に残す。Ksoup が実際に HTML から content を取り出せることの検証は `clientTest` へ移す。`FanboxResponsesTest:48` の homepage テストは extractor を差し替えて `commonTest` に残す。
+
+正規表現ベースの軽量抽出への置き換えは、#104 で bundle サイズが問題になった時点で `FanboxMetadataExtractor` の別実装として差し込めばよく、本 change では扱わない。
 
 ### D4: `FanboxExceptionFactory` — Ktor 依存メソッドのみを分離する
 
 このオブジェクトは 5 メソッドのうち `fromDownloadHttpResponse` だけが `HttpResponse` を受け取る。残りは `FanboxFailureInterpreter` と `FanboxDiagnostics` への委譲であり portable である。
 
 `fromDownloadHttpResponse` を `clientMain` の download 実装側へ移し、`FanboxExceptionFactory` 本体は `commonMain` に残す。委譲先の `FanboxFailureInterpreter.httpFailure` は既に Ktor 非依存なので、移動先では status code と `Retry-After` ヘッダ文字列を渡すだけになる。
+
+反証で呼び出し元を確認した。`fromDownloadHttpResponse` の呼び出しは `ClientBuilder.kt:118` の 1 箇所のみで、これは `clientMain` へ移る側にある。他の 4 メソッドの呼び出し元は `Fanbox.kt`（移動側）と `commonTest` のみで、`commonMain` 残留コードからの参照はない。したがって分割は成立する。
 
 ### D5: JVM 専用依存の除去 — `bundles.infra.api` を source set 単位で解体する
 
