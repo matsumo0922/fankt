@@ -3,7 +3,9 @@
 <img src="https://img.shields.io/maven-central/v/me.matsumo.fankt/fanbox">
 
 An unofficial API wrapper for pixivFANBOX and Fantia.  
-Compatible with Kotlin Multiplatform (KMP) and usable on Android and iOS.
+Compatible with Kotlin Multiplatform (KMP) and usable on Android and iOS. The library also builds
+for Kotlin/JS, but that target exists to keep the request and response logic portable rather than to
+offer a JavaScript client; see the platform table below.
 
 ## Status
 
@@ -15,12 +17,21 @@ Compatible with Kotlin Multiplatform (KMP) and usable on Android and iOS.
 
 ## Platforms
 
-| Platform | Support                      |
-|----------|------------------------------|
-| Android  | :white_check_mark: Supported |
-| iOS      | :white_check_mark: Supported | 
-| Desktop  | :x: Not Supported            |
-| Web      | :x: Not Supported            |
+| Platform        | Support                                  |
+|-----------------|------------------------------------------|
+| Android         | :white_check_mark: Supported             |
+| iOS             | :white_check_mark: Supported             |
+| Desktop         | :x: Not Supported                        |
+| Web (Kotlin/JS) | :warning: No request or response API[^1] |
+
+[^1]: The Kotlin/JS target compiles and tests the portable core — endpoint builders, response
+parsers, and domain models — and a `fanbox-js` artifact is published. Its public API covers the
+domain models, the identifier and cursor types, the exception hierarchy, and the authentication
+storage contracts, but **no operation for building a request or parsing a response**: the endpoint
+builders and response parsers are `internal`, so a separate Gradle module cannot call them. The
+target exists to keep that logic compiling and tested on Kotlin/JS, which is the prerequisite for
+running it as a [Zipline](https://github.com/cashapp/zipline) guest inside this library. The
+`Fanbox` client class and all HTTP execution remain Android and iOS only.
 
 ## Usage
 
@@ -312,9 +323,9 @@ You can test API results by inputting the required parameters.
 
 ## Continuous integration
 
-Pull requests run Detekt and Android unit tests in one Ubuntu job. Documentation-only changes skip
-the job. The library release workflow verifies the published FANBOX boundary before publishing;
-it remains on macOS because the Kotlin Multiplatform publication includes Apple targets.
+Pull requests run Detekt, Android unit tests, and Kotlin/JS tests in one Ubuntu job. Documentation-only
+changes skip the job. The library release workflow verifies the published FANBOX boundary before
+publishing; it remains on macOS because the Kotlin Multiplatform publication includes Apple targets.
 
 ## Contributing golden fixtures
 

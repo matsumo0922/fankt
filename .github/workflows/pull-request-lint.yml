@@ -39,5 +39,6 @@ jobs:
           ./gradlew
           detekt
           :fankt:fanbox:testDebugUnitTest
+          :fankt:fanbox:jsTest
           :fankt:fanbox-persistence-room:testDebugUnitTest
           --continue
