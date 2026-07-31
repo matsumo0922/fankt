@@ -444,17 +444,30 @@ class Fanbox internal constructor(
         return user.getNewsLetters()
     }
 
-    /** @throws FanboxException when the FANBOX request or response decoding fails. */
-    suspend fun getBells(page: Int): PageNumberInfo<FanboxBell> {
-        return user.getBells(page).value
+    /**
+     * Returns one page of notifications.
+     *
+     * Listing leaves the returned notifications unread. Pass `markNotificationsRead = true` to let
+     * FANBOX mark them as read while listing them; that conversion cannot be undone through this API.
+     *
+     * @throws FanboxException when the FANBOX request or response decoding fails.
+     */
+    suspend fun getBells(page: Int, markNotificationsRead: Boolean = false): PageNumberInfo<FanboxBell> {
+        return user.getBells(page, markNotificationsRead).value
     }
 
-    /** Returns notifications and reports each skipped item on the caller's coroutine context. */
+    /**
+     * Returns notifications and reports each skipped item on the caller's coroutine context.
+     *
+     * Listing leaves the returned notifications unread. Pass `markNotificationsRead = true` to let
+     * FANBOX mark them as read while listing them; that conversion cannot be undone through this API.
+     */
     suspend fun getBells(
         page: Int,
         onItemSchemaMismatch: (FanboxListItemSchemaMismatch) -> Unit,
+        markNotificationsRead: Boolean = false,
     ): PageNumberInfo<FanboxBell> {
-        return user.getBells(page).notifyMismatches(onItemSchemaMismatch)
+        return user.getBells(page, markNotificationsRead).notifyMismatches(onItemSchemaMismatch)
     }
 
     /** @throws FanboxException when homepage metadata cannot be fetched or decoded. */

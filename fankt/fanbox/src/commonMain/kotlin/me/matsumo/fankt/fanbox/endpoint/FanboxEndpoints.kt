@@ -9,7 +9,7 @@ import me.matsumo.fankt.fanbox.domain.model.id.FanboxPostId
 import me.matsumo.fankt.fanbox.domain.model.id.FanboxUserId
 
 internal object FanboxEndpoints {
-    private const val DEFAULT_LOAD_SIZE = "20"
+    private const val DEFAULT_LOAD_SIZE = 20
 
     fun homePosts(cursor: FanboxCursor?): RequestDescriptor = pagedPosts(
         endpointId = FanboxEndpointIds.postListHome,
@@ -28,7 +28,7 @@ internal object FanboxEndpoints {
         "post.listCreator",
         query(
             "creatorId" to creatorId.value,
-            "limit" to (cursor.limit?.toString() ?: DEFAULT_LOAD_SIZE),
+            "limit" to (cursor.limit ?: DEFAULT_LOAD_SIZE).toString(),
             "firstPublishedDatetime" to cursor.firstPublishedDatetime,
             "maxPublishedDatetime" to cursor.maxPublishedDatetime,
             "firstId" to cursor.firstId,
@@ -48,13 +48,13 @@ internal object FanboxEndpoints {
         query("postId" to postId.value),
     )
 
-    fun postComments(postId: FanboxPostId, offset: Int, loadSize: String = DEFAULT_LOAD_SIZE): RequestDescriptor = get(
+    fun postComments(postId: FanboxPostId, offset: Int, loadSize: Int = DEFAULT_LOAD_SIZE): RequestDescriptor = get(
         FanboxEndpointIds.postGetComments,
         "post.getComments",
         query(
             "postId" to postId.value,
             "offset" to offset.toString(),
-            "limit" to loadSize,
+            "limit" to loadSize.toString(),
         ),
     )
 
@@ -118,10 +118,10 @@ internal object FanboxEndpoints {
         "creator.listPixiv",
     )
 
-    fun recommendedCreators(loadSize: String = DEFAULT_LOAD_SIZE): RequestDescriptor = get(
+    fun recommendedCreators(loadSize: Int = DEFAULT_LOAD_SIZE): RequestDescriptor = get(
         FanboxEndpointIds.creatorListRecommended,
         "creator.listRecommended",
-        query("limit" to loadSize),
+        query("limit" to loadSize.toString()),
     )
 
     fun creatorPlans(creatorId: FanboxCreatorId): RequestDescriptor = get(
@@ -186,9 +186,13 @@ internal object FanboxEndpoints {
         "newsletter.list",
     )
 
+    /**
+     * @param skipConvertUnreadNotification `1` leaves unread notifications unread,
+     * `0` lets FANBOX mark them as read while listing them.
+     */
     fun bells(
         page: Int = 0,
-        skipConvertUnreadNotification: Int = 0,
+        skipConvertUnreadNotification: Int = 1,
         commentOnly: Int = 0,
     ): RequestDescriptor = get(
         FanboxEndpointIds.bellList,
@@ -210,7 +214,7 @@ internal object FanboxEndpoints {
         endpointId,
         path,
         query(
-            "limit" to (cursor?.limit?.toString() ?: DEFAULT_LOAD_SIZE),
+            "limit" to (cursor?.limit ?: DEFAULT_LOAD_SIZE).toString(),
             "firstPublishedDatetime" to cursor?.firstPublishedDatetime,
             "maxPublishedDatetime" to cursor?.maxPublishedDatetime,
             "firstId" to cursor?.firstId,
