@@ -35,7 +35,9 @@ Issue #41 は Phase 4 の整理項目として 2026-07-15 に作成された。�
 
 FANBOX の `bell.list` は `skipConvertUnreadNotification` を受け取り、現在の実装は常に `0`（変換する）を送っている。一覧を読むだけの呼び出しが未読状態を破壊するため、既定値を「変換しない」へ改める。
 
-既存の `getBells(page)` と `getBells(page, onItemSchemaMismatch)` は残し、`markNotificationsRead: Boolean = false` を持つ形へ既定引数で拡張する。Kotlin の既定引数は JVM で overload を生成しないため、ABI dump には `Boolean` を伴う新しい signature と既定値解決用の synthetic signature が現れる。source 互換は保たれ、既存呼び出しの実行時挙動だけが「既読化しない」へ変わる。
+既存の `getBells(page)` と `getBells(page, onItemSchemaMismatch)` は残し、`markNotificationsRead: Boolean` を持つ overload を明示的に追加する。既定引数は使わない。`markNotificationsRead` に既定値を与えると、trailing lambda 呼び出し `getBells(page) { ... }` が lambda を `Boolean` 引数へ解決しようとしてコンパイルエラーになるためである。README が推奨する呼び出しスタイルがこの形式であり、既定引数では source 互換が壊れる。
+
+明示 overload により ABI dump では既存 signature が維持され、`Boolean` を伴う signature が純粋に追加される。source 互換と binary 互換の双方が保たれ、既存呼び出しの実行時挙動だけが「既読化しない」へ変わる。
 
 この既定値変更は破壊的である。README には記載せず、通知の既読化を意図する呼び出し側が明示的に `true` を渡す必要がある点を KDoc に記す。
 

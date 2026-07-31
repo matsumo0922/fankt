@@ -7,10 +7,10 @@ public final class me/matsumo/fankt/fanbox/Fanbox : java/lang/AutoCloseable {
 	public final fun download (Ljava/lang/String;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function2;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public static synthetic fun download$default (Lme/matsumo/fankt/fanbox/Fanbox;Ljava/lang/String;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function2;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
 	public final fun followCreator-09wJxew (JLkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun getBells (ILkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun getBells (ILkotlin/jvm/functions/Function1;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public final fun getBells (ILkotlin/jvm/functions/Function1;ZLkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public final fun getBells (IZLkotlin/coroutines/Continuation;)Ljava/lang/Object;
-	public static synthetic fun getBells$default (Lme/matsumo/fankt/fanbox/Fanbox;ILkotlin/jvm/functions/Function1;ZLkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
-	public static synthetic fun getBells$default (Lme/matsumo/fankt/fanbox/Fanbox;IZLkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
 	public final fun getCookies ()Lkotlinx/coroutines/flow/Flow;
 	public final fun getCreatorDetail-b1x31zg (Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public final fun getCreatorPlanDetail-b1x31zg (Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;

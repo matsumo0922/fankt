@@ -68,6 +68,20 @@ class FanboxBellReadStateTest {
         }
     }
 
+    @Test
+    fun trailingLambdaCallSiteStillResolvesAndLeavesNotificationsUnread() = runBlocking {
+        val fixture = createFixture()
+        val mismatches = mutableListOf<FanboxListItemSchemaMismatch>()
+        try {
+            fixture.fanbox.getBells(0) { mismatch -> mismatches += mismatch }
+
+            assertEquals("1", fixture.bellRequest().parameters["skipConvertUnreadNotification"])
+            assertEquals(listOf(FanboxListItemSchemaMismatch("bell.list", listOf(1))), mismatches)
+        } finally {
+            fixture.fanbox.close()
+        }
+    }
+
     private fun createFixture(): Fixture {
         val requestUrls = mutableListOf<Url>()
         val clientFactory = FanboxHttpClientFactory { block ->

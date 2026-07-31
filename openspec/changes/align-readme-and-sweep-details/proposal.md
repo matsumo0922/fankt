@@ -23,7 +23,7 @@ README の Status 節が pixivFANBOX を「All features are fully functional」�
 
 ## Impact
 
-- 公開 API: `Fanbox.getBells` に overload を追加し、ABI dump を更新する。既定の未読変換挙動が変わる。
+- 公開 API: `Fanbox.getBells` に `markNotificationsRead` を取る overload を追加し、ABI dump を更新する。既存 signature は維持され、既定の未読変換挙動だけが変わる。
 - ドキュメント: `README.md` の Status 節と License 節。
 - ビルド設定: `gradle/libs.versions.toml`、`composeApp/build.gradle.kts`。
 - Issue #41 のうち `setFanboxSessionId` 表記、`ClientBuilder` の冗長判定、`creatorId.toString()` は先行 issue で解消済みのため対象外とする。ライセンスは CC BY-NC 4.0 を維持する判断を README に記録する。

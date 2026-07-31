@@ -445,27 +445,48 @@ class Fanbox internal constructor(
     }
 
     /**
-     * Returns one page of notifications.
-     *
-     * Listing leaves the returned notifications unread. Pass `markNotificationsRead = true` to let
-     * FANBOX mark them as read while listing them; that conversion cannot be undone through this API.
+     * Returns one page of notifications and leaves them unread.
      *
      * @throws FanboxException when the FANBOX request or response decoding fails.
      */
-    suspend fun getBells(page: Int, markNotificationsRead: Boolean = false): PageNumberInfo<FanboxBell> {
+    suspend fun getBells(page: Int): PageNumberInfo<FanboxBell> {
+        return getBells(page, markNotificationsRead = false)
+    }
+
+    /**
+     * Returns one page of notifications.
+     *
+     * Pass `markNotificationsRead = true` to let FANBOX mark the returned notifications as read
+     * while listing them; that conversion cannot be undone through this API.
+     *
+     * @throws FanboxException when the FANBOX request or response decoding fails.
+     */
+    suspend fun getBells(page: Int, markNotificationsRead: Boolean): PageNumberInfo<FanboxBell> {
         return user.getBells(page, markNotificationsRead).value
     }
 
     /**
      * Returns notifications and reports each skipped item on the caller's coroutine context.
      *
-     * Listing leaves the returned notifications unread. Pass `markNotificationsRead = true` to let
-     * FANBOX mark them as read while listing them; that conversion cannot be undone through this API.
+     * The returned notifications are left unread.
      */
     suspend fun getBells(
         page: Int,
         onItemSchemaMismatch: (FanboxListItemSchemaMismatch) -> Unit,
-        markNotificationsRead: Boolean = false,
+    ): PageNumberInfo<FanboxBell> {
+        return getBells(page, onItemSchemaMismatch, markNotificationsRead = false)
+    }
+
+    /**
+     * Returns notifications and reports each skipped item on the caller's coroutine context.
+     *
+     * Pass `markNotificationsRead = true` to let FANBOX mark the returned notifications as read
+     * while listing them; that conversion cannot be undone through this API.
+     */
+    suspend fun getBells(
+        page: Int,
+        onItemSchemaMismatch: (FanboxListItemSchemaMismatch) -> Unit,
+        markNotificationsRead: Boolean,
     ): PageNumberInfo<FanboxBell> {
         return user.getBells(page, markNotificationsRead).notifyMismatches(onItemSchemaMismatch)
     }
