@@ -27,5 +27,5 @@ Targets remain Android and iOS. The existing CI acts as the regression gate for 
 - [ ] 3.2 Add the Kotlin/JS compile classpath to the `verifyPersistenceBoundary` inspected configurations
 - [ ] 3.3 Add the Kotlin/JS publication task to `requiredPublicationMetadataTasks`, outside the macOS-only condition
 - [ ] 3.4 Add the Kotlin/JS compilation and `:fankt:fanbox:jsTest` to the pull request workflow
-- [ ] 3.5 Confirm the release workflow publishes the Kotlin/JS artifact, or record the decision to withhold it, according to the resolution of the open question about publishing
-- [ ] 3.6 Update `README.md` with the supported targets and the portable core boundary, and grep the documentation for statements invalidated by the source set split
+- [ ] 3.5 Confirm the release workflow publishes the Kotlin/JS artifact alongside the existing targets
+- [ ] 3.6 Update the `README.md` platform table and the introduction to record Kotlin/JS support and the boundary between the portable core and HTTP execution, and grep the documentation for statements invalidated by the source set split

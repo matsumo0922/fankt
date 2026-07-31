@@ -37,8 +37,10 @@
 
 - portable core を `commonMain` に残したまま JS でコンパイルできる状態にする。
 - `:fankt:fanbox:jsTest` で mapper / parser / endpoint / response / domain model のフィクスチャテストが実行される。
-- Android と iOS の公開 API・wire 挙動・ABI を維持する。
+- Android と iOS の公開 API と wire 挙動を維持する。
 - source set の分離により、portable core への非 portable 依存の混入がコンパイル時に検出されるようにする。
+
+fankt の利用者は PixiView（同一開発者）のみである。ABI dump は外部利用者への互換の約束ではなく、**意図しない公開 API の変化を検出するための回帰検査**として扱う。本 change は source set の再配置とターゲット追加であり公開 API の意味を変えないため、dump の宣言内容が変化した場合は移動の副作用を疑う手がかりとする。
 
 ### Non-Goals
 
@@ -65,7 +67,7 @@ commonMain            portable core（endpoint / response / mapper / entity / do
 
 **代替案**: `commonMain` を portable core 専用にせず、非 portable コードを `androidMain` と `iosMain` に重複配置する。棄却理由は、`Fanbox.kt` 660 行を含む 10 ファイル超が二重管理になり、Phase 1〜2 で積み上げた挙動の一貫性が壊れやすいこと。
 
-**代替案**: portable core を別 Gradle module（`:fankt:fanbox-core`）へ切り出し、それだけに JS ターゲットを与える。棄却理由は、新しい Maven artifact が増えて利用者の依存記述が変わること、`internal` 可視性が module を跨げず portable core の型を軒並み `public` にせざるを得ないこと。#39 の受け入れ条件は `:fankt:fanbox:jsTest` であり、artifact 分割は要求されていない。ただし将来 Zipline guest の bundle サイズが問題になった場合の選択肢としては残る。
+**代替案**: portable core を別 Gradle module（`:fankt:fanbox-core`）へ切り出し、それだけに JS ターゲットを与える。棄却理由は、`internal` 可視性が module を跨げないため、descriptor / endpoint builder / parser / entity といった現在 `internal` の型を軒並み `public` にせざるを得ず、公開 API が実装詳細で膨れること。これは #35 と #38 で public API を絞ってきた方向と逆行する。#39 の受け入れ条件は `:fankt:fanbox:jsTest` であり artifact 分割は要求されていない。ただし将来 Zipline guest の bundle サイズが問題になった場合の選択肢としては残る。
 
 ### D2: `Dispatchers.IO` — repository を `clientMain` へ移す
 
@@ -129,7 +131,17 @@ primitive plugin として `matsumo.primitive.kmp.js` を追加し、既存の `
 
 `verifyKtorBoundary` は Android の compiled class と ABI dump を検査するもので、JS ターゲットの有無に影響されない。
 
-### D9: PR 分割
+### D9: JS artifact を Maven Central へ publish する
+
+fankt の利用者は PixiView（同一開発者）のみであり、外部利用者への後方互換の約束は考慮しない。したがって publish するかどうかは、後方互換のコストではなく #104 の構成しやすさだけで決まる。
+
+JS artifact を publish しておけば、#104 の guest module は他の依存と同じく `implementation("me.matsumo.fankt:fanbox:$version")` で fankt を参照できる。publish しない場合、PixiView 側から fankt を source 依存させるか composite build を組む必要があり、Zipline の Gradle plugin と組み合わせたときの構成が余分に複雑になる。
+
+既存の publication 設定は `KotlinMultiplatform` を対象にしているため、`js()` ターゲットを宣言すれば JS artifact は自動的に publish 対象へ入る。追加作業は `requiredPublicationMetadataTasks` への JS task 追加のみで、明示的に publish を止める方が手数が多い。よって publish する。
+
+`deploy-library.yml` は macOS runner で全ターゲットを publish しており、JS も同じ job で扱える。
+
+### D10: PR 分割
 
 3 stage に分ける。それぞれ独立してマージ可能で、前段が後段の前提になる。
 
@@ -164,4 +176,3 @@ D8 の 2〜4 と、`.github/workflows/` の更新。JS のビルド・テスト�
 ## Open Questions
 
 - `clientMain` という名前でよいか。`httpMain` / `runtimeMain` なども候補。実装時に KGP の予約名と衝突しないことを確認する。
-- JS artifact を Maven Central へ publish するか、当面 fankt リポジトリ内でのビルド確認に留めるか。publish すると利用者から見える対応ターゲットが増え、README の記載と後方互換の約束が発生する。#104 が guest を fankt の JS artifact への依存として構成するなら publish が必要になるが、PixiView 側で fankt を source 依存させる選択肢もある。PR3 の着手前に #104 側の方針を確認したい。

@@ -15,6 +15,7 @@
 - `commonTest` のうち Ktor MockEngine に依存しないフィクスチャテストを JS でも実行できるようにし、MockEngine 依存のテストを Ktor 実行コードと同じ source set へ移す。
 - CI の検証コマンドに JS ターゲットのビルドとテストを追加する。
 - ターゲット追加で影響を受ける ABI validation、publication task の列挙、`verifyKtorBoundary` / `verifyPersistenceBoundary` / `verifyPortableImportBoundary` を JS ターゲットの存在下で成立するよう更新する。
+- JS artifact を既存ターゲットと同じく Maven Central へ publish し、README の対応プラットフォーム表を更新する。
 - **（agent 仮決め）** 変更は「依存整理と source set 再編」「JS ターゲット追加」「CI と publication 対応」の 3 stage に分割し、それぞれ独立してマージ可能にする。
 
 ## Non-goals
@@ -23,7 +24,7 @@
 - Kotlin バージョンの引き上げ。Zipline 1.27.0 は Kotlin 2.3.x を要求するが、本 change は現行の 2.2.10 のまま `js(IR)` ターゲットを追加する。バージョン引き上げは fankt 全体に影響する独立した作業として別途扱う。
 - JS ターゲットからの HTTP 実行。JS 成果物は request descriptor を組み立て raw response 文字列を解釈する純関数ライブラリであり、通信は行わない。
 - wasmJs ターゲットの追加。
-- 公開 API の意味的な変更。Android と iOS の利用者から見た `Fanbox` の API と挙動は維持する。
+- 公開 API の意味的な変更。Android と iOS から見た `Fanbox` の API と挙動は維持する。ただし fankt の利用者は PixiView（同一開発者）のみであり、ABI dump は外部への互換の約束ではなく意図しない公開 API 変化の回帰検査として扱う。
 
 ## Capabilities
 

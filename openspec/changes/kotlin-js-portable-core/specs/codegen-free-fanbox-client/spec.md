@@ -1,7 +1,7 @@
 ## MODIFIED Requirements
 
 ### Requirement: Existing Fanbox behavior remains compatible
-Every existing public non-download API operation SHALL preserve its request query and JSON body semantics, request-time authentication, successful domain result, tolerant-list behavior, and typed failure semantics after generated APIs are removed and after the core is split across source sets to support Kotlin/JS. Existing public operation signatures and domain model signatures MUST NOT be broken by this migration. The Android and iOS ABI SHALL remain compatible when the Kotlin/JS target is added.
+Every existing public non-download API operation SHALL preserve its request query and JSON body semantics, request-time authentication, successful domain result, tolerant-list behavior, and typed failure semantics after generated APIs are removed and after the core is split across source sets to support Kotlin/JS. Existing public operation signatures and domain model signatures MUST NOT be broken by this migration. Because relocating declarations between source sets is not intended to change the public API, an ABI dump difference beyond the recorded target list SHALL be treated as a signal of an unintended side effect of the move.
 
 #### Scenario: Existing fixture and MockEngine suites run
 - **WHEN** the fanbox common, client, Android unit, boundary, and compatibility tests run after migration
@@ -15,7 +15,7 @@ Every existing public non-download API operation SHALL preserve its request quer
 - **WHEN** legacy ABI checks compare the pre-migration public API with the migrated client
 - **THEN** existing `Fanbox` operations and domain models remain compatible and internal descriptor/parser symbols do not appear in the public API dump
 
-#### Scenario: Adding the JS target preserves the existing ABI
+#### Scenario: Adding the JS target changes only the recorded targets
 - **WHEN** the klib ABI dump is regenerated after the Kotlin/JS target is declared
 - **THEN** the dump records the added target and no declaration available to Android or iOS before the change is removed
 
