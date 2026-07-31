@@ -788,17 +788,34 @@ kotlin {
     }
 
     sourceSets {
+        val commonMain by getting
+        val commonTest by getting
+        val clientMain by creating { dependsOn(commonMain) }
+        val clientTest by creating { dependsOn(commonTest) }
+        val androidMain by getting { dependsOn(clientMain) }
+        val androidUnitTest by getting { dependsOn(clientTest) }
+        val iosMain by getting { dependsOn(clientMain) }
+        getByName("iosTest") { dependsOn(clientTest) }
+
         commonMain.dependencies {
             api(libs.kotlinx.coroutines.core)
             api(libs.kotlinx.serialization.core)
 
-            implementation(libs.bundles.infra.api)
-            implementation(libs.bundles.ktor)
-            implementation(libs.ksoup)
+            implementation(libs.kotlinx.serialization.json)
+            implementation(libs.kotlinx.collections.immutable)
         }
 
         commonTest.dependencies {
             implementation(kotlin("test"))
+        }
+
+        clientMain.dependencies {
+            implementation(libs.napier)
+            implementation(libs.bundles.ktor)
+            implementation(libs.ksoup)
+        }
+
+        clientTest.dependencies {
             implementation(libs.ktor.mock)
         }
 

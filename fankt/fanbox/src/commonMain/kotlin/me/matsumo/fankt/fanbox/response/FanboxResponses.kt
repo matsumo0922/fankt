@@ -10,6 +10,7 @@ import me.matsumo.fankt.fanbox.datasource.mapper.FanboxCreatorMapper
 import me.matsumo.fankt.fanbox.datasource.mapper.FanboxPostMapper
 import me.matsumo.fankt.fanbox.datasource.mapper.FanboxSearchMapper
 import me.matsumo.fankt.fanbox.datasource.mapper.FanboxUserMapper
+import me.matsumo.fankt.fanbox.datasource.parser.FanboxMetadataExtractor
 import me.matsumo.fankt.fanbox.datasource.parser.FanboxMetadataParser
 import me.matsumo.fankt.fanbox.domain.FanboxCursor
 import me.matsumo.fankt.fanbox.domain.PageCursorInfo
@@ -314,9 +315,9 @@ internal object FanboxResponses {
             mappers.user.map(decode(body, FanboxBellListEntity.serializer()), "bell.list")
         }
 
-    fun homepage(body: String, statusCode: Int = 200): FanboxMetaData =
+    fun homepage(body: String, extractor: FanboxMetadataExtractor, statusCode: Int = 200): FanboxMetaData =
         withMappers(body, statusCode, FanboxEndpointIds.homepage) { mappers ->
-            mappers.user.map(FanboxMetadataParser(formatter).parse(body, statusCode, "homepage"))
+            mappers.user.map(FanboxMetadataParser(formatter, extractor).parse(body, statusCode, "homepage"))
         }
 
     private fun creatorList(

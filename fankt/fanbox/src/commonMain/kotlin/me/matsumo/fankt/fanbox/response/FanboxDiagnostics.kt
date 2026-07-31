@@ -25,16 +25,20 @@ internal object FanboxDiagnostics {
         "(?:csrfToken|FANBOXSESSID|x-csrf-token|authorization|cookie)"
 
     private val jsonCredential = Regex(
-        pattern = "(?i)([\\\"']?$CREDENTIAL_KEY[\\\"']?\\s*:\\s*[\\\"'])([^\\\"']*)([\\\"'])",
+        pattern = "([\"']?$CREDENTIAL_KEY[\"']?\\s*:\\s*[\"'])([^\"']*)([\"'])",
+        option = RegexOption.IGNORE_CASE,
     )
     private val htmlCredential = Regex(
-        pattern = "(?i)($CREDENTIAL_KEY&amp;quot;\\s*:\\s*&amp;quot;)(.*?)(?=&amp;quot;)",
+        pattern = "($CREDENTIAL_KEY&amp;quot;\\s*:\\s*&amp;quot;)(.*?)(?=&amp;quot;)",
+        option = RegexOption.IGNORE_CASE,
     )
     private val entityCredential = Regex(
-        pattern = "(?i)($CREDENTIAL_KEY&quot;\\s*:\\s*&quot;)(.*?)(?=&quot;)",
+        pattern = "($CREDENTIAL_KEY&quot;\\s*:\\s*&quot;)(.*?)(?=&quot;)",
+        option = RegexOption.IGNORE_CASE,
     )
     private val headerCredential = Regex(
-        pattern = "(?i)($CREDENTIAL_KEY\\s*[=:]\\s*)([^\\s;,]+)",
+        pattern = "($CREDENTIAL_KEY\\s*[=:]\\s*)([^\\s;,]+)",
+        option = RegexOption.IGNORE_CASE,
     )
     private val credentialKeys = setOf(
         "csrftoken",

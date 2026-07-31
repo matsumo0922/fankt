@@ -1,6 +1,5 @@
 package me.matsumo.fankt.fanbox.response
 
-import io.ktor.http.Url
 import me.matsumo.fankt.fanbox.domain.model.FanboxCreatorDetail
 import me.matsumo.fankt.fanbox.domain.translateToCursor
 import me.matsumo.fankt.fanbox.endpoint.FanboxEndpoints
@@ -15,11 +14,7 @@ class FanboxUrlPartsTest {
         val rawUrl =
             "https://api.fanbox.cc/post.listHome?cursor=a%26b%3Dc%2520d&plus=a+b&empty=&missing&dup=first&dup=second"
         val url = FanboxUrlParts.parse(rawUrl)
-        val ktorParameters = Url(rawUrl).parameters
 
-        listOf("cursor", "plus", "empty", "missing", "dup").forEach { name ->
-            assertEquals(ktorParameters[name], url.queryValue(name))
-        }
         assertEquals("a&b=c%20d", url.queryValue("cursor"))
         assertEquals("a b", url.queryValue("plus"))
         assertEquals("", url.queryValue("empty"))

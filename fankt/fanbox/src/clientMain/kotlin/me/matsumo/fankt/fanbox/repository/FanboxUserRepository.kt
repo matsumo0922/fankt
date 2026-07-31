@@ -4,6 +4,7 @@ import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.withContext
+import me.matsumo.fankt.fanbox.datasource.parser.FanboxKsoupMetadataExtractor
 import me.matsumo.fankt.fanbox.endpoint.FanboxEndpoints
 import me.matsumo.fankt.fanbox.response.FanboxDiagnosticSink
 import me.matsumo.fankt.fanbox.response.FanboxResponses
@@ -57,6 +58,6 @@ internal class FanboxUserRepository(
 
     suspend fun getMetadata() = withContext(ioDispatcher) {
         val response = requestExecutor.execute(FanboxEndpoints.homepage())
-        FanboxResponses.homepage(response.bodyText, response.statusCode)
+        FanboxResponses.homepage(response.bodyText, FanboxKsoupMetadataExtractor, response.statusCode)
     }
 }

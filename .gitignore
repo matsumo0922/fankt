@@ -40,11 +40,16 @@ gradle/keystore/release.keystore
 
 # Gradle cache
 .gradle
+.gradle-home/
 .gradle-user-home/
 .konan/
 
 # Kotlin
 .kotlin
+kotlin-js-store/
+
+# Dokka output published to gh-pages by the documentation workflow
+docs/
 
 # Sandbox stuff
 _sandbox

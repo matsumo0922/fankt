@@ -5,6 +5,7 @@ import me.matsumo.fankt.fanbox.FanboxListItemDecoder
 import me.matsumo.fankt.fanbox.datasource.mapper.FanboxCreatorMapper
 import me.matsumo.fankt.fanbox.datasource.mapper.FanboxPostMapper
 import me.matsumo.fankt.fanbox.datasource.mapper.FanboxUserMapper
+import me.matsumo.fankt.fanbox.datasource.parser.FanboxMetadataExtractor
 import me.matsumo.fankt.fanbox.domain.entity.FanboxCreatorDetailEntity
 import me.matsumo.fankt.fanbox.domain.entity.FanboxPaidRecordListEntity
 import me.matsumo.fankt.fanbox.domain.entity.FanboxPostDetailEntity
@@ -45,7 +46,14 @@ class FanboxResponsesTest {
 
     @Test
     fun homepageHtmlUsesProductionMetadataParserAndMapper() {
-        val metadata = FanboxResponses.homepage(FanboxMetadataHtmlFixtures.home)
+        val extractor = FanboxMetadataExtractor { html ->
+            Regex("meta name=\"metadata\" content=\"(.*?)\">").find(html)
+                ?.groupValues
+                ?.get(1)
+                ?.replace("&quot;", "\"")
+        }
+
+        val metadata = FanboxResponses.homepage(FanboxMetadataHtmlFixtures.home, extractor)
 
         assertEquals("fixture-token", metadata.csrfToken)
         assertEquals("https://api.example.invalid", metadata.apiUrl)

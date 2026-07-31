@@ -1,21 +1,25 @@
 package me.matsumo.fankt.fanbox.datasource.parser
 
-import com.fleeksoft.ksoup.Ksoup
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.Json
 import me.matsumo.fankt.fanbox.domain.entity.FanboxMetaDataEntity
 import me.matsumo.fankt.fanbox.response.FanboxFailureInterpreter
 
+/** HTML 文字列から metadata JSON 文字列を取り出す関数型 */
+internal fun interface FanboxMetadataExtractor {
+    fun extract(html: String): String?
+}
+
 internal class FanboxMetadataParser(
     private val formatter: Json,
+    private val extractor: FanboxMetadataExtractor,
 ) {
     fun parse(
         html: String,
         statusCode: Int? = null,
         endpoint: String = "homepage",
     ): FanboxMetaDataEntity {
-        val document = Ksoup.parse(html)
-        val metadata = document.select("meta[name=metadata]").first()?.attr("content")
+        val metadata = extractor.extract(html)
             ?: throw FanboxFailureInterpreter.schemaMismatch(
                 statusCode = statusCode,
                 body = html,
