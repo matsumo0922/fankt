@@ -138,7 +138,13 @@ signal)`, and `RoomFanboxCookieStorage` supplies the backend `Flow` and its own 
 drive it with a substitute upstream that counts subscriptions and emits failures on demand, which is
 what makes "does not subscribe when already closed", "collector failure propagates unchanged",
 "cancellation is not rewritten", and "failure while open is not rewritten" observable rather than
-assumed. The Android/iOS contract test still exercises the real Room path for the scenarios that can
+assumed.
+
+The cause selection for an upstream failure is a separate internal function for the same reason.
+Driving it only through the composition cannot distinguish a rewritten upstream failure from the one
+the close termination branch produces, because both are `IllegalStateException` with the same
+message, so a missing rewrite would go undetected. Testing the selection directly for both signal
+states closes that gap. The Android/iOS contract test still exercises the real Room path for the scenarios that can
 be driven end to end. This mirrors `PersistentCookieStorageTest`, which already tests internals
 through a fake DAO.
 

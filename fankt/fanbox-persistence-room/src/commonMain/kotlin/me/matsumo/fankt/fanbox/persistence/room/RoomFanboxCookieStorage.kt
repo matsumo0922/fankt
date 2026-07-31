@@ -103,13 +103,20 @@ internal fun <T> closeAwareFlow(
     check(!closeSignal.isCompleted) { CLOSED_MESSAGE }
     emitAll(
         merge(
-            upstream.catch { failure ->
-                throw if (closeSignal.isCompleted) closedFailure() else failure
-            },
+            upstream.catch { failure -> throw upstreamCause(failure, closeSignal.isCompleted) },
             closeTerminationFlow(closeSignal),
         ),
     )
 }
+
+/**
+ * Chooses the cause an upstream [failure] surfaces as, given whether the close signal has completed.
+ *
+ * A failure that arrives after close is reported as a close failure so the observed cause does not
+ * depend on whether the close termination branch or the cancelled upstream branch wins that race.
+ */
+internal fun upstreamCause(failure: Throwable, closed: Boolean): Throwable =
+    if (closed) closedFailure() else failure
 
 private fun closeTerminationFlow(closeSignal: CompletableDeferred<Unit>): Flow<Nothing> = flow {
     closeSignal.await()

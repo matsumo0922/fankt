@@ -40,6 +40,10 @@
       Assert with the same substitute upstream that a failure delivered while the signal is
       incomplete propagates unchanged, and one delivered after it completes becomes
       `IllegalStateException`.
+- [x] 2.4b Extract the upstream cause selection as its own internal function and test it directly for
+      both signal states. Driving it through the composition cannot distinguish a rewritten upstream
+      failure from one produced by the close termination branch, so without this a missing rewrite can
+      go undetected.
 - [x] 2.5 Structure every new collection assertion so a thrown `IllegalStateException` cannot cancel
       the enclosing `runBlocking` scope before it is asserted: collect in a child that captures its
       outcome as a value, take delivered values from a channel rather than polling a flag, and bound

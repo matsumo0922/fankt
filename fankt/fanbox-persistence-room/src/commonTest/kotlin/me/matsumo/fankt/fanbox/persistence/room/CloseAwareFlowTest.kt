@@ -89,6 +89,17 @@ class CloseAwareFlowTest {
     }
 
     @Test
+    fun upstreamCauseIsRewrittenOnlyAfterClose() {
+        val failure = UpstreamFailure()
+
+        assertEquals(failure, upstreamCause(failure, closed = false))
+
+        val rewritten = upstreamCause(failure, closed = true)
+        assertIs<IllegalStateException>(rewritten)
+        assertEquals(CLOSED_MESSAGE, rewritten.message)
+    }
+
+    @Test
     fun collectorFailureIsPropagatedUnchanged() = runBlocking {
         val upstream = MutableSharedFlow<Int>(replay = 1)
         val closeSignal = CompletableDeferred<Unit>()
