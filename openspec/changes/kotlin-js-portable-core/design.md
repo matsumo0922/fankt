@@ -145,15 +145,31 @@ primitive plugin として `matsumo.primitive.kmp.js` を追加し、既存の `
 
 ### D9: JS artifact を Maven Central へ publish する
 
-fankt の利用者は PixiView（同一開発者）のみであり、外部利用者への後方互換の約束は考慮しない。したがって publish するかどうかは、後方互換のコストではなく #104 の構成しやすさだけで決まる。
+fankt の利用者は PixiView（同一開発者）のみであり、外部利用者への後方互換の約束は考慮しない。
 
-JS artifact を publish しておけば、#104 の guest module は他の依存と同じく `implementation("me.matsumo.fankt:fanbox:$version")` で fankt を参照できる。publish しない場合、PixiView 側から fankt を source 依存させるか composite build を組む必要があり、Zipline の Gradle plugin と組み合わせたときの構成が余分に複雑になる。
-
-既存の publication 設定は `KotlinMultiplatform` を対象にしているため、`js()` ターゲットを宣言すれば JS artifact は自動的に publish 対象へ入る。追加作業は `requiredPublicationMetadataTasks` への JS task 追加のみで、明示的に publish を止める方が手数が多い。よって publish する。
+既存の publication 設定は `KotlinMultiplatform` を対象にしているため、`js()` ターゲットを宣言すれば JS artifact は自動的に publish 対象へ入る。明示的に publish を止める方が手数が多く、artifact が存在して困ることもないため publish する。追加作業は `requiredPublicationMetadataTasks` への JS task 追加のみである。
 
 `deploy-library.yml` は macOS runner で全ターゲットを publish しており、JS も同じ job で扱える。
 
-### D10: PR 分割
+**publish された JS artifact だけでは guest を構成できない点に注意する。** `FanboxEndpoints`、`FanboxResponses`、`RequestDescriptor` はいずれも `internal` であり、別 Gradle module からは参照できない。JS artifact の public API は domain model、ID と cursor の型、例外階層、認証ストレージ contract（`FanboxCookieStorage` / `FanboxTokenStore` とその in-memory 実装）で構成され、**request を組み立てる操作も response を解釈する操作も含まない**。
+
+これは #104 の Zipline host を fankt の `clientMain` に置く構成（後述の D10）を前提とすれば問題にならない。guest と host が同一 module にあるため `internal` のまま相互参照できる。逆に host を PixiView 側の別 module に置く構成を選ぶ場合は、guest 向けの public facade と、検証済み HTTP 実行の public API の両方を新設する必要があり、本 change の範囲を超える。
+
+### D10: Zipline の host / guest はいずれも fankt 内に置く
+
+#104 の OTA 配信では、guest（QuickJS 上の Kotlin/JS）と host（HTTP 実行）の境界をどこに引くかで fankt に必要な public API が変わる。本 change は **両方を fankt 内に置く構成**を前提とする。
+
+- guest: `jsMain`（本 change で追加した JS ターゲット上）
+- host: `clientMain`（既存の Ktor 実行系と同じ source set）
+- PixiView から見える API: 従来どおり `Fanbox` クラスのみ
+
+この構成を取る理由は、SSRF 対策が `internal` に閉じていることにある。`TrustedFanboxEndpointPolicy`（endpoint ID から許可 origin と method を引く内部テーブル）と `FanboxDescriptorValidator`（HTTPS 強制、origin allowlist、path traversal 排除、リダイレクト先の再検証）は、descriptor を実際の HTTP に変換する唯一の安全な経路である。host を fankt の外に置くと、これらを public にするか、host 側で同等の検証を再実装するかのいずれかになる。前者は #35・#38 で絞った public API を開き直し、後者はセキュリティ境界が二重管理になる。
+
+同一 module に置けば、guest が返した descriptor を host が `internal` の validator を通して実行できる。credential の付与も既存どおり host 側に閉じるため、#104 の「guest は credential に触れない」要件も満たす。
+
+代償として fankt に Zipline 依存が入る。ただし Zipline plugin の適用と guest bundle の生成は #104 で行う作業であり、本 change では JS ターゲットを用意するところまでにとどめる。
+
+### D11: PR 分割
 
 3 stage に分ける。それぞれ独立してマージ可能で、前段が後段の前提になる。
 

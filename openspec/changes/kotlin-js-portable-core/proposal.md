@@ -22,7 +22,8 @@
 
 - Zipline の導入、`ZiplineService` 境界の定義、bundle の署名・配信。これらは PixiView-KMP#104 の担当であり、本 change は Kotlin/JS でコンパイルできる core を用意するところまでを範囲とする。
 - Kotlin バージョンの引き上げ。Zipline 1.27.0 は Kotlin 2.3.x を要求するが、本 change は現行の 2.2.10 のまま `js(IR)` ターゲットを追加する。バージョン引き上げは fankt 全体に影響する独立した作業として別途扱う。
-- JS ターゲットからの HTTP 実行。JS 成果物は request descriptor を組み立て raw response 文字列を解釈する純関数ライブラリであり、通信は行わない。
+- JS ターゲットからの HTTP 実行。
+- guest 向けの public facade。`FanboxEndpoints` / `FanboxResponses` / `RequestDescriptor` は `internal` のままとし、JS artifact には request を組み立てる操作も response を解釈する操作も公開しない。これらを別 Gradle module から呼べるようにするには public facade と検証済み HTTP 実行 API の新設が必要になるが、#104 の Zipline host を fankt の `clientMain` に置く構成（design D10）では guest と host が同一 module にあるため不要となる。
 - wasmJs ターゲットの追加。
 - 公開 API の意味的な変更。Android と iOS から見た `Fanbox` の API と挙動は維持する。ただし fankt の利用者は PixiView（同一開発者）のみであり、ABI dump は外部への互換の約束ではなく意図しない公開 API 変化の回帰検査として扱う。
 
