@@ -188,9 +188,9 @@ Attribution: agent 仮決め.
   starts is still observed, so a lost emission fails the test rather than passing silently.
 - **Test structure under `runBlocking`.** An `IllegalStateException` thrown by a collecting child
   would cancel the enclosing scope before the assertion runs, so the contract test collects inside a
-  child that captures its own outcome as a value, uses `CompletableDeferred` rather than polling as
-  the start barrier, and bounds each wait with a timeout so a hung collection fails instead of
-  hanging the suite.
+  child that captures its own outcome as a value, takes delivered values from a channel rather than
+  polling a flag, and bounds each wait with a timeout so a hung collection fails instead of hanging
+  the suite.
 
 ## Migration Plan
 
