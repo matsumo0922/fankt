@@ -201,6 +201,16 @@ class FanboxEndpointsTest {
     }
 
     @Test
+    fun bellListSkipsUnreadConversionUnlessRequested() {
+        fun skipValue(descriptor: RequestDescriptor) =
+            descriptor.query.single { it.name == "skipConvertUnreadNotification" }.value
+
+        assertEquals("1", skipValue(FanboxEndpoints.bells(page = 2)))
+        assertEquals("1", skipValue(FanboxEndpoints.bells(page = 2, skipConvertUnreadNotification = 1)))
+        assertEquals("0", skipValue(FanboxEndpoints.bells(page = 2, skipConvertUnreadNotification = 0)))
+    }
+
+    @Test
     fun descriptorContractIsSerializableWithoutPublicAbiExposure() {
         val descriptor = FanboxEndpoints.postDetail(FanboxPostId("post-id"))
         val encoded = Json.encodeToString(descriptor)

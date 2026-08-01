@@ -444,17 +444,51 @@ class Fanbox internal constructor(
         return user.getNewsLetters()
     }
 
-    /** @throws FanboxException when the FANBOX request or response decoding fails. */
+    /**
+     * Returns one page of notifications and leaves them unread.
+     *
+     * @throws FanboxException when the FANBOX request or response decoding fails.
+     */
     suspend fun getBells(page: Int): PageNumberInfo<FanboxBell> {
-        return user.getBells(page).value
+        return getBells(page, markNotificationsRead = false)
     }
 
-    /** Returns notifications and reports each skipped item on the caller's coroutine context. */
+    /**
+     * Returns one page of notifications.
+     *
+     * Pass `markNotificationsRead = true` to let FANBOX mark the returned notifications as read
+     * while listing them; that conversion cannot be undone through this API.
+     *
+     * @throws FanboxException when the FANBOX request or response decoding fails.
+     */
+    suspend fun getBells(page: Int, markNotificationsRead: Boolean): PageNumberInfo<FanboxBell> {
+        return user.getBells(page, markNotificationsRead).value
+    }
+
+    /**
+     * Returns notifications and reports each skipped item on the caller's coroutine context.
+     *
+     * The returned notifications are left unread.
+     */
     suspend fun getBells(
         page: Int,
         onItemSchemaMismatch: (FanboxListItemSchemaMismatch) -> Unit,
     ): PageNumberInfo<FanboxBell> {
-        return user.getBells(page).notifyMismatches(onItemSchemaMismatch)
+        return getBells(page, onItemSchemaMismatch, markNotificationsRead = false)
+    }
+
+    /**
+     * Returns notifications and reports each skipped item on the caller's coroutine context.
+     *
+     * Pass `markNotificationsRead = true` to let FANBOX mark the returned notifications as read
+     * while listing them; that conversion cannot be undone through this API.
+     */
+    suspend fun getBells(
+        page: Int,
+        onItemSchemaMismatch: (FanboxListItemSchemaMismatch) -> Unit,
+        markNotificationsRead: Boolean,
+    ): PageNumberInfo<FanboxBell> {
+        return user.getBells(page, markNotificationsRead).notifyMismatches(onItemSchemaMismatch)
     }
 
     /** @throws FanboxException when homepage metadata cannot be fetched or decoded. */

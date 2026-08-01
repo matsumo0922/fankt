@@ -20,5 +20,8 @@ dependencies {
     implementation(libs.bundles.infra.api)
     implementation(libs.bundles.ktor)
 
+    // The sample app builds its request form by reflecting over the Fanbox public API.
+    implementation(libs.kotlin.reflect)
+
     implementation(libs.androidx.core.splashscreen)
 }

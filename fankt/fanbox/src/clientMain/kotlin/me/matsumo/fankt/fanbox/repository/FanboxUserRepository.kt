@@ -46,8 +46,13 @@ internal class FanboxUserRepository(
         FanboxResponses.newsletters(response.bodyText, response.statusCode)
     }
 
-    suspend fun getBells(page: Int) = withContext(ioDispatcher) {
-        val response = requestExecutor.execute(FanboxEndpoints.bells(page))
+    suspend fun getBells(page: Int, markNotificationsRead: Boolean) = withContext(ioDispatcher) {
+        val response = requestExecutor.execute(
+            FanboxEndpoints.bells(
+                page = page,
+                skipConvertUnreadNotification = if (markNotificationsRead) 0 else 1,
+            ),
+        )
         FanboxResponses.bells(
             body = response.bodyText,
             statusCode = response.statusCode,
