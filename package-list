@@ -6,5 +6,7 @@ me.matsumo.fankt.fanbox
 me.matsumo.fankt.fanbox.domain
 me.matsumo.fankt.fanbox.domain.model
 me.matsumo.fankt.fanbox.domain.model.id
+module:fanbox-persistence-room
+me.matsumo.fankt.fanbox.persistence.room
 module:fantia
 me.matsumo.fankt.fantia
