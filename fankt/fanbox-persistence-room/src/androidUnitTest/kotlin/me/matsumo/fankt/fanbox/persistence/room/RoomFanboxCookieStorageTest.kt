@@ -22,6 +22,15 @@ class RoomFanboxCookieStorageTest {
         )
     }
 
+    @Test
+    fun terminatesCollectionsAtCloseAndOutlivesClientCycles() {
+        verifyRoomStorageCloseContract(
+            cleanupFixture = ::cleanupFixture,
+            createFixture = ::createFixture,
+            createStorage = { createRoomFanboxCookieStorage(context) },
+        )
+    }
+
     private fun createFixture(version: Int) {
         val path = roomFanboxDatabasePath(context)
         checkNotNull(File(path).parentFile).mkdirs()

@@ -166,11 +166,31 @@ try {
 Create one storage for the host lifecycle that needs persistence. Close every `Fanbox` that uses it,
 then close the storage. Do not open multiple storage instances for the same `fankt.db`: their Room
 invalidation trackers do not propagate `cookies` Flow updates between instances, and concurrent
-writes can fail with `SQLITE_BUSY`. `close()` is idempotent; operations started after close fail. A
-Flow obtained before close can instead terminate with an underlying Room exception when collected
-after close. A later factory call opens a fresh instance over the same database file and restores
-committed Cookie rows. The schema stores legacy records as domain Cookies, so Room-backed records
-have `hostOnly = false`.
+writes can fail with `SQLITE_BUSY`. `close()` is idempotent; operations started after close fail with
+`IllegalStateException`. A later factory call opens a fresh instance over the same database file and
+restores committed Cookie rows. The schema stores legacy records as domain Cookies, so Room-backed
+records have `hostOnly = false`.
+
+Closing the storage terminates a collection of its `cookies`, directly or through `Fanbox.cookies`,
+with `IllegalStateException`. A Flow obtained before close fails the same way when it is first
+collected after close, without reaching the database. That cause applies when close is the first
+terminal event to reach the collection: cancelling the collecting coroutine surfaces its
+cancellation, an exception thrown by the collector propagates unchanged, and a database failure
+delivered while the storage is still open propagates unchanged. `close()` returns without waiting for
+a collection to unwind.
+
+Because `close()` neither suspends nor preempts a running collector, a collector that throws — or a
+cancellation that arrives — after `close()` returns but before that collection observes the close
+still determines the observed cause. Reporting close instead would have to discard your own exception
+or swallow a cancellation, so do not depend on the cause in that window.
+
+Creating and closing `Fanbox` instances does not close the injected storage, so one storage serves any
+number of client lifecycles and stays usable until the host closes it.
+
+Do not call `close()` from a context that cannot make progress concurrently with the storage's query
+dispatcher — for example, a single-parallelism dispatcher passed as `ioDispatcher` and then also used
+to run `close()`. Room's close barrier waits for in-flight database work to release, and that work
+cannot resume on a dispatcher occupied by the `close()` call itself.
 
 The v0.1.0 API keeps `Fanbox()` but replaces Ktor-facing constructor and operation types. Use
 `FanboxLogLevel` instead of Ktor `LogLevel`, `FanboxCookieRecord` instead of Ktor `Cookie`, and the
