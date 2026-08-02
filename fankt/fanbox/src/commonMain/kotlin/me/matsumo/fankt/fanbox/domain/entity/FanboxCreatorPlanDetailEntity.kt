@@ -11,7 +11,7 @@ internal data class FanboxCreatorPlanDetailEntity(
     @Serializable
     data class Body(
         @SerialName("plan")
-        val plan: FanboxCreatorPlanListEntity.Body,
+        val plan: FanboxCreatorPlanListEntity.Plan,
         @SerialName("supportStartDatetime")
         val supportStartDatetime: String,
         @SerialName("supportTransactions")

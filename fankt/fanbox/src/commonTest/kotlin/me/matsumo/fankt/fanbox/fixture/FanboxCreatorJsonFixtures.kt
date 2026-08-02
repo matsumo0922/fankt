@@ -112,40 +112,42 @@ internal object FanboxCreatorJsonFixtures {
     val actualCreatorPlanList =
         """
         {
-          "body": [
-            {
-              "id": "94000001",
-              "title": "Fixture Title 1",
-              "fee": 1234,
-              "description": "Fixture description 1",
-              "coverImageUrl": "https://example.invalid/resource-1",
-              "user": {
-                "userId": "91000001",
-                "name": "Fixture Name 1",
-                "iconUrl": "https://example.invalid/resource-2"
+          "body": {
+            "plans": [
+              {
+                "id": "94000001",
+                "title": "Fixture Title 1",
+                "fee": 1234,
+                "description": "Fixture description 1",
+                "coverImageUrl": "https://example.invalid/resource-1",
+                "user": {
+                  "userId": "91000001",
+                  "name": "Fixture Name 1",
+                  "iconUrl": "https://example.invalid/resource-2"
+                },
+                "creatorId": "fixture-creator-1",
+                "hasAdultContent": false,
+                "paymentMethod": null,
+                "perks": []
               },
-              "creatorId": "fixture-creator-1",
-              "hasAdultContent": false,
-              "paymentMethod": null,
-              "perks": []
-            },
-            {
-              "id": "94000002",
-              "title": "Fixture Title 2",
-              "fee": 1234,
-              "description": "Fixture description 2",
-              "coverImageUrl": "https://example.invalid/resource-3",
-              "user": {
-                "userId": "91000002",
-                "name": "Fixture Name 2",
-                "iconUrl": "https://example.invalid/resource-4"
-              },
-              "creatorId": "fixture-creator-2",
-              "hasAdultContent": false,
-              "paymentMethod": null,
-              "perks": []
-            }
-          ]
+              {
+                "id": "94000002",
+                "title": "Fixture Title 2",
+                "fee": 1234,
+                "description": "Fixture description 2",
+                "coverImageUrl": "https://example.invalid/resource-3",
+                "user": {
+                  "userId": "91000002",
+                  "name": "Fixture Name 2",
+                  "iconUrl": "https://example.invalid/resource-4"
+                },
+                "creatorId": "fixture-creator-2",
+                "hasAdultContent": false,
+                "paymentMethod": null,
+                "perks": []
+              }
+            ]
+          }
         }
         """.trimIndent()
 
