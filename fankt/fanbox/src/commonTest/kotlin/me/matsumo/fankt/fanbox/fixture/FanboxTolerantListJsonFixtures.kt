@@ -72,39 +72,43 @@ internal object FanboxTolerantListJsonFixtures {
     val supportingPlansMixed =
         """
         {
-          "body": [
-            ${plan("tolerant-plan-1", "First plan")},
-            {
-              "id": "broken-plan",
-              "description": "missing title",
-              "fee": 500,
-              "hasAdultContent": false
-            },
-            ${plan("tolerant-plan-2", "Second plan")}
-          ]
+          "body": {
+            "plans": [
+              ${plan("tolerant-plan-1", "First plan")},
+              {
+                "id": "broken-plan",
+                "description": "missing title",
+                "fee": 500,
+                "hasAdultContent": false
+              },
+              ${plan("tolerant-plan-2", "Second plan")}
+            ]
+          }
         }
         """.trimIndent()
 
     val supportingPlanInvalidUserId =
         """
         {
-          "body": [
-            {
-              "coverImageUrl": null,
-              "creatorId": "fixture-creator",
-              "description": "fixture plan",
-              "fee": 500,
-              "hasAdultContent": false,
-              "id": "invalid-user-plan",
-              "paymentMethod": null,
-              "title": "Invalid user plan",
-              "user": {
-                "iconUrl": null,
-                "name": "Fixture user",
-                "userId": "not-a-number"
+          "body": {
+            "plans": [
+              {
+                "coverImageUrl": null,
+                "creatorId": "fixture-creator",
+                "description": "fixture plan",
+                "fee": 500,
+                "hasAdultContent": false,
+                "id": "invalid-user-plan",
+                "paymentMethod": null,
+                "title": "Invalid user plan",
+                "user": {
+                  "iconUrl": null,
+                  "name": "Fixture user",
+                  "userId": "not-a-number"
+                }
               }
-            }
-          ]
+            ]
+          }
         }
         """.trimIndent()
 

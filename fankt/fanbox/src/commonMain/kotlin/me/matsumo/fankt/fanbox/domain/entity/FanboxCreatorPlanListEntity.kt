@@ -7,10 +7,16 @@ import kotlinx.serialization.json.JsonElement
 @Serializable
 internal data class FanboxCreatorPlanListEntity(
     @SerialName("body")
-    val body: List<JsonElement>,
+    val body: Body,
 ) {
     @Serializable
     data class Body(
+        @SerialName("plans")
+        val plans: List<JsonElement>,
+    )
+
+    @Serializable
+    data class Plan(
         @SerialName("coverImageUrl")
         val coverImageUrl: String?,
         @SerialName("creatorId")
@@ -35,12 +41,18 @@ internal data class FanboxCreatorPlanListEntity(
 @Serializable
 internal data class FanboxCreatorPlanListStrictEntity(
     @SerialName("body")
-    val body: List<FanboxCreatorPlanListEntity.Body>,
+    val body: Body,
 ) {
+    @Serializable
+    data class Body(
+        @SerialName("plans")
+        val plans: List<FanboxCreatorPlanListEntity.Plan>,
+    )
+
     init {
-        body.forEachIndexed { index, plan ->
+        body.plans.forEachIndexed { index, plan ->
             val userId = plan.user?.userId ?: return@forEachIndexed
-            require(userId.toLongOrNull() != null) { "body[$index].user.userId must be a Long" }
+            require(userId.toLongOrNull() != null) { "body.plans[$index].user.userId must be a Long" }
         }
     }
 }

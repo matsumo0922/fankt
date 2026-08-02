@@ -72,7 +72,7 @@ internal class FanboxPostMapper(
     ): FanboxTolerantResult<PageCursorInfo<FanboxPost>> {
         val decoded = listItemDecoder.decodeAndMap(
             endpoint = endpoint,
-            items = entity.body,
+            items = entity.body.posts,
             deserializer = FanboxPostEntity.serializer(),
         ) { item, _ -> FanboxTolerantResult(map(item), emptyList()) }
         return FanboxTolerantResult(
@@ -423,6 +423,6 @@ internal class FanboxPostMapper(
     }
 
     fun map(entity: FanboxCreatorPostsPaginateEntity): List<FanboxCursor> {
-        return entity.body.map { it.translateToCursor() }
+        return entity.body.pageUrls.map { it.translateToCursor() }
     }
 }

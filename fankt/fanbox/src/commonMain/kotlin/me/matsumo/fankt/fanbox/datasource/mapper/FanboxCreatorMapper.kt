@@ -117,12 +117,12 @@ internal class FanboxCreatorMapper(
     fun map(entity: FanboxCreatorPlanListEntity, endpoint: String): FanboxTolerantResult<List<FanboxCreatorPlan>> {
         return listItemDecoder.decodeAndMap(
             endpoint = endpoint,
-            items = entity.body,
-            deserializer = FanboxCreatorPlanListEntity.Body.serializer(),
+            items = entity.body.plans,
+            deserializer = FanboxCreatorPlanListEntity.Plan.serializer(),
         ) { item, _ -> FanboxTolerantResult(map(item), emptyList()) }
     }
 
-    fun map(entity: FanboxCreatorPlanListEntity.Body): FanboxCreatorPlan {
+    fun map(entity: FanboxCreatorPlanListEntity.Plan): FanboxCreatorPlan {
         return with(entity) {
             FanboxCreatorPlan(
                 coverImageUrl = coverImageUrl,

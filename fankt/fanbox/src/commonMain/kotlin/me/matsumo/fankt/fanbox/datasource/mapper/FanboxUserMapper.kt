@@ -35,7 +35,7 @@ internal class FanboxUserMapper(
     }
 
     fun map(entity: FanboxCreatorPlanListStrictEntity): List<FanboxCreatorPlan> {
-        return entity.body.map(creatorMapper::map)
+        return entity.body.plans.map(creatorMapper::map)
     }
 
     fun map(entity: FanboxPaidRecordListEntity): List<FanboxPaidRecord> {
