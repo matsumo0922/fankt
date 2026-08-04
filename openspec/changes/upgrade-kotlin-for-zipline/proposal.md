@@ -1,0 +1,30 @@
+## Why
+
+Zipline 1.27.0 を使う後続の OTA prototype に進むには、fankt の Kotlin compiler と kotlinx.serialization を Zipline が対応する組み合わせへ揃える必要がある。現行の Kotlin 2.2.10 / kotlinx.serialization 1.9.0 のままでは compiler plugin の互換範囲を満たさない。
+
+## What Changes
+
+- Kotlin を 2.3.21、kotlinx.serialization を 1.10.0 以上へ更新する。
+- Kotlin 2.3 系で新たに顕在化する compile error、警告強化、deprecation を受け入れ条件に必要な範囲で解消する。
+- Android、iOS、JVM、JS を含む fankt の build / test と `:fankt:fanbox:jsTest` を通す。
+- Zipline 1.27.0 の Gradle plugin を一時的に適用した検証 build を行い、plugin 自体の恒久適用と guest 化は後続 issue に残す。
+- Kotlin 2.4.0 の PixiView-KMP から local publish した fankt artifact を消費できることを検証する。
+- version catalog に、Zipline の対応確認なしに Kotlin 2.4 系へ更新しない制約を現在形で記録する。
+- 配送形態は単一 PR とする。依存更新・互換修正・検証は同じ toolchain compatibility intent であり、独立した production vertical slice に分割できないためである。（agent 仮決め）
+
+## Capabilities
+
+### New Capabilities
+
+- `zipline-toolchain-compatibility`: fankt が Zipline 対応 Kotlin toolchain で全ターゲットを build / test でき、Kotlin 2.4 consumer から local artifact を消費できる契約。
+
+### Modified Capabilities
+
+- `javascript-portable-core`: portable core の JS build / test 契約を Kotlin 2.3.21 と kotlinx.serialization 1.10.0 以上の toolchain 上で維持する。
+
+## Impact
+
+- 主な変更箇所: `gradle/libs.versions.toml`、Kotlin 2.3 互換修正が必要な source / build logic、対応する test。
+- 依存: Kotlin compiler / Gradle plugin 2.3.21、kotlinx.serialization 1.10.0 以上。
+- 検証対象: fankt 全ターゲット、Zipline 1.27.0 plugin 適用時の build、PixiView-KMP 2.4.0 consumer build。
+- 公開 API の意図的な変更、Zipline plugin の恒久適用、guest / host 実装は含まない。（ユーザー確認済み: Issue #88）
