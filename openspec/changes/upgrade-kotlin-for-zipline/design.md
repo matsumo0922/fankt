@@ -32,7 +32,7 @@ version catalog の Kotlin 行には、Zipline が Kotlin 2.4 に対応するま
 
 （agent 仮決め）まず version catalog だけを更新して build を実行し、Kotlin 2.3 の error・warning-as-error・deprecation により失敗した箇所だけを修正する。加えて Kotlin 2.3 で `kotlin.time.Instant` / `Clock` が stable になったため、それらの使用だけを理由に置かれた `ExperimentalTime` opt-in と Kotlin 2.2 向け説明を削除する。公開 API の意図的変更や、他の先回り cleanup は行わない。
 
-実 build で確認した Kotlin 2.3 toolchain の成立条件として、Android Gradle Plugin は Kotlin 2.3 metadata に必要な R8 8.13.19 を含む 8.13.2、Ktorfit は Kotlin 2.3 compiler plugin に対応する 2.7.3、KSP は同 Ktorfit release が使用する 2.3.6 に揃える。Ktorfit 2.7.5 は project の Kotlin Gradle plugin と stdlib を 2.4.0 へ押し上げて D1 に反し、Ktorfit 2.7.3 と KSP 2.3.10 の組み合わせは削除済みの全 target `ksp` configuration を要求するため採用しない。この補助 dependency 調整は Kotlin 2.3.21 固定と全 build 成功に必要な範囲に限定する。
+実 build で確認した Kotlin 2.3 toolchain の成立条件として、Android Gradle Plugin は Kotlin 2.3 metadata に必要な R8 8.13.19 を含む 8.13.2、Ktorfit は Kotlin 2.3 compiler plugin に対応する 2.7.3、KSP は同 Ktorfit release が使用する 2.3.6 に揃える。Ktorfit 2.7.5 は project の Kotlin Gradle plugin と stdlib を 2.4.0 へ押し上げて D1 に反し、Ktorfit 2.7.3 と KSP 2.3.10 の組み合わせは削除済みの全 target `ksp` configuration を要求するため採用しない。Gradle 8.13 の publication validation に合わせ、aggregate FANBOX documentation だけを root `docs` に出力し、他 module の Dokka Javadoc output は各 build directory に分離する。この補助 build-tool 調整は Kotlin 2.3.21 固定、全 build、local publication の成功に必要な範囲に限定する。
 
 ### D3: Kotlin metadata consumer の最低 version は 2.3.21 とする
 
