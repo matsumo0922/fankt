@@ -788,9 +788,7 @@ android {
 
 kotlin {
     @OptIn(org.jetbrains.kotlin.gradle.dsl.abi.ExperimentalAbiValidation::class)
-    abiValidation {
-        enabled.set(true)
-    }
+    abiValidation {}
 
     sourceSets {
         val commonMain by getting
@@ -882,7 +880,7 @@ val verifyKtorBoundary = tasks.register<VerifyKtorBoundaryTask>("verifyKtorBound
     group = "verification"
     description = "Verifies that Ktor remains outside the public FANBOX API boundary"
     dependsOn(
-        "checkLegacyAbi",
+        "checkKotlinAbi",
         "compileReleaseKotlinAndroid",
         publicationMetadataTasks,
         verifyKtorTypeAliasFixture,

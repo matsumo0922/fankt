@@ -1,5 +1,3 @@
-@file:OptIn(kotlin.time.ExperimentalTime::class)
-
 package me.matsumo.fankt.fanbox.domain.model
 
 import kotlinx.serialization.SerialName

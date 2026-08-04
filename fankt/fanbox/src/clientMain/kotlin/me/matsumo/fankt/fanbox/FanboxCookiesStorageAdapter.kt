@@ -1,5 +1,3 @@
-@file:OptIn(kotlin.time.ExperimentalTime::class)
-
 package me.matsumo.fankt.fanbox
 
 import io.ktor.client.plugins.cookies.CookiesStorage

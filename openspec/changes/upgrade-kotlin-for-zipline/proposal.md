@@ -27,7 +27,7 @@ Zipline 1.27.0 を使う後続の OTA prototype に進むには、fankt の Kotl
 ## Impact
 
 - 主な変更箇所: `gradle/libs.versions.toml`、Kotlin 2.3 互換修正が必要な source / build logic、対応する test。
-- 依存: Kotlin compiler / Gradle plugin 2.3.21、kotlinx.serialization 1.10.0 以上。
+- 依存: Kotlin compiler / Gradle plugin 2.3.21、kotlinx.serialization 1.10.0、Android Gradle Plugin 8.13.2、Ktorfit 2.7.3、KSP 2.3.6。
 - consumer compatibility: Kotlin/Native・Kotlin/JS metadata の最低 consumer compiler は Kotlin 2.3.21。Kotlin 2.2 consumer は保証外となる。
 - 検証対象: fankt 全ターゲット、Zipline 1.27.0 plugin 適用時の build、PixiView-KMP 2.4.0 consumer build。
 - 公開 API の意図的な変更、Zipline plugin の恒久適用、guest / host 実装は含まない。（ユーザー確認済み: Issue #88）

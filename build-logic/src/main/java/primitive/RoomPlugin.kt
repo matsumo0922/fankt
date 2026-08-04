@@ -16,6 +16,10 @@ class RoomPlugin : Plugin<Project> {
             pluginManager.apply("androidx.room")
 
             kotlin {
+                compilerOptions {
+                    freeCompilerArgs.add("-Xexpect-actual-classes")
+                }
+
                 sourceSets.commonMain.dependencies {
                     implementation(libs.bundle("database"))
                 }
@@ -26,7 +30,7 @@ class RoomPlugin : Plugin<Project> {
                     "kspAndroid",
                     "kspIosSimulatorArm64",
                     "kspIosX64",
-                    "kspIosArm64"
+                    "kspIosArm64",
                 ).forEach {
                     add(it, libs.library("kmp-room-compiler"))
                 }
