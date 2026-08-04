@@ -28,11 +28,17 @@ PixiView-KMP は Kotlin 2.4.0 で fankt の `fanbox` と `fanbox-persistence-roo
 
 version catalog の Kotlin 行には、Zipline が Kotlin 2.4 に対応するまで 2.3.x に留める制約を現在形で記す。
 
-### D2: Kotlin 2.3 互換修正は compiler / test failure が示した箇所に限定する
+### D2: Kotlin 2.3 互換修正は compiler / test failure と stable-time 境界に限定する
 
-（agent 仮決め）まず version catalog だけを更新して build を実行し、Kotlin 2.3 の error・warning-as-error・deprecation により失敗した箇所だけを修正する。公開 API の意図的変更や、失敗を伴わない先回りの cleanup は行わない。
+（agent 仮決め）まず version catalog だけを更新して build を実行し、Kotlin 2.3 の error・warning-as-error・deprecation により失敗した箇所だけを修正する。加えて Kotlin 2.3 で `kotlin.time.Instant` / `Clock` が stable になったため、それらの使用だけを理由に置かれた `ExperimentalTime` opt-in と Kotlin 2.2 向け説明を削除する。公開 API の意図的変更や、他の先回り cleanup は行わない。
 
-### D3: Zipline plugin は disposable validation copy で適用する
+### D3: Kotlin metadata consumer の最低 version は 2.3.21 とする
+
+（ユーザー確認済み: Issue #88 の producer 2.3.21 更新と既知 consumer PixiView-KMP 2.4.0）Kotlin/Native・Kotlin/JS の klib metadata は古い compiler による新しい metadata の消費を保証しない。本 change は Kotlin 2.2 consumer compatibility を保証せず、consumer の最低 Kotlin version を 2.3.21 とする。既知 consumer は PixiView-KMP 2.4.0 であり、今回 local publication を使って実証する。
+
+これは dependency-only update に見えても consumer toolchain の breaking boundary なので、proposal と README に明記する。Kotlin 2.2 consumer fixture は「維持する保証」ではないため追加しない。repository 内の compatibility fixture は producer と同じ catalog の Kotlin 2.3.21 で検証する。
+
+### D4: Zipline plugin は disposable validation copy で適用する
 
 （agent 仮決め）production branch に `app.cash.zipline` を残すと後続 issue の plugin 適用を先取りするため、最終 fankt HEAD から作る disposable copy にだけ Zipline 1.27.0 を追加する。
 
@@ -43,13 +49,15 @@ version catalog の Kotlin 行には、Zipline が Kotlin 2.4 に対応するま
 
 Zipline 1.27.0 tag の公式 sample は `id("app.cash.zipline")` を KMP module に適用しており、plugin 実装は `KotlinCompilerPluginSupportPlugin` として全 compilation に compiler plugin artifact を追加する。この経路を検証対象とする。
 
-### D4: consumer 検証は隔離した Maven repository と PixiView worktree を使う
+### D5: consumer 検証は隔離した Maven repository と PixiView worktreeを使う
 
-（agent 仮決め）最終 fankt HEAD の publication を一時 Maven repository へ出し、PixiView-KMP の detached worktree だけにその repository を一時追加する。既存の `fankt = "0.1.1"` dependency coordinate は維持し、一時 repository にある新 build の artifact だけを解決させる。PixiView の main checkout、version catalog、tracked filesは変更しない。
+（agent 仮決め）最終 fankt HEAD の `fanbox` と `fanbox-persistence-room` publication を一時 Maven repository へ `0.1.1-issue88-local` として出し、検証開始時の PixiView-KMP `origin/main` から作る detached worktree だけにその repository と version を一時設定する。PixiView の main checkout と tracked files は変更しない。
 
-consumer build は fankt を直接使う production module を含む Gradle build で行い、Kotlin 2.4.0 compiler が Kotlin 2.3.21 で生成した klib metadata を読めることを確認する。
+PixiView の repository 設定は `me.matsumo.fankt` group を一時 repository だけへ送る `exclusiveContent` とし、Maven Central や既存 cache への fallback を許さない。`core:repository` が `fanbox-persistence-room` を `api` で使用し、そこから `fanbox` も解決する production path を対象に、`:core:repository:compileAndroidMain` と `:core:repository:compileKotlinIosSimulatorArm64` を実行する。resolved component が両方とも unique version であることを dependency insight で確認し、repository 内 artifact と Gradle が解決した artifact の SHA-256 を照合する。
 
-### D5: 単一 PR で配送する
+これにより Android（JVM bytecode）と iOS KLib の両経路で、Kotlin 2.4.0 compiler が Kotlin 2.3.21 で生成した metadata と API を読めることを確認する。standalone JVM target は fankt に存在せず、保証対象に含めない。
+
+### D6: 単一 PR で配送する
 
 （agent 仮決め）version bump、必要な互換修正、検証記録は互いに単独では受け入れ条件を満たさない。同じ toolchain compatibility intent の一続きなので、OpenSpec artifacts と実装を単一 PR に載せる。
 
@@ -57,7 +65,8 @@ consumer build は fankt を直接使う production module を含む Gradle buil
 
 - [Risk] Zipline plugin の一時適用方法が後続の最終 guest 構成と異なる → plugin ID、version、compiler plugin 適用経路だけを今回の保証として明記し、guest task・API tracking は後続 issue に残す。
 - [Risk] Kotlin 2.3.21 で通っても Zipline 1.27.0 が build した 2.3.20 と完全同一ではない → 実際の 1.27.0 compiler plugin を適用した compile / build を証拠にする。
-- [Risk] shared Maven cache によって旧 artifact を誤消費する → 一時 repository を空の隔離 directory にし、consumer dependency resolution をその artifact に固定する。
+- [Risk] shared Maven cache によって旧 artifact を誤消費する → unique version、`exclusiveContent`、両 coordinate の resolved component、artifact SHA-256 照合で provenance を固定する。
+- [Risk] Kotlin 2.2 consumer が新しい klib metadata を読めない → 最低 consumer Kotlin 2.3.21 を breaking boundary として明記し、既知 consumer PixiView 2.4.0 を実証する。
 - [Risk] dependency update が生成物や public API dump を変える → full build と既存 ABI / boundary checks を実行し、意図しない差分は修正または blocker とする。
 
 ## Migration Plan

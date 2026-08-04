@@ -5,6 +5,7 @@ Zipline 1.27.0 を使う後続の OTA prototype に進むには、fankt の Kotl
 ## What Changes
 
 - Kotlin を 2.3.21、kotlinx.serialization を 1.10.0 以上へ更新する。
+- **BREAKING** Kotlin/Native・Kotlin/JS metadata を消費する compiler の最低 version を Kotlin 2.3.21 とし、Kotlin 2.2 consumer compatibility は保証しない。既知 consumer の PixiView-KMP 2.4.0 は local publication で検証する。
 - Kotlin 2.3 系で新たに顕在化する compile error、警告強化、deprecation を受け入れ条件に必要な範囲で解消する。
 - Android、iOS、JVM、JS を含む fankt の build / test と `:fankt:fanbox:jsTest` を通す。
 - Zipline 1.27.0 の Gradle plugin を一時的に適用した検証 build を行い、plugin 自体の恒久適用と guest 化は後続 issue に残す。
@@ -21,10 +22,12 @@ Zipline 1.27.0 を使う後続の OTA prototype に進むには、fankt の Kotl
 ### Modified Capabilities
 
 - `javascript-portable-core`: portable core の JS build / test 契約を Kotlin 2.3.21 と kotlinx.serialization 1.10.0 以上の toolchain 上で維持する。
+- `stdlib-time-public-api`: Kotlin 2.3 で stable になった `kotlin.time.Instant` / `Clock` から不要な `ExperimentalTime` 境界を除き、consumer guidance を現在の最低 Kotlin version に合わせる。
 
 ## Impact
 
 - 主な変更箇所: `gradle/libs.versions.toml`、Kotlin 2.3 互換修正が必要な source / build logic、対応する test。
 - 依存: Kotlin compiler / Gradle plugin 2.3.21、kotlinx.serialization 1.10.0 以上。
+- consumer compatibility: Kotlin/Native・Kotlin/JS metadata の最低 consumer compiler は Kotlin 2.3.21。Kotlin 2.2 consumer は保証外となる。
 - 検証対象: fankt 全ターゲット、Zipline 1.27.0 plugin 適用時の build、PixiView-KMP 2.4.0 consumer build。
 - 公開 API の意図的な変更、Zipline plugin の恒久適用、guest / host 実装は含まない。（ユーザー確認済み: Issue #88）
