@@ -34,9 +34,9 @@ version catalog の Kotlin 行には、Zipline が Kotlin 2.4 に対応するま
 
 ### D3: Kotlin metadata consumer の最低 version は 2.3.21 とする
 
-（ユーザー確認済み: Issue #88 の producer 2.3.21 更新と既知 consumer PixiView-KMP 2.4.0）Kotlin/Native・Kotlin/JS の klib metadata は古い compiler による新しい metadata の消費を保証しない。本 change は Kotlin 2.2 consumer compatibility を保証せず、consumer の最低 Kotlin version を 2.3.21 とする。既知 consumer は PixiView-KMP 2.4.0 であり、今回 local publication を使って実証する。
+（ユーザー確認済み: Issue #88、および archived `kotlin-js-portable-core` design D9）Kotlin/Native・Kotlin/JS の klib metadata は古い compiler による新しい metadata の消費を保証しない。本 change は Kotlin 2.2 consumer compatibility を保証せず、consumer の最低 Kotlin version を 2.3.21 とする。既存 design は fankt の利用者を PixiView（同一開発者）のみとし、外部利用者への後方互換を約束しない。Issue #88 は既知 consumer の PixiView-KMP 2.4.0 を local publication で検証する契約を明示している。
 
-これは dependency-only update に見えても consumer toolchain の breaking boundary なので、proposal と README に明記する。Kotlin 2.2 consumer fixture は「維持する保証」ではないため追加しない。repository 内の compatibility fixture は producer と同じ catalog の Kotlin 2.3.21 で検証する。
+これは dependency-only update に見えても consumer toolchain の breaking boundary なので、proposal と README に明記する。隔離した最小 JS KLib 実験では、Kotlin 2.3.21 producer の public symbol を Kotlin 2.2.10 consumer が解決できず、consumer を 2.3.21 にすると compile が成功した。Kotlin 2.2 consumer fixture は「維持する保証」ではないため追加しない。repository 内の compatibility fixture は producer と同じ catalog の Kotlin 2.3.21 で検証する。
 
 ### D4: Zipline plugin は disposable validation copy で適用する
 

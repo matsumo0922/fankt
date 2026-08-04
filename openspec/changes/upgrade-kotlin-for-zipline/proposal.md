@@ -7,7 +7,7 @@ Zipline 1.27.0 を使う後続の OTA prototype に進むには、fankt の Kotl
 - Kotlin を 2.3.21、kotlinx.serialization を 1.10.0 以上へ更新する。
 - **BREAKING** Kotlin/Native・Kotlin/JS metadata を消費する compiler の最低 version を Kotlin 2.3.21 とし、Kotlin 2.2 consumer compatibility は保証しない。既知 consumer の PixiView-KMP 2.4.0 は local publication で検証する。
 - Kotlin 2.3 系で新たに顕在化する compile error、警告強化、deprecation を受け入れ条件に必要な範囲で解消する。
-- Android、iOS、JVM、JS を含む fankt の build / test と `:fankt:fanbox:jsTest` を通す。
+- Android（JVM bytecode）、iOS、JS を含む fankt の build / test と `:fankt:fanbox:jsTest` を通す。standalone JVM target は存在せず、保証対象に含めない。
 - Zipline 1.27.0 の Gradle plugin を一時的に適用した検証 build を行い、plugin 自体の恒久適用と guest 化は後続 issue に残す。
 - Kotlin 2.4.0 の PixiView-KMP から local publish した fankt artifact を消費できることを検証する。
 - version catalog に、Zipline の対応確認なしに Kotlin 2.4 系へ更新しない制約を現在形で記録する。
