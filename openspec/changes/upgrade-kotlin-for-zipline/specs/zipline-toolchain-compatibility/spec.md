@@ -3,9 +3,9 @@
 ### Requirement: fankt uses the Zipline-compatible Kotlin toolchain
 Issue #88 の「Kotlin 2.3.21」「kotlinx.serialization 1.10.0 以上」「Kotlin 2.4 系へ上げない」に対応する。fankt は Kotlin compiler / Gradle plugin 2.3.21 と kotlinx.serialization 1.10.0 を使用し、Zipline が Kotlin 2.4 に対応するまで Kotlin 2.3.x に留まらなければならない（SHALL）。
 
-#### Scenario: Version catalog selects the compatible versions
-- **WHEN** `gradle/libs.versions.toml` の Kotlin と kotlinx.serialization version を検査する
-- **THEN** Kotlin は 2.3.21、kotlinx.serialization は 1.10.0 であり、Kotlin 2.4 へ上げない制約が隣接する comment に記録されている
+#### Scenario: Compatible versions and constraint are recorded
+- **WHEN** `gradle/libs.versions.toml` の Kotlin と kotlinx.serialization version、および OpenSpec と README の compatibility guidance を検査する
+- **THEN** Kotlin は 2.3.21、kotlinx.serialization は 1.10.0 であり、Kotlin 2.4 へ上げない制約は version catalog の version 定義へ説明 comment を追加せず OpenSpec と README に記録されている
 
 ### Requirement: fankt builds and tests every supported target
 Issue #88 の「全 target の build / test」と受け入れ条件 `./gradlew build`、`:fankt:fanbox:jsTest` に対応する。toolchain update 後も、fankt の既存 target と検証 task はすべて成功しなければならない（SHALL）。

@@ -12,7 +12,6 @@ compileSdk = "36"
 gradle = "8.13.2"
 
 # Kotlin
-# Zipline 1.27.0 supports Kotlin 2.3.x; keep this below 2.4 until Zipline supports it.
 kotlin = "2.3.21"
 
 # KotlinX
@@ -42,7 +41,6 @@ androidxTestCore = "1.7.0"
 
 # Google
 material = "1.12.0"
-# KSP 2.3.6 is the Kotlin 2.3-compatible pairing used by Ktorfit 2.7.3.
 ksp = "2.3.6"
 gms = "4.4.3"
 

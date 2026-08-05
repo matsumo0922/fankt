@@ -1,6 +1,6 @@
 ## 1. Toolchain Update
 
-- [x] 1.1 Set Kotlin to 2.3.21 and kotlinx.serialization to 1.10.0 in the version catalog, with the Kotlin 2.3.x Zipline compatibility constraint documented next to the version.
+- [x] 1.1 Set Kotlin to 2.3.21 and kotlinx.serialization to 1.10.0 in the version catalog, with the Kotlin 2.3.x Zipline compatibility constraint documented in OpenSpec and README without adding explanatory comments to version definitions.
 - [x] 1.2 Run the Kotlin 2.3 toolchain and fix only compile errors, warning-as-error failures, deprecations, and obsolete `ExperimentalTime` boundaries that block or contradict the Issue #88 toolchain contract.
 
 ## 2. Repository Validation
@@ -20,7 +20,7 @@ Implementation HEAD for the external compatibility runs: `d7d0577e5ef1ef30b9318b
 
 | ID | Command / inspection | Result and scope |
 | --- | --- | --- |
-| V1 | Inspect `gradle/libs.versions.toml` and run `rg -n 'Kotlin 2\\.[234]\|2\\.2\\.10\|2\\.3\\.21\|serialization 1\\.(9\|10)\|ExperimentalTime\|Zipline' README.md fankt --glob '*.md' --glob '*.kt' --glob '*.kts'` | Kotlin 2.3.21, serialization 1.10.0, the adjacent Kotlin 2.4 guard, stable stdlib time usage, current README guidance, and no obsolete source opt-in are present in fankt at the implementation HEAD. |
+| V1 | Inspect `gradle/libs.versions.toml` and run `rg -n 'Kotlin 2\\.[234]\|2\\.2\\.10\|2\\.3\\.21\|serialization 1\\.(9\|10)\|ExperimentalTime\|Zipline' README.md fankt --glob '*.md' --glob '*.kt' --glob '*.kts'` | Kotlin 2.3.21 and serialization 1.10.0 are present without explanatory comments on the version definitions; the Kotlin 2.4 constraint, stable stdlib time usage, current consumer guidance, and absence of obsolete source opt-ins are recorded in OpenSpec, README, and source at the implementation HEAD. |
 | V2 | In a disposable fankt worktree, apply `app.cash.zipline` 1.27.0 to `:fankt:fanbox`, set `zipline.apiTracking=false`, then run the validation-lease-wrapped `./gradlew build :fankt:fanbox:jsTest` with isolated Gradle, Konan, and Android homes. | `BUILD SUCCESSFUL in 6m 50s`; 517 tasks (455 executed, 62 from cache). Android, iOS, JS, FANBOX timestamp mapper/serialization tests, ABI/boundary checks, and both explicit JS and portable fixture tests pass at the implementation HEAD. |
 | V3 | Run `openspec validate upgrade-kotlin-for-zipline --strict`; inspect README, the stdlib-time delta, FANBOX `Clock.System` call sites, timestamp tests, and the absence of `toStdlibInstant()` in detached PixiView-KMP `origin/main`. | OpenSpec is valid; stable stdlib ownership, consumer compiler minimum, bridge-removal guidance, independent calendar dependency guidance, runtime clock ownership, and the timestamp parse/round-trip scenarios are coherent with the implementation and tests. |
 | V4 | From a second disposable fankt worktree, set version `0.1.1-issue88-final` and run `./gradlew -Dmaven.repo.local=/private/tmp/fankt-issue88-maven-final :fankt:fanbox:publishToMavenLocal :fankt:fanbox-persistence-room:publishToMavenLocal`. | `BUILD SUCCESSFUL in 1m 48s`; 238 tasks. Android, iOS, JS, and multiplatform publications for both coordinates are written only to the empty isolated repository. |
@@ -39,7 +39,7 @@ Implementation HEAD for the external compatibility runs: `d7d0577e5ef1ef30b9318b
 | PixiView retains calendar APIs independently | V3 |
 | Consumer guidance is current | V1, V3 |
 | Portable core survives the toolchain update | V2 |
-| Version catalog selects the compatible versions | V1 |
+| Compatible versions and constraint are recorded | V1 |
 | Full build passes | V2 |
 | JavaScript tests pass explicitly | V2 |
 | Disposable plugin-applied build passes | V2 |

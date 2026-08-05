@@ -10,7 +10,7 @@ Zipline 1.27.0 を使う後続の OTA prototype に進むには、fankt の Kotl
 - Android（JVM bytecode）、iOS、JS を含む fankt の build / test と `:fankt:fanbox:jsTest` を通す。standalone JVM target は存在せず、保証対象に含めない。
 - Zipline 1.27.0 の Gradle plugin を一時的に適用した検証 build を行い、plugin 自体の恒久適用と guest 化は後続 issue に残す。
 - Kotlin 2.4.0 の PixiView-KMP から local publish した fankt artifact を消費できることを検証する。
-- version catalog に、Zipline の対応確認なしに Kotlin 2.4 系へ更新しない制約を現在形で記録する。
+- OpenSpec と README に、Zipline の対応確認なしに Kotlin 2.4 系へ更新しない制約を現在形で記録する。
 - 配送形態は単一 PR とする。依存更新・互換修正・検証は同じ toolchain compatibility intent であり、独立した production vertical slice に分割できないためである。（agent 仮決め）
 
 ## Capabilities

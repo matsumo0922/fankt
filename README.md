@@ -215,7 +215,7 @@ need `ExperimentalTime` opt-ins solely for `Instant` or `Clock`. Remove `toStdli
 accept model timestamps directly. PixiView's known migration covers payment grouping, the common
 formatting extension, and both relative-time extensions. Consumers that still need calendar or
 time-zone APIs should select a normal non-compat `kotlinx-datetime` artifact independently; fankt
-does not publish that dependency.
+does not publish that dependency. fankt remains on Kotlin 2.3.x until Zipline supports Kotlin 2.4.
 
 `Fanbox` keeps request builders, serializable descriptors, response parsers, cursor/host extraction,
 and failure interpretation in an internal portable core without Ktor, Room, or Napier imports. Every

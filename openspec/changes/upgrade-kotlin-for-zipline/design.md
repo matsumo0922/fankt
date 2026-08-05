@@ -26,7 +26,7 @@ PixiView-KMP は Kotlin 2.4.0 で fankt の `fanbox` と `fanbox-persistence-roo
 
 （ユーザー確認済み: Issue #88）Kotlin は Zipline main が採用している 2.3.21、kotlinx.serialization は 1.27.0 release と同じ 1.10.0 に固定する。`1.10.0 以上`を満たす最小値を選び、他の KotlinX dependency は更新しない。
 
-version catalog の Kotlin 行には、Zipline が Kotlin 2.4 に対応するまで 2.3.x に留める制約を現在形で記す。
+OpenSpec と README には、Zipline が Kotlin 2.4 に対応するまで 2.3.x に留める制約を現在形で記す。version catalog の version 定義には説明 comment を追加しない。
 
 ### D2: Kotlin 2.3 互換修正は compiler / test failure と stable-time 境界に限定する
 
