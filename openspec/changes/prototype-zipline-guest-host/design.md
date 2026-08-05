@@ -70,7 +70,7 @@ tag 1.27.0 のソースと Maven Central で確認した。設計の結論を左
 
 host 側の compilation にも compiler plugin が必要である以上、plugin を適用しない構成は成立しない。plugin を `:fankt:fanbox` に適用し、guest と host を同一 module に置く。#39 の設計判断 D10（host / guest をいずれも fankt 内に置く）をそのまま実現する構成であり、`FanboxDescriptorValidator` と `TrustedFanboxEndpointPolicy` は `internal` のまま保たれる。
 
-代償は、publish 用の js klib の compile 条件が `es2015` / `MODULE_UMD` へ変わることにある。これを **PR1 で実測して確認する**（V1）。
+代償は、publish 用の js klib の compile 条件が `es2015` / `MODULE_UMD` へ変わることにある。**V1 の実測結果（PR1 で確認済み）**: plugin を適用した状態で `:fankt:fanbox:generateMetadataFileForJsPublication` が成功し、`compileKotlinJs` も通る。compile 条件の変更で publish 用 klib は壊れない。
 
 **代替案として検討し、却下したもの**: host bridge を別 module へ切り出し、plugin を guest module と bridge module だけに適用する。`:fankt:fanbox` の js target の compile 条件は変わらないが、module が 2 つ増え、`FanboxGuestService` の interface 定義を両側から見えるようにする配置も要る。fankt の consumer が事実上ユーザー本人に限られる現状では、compile 条件変更のリスクより構成の複雑さのほうが大きい。
 
@@ -94,7 +94,7 @@ V2 で問題が出た場合の戻り先は、distinguishing attribute の追加�
 
 `ziplineApiCheck` の子 task は JVM 向け `KotlinCompile` にしか登録されない。`:fankt:fanbox` の Android target の compile task がこの型のサブタイプかどうかで、検証が実効を持つかが決まる。
 
-**V3 として PR1 で確認する**: plugin 適用後に `./gradlew :fankt:fanbox:ziplineApiCheck --dry-run` を実行し、子 task が 1 つ以上存在すること、および `api/zipline-api.toml` が生成されることを確認する。
+**V3 の実測結果（PR1 で確認済み）**: `./gradlew :fankt:fanbox:ziplineApiCheck --dry-run` は `compileDebugKotlinAndroidZiplineApiCheck` と `compileReleaseKotlinAndroidZiplineApiCheck` を子 task として列挙する。Android target の compile task が JVM 向け `KotlinCompile` のサブタイプであるため、検証は空回りしない。D1 で plugin を `:fankt:fanbox` へ適用した構成の副次的な帰結であり、当初案（js のみの guest module へ適用）であれば子 task はゼロだった。
 
 子 task がゼロだった場合、`apiTracking` を有効にしたまま放置すると「検証が通っている」という誤った信号になる。その場合の対処を PR1 で決める。選択肢は (a) guest service interface を含む JVM target を追加する、(b) `ziplineApiCheck` に依存しない形で bridge API の固定を行い、その旨を spec の scenario に反映する、のいずれか。**どちらを採るにせよ、無内容に成功する検証を CI に置いたままにはしない。**
 

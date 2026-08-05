@@ -58,6 +58,7 @@ ktor = "3.2.3"
 ksoup = "0.2.5"
 detekt = "1.23.8"
 ktorfit = "2.7.3"
+zipline = "1.27.0"
 buildKonfig = "0.17.1"
 twitterComposeRule = "0.0.26"
 sqliteJdbc = "3.53.2.0"
@@ -91,6 +92,7 @@ dokka = { id = "org.jetbrains.dokka", version.ref = "dokka" }
 detekt = { id = "io.gitlab.arturbosch.detekt", version.ref = "detekt" }
 ktorfit = { id = "de.jensklingenberg.ktorfit", version.ref = "ktorfit" }
 room = { id = "androidx.room", version.ref = "androidxRoom"}
+zipline = { id = "app.cash.zipline", version.ref = "zipline" }
 
 [libraries]
 ## Dependency of the include build-logic
@@ -180,6 +182,9 @@ ktor-logging = { module = "io.ktor:ktor-client-logging", version.ref = "ktor" }
 # Others
 asm = { module = "org.ow2.asm:asm", version.ref = "asm" }
 ksoup = { module = "com.fleeksoft.ksoup:ksoup", version.ref = "ksoup" }
+zipline = { module = "app.cash.zipline:zipline", version.ref = "zipline" }
+zipline-loader = { module = "app.cash.zipline:zipline-loader", version.ref = "zipline" }
+zipline-gradlePlugin = { module = "app.cash.zipline:zipline-gradle-plugin", version.ref = "zipline" }
 desugar = { module = "com.android.tools:desugar_jdk_libs", version = "2.1.4" }
 sqlite-jdbc = { module = "org.xerial:sqlite-jdbc", version.ref = "sqliteJdbc" }
 robolectric = { module = "org.robolectric:robolectric", version.ref = "robolectric" }

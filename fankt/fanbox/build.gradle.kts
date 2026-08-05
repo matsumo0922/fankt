@@ -746,6 +746,7 @@ plugins {
     id("matsumo.primitive.kmp.js")
     id("matsumo.primitive.detekt")
     id("matsumo.primitive.maven.publish")
+    alias(libs.plugins.zipline)
 }
 
 val persistenceBoundaryConfigurations = configurations.matching { configuration ->
@@ -786,9 +787,36 @@ android {
     namespace = "me.matsumo.fankt.fanbox"
 }
 
+zipline {
+    mainFunction.set("me.matsumo.fankt.fanbox.guest.launchZipline")
+}
+
+// The guest target exists to build the bundle, not to be consumed as a dependency. Kotlin
+// Multiplatform has no API to keep a target out of publishing, so its tasks are disabled instead.
+tasks.matching { task -> task.name.contains("GuestPublication") }.configureEach {
+    enabled = false
+}
+
+// Two Kotlin/JS targets share a platform type, so consumers need an attribute to tell their
+// variants apart.
+val fanboxJsTargetAttribute: Attribute<String> = Attribute.of("me.matsumo.fankt.jsTarget", String::class.java)
+
 kotlin {
     @OptIn(org.jetbrains.kotlin.gradle.dsl.abi.ExperimentalAbiValidation::class)
     abiValidation {}
+
+    // The guest bundle needs an executable binary with an entry point, and the existing `js` target
+    // publishes a library. Zipline's serve task name omits the binary kind, so declaring both on one
+    // target registers it twice and fails configuration. A second target keeps them apart.
+    js("guest", org.jetbrains.kotlin.gradle.plugin.KotlinJsCompilerType.IR) {
+        nodejs()
+        binaries.executable()
+        attributes.attribute(fanboxJsTargetAttribute, "guest")
+    }
+
+    targets.named("js") {
+        attributes.attribute(fanboxJsTargetAttribute, "library")
+    }
 
     sourceSets {
         val commonMain by getting
@@ -804,6 +832,9 @@ kotlin {
             api(libs.kotlinx.coroutines.core)
             api(libs.kotlinx.serialization.core)
 
+            // The bridge service interface is shared by the host and the guest, so its Zipline
+            // dependency reaches every published target.
+            implementation(libs.zipline)
             implementation(libs.kotlinx.serialization.json)
             implementation(libs.kotlinx.collections.immutable)
         }
