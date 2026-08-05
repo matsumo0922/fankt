@@ -1,5 +1,3 @@
-@file:OptIn(kotlin.time.ExperimentalTime::class)
-
 package me.matsumo.fankt.fanbox.datasource.mapper
 
 import me.matsumo.fankt.fanbox.domain.FanboxCursor

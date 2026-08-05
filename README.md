@@ -209,13 +209,13 @@ The default authentication durability changes from implicit Room persistence to 
 storage, and constructor binary signatures change. Consumers must perform a clean rebuild and
 inject persistence before upgrading when restart durability is required.
 
-FANBOX model timestamps now use `kotlin.time.Instant` instead of the transitional
-`kotlinx.datetime.Instant` compatibility type. On Kotlin 2.2, callers must explicitly opt in to
-`kotlin.time.ExperimentalTime`; this API is experimental and may change binary shape in a future
-Kotlin release. Remove `toStdlibInstant()` calls and accept model timestamps directly. PixiView's
-known migration covers payment grouping, the common formatting extension, and both relative-time
-extensions. Consumers that still need calendar or time-zone APIs should select a normal
-non-compat `kotlinx-datetime` artifact independently; fankt no longer publishes that dependency.
+FANBOX model timestamps use the stable `kotlin.time.Instant` API instead of the transitional
+`kotlinx.datetime.Instant` compatibility type. Consumers require Kotlin 2.3.21 or newer and do not
+need `ExperimentalTime` opt-ins solely for `Instant` or `Clock`. Remove `toStdlibInstant()` calls and
+accept model timestamps directly. PixiView's known migration covers payment grouping, the common
+formatting extension, and both relative-time extensions. Consumers that still need calendar or
+time-zone APIs should select a normal non-compat `kotlinx-datetime` artifact independently; fankt
+does not publish that dependency. fankt remains on Kotlin 2.3.x until Zipline supports Kotlin 2.4.
 
 `Fanbox` keeps request builders, serializable descriptors, response parsers, cursor/host extraction,
 and failure interpretation in an internal portable core without Ktor, Room, or Napier imports. Every

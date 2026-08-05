@@ -62,7 +62,11 @@ class MavenPublishPlugin : Plugin<Project> {
             }
 
             dokkaPublications.getByName("html") {
-                outputDirectory = file("$rootDir/docs")
+                outputDirectory = if (path == ":fankt:fanbox") {
+                    file("$rootDir/docs")
+                } else {
+                    layout.buildDirectory.dir("dokka/html").get().asFile
+                }
             }
 
             dependencies {

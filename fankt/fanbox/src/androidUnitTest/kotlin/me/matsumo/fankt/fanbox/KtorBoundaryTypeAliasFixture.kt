@@ -1,5 +1,4 @@
 @file:Suppress("unused")
-@file:OptIn(kotlin.time.ExperimentalTime::class)
 
 package me.matsumo.fankt.fanbox
 
