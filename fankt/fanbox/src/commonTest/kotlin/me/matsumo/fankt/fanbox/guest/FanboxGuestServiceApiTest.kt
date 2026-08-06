@@ -18,7 +18,7 @@ import kotlin.test.assertTrue
 class FanboxGuestServiceApiTest {
 
     @Test
-    fun `bridge carries only identifiers and response text and parsed results`() {
+    fun bridgeCarriesOnlyIdentifiersAndResponseTextAndParsedResults() {
         val service: FanboxGuestService = StubGuestService()
 
         // Compiles only while every bridge value is one of these types. A cookie store, a token
@@ -32,7 +32,7 @@ class FanboxGuestServiceApiTest {
     }
 
     @Test
-    fun `parse result distinguishes a schema mismatch from a guest failure`() {
+    fun parseResultDistinguishesASchemaMismatchFromAGuestFailure() {
         val mismatch: GuestParseResult = GuestParseResult.SchemaMismatch("schema")
         val failure: GuestParseResult = GuestParseResult.GuestFailure("engine")
 

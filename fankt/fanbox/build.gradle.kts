@@ -843,6 +843,10 @@ kotlin {
             implementation(kotlin("test"))
         }
 
+        getByName("guestTest").dependencies {
+            implementation(kotlin("test"))
+        }
+
         clientMain.dependencies {
             implementation(libs.napier)
             implementation(libs.bundles.ktor)
