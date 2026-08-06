@@ -198,7 +198,9 @@ V1 が失敗した場合、D1 を「host bridge を別 module へ切り出す」
 
 `zipline-loader` 依存と loader ラッパーを `clientMain` へ追加し、`FanboxPostRepository.getPostDetail` を guest 経由へ切り替える。D6 の 3 段 fallback（`LoadResult.Failure` と throw の両方を捕捉）と D7 の遅延初期化・sticky fallback を実装する。
 
-V4（sealed 階層の bridge 越え round-trip）をここで確認する。round-trip が成立しない場合の戻り先は D5 の代替（guest が正規化済み JSON を返し、domain model の構築を host に残す）である。その場合 mapper の変更は OTA で配信できなくなり、bridge API の形も変わる。
+**V4 の実測結果（PR2 で確認済み）**: `FanboxPostDetail` の sealed 階層は bridge を越えて round-trip する。D5 の代替（guest が正規化済み JSON を返し、domain model の構築を host に残す）へ切り替える必要はない。mapper の変更も OTA で配信できる。
+
+**レイテンシと bundle サイズの実測（iOS Simulator arm64、ローカル bundle、HTTP を除く）**: 初回 load 43.46 ms、warm-up 後の descriptor 構築と article response 解釈が 27.84 ms/回。guest bundle は全体 815,703 bytes、うち guest main module が 152,455 bytes。
 
 **PR2 の規模が 1 本のレビューに収まらない場合、loader ラッパーとその fallback 挙動を先に入れ、`getPostDetail` の切り替えを後続へ分ける。** 前者だけでも単体でテストでき、後者は差分が小さくなる。
 

@@ -11,6 +11,7 @@ import me.matsumo.fankt.fanbox.domain.model.id.FanboxCommentId
 import me.matsumo.fankt.fanbox.domain.model.id.FanboxCreatorId
 import me.matsumo.fankt.fanbox.domain.model.id.FanboxPostId
 import me.matsumo.fankt.fanbox.endpoint.FanboxEndpoints
+import me.matsumo.fankt.fanbox.guest.FanboxGuestHost
 import me.matsumo.fankt.fanbox.response.FanboxDiagnosticSink
 import me.matsumo.fankt.fanbox.response.FanboxResponses
 import me.matsumo.fankt.fanbox.transport.FanboxRequestExecutor
@@ -20,6 +21,7 @@ internal class FanboxPostRepository(
     private val diagnosticSink: FanboxDiagnosticSink = FanboxDiagnosticSink.none,
     private val includeRawFragment: Boolean = false,
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
+    private val guestHost: FanboxGuestHost? = null,
 ) {
 
     suspend fun getHomePosts(cursor: FanboxCursor?) = withContext(ioDispatcher) {
@@ -70,8 +72,11 @@ internal class FanboxPostRepository(
     }
 
     suspend fun getPostDetail(postId: FanboxPostId) = withContext(ioDispatcher) {
-        val response = requestExecutor.execute(FanboxEndpoints.postDetail(postId))
-        FanboxResponses.postDetail(response.bodyText, response.statusCode)
+        suspend fun direct() = requestExecutor.execute(FanboxEndpoints.postDetail(postId)).let { response ->
+            FanboxResponses.postDetail(response.bodyText, response.statusCode)
+        }
+
+        guestHost?.getPostDetail(postId, requestExecutor, ::direct) ?: direct()
     }
 
     suspend fun getPostComment(postId: FanboxPostId, offset: Int) = withContext(ioDispatcher) {

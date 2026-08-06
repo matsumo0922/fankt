@@ -225,7 +225,7 @@ abstract class VerifyPersistenceBoundaryTask : DefaultTask() {
     @TaskAction
     fun verify() {
         val configurationNames = inspectedConfigurationNames.get()
-        check("androidReleaseCompileClasspath" in configurationNames) {
+        check("releaseCompileClasspath" in configurationNames) {
             "Android release dependency configuration was not inspected"
         }
         check(configurationNames.any { it.matches(Regex("ios.*CompileKlibraries")) }) {
@@ -753,7 +753,7 @@ val persistenceBoundaryConfigurations = configurations.matching { configuration 
     if (!configuration.isCanBeResolved) {
         false
     } else {
-        configuration.name == "androidReleaseCompileClasspath" ||
+        configuration.name == "releaseCompileClasspath" ||
             configuration.name == "commonMainResolvableDependenciesMetadata" ||
             configuration.name == "jsCompileClasspath" ||
             configuration.name.matches(Regex("ios.*CompileKlibraries"))
@@ -851,6 +851,7 @@ kotlin {
             implementation(libs.napier)
             implementation(libs.bundles.ktor)
             implementation(libs.ksoup)
+            implementation(libs.zipline.loader)
         }
 
         clientTest.dependencies {
