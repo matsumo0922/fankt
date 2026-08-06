@@ -211,6 +211,43 @@ private object AndroidKotlinMetadataInspector {
     }
 }
 
+/**
+ * Removes variants belonging to targets whose publication tasks are disabled.
+ *
+ * Kotlin Multiplatform writes every target into the root module, and its root component is not an
+ * `AdhocComponentWithVariants`, so Gradle's variant-skipping API cannot reach them. Left in place,
+ * the root module points at modules that never reach the repository and a consumer following one
+ * of those references fails to resolve the library.
+ */
+abstract class StripUnpublishedVariantsTask : DefaultTask() {
+    @get:InputFile
+    abstract val moduleFile: RegularFileProperty
+
+    @get:Input
+    abstract val unpublishedTargetNames: ListProperty<String>
+
+    @TaskAction
+    fun strip() {
+        val file = moduleFile.get().asFile
+
+        @Suppress("UNCHECKED_CAST")
+        val module = JsonSlurper().parse(file) as MutableMap<String, Any?>
+        val variants = module["variants"] as? MutableList<*> ?: return
+        val targets = unpublishedTargetNames.get()
+
+        val removed = variants.removeAll { variant ->
+            @Suppress("UNCHECKED_CAST")
+            val name = (variant as? Map<String, Any?>)?.get("name") as? String ?: return@removeAll false
+            targets.any(name::startsWith)
+        }
+        check(removed) {
+            "No unpublished target variant was found in $file; the target names may be stale"
+        }
+
+        file.writeText(groovy.json.JsonOutput.prettyPrint(groovy.json.JsonOutput.toJson(module)))
+    }
+}
+
 abstract class VerifyPersistenceBoundaryTask : DefaultTask() {
     @get:Input
     abstract val inspectedConfigurationNames: ListProperty<String>
@@ -792,18 +829,27 @@ zipline {
 }
 
 // The guest, legacyGuest, and ziplineTest targets build bundles and run tests; they are not meant
-// to be resolved as dependencies, so their publication tasks stay off.
-//
-// ponytail: this stops the artifacts from reaching the repository but leaves the root Kotlin
-// Multiplatform module pointing at them, so a consumer resolving this library follows a reference
-// to a module that was never published. Gradle's variant-skipping API does not apply here — the
-// root component is KotlinSoftwareComponent, not AdhocComponentWithVariants — so closing this needs
-// either a KGP-level way to exclude a target from the root module or moving these targets out of
-// the published module. Tracked as a release blocker; see #90.
+// to be resolved as dependencies. Disabling their publication tasks keeps the artifacts out of the
+// repository, but the root Kotlin Multiplatform module still lists them, and a consumer following
+// one of those references fails to resolve this library at all. So the variants are stripped from
+// the generated root module as well.
 tasks.matching { task ->
     task.name.contains("GuestPublication") || task.name.contains("ZiplineTestPublication")
 }.configureEach {
     enabled = false
+}
+
+tasks.register<StripUnpublishedVariantsTask>("stripUnpublishedRootVariants") {
+    val metadataTask = tasks.named<GenerateModuleMetadata>(
+        "generateMetadataFileForKotlinMultiplatformPublication",
+    )
+    dependsOn(metadataTask)
+    moduleFile.set(metadataTask.flatMap { it.outputFile })
+    unpublishedTargetNames.set(listOf("guest", "legacyGuest", "ziplineTest"))
+}
+
+tasks.named("generateMetadataFileForKotlinMultiplatformPublication") {
+    finalizedBy("stripUnpublishedRootVariants")
 }
 
 // Two Kotlin/JS targets share a platform type, so consumers need an attribute to tell their
