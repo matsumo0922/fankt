@@ -2,30 +2,30 @@
 
 ## 1. Zipline plugin の適用と guest target（PR1）
 
-- [ ] 1.1 `gradle/libs.versions.toml` に Zipline 1.27.0 の version、Gradle plugin、`zipline` core、`zipline-loader` を追加する
-- [ ] 1.2 `:fankt:fanbox` に `app.cash.zipline` plugin を適用する
-- [ ] 1.3 `js("guest") { nodejs(); binaries.executable() }` を宣言し、`guestMain` source set を `commonMain` に依存させる（`clientMain` には依存させない）
-- [ ] 1.4 guest target の publication を無効化する。既存の js publication が残ることを確認する
-- [ ] 1.5 `zipline { mainFunction }` に guest の entry point を設定し、guest bundle 生成 task が成功することを確認する
+- [x] 1.1 `gradle/libs.versions.toml` に Zipline 1.27.0 の version、Gradle plugin、`zipline` core、`zipline-loader` を追加する
+- [x] 1.2 `:fankt:fanbox` に `app.cash.zipline` plugin を適用する
+- [x] 1.3 `js("guest") { nodejs(); binaries.executable() }` を宣言し、`guestMain` source set を `commonMain` に依存させる（`clientMain` には依存させない）
+- [x] 1.4 guest target の publication を無効化する。既存の js publication が残ることを確認する
+- [x] 1.5 `zipline { mainFunction }` に guest の entry point を設定し、guest bundle 生成 task が成功することを確認する
 
 ## 2. PR1 の実測（V1〜V3）
 
 各項目は結果を design.md へ追記して閉じる。
 
-- [ ] 2.1 **V1**: plugin 適用後に `generateMetadataFileForJsPublication` が従来どおり成功することを確認する。既存 js klib が `es2015` / `MODULE_UMD` への変更で壊れないことを確かめる。壊れる場合は D1 の代替案（host bridge の別 module 切り出し）へ戻す判断を行う
-- [ ] 2.2 **V2**: 2 つ目の js target 追加が `generateMetadataFileForKotlinMultiplatformPublication` と klib ABI dump の `// Targets:` 行、`checkKotlinAbi` に与える影響を確認する。variant 解決の曖昧さが出る場合は distinguishing attribute を設定する
-- [ ] 2.3 **V3**: `./gradlew :fankt:fanbox:ziplineApiCheck --dry-run` で子 task が 1 つ以上あることと、`api/zipline-api.toml` が生成されることを確認する。子 task がゼロの場合は D3 の (a)(b) いずれかを選び、design と spec へ反映する。無内容に成功する検証を CI に残さない
-- [ ] 2.4 guest bundle に Ktor / Napier / kotlinx.io / Ksoup が含まれないことを確認する
-- [ ] 2.5 `nodejs()` のみで guest bundle が生成できるか確認する。できない場合は guest target に `browser()` を宣言する
+- [x] 2.1 **V1**: plugin 適用後に `generateMetadataFileForJsPublication` が従来どおり成功することを確認する。既存 js klib が `es2015` / `MODULE_UMD` への変更で壊れないことを確かめる。壊れる場合は D1 の代替案（host bridge の別 module 切り出し）へ戻す判断を行う
+- [x] 2.2 **V2**: 2 つ目の js target 追加が `generateMetadataFileForKotlinMultiplatformPublication` と klib ABI dump の `// Targets:` 行、`checkKotlinAbi` に与える影響を確認する。variant 解決の曖昧さが出る場合は distinguishing attribute を設定する
+- [x] 2.3 **V3**: `./gradlew :fankt:fanbox:ziplineApiCheck --dry-run` で子 task が 1 つ以上あることと、`api/zipline-api.toml` が生成されることを確認する。子 task がゼロの場合は D3 の (a)(b) いずれかを選び、design と spec へ反映する。無内容に成功する検証を CI に残さない
+- [x] 2.4 guest bundle に Ktor / Napier / kotlinx.io / Ksoup が含まれないことを確認する
+- [x] 2.5 `nodejs()` のみで guest bundle が生成できるか確認する。できない場合は guest target に `browser()` を宣言する
 
 ## 3. guest service の定義（PR1）
 
-- [ ] 3.1 `commonMain` に `FanboxGuestService : ZiplineService` を定義する。`buildPostDetailRequest(postId: String): RequestDescriptor` と `parsePostDetail(body: String, statusCode: Int): GuestParseResult` の 2 関数のみとする
-- [ ] 3.2 `commonMain` に `@Serializable` sealed 型 `GuestParseResult` を定義する。成功（`FanboxPostDetail` を運ぶ）、スキーマ不一致、guest 実行故障の 3 分類を区別できる形にする
-- [ ] 3.3 `guestMain` に `FanboxGuestService` の実装を置く。既存の `FanboxEndpoints.postDetail` と `FanboxResponses.postDetail` へ委譲し、`FanboxException.SchemaMismatch` を捕捉してスキーマ不一致の結果へ変換する
-- [ ] 3.4 guest の entry point（`Zipline.get().bind`）を `guestMain` に置く
-- [ ] 3.5 bridge API のシグネチャに credential 型（`FanboxCookieStorage` / `FanboxTokenStore` / cookie record / CSRF token）が現れないことをテストで固定する
-- [ ] 3.6 `api/zipline-api.toml` を生成して commit する（V3 の結果次第）
+- [x] 3.1 `commonMain` に `FanboxGuestService : ZiplineService` を定義する。`buildPostDetailRequest(postId: String): RequestDescriptor` と `parsePostDetail(body: String, statusCode: Int): GuestParseResult` の 2 関数のみとする
+- [x] 3.2 `commonMain` に `@Serializable` sealed 型 `GuestParseResult` を定義する。成功（`FanboxPostDetail` を運ぶ）、スキーマ不一致、guest 実行故障の 3 分類を区別できる形にする
+- [x] 3.3 `guestMain` に `FanboxGuestService` の実装を置く。既存の `FanboxEndpoints.postDetail` と `FanboxResponses.postDetail` へ委譲し、`FanboxException.SchemaMismatch` を捕捉してスキーマ不一致の結果へ変換する
+- [x] 3.4 guest の entry point（`Zipline.get().bind`）を `guestMain` に置く
+- [x] 3.5 bridge API のシグネチャに credential 型（`FanboxCookieStorage` / `FanboxTokenStore` / cookie record / CSRF token）が現れないことをテストで固定する
+- [x] 3.6 `api/zipline-api.toml` を生成して commit する（V3 の結果次第）
 
 ## 4. bundle loader（PR2）
 

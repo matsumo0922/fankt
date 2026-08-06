@@ -1,0 +1,12 @@
+[me.matsumo.fankt.fanbox.guest.FanboxGuestService]
+
+functions = [
+  # fun buildPostDetailRequest(kotlin.String): me.matsumo.fankt.fanbox.endpoint.RequestDescriptor
+  "iFo+/phf",
+
+  # fun close(): kotlin.Unit
+  "moYx+T3e",
+
+  # fun parsePostDetail(kotlin.String, kotlin.Int): me.matsumo.fankt.fanbox.guest.GuestParseResult
+  "2ObgT0U2",
+]
