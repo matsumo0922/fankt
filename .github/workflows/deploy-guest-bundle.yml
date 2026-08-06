@@ -56,8 +56,10 @@ jobs:
           test -f "$manifest" || { echo "::error::$manifest was not produced"; exit 1; }
           python3 - "$manifest" <<'PY'
           import json, sys
+          # The signatures sit under "unsigned" because that object is what the signature is
+          # computed over; a top-level lookup here would read as unsigned no matter what.
           with open(sys.argv[1]) as f:
-              signatures = json.load(f).get("signatures") or {}
+              signatures = json.load(f).get("unsigned", {}).get("signatures") or {}
           if not signatures:
               sys.exit("::error::the manifest carries no signature; is ZIPLINE_SIGNING_PRIVATE_KEY_HEX set?")
           print(f"manifest signed by: {', '.join(signatures)}")
