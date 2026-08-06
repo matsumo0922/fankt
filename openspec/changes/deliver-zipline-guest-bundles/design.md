@@ -164,7 +164,11 @@ broad catch は本来なら避ける形だが、ここでは「guest 由来の�
 
 つまり #90 は**初期化の失敗には broad catch を、呼び出しの失敗には型の列挙を**適用していた。同じ「guest が信頼できない」という前提に対して扱いが揺れていた。本 change はその不整合を解消する。
 
-ただし既存側は `Throwable` である。呼び出し経路だけを `Exception` にすると、同じ関心に 2 つの書き方が残る。`guestOrNull()` の `Throwable` も `Exception` へ揃える。これは #90 由来の記述であり本 change が壊したものではないが、同じ理由（`Error` 系を握って継続しない）が同じように当てはまる。
+既存側は `Throwable` であり、そのままにする。当初は「同じ関心に 2 つの書き方を残さない」ため `guestOrNull()` も `Exception` へ揃える方針だったが、独立レビューの指摘を受けて撤回した。
+
+理由は 2 つある。1 つは、その変更が本 change のどの受け入れ条件にも Requirement にも紐付かないこと。もう 1 つは、それが既存の挙動を可用性の下がる方向へ変えることである。`guestOrNull()` は初期化経路であり、Zipline engine の起動と bundle のロードを含む。ここで `OutOfMemoryError` が起きた場合、`Throwable` なら直接経路へ退避するが、`Exception` にすると consumer へ伝播する。「OTA の導入が既存の可用性を下げない」という前提に反する。
+
+結果として、呼び出し経路は `Exception`（`Error` は捕捉しない）、初期化経路は `Throwable`（`Error` も退避する）で非対称に残る。非対称の理由は経路の違いにある。呼び出し経路は本 change が新設する catch であり、そこで `Error` を握らない判断は新しい選択として取れる。初期化経路は既存の挙動であり、変える理由が本 change にない。
 
 なお `buildPostDetailRequest` の戻り値 `RequestDescriptor` も同じ経路で decode されるため、両方の呼び出しに適用する。
 

@@ -128,7 +128,9 @@ internal class FanboxGuestHost(
      * it is assumed to be predictable.
      *
      * `Error` stays uncaught: it signals a resource-exhausted or corrupted runtime, where the
-     * direct path would fail for the same reason.
+     * direct path would fail for the same reason. Initialization in [guestOrNull] keeps catching
+     * `Throwable` instead, because narrowing it there would turn a failure it currently retreats
+     * from into one that reaches the caller.
      */
     private suspend fun <T> callGuest(
         guest: LoadedGuest,
@@ -191,7 +193,7 @@ internal class FanboxGuestHost(
                     }
                 } catch (failure: CancellationException) {
                     throw failure
-                } catch (failure: Exception) {
+                } catch (failure: Throwable) {
                     diagnosticSink.report(
                         "Zipline guest initialization failed; using direct path (${failure.describe()})",
                     )

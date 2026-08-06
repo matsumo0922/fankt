@@ -91,7 +91,9 @@ manifest URL は bridge API バージョンを含むパスの下に置かなけ�
 
 ### Requirement: A bridge failure falls back instead of escaping
 
-guest の呼び出しで生じた失敗を、呼び出し元へ例外として伝播させてはならない（SHALL NOT）。guest を無効化して既存の直接経路へ退避する。対象は `CancellationException` を除くすべての `Exception` である。`Error` 系は対象としない。JVM が資源枯渇または破損した状態にあるシグナルであり、退避しても直接経路が同じ理由で失敗するためである。
+guest の呼び出しで生じた失敗を、呼び出し元へ例外として伝播させてはならない（SHALL NOT）。guest を無効化して既存の直接経路へ退避する。対象は `CancellationException` を除くすべての `Exception` である。
+
+`Error` 系はこの Requirement の対象としない。JVM が資源枯渇または破損した状態にあるシグナルであり、退避しても直接経路が同じ理由で失敗するためである。ただし guest の初期化経路が既に `Error` を退避対象にしている場合、その挙動を狭めてはならない（SHALL NOT）。狭めると、現在は退避できている失敗が呼び出し元へ届くようになる。
 
 golden fixture と `ziplineApiCheck` は意図しない変更を配信前に止めるが、網羅の漏れを保証しない。漏れた場合の失敗は値ではなく例外として現れ、その型は 1 つではない。値の decode 失敗は `SerializationException`、bridge API の関数レベルの不整合は `ZiplineApiMismatchException` であり、後者は `Exception` を直接継承するため `ZiplineException` の catch にも掛からない。`Fanbox` の公開契約は `FanboxException` しか宣言しておらず、consumer はこれらを捕捉しない。
 

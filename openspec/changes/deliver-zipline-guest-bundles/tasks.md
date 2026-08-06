@@ -20,7 +20,7 @@ PR1 は配信を伴わないため単独で merge できる。PR2 は main へ�
 ## 2b. guest の失敗時の退避（PR1）
 
 - [x] 2b.1 `FanboxGuestHost` の `guest.service.buildPostDetailRequest` と `parsePostDetail` の catch を、`CancellationException` の再 throw を保ったまま `Exception` へ広げ、`disableAndFallback` へ流す。`CancellationException` の catch は最初の節に置く
-- [x] 2b.1b 既存の `guestOrNull()` の `catch (failure: Throwable)` を `Exception` へ揃える。同じ関心に 2 つの書き方を残さないため
+- [x] 2b.1b 既存の `guestOrNull()` の `catch (failure: Throwable)` は変更しない（独立レビューの指摘により当初方針を撤回）。揃えると初期化中の `Error` が consumer へ伝播し、既存の可用性を下げる。理由は design.md D7 に記録
 - [x] 2b.2 退避が診断経路へ報告されることを確認する
 - [x] 2b.3 host が decode できない値を返す guest で `post.info` が直接経路で成功し、例外が漏れないことをテストで確認する（V6）
 - [x] 2b.4 descriptor 側の decode 失敗でも同様に退避することをテストで確認する

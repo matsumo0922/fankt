@@ -127,9 +127,10 @@ class FanboxGuestWireSchemaTest {
     }
 
     /**
-     * A sealed hierarchy reaches the wire through the value element of its polymorphic descriptor.
-     * Its order there follows declaration, which the wire does not observe, so the names are sorted
-     * to keep the fixture from failing on a reorder.
+     * A sealed descriptor holds `element("type", …)` at index 0 and `element("value", …)` at index 1,
+     * and the subtypes are the children of that second element (`SealedSerializer`). Their order
+     * there follows the declaration order, which the wire never carries — only the discriminator
+     * string in `type` does — so the names are sorted to keep the fixture from failing on a reorder.
      */
     private fun subtypeNames(descriptor: SerialDescriptor): List<String> {
         check(descriptor.kind is PolymorphicKind) { "${descriptor.serialName} is not polymorphic" }
