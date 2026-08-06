@@ -2,7 +2,7 @@
 <html class="no-js">
 <head>
     <meta name="viewport" content="width=device-width, initial-scale=1" charset="UTF-8">
-    <title>createRoomFanboxCookieStorage</title>
+    <title>me.matsumo.fankt.fanbox.guest</title>
 <link href="../../../images/logo-icon.svg" rel="icon" type="image/svg">    <script>var pathToRoot = "../../../";</script>
     <script>document.documentElement.classList.replace("no-js","js");</script>
     <script>const storage = localStorage.getItem("dokka-dark-mode")
@@ -45,8 +45,8 @@
         </div>
         <div class="navigation-controls">
         <div class="filter-section filter-section_loading" id="filter-section">
-                <button class="platform-tag platform-selector jvm-like" data-active="" data-filter=":fankt:fanbox-persistence-room/androidMain">android</button>
-                <button class="platform-tag platform-selector common-like" data-active="" data-filter=":fankt:fanbox-persistence-room/iosMain">ios</button>
+                <button class="platform-tag platform-selector js-like" data-active="" data-filter=":fankt:fanbox/guestMain">guest</button>
+                <button class="platform-tag platform-selector js-like" data-active="" data-filter=":fankt:fanbox/legacyGuestMain">legacyGuest</button>
             <div class="dropdown filter-section--dropdown" data-role="dropdown" id="filter-section-dropdown">
                 <button class="button button_dropdown filter-section--dropdown-toggle" role="combobox" data-role="dropdown-toggle" aria-controls="platform-tags-listbox" aria-haspopup="listbox" aria-expanded="false" aria-label="Toggle source sets"></button>
                 <ul role="listbox" id="platform-tags-listbox" class="dropdown--list" data-role="dropdown-listbox">
@@ -55,18 +55,18 @@
                             <i class="ui-kit-icon ui-kit-icon_cross"></i>
                         </button>
                     </div>
-                        <li role="option" class="dropdown--option platform-selector-option jvm-like" tabindex="0">
+                        <li role="option" class="dropdown--option platform-selector-option js-like" tabindex="0">
                             <label class="checkbox">
-                                <input type="checkbox" class="checkbox--input" id=":fankt:fanbox-persistence-room/androidMain" data-filter=":fankt:fanbox-persistence-room/androidMain">
+                                <input type="checkbox" class="checkbox--input" id=":fankt:fanbox/guestMain" data-filter=":fankt:fanbox/guestMain">
                                 <span class="checkbox--icon"></span>
-                                android
+                                guest
                             </label>
                         </li>
-                        <li role="option" class="dropdown--option platform-selector-option common-like" tabindex="0">
+                        <li role="option" class="dropdown--option platform-selector-option js-like" tabindex="0">
                             <label class="checkbox">
-                                <input type="checkbox" class="checkbox--input" id=":fankt:fanbox-persistence-room/iosMain" data-filter=":fankt:fanbox-persistence-room/iosMain">
+                                <input type="checkbox" class="checkbox--input" id=":fankt:fanbox/legacyGuestMain" data-filter=":fankt:fanbox/legacyGuestMain">
                                 <span class="checkbox--icon"></span>
-                                ios
+                                legacyGuest
                             </label>
                         </li>
                 </ul>
@@ -98,14 +98,37 @@
                 </div>
             </div>
             <div id="main">
-<div class="main-content" data-page-type="member" id="content" pageids="fanbox-persistence-room::me.matsumo.fankt.fanbox.persistence.room//createRoomFanboxCookieStorage/#android.content.Context#kotlinx.coroutines.CoroutineDispatcher/PointingToDeclaration//698331916">
-  <div class="breadcrumbs"><a href="../index.html">fanbox-persistence-room</a><span class="delimiter">/</span><a href="index.html">me.matsumo.fankt.fanbox.persistence.room</a><span class="delimiter">/</span><span class="current">createRoomFanboxCookieStorage</span></div>
+<div class="main-content" data-page-type="package" id="content" pageids="fanbox::me.matsumo.fankt.fanbox.guest////PointingToDeclaration//-241130652">
+  <div class="breadcrumbs"><a href="../index.html">fanbox</a><span class="delimiter">/</span><span class="current">me.matsumo.fankt.fanbox.guest</span></div>
   <div class="cover ">
-    <h1 class="cover"><span>create</span><wbr><span>Room</span><wbr><span>Fanbox</span><wbr><span>Cookie</span><wbr><span><span>Storage</span></span></h1>
+    <h1 class="cover"><span><span>Package-level</span></span> <span><span>declarations</span></span></h1>
   </div>
-  <div class="platform-hinted  with-platform-tabs" data-platform-hinted="data-platform-hinted">
-    <div class="platform-bookmarks-row" data-toggle-list="data-toggle-list"><button class="platform-bookmark" data-filterable-current=":fankt:fanbox-persistence-room/androidMain" data-filterable-set=":fankt:fanbox-persistence-room/androidMain" data-active="" data-toggle=":fankt:fanbox-persistence-room/androidMain">android</button><button class="platform-bookmark" data-filterable-current=":fankt:fanbox-persistence-room/iosMain" data-filterable-set=":fankt:fanbox-persistence-room/iosMain" data-toggle=":fankt:fanbox-persistence-room/iosMain">ios</button></div>
-<div class="content sourceset-dependent-content" data-active="" data-togglable=":fankt:fanbox-persistence-room/androidMain"><div class="symbol monospace"><span class="token keyword">fun </span><a href="create-room-fanbox-cookie-storage.html"><span class="token function">createRoomFanboxCookieStorage</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">context<span class="token operator">: </span><a href="https://developer.android.com/reference/kotlin/android/content/Context.html">Context</a><span class="token punctuation">, </span></span><span class="parameter ">ioDispatcher<span class="token operator">: </span><span data-unresolved-link="kotlinx.coroutines/CoroutineDispatcher///PointingToDeclaration/">CoroutineDispatcher</span><span class="token operator"> = </span>Dispatchers.IO</span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="-room-fanbox-cookie-storage/index.html">RoomFanboxCookieStorage</a></div><p class="paragraph">Opens Room-backed FANBOX Cookie storage at this application's existing <code class="lang-kotlin">fankt.db</code> path.</p><p class="paragraph">The returned storage owns its database instance. Close every <a href="../../../fankt/fanbox/me.matsumo.fankt.fanbox/-fanbox/index.html">me.matsumo.fankt.fanbox.Fanbox</a> using it before closing the storage.</p></div><div class="content sourceset-dependent-content" data-togglable=":fankt:fanbox-persistence-room/iosMain"><div class="symbol monospace"><span class="token keyword">fun </span><a href="create-room-fanbox-cookie-storage.html"><span class="token function">createRoomFanboxCookieStorage</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">ioDispatcher<span class="token operator">: </span><span data-unresolved-link="kotlinx.coroutines/CoroutineDispatcher///PointingToDeclaration/">CoroutineDispatcher</span><span class="token operator"> = </span>Dispatchers.IO</span></span><span class="token punctuation">)</span><span class="token operator">: </span><span data-unresolved-link="/<Error class: unknown class>///PointingToDeclaration/">&lt;Error class: unknown class&gt;</span></div><p class="paragraph">Opens Room-backed FANBOX Cookie storage at the existing Documents-directory <code class="lang-kotlin">fankt.db</code> path.</p><p class="paragraph">The returned storage owns its database instance. Close every me.matsumo.fankt.fanbox.Fanbox using it before closing the storage.</p></div>  </div>
+  <div class="tabbedcontent">
+    <div class="tabs-section" tabs-section="tabs-section"><button class="section-tab" data-active="" data-togglable="FUNCTION,EXTENSION_FUNCTION">Functions</button></div>
+    <div class="tabs-section-body">
+      <div data-togglable="FUNCTION">
+        <h2 class="">Functions</h2>
+        <div class="table"><a data-name="1658718991%2FFunctions%2F-241130652" anchor-label="launchZipline" id="1658718991%2FFunctions%2F-241130652" data-filterable-set=":fankt:fanbox/guestMain,:fankt:fanbox/legacyGuestMain"></a>
+          <div class="table-row" data-filterable-current=":fankt:fanbox/guestMain,:fankt:fanbox/legacyGuestMain" data-filterable-set=":fankt:fanbox/guestMain,:fankt:fanbox/legacyGuestMain">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="../../../fankt/fanbox/me.matsumo.fankt.fanbox.guest/[legacy-guest]launch-zipline.html"><span>launch</span><wbr><span><span>Zipline</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1658718991%2FFunctions%2F-241130652"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted  with-platform-tabs" data-platform-hinted="data-platform-hinted">
+                    <div class="platform-bookmarks-row" data-toggle-list="data-toggle-list"><button class="platform-bookmark" data-filterable-current=":fankt:fanbox/guestMain" data-filterable-set=":fankt:fanbox/guestMain" data-active="" data-toggle=":fankt:fanbox/guestMain">guest</button><button class="platform-bookmark" data-filterable-current=":fankt:fanbox/legacyGuestMain" data-filterable-set=":fankt:fanbox/legacyGuestMain" data-toggle=":fankt:fanbox/legacyGuestMain">legacyGuest</button></div>
+<div class="content sourceset-dependent-content" data-active="" data-togglable=":fankt:fanbox/guestMain"><div class="symbol monospace"><span class="token keyword">fun </span><a href="[guest]launch-zipline.html"><span class="token function">launchZipline</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span></div></div><div class="content sourceset-dependent-content" data-togglable=":fankt:fanbox/legacyGuestMain"><div class="symbol monospace"><span class="token keyword">fun </span><a href="[legacy-guest]launch-zipline.html"><span class="token function">launchZipline</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span></div></div>                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>
     <div class="footer">
         <a href="#content" id="go-to-top-link" class="footer--button footer--button_go-to-top"></a>

@@ -37,11 +37,11 @@
     <div class="root">
     <nav class="navigation theme-dark" id="navigation-wrapper">
 <a class="library-name--link" href="../../../../index.html">
-                    fanbox-persistence-room
+                    fanbox
             </a>        <button class="navigation-controls--btn navigation-controls--btn_toc ui-kit_mobile-only" id="toc-toggle" type="button">Toggle table of contents
         </button>
         <div class="navigation-controls--break ui-kit_mobile-only"></div>
-        <div class="library-version" id="library-version">0.1.1
+        <div class="library-version" id="library-version">0.1.2
         </div>
         <div class="navigation-controls">
         <div class="filter-section filter-section_loading" id="filter-section">
@@ -78,7 +78,7 @@
                     <ul role="listbox" id="toc-listbox" class="dropdown--list dropdown--list_toc-list" data-role="dropdown-listbox">
                         <div class="dropdown--header">
                             <span>
-                                    fanbox-persistence-room
+                                    fanbox
                             </span>
                             <button class="button" data-role="dropdown-toggle" aria-label="Close table of contents">
                                 <i class="ui-kit-icon ui-kit-icon_cross"></i>
@@ -94,7 +94,7 @@
   <div class="breadcrumbs"><a href="../../index.html">fanbox</a><span class="delimiter">/</span><a href="../index.html">me.matsumo.fankt.fanbox</a><span class="delimiter">/</span><span class="current">FanboxException</span></div>
   <div class="cover ">
     <h1 class="cover"><span>Fanbox</span><wbr><span><span>Exception</span></span></h1>
-    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":fankt:fanbox/commonMain"><div class="symbol monospace"><span class="token keyword">sealed </span><span class="token keyword">class </span><a href="index.html">FanboxException</a> : <a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-exception/index.html">Exception</a></div><p class="paragraph">A typed failure produced by a FANBOX request.</p><p class="paragraph"><a href="status-code.html">statusCode</a> is <code class="lang-kotlin">null</code> when no response was received. <a href="raw-body.html">rawBody</a> contains at most a bounded, sanitized diagnostic fragment. A <code class="lang-kotlin">null</code> fragment means either that the body was unavailable or that the client intentionally suppressed it. The fragment can still contain FANBOX or user data and must not be treated as credential-free. Only this exception's <a href="../../../../fankt/fanbox/me.matsumo.fankt.fanbox/-fanbox-exception/message.html">message</a> and <a href="raw-body.html">rawBody</a> are covered by the bounded-diagnostic contract; messages in <a href="../../../../fankt/fanbox/me.matsumo.fankt.fanbox/-fanbox-exception/cause.html">cause</a> are not sanitized.</p><h4 class="">Inheritors</h4><div class="table"><div class="table-row" data-filterable-current=":fankt:fanbox/commonMain" data-filterable-set=":fankt:fanbox/commonMain"><div class="main-subrow keyValue "><div class=""><span class="inline-flex"><div><a href="-unauthorized/index.html">Unauthorized</a></div></span></div><div></div></div></div><div class="table-row" data-filterable-current=":fankt:fanbox/commonMain" data-filterable-set=":fankt:fanbox/commonMain"><div class="main-subrow keyValue "><div class=""><span class="inline-flex"><div><a href="-forbidden/index.html">Forbidden</a></div></span></div><div></div></div></div><div class="table-row" data-filterable-current=":fankt:fanbox/commonMain" data-filterable-set=":fankt:fanbox/commonMain"><div class="main-subrow keyValue "><div class=""><span class="inline-flex"><div><a href="-not-found/index.html">NotFound</a></div></span></div><div></div></div></div><div class="table-row" data-filterable-current=":fankt:fanbox/commonMain" data-filterable-set=":fankt:fanbox/commonMain"><div class="main-subrow keyValue "><div class=""><span class="inline-flex"><div><a href="-rate-limited/index.html">RateLimited</a></div></span></div><div></div></div></div><div class="table-row" data-filterable-current=":fankt:fanbox/commonMain" data-filterable-set=":fankt:fanbox/commonMain"><div class="main-subrow keyValue "><div class=""><span class="inline-flex"><div><a href="-server-error/index.html">ServerError</a></div></span></div><div></div></div></div><div class="table-row" data-filterable-current=":fankt:fanbox/commonMain" data-filterable-set=":fankt:fanbox/commonMain"><div class="main-subrow keyValue "><div class=""><span class="inline-flex"><div><a href="-unexpected-http-error/index.html">UnexpectedHttpError</a></div></span></div><div></div></div></div><div class="table-row" data-filterable-current=":fankt:fanbox/commonMain" data-filterable-set=":fankt:fanbox/commonMain"><div class="main-subrow keyValue "><div class=""><span class="inline-flex"><div><a href="-schema-mismatch/index.html">SchemaMismatch</a></div></span></div><div></div></div></div><div class="table-row" data-filterable-current=":fankt:fanbox/commonMain" data-filterable-set=":fankt:fanbox/commonMain"><div class="main-subrow keyValue "><div class=""><span class="inline-flex"><div><a href="-network/index.html">Network</a></div></span></div><div></div></div></div></div></div></div>
+    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":fankt:fanbox/commonMain"><div class="symbol monospace"><span class="token keyword">sealed </span><span class="token keyword">class </span><a href="index.html">FanboxException</a></div><p class="paragraph">A typed failure produced by a FANBOX request.</p><p class="paragraph"><a href="status-code.html">statusCode</a> is <code class="lang-kotlin">null</code> when no response was received. <a href="raw-body.html">rawBody</a> contains at most a bounded, sanitized diagnostic fragment. A <code class="lang-kotlin">null</code> fragment means either that the body was unavailable or that the client intentionally suppressed it. The fragment can still contain FANBOX or user data and must not be treated as credential-free. Only this exception's message and <a href="raw-body.html">rawBody</a> are covered by the bounded-diagnostic contract; messages in cause are not sanitized.</p><h4 class="">Inheritors</h4><div class="table"><div class="table-row" data-filterable-current=":fankt:fanbox/commonMain" data-filterable-set=":fankt:fanbox/commonMain"><div class="main-subrow keyValue "><div class=""><span class="inline-flex"><div><a href="-unauthorized/index.html">Unauthorized</a></div></span></div><div></div></div></div><div class="table-row" data-filterable-current=":fankt:fanbox/commonMain" data-filterable-set=":fankt:fanbox/commonMain"><div class="main-subrow keyValue "><div class=""><span class="inline-flex"><div><a href="-forbidden/index.html">Forbidden</a></div></span></div><div></div></div></div><div class="table-row" data-filterable-current=":fankt:fanbox/commonMain" data-filterable-set=":fankt:fanbox/commonMain"><div class="main-subrow keyValue "><div class=""><span class="inline-flex"><div><a href="-not-found/index.html">NotFound</a></div></span></div><div></div></div></div><div class="table-row" data-filterable-current=":fankt:fanbox/commonMain" data-filterable-set=":fankt:fanbox/commonMain"><div class="main-subrow keyValue "><div class=""><span class="inline-flex"><div><a href="-rate-limited/index.html">RateLimited</a></div></span></div><div></div></div></div><div class="table-row" data-filterable-current=":fankt:fanbox/commonMain" data-filterable-set=":fankt:fanbox/commonMain"><div class="main-subrow keyValue "><div class=""><span class="inline-flex"><div><a href="-server-error/index.html">ServerError</a></div></span></div><div></div></div></div><div class="table-row" data-filterable-current=":fankt:fanbox/commonMain" data-filterable-set=":fankt:fanbox/commonMain"><div class="main-subrow keyValue "><div class=""><span class="inline-flex"><div><a href="-unexpected-http-error/index.html">UnexpectedHttpError</a></div></span></div><div></div></div></div><div class="table-row" data-filterable-current=":fankt:fanbox/commonMain" data-filterable-set=":fankt:fanbox/commonMain"><div class="main-subrow keyValue "><div class=""><span class="inline-flex"><div><a href="-schema-mismatch/index.html">SchemaMismatch</a></div></span></div><div></div></div></div><div class="table-row" data-filterable-current=":fankt:fanbox/commonMain" data-filterable-set=":fankt:fanbox/commonMain"><div class="main-subrow keyValue "><div class=""><span class="inline-flex"><div><a href="-network/index.html">Network</a></div></span></div><div></div></div></div></div></div></div>
   </div>
   <div class="tabbedcontent">
     <div class="tabs-section" tabs-section="tabs-section"><button class="section-tab" data-active="" data-togglable="CONSTRUCTOR,TYPE,PROPERTY,FUNCTION">Members</button></div>
@@ -225,22 +225,7 @@
       </div>
       <div data-togglable="PROPERTY">
         <h2 class="">Properties</h2>
-        <div class="table"><a data-name="-654012527%2FProperties%2F-1898352095" anchor-label="cause" id="-654012527%2FProperties%2F-1898352095" data-filterable-set=":fankt:fanbox/commonMain"></a>
-          <div class="table-row" data-filterable-current=":fankt:fanbox/commonMain" data-filterable-set=":fankt:fanbox/commonMain">
-            <div class="main-subrow keyValue ">
-              <div class=""><span class="inline-flex">
-                  <div><a href="-network/index.html#-654012527%2FProperties%2F-1898352095"><span><span>cause</span></span></a></div>
-<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-654012527%2FProperties%2F-1898352095"></span>
-                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
-                  </span></span></div>
-              <div>
-                <div class="title">
-                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":fankt:fanbox/commonMain"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">val </span><a href="-network/index.html#-654012527%2FProperties%2F-1898352095">cause</a><span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-throwable/index.html">Throwable</a><span class="token operator">?</span></div></div></div>
-                </div>
-              </div>
-            </div>
-          </div>
-<a data-name="1759317451%2FProperties%2F-1898352095" anchor-label="endpoint" id="1759317451%2FProperties%2F-1898352095" data-filterable-set=":fankt:fanbox/commonMain"></a>
+        <div class="table"><a data-name="1759317451%2FProperties%2F-1898352095" anchor-label="endpoint" id="1759317451%2FProperties%2F-1898352095" data-filterable-set=":fankt:fanbox/commonMain"></a>
           <div class="table-row" data-filterable-current=":fankt:fanbox/commonMain" data-filterable-set=":fankt:fanbox/commonMain">
             <div class="main-subrow keyValue ">
               <div class=""><span class="inline-flex">
@@ -251,21 +236,6 @@
               <div>
                 <div class="title">
                   <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":fankt:fanbox/commonMain"><div class="symbol monospace"><span class="token keyword">val </span><a href="endpoint.html">endpoint</a><span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-string/index.html">String</a></div><div class="brief "><p class="paragraph">stable library endpoint label.</p></div></div></div>
-                </div>
-              </div>
-            </div>
-          </div>
-<a data-name="1824300659%2FProperties%2F-1898352095" anchor-label="message" id="1824300659%2FProperties%2F-1898352095" data-filterable-set=":fankt:fanbox/commonMain"></a>
-          <div class="table-row" data-filterable-current=":fankt:fanbox/commonMain" data-filterable-set=":fankt:fanbox/commonMain">
-            <div class="main-subrow keyValue ">
-              <div class=""><span class="inline-flex">
-                  <div><a href="-network/index.html#1824300659%2FProperties%2F-1898352095"><span><span>message</span></span></a></div>
-<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1824300659%2FProperties%2F-1898352095"></span>
-                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
-                  </span></span></div>
-              <div>
-                <div class="title">
-                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":fankt:fanbox/commonMain"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">val </span><a href="-network/index.html#1824300659%2FProperties%2F-1898352095">message</a><span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-string/index.html">String</a><span class="token operator">?</span></div></div></div>
                 </div>
               </div>
             </div>

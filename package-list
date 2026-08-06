@@ -1,11 +1,12 @@
 $dokka.format:html-v1
 $dokka.linkExtension:html
-
+$dokka.location:me.matsumo.fankt.fanbox.guest//launchZipline/#/PointingToDeclaration/fanbox/me.matsumo.fankt.fanbox.guest/[legacy-guest]launch-zipline.html
 module:fanbox
 me.matsumo.fankt.fanbox
 me.matsumo.fankt.fanbox.domain
 me.matsumo.fankt.fanbox.domain.model
 me.matsumo.fankt.fanbox.domain.model.id
+me.matsumo.fankt.fanbox.guest
 module:fanbox-persistence-room
 me.matsumo.fankt.fanbox.persistence.room
 module:fantia
