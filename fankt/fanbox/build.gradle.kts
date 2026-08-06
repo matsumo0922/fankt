@@ -791,8 +791,15 @@ zipline {
     mainFunction.set("me.matsumo.fankt.fanbox.guest.launchZipline")
 }
 
-// The guest target exists to build the bundle, not to be consumed as a dependency. Kotlin
-// Multiplatform has no API to keep a target out of publishing, so its tasks are disabled instead.
+// The guest, legacyGuest, and ziplineTest targets build bundles and run tests; they are not meant
+// to be resolved as dependencies, so their publication tasks stay off.
+//
+// ponytail: this stops the artifacts from reaching the repository but leaves the root Kotlin
+// Multiplatform module pointing at them, so a consumer resolving this library follows a reference
+// to a module that was never published. Gradle's variant-skipping API does not apply here — the
+// root component is KotlinSoftwareComponent, not AdhocComponentWithVariants — so closing this needs
+// either a KGP-level way to exclude a target from the root module or moving these targets out of
+// the published module. Tracked as a release blocker; see #90.
 tasks.matching { task ->
     task.name.contains("GuestPublication") || task.name.contains("ZiplineTestPublication")
 }.configureEach {
