@@ -1,3 +1,4 @@
+import app.cash.zipline.loader.SignatureAlgorithmId
 import groovy.json.JsonSlurper
 import org.gradle.api.DefaultTask
 import org.gradle.api.artifacts.result.ResolvedComponentResult
@@ -826,6 +827,18 @@ android {
 
 zipline {
     mainFunction.set("me.matsumo.fankt.fanbox.guest.launchZipline")
+
+    // The delivery workflow passes the key from a repository secret. Local builds and pull request
+    // CI have no secret, and they build an unsigned manifest rather than failing: the loader
+    // requires a signature, so an unsigned bundle cannot be executed by a consumer even if it
+    // escapes. The workflow separately refuses to publish a manifest that carries no signature.
+    val signingPrivateKeyHex = providers.gradleProperty("fanboxZiplineSigningPrivateKeyHex")
+    if (signingPrivateKeyHex.isPresent) {
+        signingKeys.create("fanboxGuest") {
+            algorithmId.set(SignatureAlgorithmId.Ed25519)
+            privateKeyHex.set(signingPrivateKeyHex)
+        }
+    }
 }
 
 // The guest, legacyGuest, and ziplineTest targets build bundles and run tests; they are not meant

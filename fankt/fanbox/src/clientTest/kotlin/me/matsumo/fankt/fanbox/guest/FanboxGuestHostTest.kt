@@ -1,7 +1,9 @@
 package me.matsumo.fankt.fanbox.guest
 
+import app.cash.zipline.ZiplineApiMismatchException
 import app.cash.zipline.loader.LoadResult
 import app.cash.zipline.loader.ZiplineHttpClient
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.async
@@ -9,6 +11,7 @@ import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.newSingleThreadContext
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.yield
+import kotlinx.serialization.SerializationException
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
@@ -168,6 +171,76 @@ class FanboxGuestHostTest {
         }
     }
 
+    /**
+     * A bridge call fails with a type that neither `CancellationException` nor `ZiplineException`
+     * covers when this host cannot decode what the guest returned, or when the bundle's bridge API
+     * differs from what it expects. Those arrive as `SerializationException` and
+     * `ZiplineApiMismatchException`, and the latter extends `Exception` directly.
+     */
+    @Test
+    fun aParseFailureOutsideZiplineExceptionFallsBackToDirectPath() = runBlocking {
+        val diagnostics = mutableListOf<String>()
+        var directCalls = 0
+        val host = hostWithService(
+            parse = { _, _ -> throw SerializationException("unexpected discriminator") },
+            diagnosticSink = { message -> diagnostics += message },
+        )
+        try {
+            repeat(2) {
+                val actual = host.getPostDetail(POST_ID, successfulExecutor()) {
+                    directCalls += 1
+                    DIRECT_POST
+                }
+                assertEquals(DIRECT_POST, actual)
+            }
+
+            assertEquals(2, directCalls)
+            assertTrue(diagnostics.any { "using direct path" in it })
+        } finally {
+            host.close()
+        }
+    }
+
+    @Test
+    fun aDescriptorFailureOutsideZiplineExceptionFallsBackToDirectPath() = runBlocking {
+        var directCalls = 0
+        val host = hostWithService(
+            parse = { _, _ -> error("parse must not run once the descriptor call failed") },
+            buildRequest = { throw ZiplineApiMismatchException("no such method") },
+        )
+        try {
+            val actual = host.getPostDetail(POST_ID, successfulExecutor()) {
+                directCalls += 1
+                DIRECT_POST
+            }
+
+            assertEquals(DIRECT_POST, actual)
+            assertEquals(1, directCalls)
+        } finally {
+            host.close()
+        }
+    }
+
+    @Test
+    fun cancellationIsNotTreatedAsAGuestFailure() = runBlocking {
+        var directCalls = 0
+        val host = hostWithService(
+            parse = { _, _ -> throw CancellationException("caller went away") },
+        )
+        try {
+            assertFailsWith<CancellationException> {
+                host.getPostDetail(POST_ID, successfulExecutor()) {
+                    directCalls += 1
+                    DIRECT_POST
+                }
+            }
+
+            assertEquals(0, directCalls)
+        } finally {
+            host.close()
+        }
+    }
+
     @Test
     fun constructionDoesNotInitializeGuest() {
         var loadCalls = 0
@@ -318,15 +391,19 @@ class FanboxGuestHostTest {
 
     private fun hostWithService(
         parse: (String, Int) -> GuestParseResult,
+        buildRequest: (String) -> RequestDescriptor = { postId ->
+            FanboxEndpoints.postDetail(FanboxPostId(postId))
+        },
+        diagnosticSink: FanboxDiagnosticSink = FanboxDiagnosticSink.none,
     ): FanboxGuestHost = FanboxGuestHost(
         config = CONFIG,
         httpClientFactory = { error("HTTP client must not be created by the override") },
-        diagnosticSink = FanboxDiagnosticSink.none,
+        diagnosticSink = diagnosticSink,
         loadGuestOverride = {
             LoadedGuest(
                 service = object : FanboxGuestService {
                     override fun buildPostDetailRequest(postId: String): RequestDescriptor =
-                        FanboxEndpoints.postDetail(FanboxPostId(postId))
+                        buildRequest(postId)
 
                     override fun parsePostDetail(body: String, statusCode: Int): GuestParseResult =
                         parse(body, statusCode)

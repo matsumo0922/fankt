@@ -1,7 +1,6 @@
 package me.matsumo.fankt.fanbox.guest
 
 import app.cash.zipline.Zipline
-import app.cash.zipline.ZiplineException
 import app.cash.zipline.ZiplineManifest
 import app.cash.zipline.loader.FreshnessChecker
 import app.cash.zipline.loader.LoadResult
@@ -91,25 +90,17 @@ internal class FanboxGuestHost(
         direct: suspend () -> FanboxPostDetail,
     ): FanboxPostDetail {
         val guest = guestOrNull() ?: return direct()
-        val descriptor = try {
-            withContext(guestDispatcher.value) {
-                guest.service.buildPostDetailRequest(postId.value)
-            }
-        } catch (failure: CancellationException) {
-            throw failure
-        } catch (failure: ZiplineException) {
-            return disableAndFallback(guest, failure.message.orEmpty(), direct)
+        val descriptor = callGuest(guest) { service ->
+            service.buildPostDetailRequest(postId.value)
+        }.getOrElse { failure ->
+            return disableAndFallback(guest, failure.describe(), direct)
         }
 
         val response = requestExecutor.execute(descriptor)
-        val parsed = try {
-            withContext(guestDispatcher.value) {
-                guest.service.parsePostDetail(response.bodyText, response.statusCode)
-            }
-        } catch (failure: CancellationException) {
-            throw failure
-        } catch (failure: ZiplineException) {
-            return disableAndFallback(guest, failure.message.orEmpty(), direct)
+        val parsed = callGuest(guest) { service ->
+            service.parsePostDetail(response.bodyText, response.statusCode)
+        }.getOrElse { failure ->
+            return disableAndFallback(guest, failure.describe(), direct)
         }
 
         return when (parsed) {
@@ -122,6 +113,34 @@ internal class FanboxGuestHost(
             )
             is GuestParseResult.GuestFailure -> disableAndFallback(guest, parsed.diagnostic, direct)
         }
+    }
+
+    /**
+     * Runs one bridge call on the guest's thread, reporting every failure but cancellation as a
+     * value.
+     *
+     * The failure types are not enumerated here. A bridge call fails with `ZiplineException` when
+     * the guest function itself threw, with `SerializationException` when this host cannot decode
+     * what the guest returned, and with `ZiplineApiMismatchException` when the bundle's bridge API
+     * differs from what this host expects — and the last of those extends `Exception` directly, so
+     * it shares none of the others' supertypes. Listing them invites the next release to add a
+     * fourth. The guest is the boundary at which untrusted input is interpreted, so no failure from
+     * it is assumed to be predictable.
+     *
+     * `Error` stays uncaught: it signals a resource-exhausted or corrupted runtime, where the
+     * direct path would fail for the same reason. Initialization in [guestOrNull] keeps catching
+     * `Throwable` instead, because narrowing it there would turn a failure it currently retreats
+     * from into one that reaches the caller.
+     */
+    private suspend fun <T> callGuest(
+        guest: LoadedGuest,
+        call: (FanboxGuestService) -> T,
+    ): Result<T> = try {
+        Result.success(withContext(guestDispatcher.value) { call(guest.service) })
+    } catch (failure: CancellationException) {
+        throw failure
+    } catch (failure: Exception) {
+        Result.failure(failure)
     }
 
     override fun close() {

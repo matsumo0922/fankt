@@ -27,8 +27,12 @@ jobs:
       - name: Generate documents
         run: ./gradlew dokkaGeneratePublicationHtml
 
+      # Without keep_files this action clears the branch root before copying, which would delete the
+      # guest bundle published under zipline/ by deploy-guest-bundle.yml. The documents are served
+      # from the root, so they cannot move under a destination_dir without changing their URL.
       - name: Deploy documents
         uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./docs
+          keep_files: true

@@ -1,0 +1,73 @@
+name: Deploy Guest Bundle
+
+# A FANBOX schema change reaches users through a bundle replacement rather than a store review, so
+# this runs on every push to main instead of on a release. The bridge API version lives in the
+# destination path: a consumer keeps reading the version it was built against, so a bundle built for
+# a newer bridge API never reaches a host that cannot decode it.
+on:
+  push:
+    branches: [ main ]
+    paths-ignore:
+      - '**/*.md'
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Build, sign and publish the guest bundle
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Validate Gradle Wrapper
+        uses: gradle/actions/wrapper-validation@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Build the signed guest bundle
+        env:
+          SIGNING_PRIVATE_KEY_HEX: ${{ secrets.ZIPLINE_SIGNING_PRIVATE_KEY_HEX }}
+        run: >-
+          ./gradlew
+          :fankt:fanbox:compileProductionExecutableKotlinGuestZipline
+          -PfanboxZiplineSigningPrivateKeyHex="$SIGNING_PRIVATE_KEY_HEX"
+
+      # The build succeeds without the key so that local builds and pull request CI pass, which
+      # means an unsigned manifest can reach this point when the secret is missing. A consumer
+      # would refuse it, but publishing one would replace a working bundle with one that no host
+      # accepts, so it is stopped here instead.
+      - name: Refuse an unsigned manifest
+        run: |
+          manifest="fankt/fanbox/build/zipline/GuestProduction/manifest.zipline.json"
+          test -f "$manifest" || { echo "::error::$manifest was not produced"; exit 1; }
+          python3 - "$manifest" <<'PY'
+          import json, sys
+          # The signatures sit under "unsigned" because that object is what the signature is
+          # computed over; a top-level lookup here would read as unsigned no matter what.
+          with open(sys.argv[1]) as f:
+              signatures = json.load(f).get("unsigned", {}).get("signatures") or {}
+          if not signatures:
+              sys.exit("::error::the manifest carries no signature; is ZIPLINE_SIGNING_PRIVATE_KEY_HEX set?")
+          print(f"manifest signed by: {', '.join(signatures)}")
+          PY
+
+      - name: Publish to the versioned path
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./fankt/fanbox/build/zipline/GuestProduction
+          destination_dir: zipline/v1

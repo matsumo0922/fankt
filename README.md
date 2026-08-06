@@ -48,8 +48,45 @@ Ed25519 public key through the corresponding `Fanbox` constructor. The library e
 production delivery URL nor a default trusted key. Without that explicit configuration, `Fanbox`
 uses the same built-in request and parsing path as before the prototype.
 
-Signed bundle hosting, signing-key operations, rollback controls, and embedded fallback packaging
-belong to the delivery system and are not provided by this prototype.
+Embedded fallback packaging is not yet exposed to callers: `Fanbox` accepts no embedded bundle
+location, so a consumer that cannot reach the manifest falls through to the built-in path rather
+than to a bundled guest.
+
+#### Bundle delivery
+
+`deploy-guest-bundle.yml` builds, signs and publishes the guest bundle on every push to `main`. The
+manifest is served from GitHub Pages under a path that names the bridge API version:
+
+```text
+https://matsumo0922.github.io/fankt/zipline/v1/manifest.zipline.json
+```
+
+A consumer keeps reading the version it was built against, so a bundle built for a newer bridge API
+never reaches a host that cannot decode it. Raise the version — and publish under a new path without
+removing the old one — when the signature of a `FanboxGuestService` function changes, or when the
+wire schema of `RequestDescriptor`, `GuestParseResult` or `FanboxPostDetail` changes. Consumers built
+against the previous version keep reading the previous path until they are updated.
+
+Builds without the signing key produce an unsigned manifest instead of failing, so that local builds
+and pull request CI pass. The workflow refuses to publish such a manifest.
+
+#### Signing keys
+
+`./gradlew :fankt:fanbox:generateZiplineManifestKeyPairEd25519` prints a key pair. The private key
+belongs in the `ZIPLINE_SIGNING_PRIVATE_KEY_HEX` repository secret and nowhere else; the public key
+is what a consumer passes to `Fanbox`.
+
+Rotating the key needs no API change. `ManifestVerifier` verifies against the first signature whose
+key name it recognises and skips the rest, so registering both keys in `signingKeys` during the
+transition produces a manifest that an application trusting either key accepts. Retire the old key
+only once the applications that embed it are no longer in use — a public key compiled into a release
+cannot be changed without shipping a new one.
+
+#### Stopping a delivery
+
+Deleting the manifest from the `gh-pages` branch stops the delivery: consumers fail to reach it and
+fall back, first to their embedded bundle if they have one and then to the built-in path. Reverting
+the offending commit on `main` republishes a working bundle.
 
 ## Usage
 
