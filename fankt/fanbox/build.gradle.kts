@@ -793,7 +793,9 @@ zipline {
 
 // The guest target exists to build the bundle, not to be consumed as a dependency. Kotlin
 // Multiplatform has no API to keep a target out of publishing, so its tasks are disabled instead.
-tasks.matching { task -> task.name.contains("GuestPublication") }.configureEach {
+tasks.matching { task ->
+    task.name.contains("GuestPublication") || task.name.contains("ZiplineTestPublication")
+}.configureEach {
     enabled = false
 }
 
@@ -814,6 +816,16 @@ kotlin {
         attributes.attribute(fanboxJsTargetAttribute, "guest")
     }
 
+    // This test-only target preserves the pre-#12 envelope interpretation so a host test can prove
+    // that changing only the signed manifest and bundle changes response parsing.
+    js("legacyGuest", org.jetbrains.kotlin.gradle.plugin.KotlinJsCompilerType.IR) {
+        nodejs()
+        binaries.executable()
+        attributes.attribute(fanboxJsTargetAttribute, "legacy-guest")
+    }
+
+    jvm("ziplineTest")
+
     targets.named("js") {
         attributes.attribute(fanboxJsTargetAttribute, "library")
     }
@@ -821,8 +833,15 @@ kotlin {
     sourceSets {
         val commonMain by getting
         val commonTest by getting
+        getByName("legacyGuestMain") {
+            kotlin.srcDir("src/guestTest/legacy")
+        }
         val clientMain by creating { dependsOn(commonMain) }
         val clientTest by creating { dependsOn(commonTest) }
+        getByName("ziplineTestMain") { dependsOn(clientMain) }
+        val ziplineTestTest by getting {
+            kotlin.srcDir("src/clientTest/zipline")
+        }
         val androidMain by getting { dependsOn(clientMain) }
         val androidUnitTest by getting { dependsOn(clientTest) }
         val iosMain by getting { dependsOn(clientMain) }
@@ -855,6 +874,11 @@ kotlin {
         }
 
         clientTest.dependencies {
+            implementation(libs.ktor.mock)
+        }
+
+        ziplineTestTest.dependencies {
+            implementation(kotlin("test"))
             implementation(libs.ktor.mock)
         }
 
@@ -995,6 +1019,21 @@ val verifyPortableImportBoundary = tasks.register<VerifyPortableImportBoundaryTa
             "java",
             "javax",
         ),
+    )
+}
+
+tasks.matching { task ->
+    task.name in setOf(
+        "testDebugUnitTest",
+        "testReleaseUnitTest",
+        "iosSimulatorArm64Test",
+        "iosX64Test",
+        "ziplineTestTest",
+    )
+}.configureEach {
+    dependsOn(
+        "compileProductionExecutableKotlinGuestZipline",
+        "compileProductionExecutableKotlinLegacyGuestZipline",
     )
 }
 

@@ -61,20 +61,21 @@
 
 ## 7. テスト（PR3）
 
-- [ ] 7.1 テスト内で鍵ペアを生成し、正しく署名された manifest がロードされることを確認する
-- [ ] 7.2 改竄された署名を持つ manifest が実行されず fallback bundle へ落ちることを確認する
-- [ ] 7.3 信頼されない鍵名の manifest が実行されず fallback bundle へ落ちることを確認する
-- [ ] 7.4 同梱 fallback bundle の署名検証失敗が呼び出し元へ例外として漏れず、既存経路で `post.info` が成功することを確認する
-- [ ] 7.5 manifest URL へ到達できない場合に同梱 fallback bundle で動作することを確認する
-- [ ] 7.6 **受け入れ条件の実証**: `body` 解釈の guest bundle と `body.post` 解釈の guest bundle を用意し、host を変更せず manifest の差し替えだけで挙動が変わることを確認する
-- [ ] 7.7 manifest URL と公開鍵を与えない構成で guest engine が起動せず、本 change の前と同じ結果になることを確認する
-- [ ] 7.8 guest の初期化失敗後と実行故障後に、いずれも再試行されず direct path で完了することを確認する
-- [ ] 7.9 秘密鍵と署名済み bundle をリポジトリへ commit していないことを確認する
+- [x] 7.0 テストが使う guest bundle を組み立てる手段を用意する。`ZiplineLoader` の embedded 経路は「manifest + SHA 名の module ファイル」が置かれた `FileSystem` を要求するため、鍵ペアの生成、manifest への署名、SHA 名での配置までをテスト側で行う。production の同梱 bundle の生成・packaging は配信基盤の範囲であり、ここでは含めない
+- [x] 7.1 テスト内で鍵ペアを生成し、正しく署名された manifest がロードされることを確認する
+- [x] 7.2 改竄された署名を持つ manifest が実行されず fallback bundle へ落ちることを確認する
+- [x] 7.3 信頼されない鍵名の manifest が実行されず fallback bundle へ落ちることを確認する
+- [x] 7.4 同梱 fallback bundle の署名検証失敗が呼び出し元へ例外として漏れず、既存経路で `post.info` が成功することを確認する
+- [x] 7.5 manifest URL へ到達できない場合に同梱 fallback bundle で動作することを確認する
+- [x] 7.6 **受け入れ条件の実証**: `body` 解釈の guest bundle と `body.post` 解釈の guest bundle を用意し、host を変更せず manifest の差し替えだけで挙動が変わることを確認する
+- [x] 7.7 manifest URL と公開鍵を与えない構成で guest engine が起動せず、本 change の前と同じ結果になることを確認する
+- [x] 7.8 guest の初期化失敗後と実行故障後に、いずれも再試行されず direct path で完了することを確認する
+- [x] 7.9 秘密鍵と署名済み bundle をリポジトリへ commit していないことを確認する
 
 ## 8. CI とドキュメント（PR3）
 
-- [ ] 8.1 `.github/workflows/pull-request-lint.yml` に guest bundle のビルド task を追加する
-- [ ] 8.2 bridge API の検証を CI へ追加する（V3 の結果に従う）
-- [ ] 8.3 `./gradlew build` と `:fankt:fanbox:jsTest` が通ることを確認する
-- [ ] 8.4 README に OTA prototype の位置づけを追記する。guest 経路が明示的な設定を要すること、既定では従来どおり動作することを書く
-- [ ] 8.5 変更した機能名・クラス名・コマンド名で README を grep し、誤りになった記述がないか確認する
+- [x] 8.1 `.github/workflows/pull-request-lint.yml` に guest bundle のビルド task を追加する
+- [x] 8.2 bridge API の検証を CI へ追加する（V3 の結果に従う）
+- [x] 8.3 `./gradlew build` と `:fankt:fanbox:jsTest` が通ることを確認する
+- [x] 8.4 README に OTA prototype の位置づけを追記する。guest 経路が明示的な設定を要すること、既定では従来どおり動作することを書く
+- [x] 8.5 変更した機能名・クラス名・コマンド名で README を grep し、誤りになった記述がないか確認する
