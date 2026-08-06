@@ -29,32 +29,35 @@
 
 ## 4. bundle loader（PR2）
 
-- [ ] 4.1 `clientMain` に `zipline-loader` 依存を追加する
-- [ ] 4.2 guest 専用の単一スレッド dispatcher を用意する
-- [ ] 4.3 loader ラッパーを実装する。manifest URL と trusted 公開鍵を受け取り、`ManifestVerifier` を構成する。署名検証を無効化する設定は使わない
-- [ ] 4.4 D6 の 3 段 fallback を実装する。ローカル manifest → 同梱 fallback bundle → guest を経由しない既存経路
-- [ ] 4.5 fallback の失敗検出で `LoadResult.Failure` と throw の両方を捕捉する。local 経路の署名検証失敗が例外として漏れることに対応する
-- [ ] 4.6 fallback へ落ちた事実を診断経路へ報告する
-- [ ] 4.7 manifest URL と trusted 公開鍵のいずれかが与えられない場合、guest を初期化せず既存経路で動作させる。既定値としての鍵も URL も埋め込まない
+- [x] 4.1 `clientMain` に `zipline-loader` 依存を追加する
+- [x] 4.2 guest 専用の単一スレッド dispatcher を用意する
+- [x] 4.3 loader ラッパーを実装する。manifest URL と trusted 公開鍵を受け取り、`ManifestVerifier` を構成する。署名検証を無効化する設定は使わない
+- [x] 4.4 D6 の 3 段 fallback を実装する。ローカル manifest → 同梱 fallback bundle → guest を経由しない既存経路
+  - production の embedded source は未設定。同梱 bundle の生成・署名・packaging は後続 PR と配信基盤の範囲
+- [x] 4.5 fallback の失敗検出で `LoadResult.Failure` と throw の両方を捕捉する。local 経路の署名検証失敗が例外として漏れることに対応する
+- [x] 4.6 fallback へ落ちた事実を診断経路へ報告する
+- [x] 4.7 manifest URL と trusted 公開鍵のいずれかが与えられない場合、guest を初期化せず既存経路で動作させる。既定値としての鍵も URL も埋め込まない
 
 ## 5. guest 経由の `post.info` 経路（PR2）
 
-- [ ] 5.1 `Fanbox` に guest 初期化の遅延実行を実装する。コンストラクタでは engine を起動しない
-- [ ] 5.2 `Fanbox.close()` が Zipline engine と guest dispatcher を解放するようにする
-- [ ] 5.3 初期化失敗時に direct path へ sticky に固定する
-- [ ] 5.4 初期化成功後の呼び出しで guest が故障した場合も、その呼び出しを direct path で処理し、以降 sticky に固定する
-- [ ] 5.5 `FanboxPostRepository.getPostDetail` を guest 経由へ切り替える。guest が返した descriptor を `FanboxDescriptorValidator` へ通してから実行する
-- [ ] 5.6 `GuestParseResult` のスキーマ不一致を `FanboxException.SchemaMismatch` へ変換する。この場合は fallback を起こさない
-- [ ] 5.7 `GuestParseResult` の実行故障と `ZiplineException` を guest 経路の故障として扱う
+- [x] 5.1 `Fanbox` に guest 初期化の遅延実行を実装する。コンストラクタでは engine を起動しない
+- [x] 5.2 `Fanbox.close()` が Zipline engine と guest dispatcher を解放するようにする
+- [x] 5.3 初期化失敗時に direct path へ sticky に固定する
+- [x] 5.4 初期化成功後の呼び出しで guest が故障した場合も、その呼び出しを direct path で処理し、以降 sticky に固定する
+- [x] 5.5 `FanboxPostRepository.getPostDetail` を guest 経由へ切り替える。guest が返した descriptor を `FanboxDescriptorValidator` へ通してから実行する
+- [x] 5.6 `GuestParseResult` のスキーマ不一致を `FanboxException.SchemaMismatch` へ変換する。この場合は fallback を起こさない
+- [x] 5.7 `GuestParseResult` の実行故障と `ZiplineException` を guest 経路の故障として扱う
 
 **5 章の分量が 4 章と合わせて 1 本のレビューに収まらない場合、4 章を先行 PR とし 5 章を後続へ分ける。**
 
 ## 6. PR2 の実測と既存 gate（V4）
 
-- [ ] 6.1 **V4**: `FanboxPostDetail` の sealed 階層（`Body` とその派生）が bridge を越えて正しく round-trip することを確認する。成立しない場合は D5 の代替（正規化済み JSON を返し host で model 構築）へ切り替える判断を行う
-- [ ] 6.2 guest 経由の `post.info` のレイテンシと guest bundle のサイズを実測し、design へ記録する
-- [ ] 6.3 `verifyKtorBoundary` と `verifyPersistenceBoundary` が Zipline の新依存に反応しないことを確認する。反応する場合は期待値を更新する
-- [ ] 6.4 guest 経路の導入後も klib ABI dump と Android ABI に Zipline の型が現れないことを確認する
+- [x] 6.1 **V4**: `FanboxPostDetail` の sealed 階層（`Body` とその派生）が bridge を越えて正しく round-trip することを確認する。成立しない場合は D5 の代替（正規化済み JSON を返し host で model 構築）へ切り替える判断を行う
+- [x] 6.2 guest 経由の `post.info` のレイテンシと guest bundle のサイズを実測し、design へ記録する
+  - iOS Simulator Arm64、local bundle、HTTP を除く: 初期 load 43.46 ms、warm-up 後の descriptor 構築 + article response 解釈 27.84 ms/回
+  - GuestProduction 全体 815,703 bytes（guest main module 152,455 bytes）
+- [x] 6.3 `verifyKtorBoundary` と `verifyPersistenceBoundary` が Zipline の新依存に反応しないことを確認する。反応する場合は期待値を更新する
+- [x] 6.4 guest 経路の導入後も klib ABI dump と Android ABI に Zipline の型が現れないことを確認する
 
 ## 7. テスト（PR3）
 

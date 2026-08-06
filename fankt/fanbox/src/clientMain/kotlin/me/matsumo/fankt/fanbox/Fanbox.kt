@@ -35,6 +35,8 @@ import me.matsumo.fankt.fanbox.domain.model.id.FanboxCommentId
 import me.matsumo.fankt.fanbox.domain.model.id.FanboxCreatorId
 import me.matsumo.fankt.fanbox.domain.model.id.FanboxPostId
 import me.matsumo.fankt.fanbox.domain.model.id.FanboxUserId
+import me.matsumo.fankt.fanbox.guest.FanboxGuestDeliveryConfig
+import me.matsumo.fankt.fanbox.guest.FanboxGuestHost
 import me.matsumo.fankt.fanbox.repository.FanboxCreatorRepository
 import me.matsumo.fankt.fanbox.repository.FanboxPostRepository
 import me.matsumo.fankt.fanbox.repository.FanboxSearchRepository
@@ -72,6 +74,7 @@ class Fanbox internal constructor(
     private val clientFactory: FanboxHttpClientFactory,
     private val logLevel: FanboxLogLevel = FanboxLogLevel.NONE,
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
+    private val guestDeliveryConfig: FanboxGuestDeliveryConfig? = null,
 ) : AutoCloseable {
     private val lifecycle = Job()
     private val resources = buildResources()
@@ -99,17 +102,43 @@ class Fanbox internal constructor(
         ioDispatcher = ioDispatcher,
     )
 
-    internal constructor(
-        clientFactory: FanboxHttpClientFactory,
+    /**
+     * Enables the signed Zipline guest for `post.info`. Both the manifest URL and trusted Ed25519
+     * public key are required; the other constructor keeps using the built-in direct path.
+     */
+    constructor(
+        guestManifestUrl: String,
+        guestTrustedKeyName: String,
+        guestTrustedEd25519PublicKey: ByteArray,
         logLevel: FanboxLogLevel = FanboxLogLevel.NONE,
         ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
         cookieStorage: FanboxCookieStorage = InMemoryFanboxCookieStorage(),
         tokenStore: FanboxTokenStore = InMemoryFanboxTokenStore(),
     ) : this(
         dependencies = createFanboxDependencies(cookieStorage, tokenStore),
+        clientFactory = DefaultFanboxHttpClientFactory,
+        logLevel = logLevel,
+        ioDispatcher = ioDispatcher,
+        guestDeliveryConfig = FanboxGuestDeliveryConfig(
+            manifestUrl = guestManifestUrl,
+            trustedKeyName = guestTrustedKeyName,
+            trustedEd25519PublicKey = guestTrustedEd25519PublicKey.copyOf(),
+        ),
+    )
+
+    internal constructor(
+        clientFactory: FanboxHttpClientFactory,
+        logLevel: FanboxLogLevel = FanboxLogLevel.NONE,
+        ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
+        cookieStorage: FanboxCookieStorage = InMemoryFanboxCookieStorage(),
+        tokenStore: FanboxTokenStore = InMemoryFanboxTokenStore(),
+        guestDeliveryConfig: FanboxGuestDeliveryConfig? = null,
+    ) : this(
+        dependencies = createFanboxDependencies(cookieStorage, tokenStore),
         clientFactory = clientFactory,
         logLevel = logLevel,
         ioDispatcher = ioDispatcher,
+        guestDeliveryConfig = guestDeliveryConfig,
     )
 
     private fun buildResources(): FanboxResources {
@@ -137,6 +166,18 @@ class Fanbox internal constructor(
             val downloadClient = buildOwnedDownloadClient()
             val diagnosticSink = FanboxDiagnosticSink { message -> Napier.w { message } }
             val includeRawFragment = logLevel != FanboxLogLevel.NONE
+            val guestHost = guestDeliveryConfig?.let { config ->
+                FanboxGuestHost(
+                    config = config,
+                    httpClientFactory = {
+                        clientFactory.create {
+                            expectSuccess = true
+                            followRedirects = false
+                        }
+                    },
+                    diagnosticSink = diagnosticSink,
+                )
+            }
 
             return FanboxResources(
                 post = FanboxPostRepository(
@@ -144,6 +185,7 @@ class Fanbox internal constructor(
                     diagnosticSink = diagnosticSink,
                     includeRawFragment = includeRawFragment,
                     ioDispatcher = ioDispatcher,
+                    guestHost = guestHost,
                 ),
                 creator = FanboxCreatorRepository(
                     requestExecutor = requestExecutor,
@@ -164,6 +206,7 @@ class Fanbox internal constructor(
                 requestExecutor = requestExecutor,
                 downloadClient = downloadClient,
                 clients = clients,
+                guestHost = guestHost,
             )
         } catch (failure: Throwable) {
             closeClients(clients)?.let(failure::addSuppressed)
@@ -589,7 +632,18 @@ class Fanbox internal constructor(
 
     override fun close() {
         if (!lifecycle.complete()) return
-        closeClients(resources.clients)?.let { throw it }
+
+        var failure: Throwable? = null
+        try {
+            resources.guestHost?.close()
+        } catch (closeFailure: Throwable) {
+            failure = closeFailure
+        }
+        closeClients(resources.clients)?.let { closeFailure ->
+            val firstFailure = failure
+            if (firstFailure == null) failure = closeFailure else firstFailure.addSuppressed(closeFailure)
+        }
+        failure?.let { throw it }
     }
 
     private fun ensureOpen() {
@@ -610,6 +664,7 @@ private data class FanboxResources(
     val requestExecutor: FanboxRequestExecutor,
     val downloadClient: HttpClient,
     val clients: List<HttpClient>,
+    val guestHost: FanboxGuestHost?,
 )
 
 private const val DOWNLOAD_CHUNK_SIZE: Int = 64 * 1_024
