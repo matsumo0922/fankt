@@ -22,6 +22,22 @@ import kotlin.test.assertIs
 class FanboxPostBodyMappingTest {
 
     @Test
+    fun defaultConfigurationUsesDirectPathWithoutGuestClient() = runBlocking {
+        var clientCreations = 0
+        val fanbox = createFanbox(FanboxPostJsonFixtures.postInfoTextHybrid) {
+            clientCreations += 1
+        }
+        try {
+            val actual = fanbox.getPostDetail(FanboxPostId("10000001"))
+
+            assertEquals(FanboxPostDetail.Body.Text("Fixture legacy text"), actual.body)
+            assertEquals(2, clientCreations)
+        } finally {
+            fanbox.close()
+        }
+    }
+
+    @Test
     fun legacyTextRunsThroughPublicPostDetailPath() = runBlocking {
         val fanbox = createFanbox(FanboxPostJsonFixtures.postInfoTextHybrid)
         try {
@@ -251,8 +267,12 @@ class FanboxPostBodyMappingTest {
         }
     }
 
-    private fun createFanbox(responseBody: String): Fanbox {
+    private fun createFanbox(
+        responseBody: String,
+        onClientCreated: () -> Unit = {},
+    ): Fanbox {
         val clientFactory = FanboxHttpClientFactory { block ->
+            onClientCreated()
             HttpClient(
                 MockEngine {
                     respond(

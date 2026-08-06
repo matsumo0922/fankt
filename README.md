@@ -40,6 +40,17 @@ target exists to keep that logic compiling and tested on Kotlin/JS, which is the
 running it as a [Zipline](https://github.com/cashapp/zipline) guest inside this library. The
 `Fanbox` client class and all HTTP execution remain Android and iOS only.
 
+### Zipline OTA prototype
+
+The FANBOX client includes an opt-in OTA prototype for the `post.info` request builder and response
+parser. It starts the guest engine only when the caller supplies both a manifest URL and a trusted
+Ed25519 public key through the corresponding `Fanbox` constructor. The library embeds neither a
+production delivery URL nor a default trusted key. Without that explicit configuration, `Fanbox`
+uses the same built-in request and parsing path as before the prototype.
+
+Signed bundle hosting, signing-key operations, rollback controls, and embedded fallback packaging
+belong to the delivery system and are not provided by this prototype.
+
 ## Usage
 
 ### Download
@@ -350,7 +361,8 @@ You can test API results by inputting the required parameters.
 
 ## Continuous integration
 
-Pull requests run Detekt, Android unit tests, and Kotlin/JS tests in one Ubuntu job. Documentation-only
+Pull requests run Detekt, Android unit tests, Kotlin/JS tests, the signed Zipline bundle tests, the
+guest production bundle build, and bridge API verification in one Ubuntu job. Documentation-only
 changes skip the job. The library release workflow verifies the published FANBOX boundary before
 publishing; it remains on macOS because the Kotlin Multiplatform publication includes Apple targets.
 

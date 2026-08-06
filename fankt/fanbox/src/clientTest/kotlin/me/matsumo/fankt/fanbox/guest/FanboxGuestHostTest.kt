@@ -4,8 +4,11 @@ import app.cash.zipline.loader.LoadResult
 import app.cash.zipline.loader.ZiplineHttpClient
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.newSingleThreadContext
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.yield
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
@@ -212,12 +215,105 @@ class FanboxGuestHostTest {
     }
 
     @Test
+    fun concurrentCallersShareOneInitialization() = runBlocking {
+        var loadCalls = 0
+        val host = FanboxGuestHost(
+            config = CONFIG,
+            httpClientFactory = { error("HTTP client must not be created by the override") },
+            diagnosticSink = FanboxDiagnosticSink.none,
+            loadGuestOverride = {
+                loadCalls += 1
+                // Loading is slow enough in practice that a second caller arrives during it; the
+                // yield reproduces that without a timing assumption.
+                yield()
+                LoadedGuest(service = StubGuestService { _, _ -> GuestParseResult.Success(GUEST_POST) })
+            },
+        )
+        try {
+            val results = List(4) {
+                async { host.getPostDetail(POST_ID, successfulExecutor()) { DIRECT_POST } }
+            }.awaitAll()
+
+            // A second engine would mean two QuickJS instances on one dispatcher, which Zipline's
+            // thread-confinement does not allow.
+            assertEquals(1, loadCalls)
+            assertTrue(results.all { it == GUEST_POST })
+        } finally {
+            host.close()
+        }
+    }
+
+    @Test
+    fun concurrentCallersDisableTheGuestOnce() = runBlocking {
+        var loadCalls = 0
+        var directCalls = 0
+        val host = FanboxGuestHost(
+            config = CONFIG,
+            httpClientFactory = { error("HTTP client must not be created by the override") },
+            diagnosticSink = FanboxDiagnosticSink.none,
+            loadGuestOverride = {
+                loadCalls += 1
+                LoadedGuest(service = StubGuestService { _, _ -> GuestParseResult.GuestFailure("broken") })
+            },
+        )
+        try {
+            val results = List(4) {
+                async {
+                    host.getPostDetail(POST_ID, successfulExecutor()) {
+                        directCalls += 1
+                        DIRECT_POST
+                    }
+                }
+            }.awaitAll()
+
+            // Every caller falls back, and none of them reloads the guest that just failed.
+            assertEquals(1, loadCalls)
+            assertEquals(4, directCalls)
+            assertTrue(results.all { it == DIRECT_POST })
+        } finally {
+            host.close()
+        }
+    }
+
+    @Test
+    fun closingAnInitializedHostStopsUsingTheGuest() = runBlocking {
+        var loadCalls = 0
+        val host = FanboxGuestHost(
+            config = CONFIG,
+            httpClientFactory = { error("HTTP client must not be created by the override") },
+            diagnosticSink = FanboxDiagnosticSink.none,
+            loadGuestOverride = {
+                loadCalls += 1
+                LoadedGuest(service = StubGuestService { _, _ -> GuestParseResult.Success(GUEST_POST) })
+            },
+        )
+        assertEquals(GUEST_POST, host.getPostDetail(POST_ID, successfulExecutor()) { DIRECT_POST })
+        assertEquals(1, loadCalls)
+
+        host.close()
+
+        // Closing releases the engine, so the guest is gone rather than reloaded on the next call.
+        assertEquals(DIRECT_POST, host.getPostDetail(POST_ID, successfulExecutor()) { DIRECT_POST })
+        assertEquals(1, loadCalls)
+    }
+
+    @Test
     fun sealedPostBodyRoundTripsInGuestPayload() {
         val post = FanboxResponses.postDetail(FanboxPostJsonFixtures.postInfoArticleEmbeds, 200)
         val encoded = Json.encodeToString<GuestParseResult>(GuestParseResult.Success(post))
         val decoded = Json.decodeFromString<GuestParseResult>(encoded)
 
         assertEquals(post, assertIs<GuestParseResult.Success>(decoded).postDetail)
+    }
+
+    private class StubGuestService(
+        private val parse: (String, Int) -> GuestParseResult,
+    ) : FanboxGuestService {
+        override fun buildPostDetailRequest(postId: String): RequestDescriptor =
+            FanboxEndpoints.postDetail(FanboxPostId(postId))
+
+        override fun parsePostDetail(body: String, statusCode: Int): GuestParseResult =
+            parse(body, statusCode)
     }
 
     private fun hostWithService(
@@ -255,6 +351,9 @@ class FanboxGuestHostTest {
             trustedEd25519PublicKey = ByteArray(32),
         )
         val DIRECT_POST = FanboxResponses.postDetail(FanboxPostJsonFixtures.postInfoTextHybrid, 200)
+
+        // A different post than DIRECT_POST, so a test can tell which path produced its result.
+        val GUEST_POST = FanboxResponses.postDetail(FanboxPostJsonFixtures.postInfoArticleA, 200)
         const val UNSIGNED_MANIFEST =
             "{\"unsigned\":{\"signatures\":{},\"freshAtEpochMs\":null,\"baseUrl\":null}," +
                 "\"modules\":{},\"mainModuleId\":\"./main.js\",\"mainFunction\":null," +

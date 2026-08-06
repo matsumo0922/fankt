@@ -40,5 +40,9 @@ jobs:
           detekt
           :fankt:fanbox:testDebugUnitTest
           :fankt:fanbox:jsTest
+          :fankt:fanbox:guestTest
+          :fankt:fanbox:compileProductionExecutableKotlinGuestZipline
+          :fankt:fanbox:ziplineApiCheck
+          :fankt:fanbox:ziplineTestTest
           :fankt:fanbox-persistence-room:testDebugUnitTest
           --continue

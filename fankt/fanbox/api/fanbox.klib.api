@@ -2105,6 +2105,7 @@ sealed class me.matsumo.fankt.fanbox/FanboxException : kotlin/Exception { // me.
 
 // Targets: [ios]
 final class me.matsumo.fankt.fanbox/Fanbox : kotlin/AutoCloseable { // me.matsumo.fankt.fanbox/Fanbox|null[0]
+    constructor <init>(kotlin/String, kotlin/String, kotlin/ByteArray, me.matsumo.fankt.fanbox/FanboxLogLevel = ..., kotlinx.coroutines/CoroutineDispatcher = ..., me.matsumo.fankt.fanbox/FanboxCookieStorage = ..., me.matsumo.fankt.fanbox/FanboxTokenStore = ...) // me.matsumo.fankt.fanbox/Fanbox.<init>|<init>(kotlin.String;kotlin.String;kotlin.ByteArray;me.matsumo.fankt.fanbox.FanboxLogLevel;kotlinx.coroutines.CoroutineDispatcher;me.matsumo.fankt.fanbox.FanboxCookieStorage;me.matsumo.fankt.fanbox.FanboxTokenStore){}[0]
     constructor <init>(me.matsumo.fankt.fanbox/FanboxLogLevel = ..., kotlinx.coroutines/CoroutineDispatcher = ..., me.matsumo.fankt.fanbox/FanboxCookieStorage = ..., me.matsumo.fankt.fanbox/FanboxTokenStore = ...) // me.matsumo.fankt.fanbox/Fanbox.<init>|<init>(me.matsumo.fankt.fanbox.FanboxLogLevel;kotlinx.coroutines.CoroutineDispatcher;me.matsumo.fankt.fanbox.FanboxCookieStorage;me.matsumo.fankt.fanbox.FanboxTokenStore){}[0]
 
     final val cookies // me.matsumo.fankt.fanbox/Fanbox.cookies|{}cookies[0]
