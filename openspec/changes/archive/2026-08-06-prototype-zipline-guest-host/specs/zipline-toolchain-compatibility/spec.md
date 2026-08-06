@@ -5,10 +5,10 @@ Issue #90 の「`app.cash.zipline` 1.27.0 を production branch へ恒久適用�
 
 plugin は Kotlin/JS IR target 全体の compiler options を `es2015` と UMD module kind へ強制する。したがって既存の publish 用 Kotlin/JS target の compile 条件が変わる。この変更が publication を壊さないことを確認しなければならない（SHALL）。
 
-#### Scenario: Production build applies the plugin permanently
+#### Scenario: Disposable plugin-applied build passes
 
-- **WHEN** production branch で `app.cash.zipline` 1.27.0 を適用した full build を実行する
-- **THEN** Gradle plugin と compiler plugin が解決・適用され、既存 compilation と test が失敗せず完了する
+- **WHEN** production branch で `app.cash.zipline` 1.27.0 を `:fankt:fanbox` に適用した full build と `:fankt:fanbox:jsTest` を実行する
+- **THEN** Gradle plugin と compiler plugin が解決・適用され、既存 compilation と test が失敗せず完了する。plugin は production branch に恒久適用されているため、この確認に disposable copy を要さない
 
 #### Scenario: Publication survives the compiler options change
 
