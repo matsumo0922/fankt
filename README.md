@@ -113,6 +113,11 @@ val downloadGuestBundle by tasks.creating(ZiplineDownloadTask::class) {
 }
 ```
 
+The task runs inside the build, so its own classpath has to satisfy Zipline: a project whose
+buildscript pins `kotlin-stdlib` below the version Zipline was compiled against fails with
+`NoClassDefFoundError` before reaching the network. Copy the layout by other means if the project
+cannot move that pin.
+
 That task does not verify the signature while downloading. It does not need to: the signature it
 saves is verified at runtime against the public key the application was built with, so a tampered
 bundle is refused then and the built-in path takes over. What the missing build-time check costs is
