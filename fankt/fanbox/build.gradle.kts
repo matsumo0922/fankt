@@ -416,10 +416,9 @@ abstract class VerifyKtorBoundaryTask : DefaultTask() {
                     it.relativeTo(project.projectDir).path
                 }
         }
-        // okio arrives through zipline-loader, which fankt declares as an implementation dependency,
-        // so it currently reaches no consumer's compile classpath. The embedded guest bundle is
-        // supplied through a fankt-owned read abstraction to keep that true; this rejects a signature
-        // that would hand okio to consumers instead.
+        // okio reaches this project only through zipline-loader, which is an implementation
+        // dependency, so a public signature naming an okio type would oblige consumers to declare a
+        // dependency they otherwise never see.
         val okioAbiFiles = checkedAbiFiles.filter { abi -> abi.readText().containsOkioType() }
         check(okioAbiFiles.isEmpty()) {
             "okio types leaked into the public fanbox ABI:\n" +

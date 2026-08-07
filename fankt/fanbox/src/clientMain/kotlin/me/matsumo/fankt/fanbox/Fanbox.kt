@@ -137,9 +137,9 @@ class Fanbox internal constructor(
      * The embedded directory does not hold what the build produces. See the README for how to
      * produce it and for the cadence of replacing it.
      *
-     * Do not merge this parameter into the other guest constructor. Adding a parameter to that one
-     * changes its JVM descriptor even when the parameter carries a default, which removes the
-     * signature published in v0.1.2 and breaks consumers compiled against it.
+     * This constructor stands apart from the one without an embedded bundle because each published
+     * constructor owns a JVM descriptor that consumers compile against. A parameter added to an
+     * existing constructor changes that descriptor even when it carries a default value.
      */
     constructor(
         guestManifestUrl: String,
