@@ -1,6 +1,8 @@
 public final class me/matsumo/fankt/fanbox/Fanbox : java/lang/AutoCloseable {
 	public fun <init> (Ljava/lang/String;Ljava/lang/String;[BLme/matsumo/fankt/fanbox/FanboxLogLevel;Lkotlinx/coroutines/CoroutineDispatcher;Lme/matsumo/fankt/fanbox/FanboxCookieStorage;Lme/matsumo/fankt/fanbox/FanboxTokenStore;)V
 	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;[BLme/matsumo/fankt/fanbox/FanboxLogLevel;Lkotlinx/coroutines/CoroutineDispatcher;Lme/matsumo/fankt/fanbox/FanboxCookieStorage;Lme/matsumo/fankt/fanbox/FanboxTokenStore;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;[BLme/matsumo/fankt/fanbox/FanboxEmbeddedGuestBundle;Lme/matsumo/fankt/fanbox/FanboxLogLevel;Lkotlinx/coroutines/CoroutineDispatcher;Lme/matsumo/fankt/fanbox/FanboxCookieStorage;Lme/matsumo/fankt/fanbox/FanboxTokenStore;)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;[BLme/matsumo/fankt/fanbox/FanboxEmbeddedGuestBundle;Lme/matsumo/fankt/fanbox/FanboxLogLevel;Lkotlinx/coroutines/CoroutineDispatcher;Lme/matsumo/fankt/fanbox/FanboxCookieStorage;Lme/matsumo/fankt/fanbox/FanboxTokenStore;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public fun <init> (Lme/matsumo/fankt/fanbox/FanboxLogLevel;Lkotlinx/coroutines/CoroutineDispatcher;Lme/matsumo/fankt/fanbox/FanboxCookieStorage;Lme/matsumo/fankt/fanbox/FanboxTokenStore;)V
 	public synthetic fun <init> (Lme/matsumo/fankt/fanbox/FanboxLogLevel;Lkotlinx/coroutines/CoroutineDispatcher;Lme/matsumo/fankt/fanbox/FanboxCookieStorage;Lme/matsumo/fankt/fanbox/FanboxTokenStore;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun addComment-GMbJC_w (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
@@ -85,6 +87,10 @@ public abstract interface class me/matsumo/fankt/fanbox/FanboxCookieStorage {
 	public abstract fun replaceAll (Ljava/util/List;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public abstract fun snapshot (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public abstract fun upsert (Lme/matsumo/fankt/fanbox/FanboxCookieRecord;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
+public abstract interface class me/matsumo/fankt/fanbox/FanboxEmbeddedGuestBundle {
+	public abstract fun read (Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 }
 
 public abstract class me/matsumo/fankt/fanbox/FanboxException : java/lang/Exception {
