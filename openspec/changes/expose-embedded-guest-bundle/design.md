@@ -126,36 +126,55 @@ D2 の段 1 で manifest が `null` だった場合と、段 2 でいずれか�
 
 既存の `FanboxDiagnosticSink` を使う。新しい診断経路は作らない。
 
-### D5. 引数は guest コンストラクタの末尾に足す
+### D5. 既存 guest コンストラクタには触れず、別のコンストラクタを足す
 
-同梱 bundle は guest 経路が有効なときにしか意味を持たないため、既存の guest 用コンストラクタに既定値付きの引数を 1 つ足す。新しいコンストラクタや builder は追加しない（ladder 段 1: 不要なら書かない）。
-
-位置は**末尾**とする。
+既存の guest コンストラクタは変更しない。同梱 bundle を非既定引数として受け取る別のコンストラクタを追加する。
 
 ```kotlin
 constructor(
     guestManifestUrl: String,
     guestTrustedKeyName: String,
     guestTrustedEd25519PublicKey: ByteArray,
+    embeddedGuestBundle: FanboxEmbeddedGuestBundle,
     logLevel: FanboxLogLevel = FanboxLogLevel.NONE,
     ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
     cookieStorage: FanboxCookieStorage = InMemoryFanboxCookieStorage(),
     tokenStore: FanboxTokenStore = InMemoryFanboxTokenStore(),
-    embeddedGuestBundle: FanboxEmbeddedGuestBundle? = null,
 )
 ```
 
-guest 設定が `logLevel` 以降の 4 引数に分断されて読みにくくなるが、既存 ABI を保つことを優先する。
+#### この判断の根拠（実測）
 
-この guest コンストラクタは **v0.1.2 として Maven Central に公開済み**である。
+既存の guest コンストラクタは **v0.1.2 として Maven Central に公開済み**である。
 
 - `v0.1.2` タグの `Fanbox.kt:110` に `guestManifestUrl` を受け取るコンストラクタが存在する
-- 同タグの `api/android/fanbox.api:2` にその ABI が記録されている
-- `https://repo1.maven.org/maven2/me/matsumo/fankt/fanbox/0.1.2/` が実在する（HTTP 200）
+- 同タグの `api/android/fanbox.api:2-3` にその ABI が 2 行（フル引数版と `DefaultConstructorMarker` 付き synthetic 版）記録されている
+- `https://repo1.maven.org/maven2/me/matsumo/fankt/fanbox/0.1.2/fanbox-0.1.2.module` が HTTP 200 を返し、`maven-metadata.xml` の version 一覧に `0.1.2` が載っている
 
-したがって既存の引数リストの中間へ挿入すると、位置引数でコンパイルされた既存 consumer のバイナリ互換を破る。README が「opt-in の prototype」と書いていることは、公開済みの ABI を壊してよい根拠にならない。このリポジトリは Kotlin Binary Compatibility Validator（`build.gradle.kts:874` の `abiValidation {}`）で ABI をダンプ管理しており、破壊は検証で顕在化する。
+既定値付き引数を**末尾**に足す案は当初採ろうとしたが、実測で棄却した。コンパイル済みクラスからコンストラクタの descriptor を直接読み出して比較したところ、既存の 2 行が**両方とも消えて**置き換わった。
 
-PixiView 自身はこのコンストラクタを使っていないが（現在は `Fanbox(logLevel, ioDispatcher)` のみ）、fankt は Maven Central 上の公開ライブラリであり、他の consumer の不在を証明できない。
+```text
+- (String;String;[B;FanboxLogLevel;CoroutineDispatcher;FanboxCookieStorage;FanboxTokenStore)V
+- (String;String;[B;FanboxLogLevel;CoroutineDispatcher;FanboxCookieStorage;FanboxTokenStore;I;DefaultConstructorMarker)V
++ (String;String;[B;FanboxLogLevel;CoroutineDispatcher;FanboxCookieStorage;FanboxTokenStore;String)V
++ (String;String;[B;FanboxLogLevel;CoroutineDispatcher;FanboxCookieStorage;FanboxTokenStore;String;I;DefaultConstructorMarker)V
+```
+
+既定値の有無に関係なく、引数を 1 つ足せばフル引数版の descriptor 自体が変わる。既存 consumer のバイトコードは `NoSuchMethodError` になる。**末尾追加でもバイナリ互換は破れる。**
+
+一方、別のコンストラクタを足す案では既存の 2 行が無傷のまま残り、差分が純粋な追加だけになることを同じ方法で確認した。
+
+#### 引数を非 null にする理由
+
+`FanboxEmbeddedGuestBundle` を nullable にすると既存コンストラクタと同じ descriptor になり得るため、非 null の必須引数とする。同梱 bundle を渡さない consumer は既存のコンストラクタを使う。これは意味的にも正しい。同梱 bundle を「指定しない」ことは既存コンストラクタの選択で表現できる。
+
+位置は鍵の直後とする。末尾に置く必要がなくなったため、guest 設定をまとめられる。
+
+#### 補足
+
+README が「opt-in の prototype」と書いていることは、公開済みの ABI を壊してよい根拠にならない。PixiView 自身はこのコンストラクタを使っていないが（現在は `Fanbox(logLevel, ioDispatcher)` のみ）、fankt は Maven Central 上の公開ライブラリであり、他の consumer の不在を証明できない。
+
+なお `abiValidation {}` は宣言されているが有効化されていない（`internalDumpKotlinAbi` が `onlyIf` で SKIPPED になり、ダンプが生成されない）。CI にも ABI 検証の step がない。**破壊は自動検証では顕在化しない。** これは本 change のスコープ外の既存問題であり、follow-up として報告する。本 change では `api/*.api` を手で正しい状態に保つ。
 
 ### D6. 同梱 bundle の署名検証失敗は既存経路で吸収される
 

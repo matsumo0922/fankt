@@ -28,6 +28,19 @@ fankt は同梱 guest bundle の読み出し経路を受け取る公開 API を�
 - **WHEN** 同梱 bundle を指定せずに既存の `Fanbox` コンストラクタを呼ぶ
 - **THEN** 従来どおり動作し、同梱 bundle を要求されない
 
+### Requirement: The published constructor ABI is preserved
+
+v0.1.2 で公開された `Fanbox` のコンストラクタは Maven Central に存在する。同梱 bundle の受け取り口を追加する際、公開済みコンストラクタの JVM descriptor を変更または削除してはならない（SHALL NOT）。
+
+既存コンストラクタへ引数を追加すると、既定値の有無に関係なくフル引数版の descriptor が変わり、公開済みの descriptor が失われる。既存 consumer のバイトコードは `NoSuchMethodError` になる。したがって受け取り口は別のコンストラクタとして追加する。
+
+現在 ABI ダンプの自動生成は動作しておらず、この破壊は自動検証で顕在化しない。確認は成果物に対して行う必要がある。
+
+#### Scenario: Published descriptors survive the addition
+
+- **WHEN** 同梱 bundle を受け取る口を追加した後、コンパイル済みの `Fanbox` のコンストラクタ descriptor を列挙する
+- **THEN** v0.1.2 で公開された descriptor がいずれも欠けておらず、差分は追加だけである
+
 ### Requirement: An unreachable delivery target loads the embedded bundle through the public API
 
 Issue #99 の受け入れ条件「配信先へ到達できない場合、同梱 bundle で guest 経路が動作する」に対応する。
