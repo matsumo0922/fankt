@@ -15,6 +15,7 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.newSingleThreadContext
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
+import me.matsumo.fankt.fanbox.FanboxEmbeddedGuestBundle
 import me.matsumo.fankt.fanbox.domain.model.id.FanboxPostId
 import me.matsumo.fankt.fanbox.response.FanboxDiagnosticSink
 import me.matsumo.fankt.fanbox.transport.FanboxRawResponse
@@ -230,18 +231,19 @@ class FanboxSignedBundleTest {
                 )
             }
 
-            val outputDirectory = root / "bundle-${Random.nextLong()}"
-            fileSystem.createDirectories(outputDirectory)
-            fileSystem.write(outputDirectory / EMBEDDED_MANIFEST_FILE_NAME) {
-                writeUtf8(manifest.encodeJson())
-            }
+            // The embedded stage reads through the public API, so the bundle is held by file name
+            // rather than written to disk. The names follow what the loader looks for: the manifest
+            // carries the application name, and each module is named by its SHA-256.
+            val embeddedFiles = mutableMapOf(
+                EMBEDDED_MANIFEST_FILE_NAME to manifest.encodeJson().encodeToByteArray(),
+            )
             val modulesByFileName = manifest.modules.values.associate { module ->
                 val bytes = fileSystem.read(sourceDirectory / module.url) { readByteString() }
-                fileSystem.write(outputDirectory / module.sha256.hex()) { write(bytes) }
+                embeddedFiles[module.sha256.hex()] = bytes.toByteArray()
                 module.url.substringAfterLast('/') to bytes
             }
             return SignedBundle(
-                embedded = EmbeddedGuestBundle(fileSystem, outputDirectory),
+                embedded = FanboxEmbeddedGuestBundle(embeddedFiles::get),
                 httpClient = BundleZiplineHttpClient(manifest.encodeJson(), modulesByFileName),
             )
         }
@@ -277,7 +279,7 @@ class FanboxSignedBundleTest {
     }
 
     private data class SignedBundle(
-        val embedded: EmbeddedGuestBundle,
+        val embedded: FanboxEmbeddedGuestBundle,
         val httpClient: ZiplineHttpClient,
     )
 
@@ -308,7 +310,6 @@ class FanboxSignedBundleTest {
         const val LEGACY_BUNDLE_DIRECTORY = "LegacyguestProduction"
         const val TRUSTED_KEY_NAME = "test-key"
         const val MANIFEST_URL = "https://example.invalid/manifest.zipline.json"
-        const val EMBEDDED_MANIFEST_FILE_NAME = "fanbox-guest.manifest.zipline.json"
         const val RESPONSE_BODY =
             """{"body":{"post":{"body":{"text":"OTA fixture"},"commentCount":0,"creatorId":"fixture-creator","excerpt":"Fixture excerpt","feeRequired":0,"hasAdultContent":false,"id":"10000001","imageForShare":"https://example.invalid/share.png","isLiked":false,"isRestricted":false,"likeCount":0,"nextPost":null,"prevPost":null,"publishedDatetime":"2026-01-01T00:00:00Z","tags":[],"title":"Fixture title","type":"text","updatedDatetime":"2026-01-01T00:00:00Z","coverImageUrl":null,"user":null}}}"""
         val POST_ID = FanboxPostId("10000001")

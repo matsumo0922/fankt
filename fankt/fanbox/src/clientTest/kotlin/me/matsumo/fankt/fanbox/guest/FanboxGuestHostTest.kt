@@ -15,6 +15,7 @@ import kotlinx.serialization.SerializationException
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
+import me.matsumo.fankt.fanbox.FanboxEmbeddedGuestBundle
 import me.matsumo.fankt.fanbox.FanboxException
 import me.matsumo.fankt.fanbox.domain.model.id.FanboxPostId
 import me.matsumo.fankt.fanbox.endpoint.FanboxEndpoints
@@ -25,8 +26,6 @@ import me.matsumo.fankt.fanbox.response.FanboxResponses
 import me.matsumo.fankt.fanbox.transport.FanboxRawResponse
 import me.matsumo.fankt.fanbox.transport.FanboxRequestExecutor
 import okio.ByteString
-import okio.FileSystem
-import kotlin.random.Random
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
@@ -86,23 +85,63 @@ class FanboxGuestHostTest {
         assertTrue("embedded bundle threw" in diagnostics.last())
     }
 
-    @OptIn(DelicateCoroutinesApi::class, ExperimentalCoroutinesApi::class)
+    /**
+     * The manifest is rejected before its signature is examined, because a manifest read from a
+     * local source is required to carry `freshAtEpochMs`. Either way the failure arrives as an
+     * exception rather than a `LoadResult.Failure`, which is the asymmetry this covers: the embedded
+     * stage must absorb it instead of letting it reach the caller.
+     */
     @Test
-    fun embeddedSignatureThrowFallsBackToDirectPath() = runBlocking {
-        val fileSystem = FileSystem.SYSTEM
-        val directory = FileSystem.SYSTEM_TEMPORARY_DIRECTORY / "fankt-zipline-${Random.nextLong()}"
+    fun anUnusableEmbeddedManifestFallsBackToDirectPath() = runBlocking {
+        val diagnostics = loadEmbeddedAndReportFailures { fileName ->
+            UNSIGNED_MANIFEST.encodeToByteArray().takeIf { fileName == EMBEDDED_MANIFEST_FILE_NAME }
+        }
+
+        assertEquals(2, diagnostics.size)
+        assertTrue("remote manifest failed" in diagnostics.first(), diagnostics.first())
+        assertTrue("embedded bundle failed" in diagnostics.last(), diagnostics.last())
+    }
+
+    @Test
+    fun aMissingEmbeddedManifestIsReportedAsSuch() = runBlocking {
+        val diagnostics = loadEmbeddedAndReportFailures { null }
+
+        assertTrue("has no $EMBEDDED_MANIFEST_FILE_NAME" in diagnostics.last(), diagnostics.last())
+    }
+
+    @Test
+    fun aMissingEmbeddedModuleIsDistinguishedFromAMissingManifest() = runBlocking {
+        val diagnostics = loadEmbeddedAndReportFailures { fileName ->
+            MANIFEST_WITH_ONE_MODULE.encodeToByteArray()
+                .takeIf { fileName == EMBEDDED_MANIFEST_FILE_NAME }
+        }
+
+        val reported = diagnostics.last()
+        assertTrue("missing 1 module(s)" in reported, reported)
+        assertTrue(MODULE_SHA256_HEX in reported, reported)
+    }
+
+    @Test
+    fun anEmbeddedReadFailureFallsBackToTheDirectPath() = runBlocking {
+        val diagnostics = loadEmbeddedAndReportFailures { error("asset unavailable") }
+
+        assertTrue("embedded bundle threw" in diagnostics.last(), diagnostics.last())
+    }
+
+    /**
+     * Loads the guest with an unreachable manifest URL so that only the embedded stage can succeed,
+     * and returns what the loader reported. Returning null means both stages failed.
+     */
+    @OptIn(DelicateCoroutinesApi::class, ExperimentalCoroutinesApi::class)
+    private suspend fun loadEmbeddedAndReportFailures(
+        bundle: FanboxEmbeddedGuestBundle,
+    ): List<String> {
         val diagnostics = mutableListOf<String>()
         val dispatcher = newSingleThreadContext("FanboxZiplineTest")
-        fileSystem.createDirectories(directory)
-        fileSystem.write(directory / "fanbox-guest.manifest.zipline.json") {
-            writeUtf8(UNSIGNED_MANIFEST)
-        }
 
         try {
             val loader = ZiplineGuestLoader(
-                config = CONFIG.copy(
-                    embeddedBundle = EmbeddedGuestBundle(fileSystem, directory),
-                ),
+                config = CONFIG.copy(embeddedBundle = bundle),
                 dispatcher = dispatcher,
                 httpClient = object : ZiplineHttpClient() {
                     override suspend fun download(
@@ -114,13 +153,11 @@ class FanboxGuestHostTest {
             )
 
             assertNull(loader.load())
-            assertEquals(2, diagnostics.size)
-            assertTrue("remote manifest failed" in diagnostics.first())
-            assertTrue("embedded bundle threw" in diagnostics.last())
         } finally {
             dispatcher.close()
-            fileSystem.deleteRecursively(directory)
         }
+
+        return diagnostics
     }
 
     @Test
@@ -434,6 +471,16 @@ class FanboxGuestHostTest {
         const val UNSIGNED_MANIFEST =
             "{\"unsigned\":{\"signatures\":{},\"freshAtEpochMs\":null,\"baseUrl\":null}," +
                 "\"modules\":{},\"mainModuleId\":\"./main.js\",\"mainFunction\":null," +
+                "\"version\":null,\"metadata\":{}}"
+
+        const val MODULE_SHA256_HEX =
+            "0000000000000000000000000000000000000000000000000000000000000001"
+
+        const val MANIFEST_WITH_ONE_MODULE =
+            "{\"unsigned\":{\"signatures\":{},\"freshAtEpochMs\":null,\"baseUrl\":null}," +
+                "\"modules\":{\"./main.js\":{\"url\":\"main.zipline\"," +
+                "\"sha256\":\"$MODULE_SHA256_HEX\"}}," +
+                "\"mainModuleId\":\"./main.js\",\"mainFunction\":null," +
                 "\"version\":null,\"metadata\":{}}"
     }
 }
