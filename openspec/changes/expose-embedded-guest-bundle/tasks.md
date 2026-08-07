@@ -5,7 +5,7 @@
 ## 1. 公開 API の追加
 
 - [ ] 1.1 `FanboxEmbeddedGuestBundle` を `clientMain` に定義する。`fun interface` で `suspend fun read(fileName: String): ByteArray?` を持つ。KDoc は日本語で書き、ファイル名が manifest 名または sha256 の hex であること、不在時に `null` を返す契約を記す
-- [ ] 1.2 `Fanbox` の guest 用コンストラクタに `embeddedGuestBundle: FanboxEmbeddedGuestBundle? = null` を追加する。位置は `guestTrustedEd25519PublicKey` の直後
+- [ ] 1.2 `Fanbox` の guest 用コンストラクタに `embeddedGuestBundle: FanboxEmbeddedGuestBundle? = null` を追加する。位置は**末尾**（`tokenStore` の後）。中間への挿入は v0.1.2 で公開済みの ABI を破るため行わない
 - [ ] 1.3 `FanboxGuestDeliveryConfig` が公開 API 由来の読み出し経路を保持する形に変える
 
 ## 2. 内部実装

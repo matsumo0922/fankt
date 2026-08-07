@@ -40,6 +40,10 @@ fankt-fankt-fanbox-guest.zipline
 
 `FsEmbeddedFetcher` が呼ぶのは `embeddedFileSystem.exists(path)` と `embeddedFileSystem.read(path) { readByteString() }` のみである。`list`、`metadataOrNull`、`sink`、`delete` などは embedded 経路では呼ばれない。
 
+`embeddedFileSystem` は `FsEmbeddedFetcher` にのみ渡り、他の経路へ流れない（`ZiplineLoader.kt:171-174`）。ただし `moduleFetchers` は `listOfNotNull(embeddedFetcher, cachingFetcher ?: httpFetcher)` であり、embedded fetcher が**先頭**に置かれる（同 `:187`）。1 つの loader に `withEmbedded` を適用すると、network から取得した manifest のモジュールも embedded から先に探される。
+
+fankt はこれに依拠しない。`ZiplineGuestLoader.load` は remote 段と embedded 段で別の loader インスタンスを構成し、remote 段は `withEmbedded` を呼ばない（`FanboxGuestHost.kt:253-272`）。本 change はこの分離を維持する。維持しない場合、remote 段が古い同梱モジュールを掴む経路が生まれる。
+
 ### F5. local 経路の署名検証失敗は今も例外として素通しする
 
 `ZiplineLoader.loadCachedOrEmbeddedManifest` の末尾で `manifestVerifier.verify` を呼んでおり、これは `loadFromLocal` の `try` の外側にある。#90 の design.md に記録された非対称性は 1.27.0 でも成立する。network 経路は `LoadResult.Failure` を返すが、embedded 経路の検証失敗は `loadOnce` の throw として現れる。
@@ -66,8 +70,10 @@ fun interface FanboxEmbeddedGuestBundle {
 
 `okio.FileSystem` / `okio.Path` を公開しない理由は 2 つある。
 
-1. okio が fankt の公開 ABI と API 依存に現れる。`ktor-free-public-api` で Ktor を排除した方針と衝突し、consumer は okio と（Android では）`okio-assetfilesystem` を明示的に依存へ加える必要が生じる
+1. okio が fankt の公開 ABI と API 依存に現れる。`ktor-free-public-api` で Ktor を排除した方針と衝突する
 2. F4 のとおり embedded 経路が使う操作は 2 つしかない。`FileSystem` 全体を公開境界に置くと、実際には呼ばれない操作まで consumer との契約になる
+
+理由 1 について、okio は `zipline-loader` の api 依存である（`zipline-loader-jvm-1.27.0.module` の `jvmApiElements-published` variant に `com.squareup.okio:okio 3.17.0` が入る）。しかし fankt はその `zipline-loader` を `implementation` で宣言しているため（`build.gradle.kts:939`）、okio は現在 consumer のコンパイル classpath に到達しない。案 A を採れば、fankt が okio を初めて公開境界へ持ち出すことになる。
 
 `fileName` は F1 のレイアウトにおけるファイル名（`fanbox-guest.manifest.zipline.json` または sha256 の hex）を受け取る。consumer は自分の格納方式（asset / NSBundle / filesDir）に対応する読み出しを書く。
 
@@ -77,7 +83,9 @@ fun interface FanboxEmbeddedGuestBundle {
 
 `FanboxEmbeddedGuestBundle` を `okio.FileSystem` の実装でラップし、`withEmbedded(fileSystem, directory)` に渡す。`directory` は仮想的な root（consumer からは見えない）とする。
 
-`FileSystem` は abstract メンバーを多く持つが、F4 のとおり embedded 経路が呼ぶのは `exists` と `source` 系だけである。`exists` は `metadataOrNull` の既定実装から導かれるため、実装が必要なのは `metadataOrNull` と `source` の 2 つになる。残りは呼ばれた時点で設計の前提が崩れていることを示すので `error()` で塞ぐ。
+okio 3.17.0 の `FileSystem` は abstract メンバーを 12 個持つ（`canonicalize` / `metadataOrNull` / `list` / `listOrNull` / `openReadOnly` / `openReadWrite` / `source` / `sink` / `createDirectory` / `atomicMove` / `delete` / `createSymlink`）。コンパイル上は全部の override が必要になる。
+
+F4 のとおり embedded 経路が呼ぶのは `exists` と `read` だけで、これらはそれぞれ `metadataOrNull` と `source` を呼ぶ final メソッドである。したがって意味のある実装が必要なのは `metadataOrNull` と `source` の 2 つで、残り 10 個は呼ばれた時点で設計の前提が崩れていることを示すため `error()` で塞ぐ。
 
 `read` は `suspend` だが `okio.FileSystem.source` は同期である。この境界の橋渡しには `runBlocking` を使わない（guest の単一スレッドで実行されるため deadlock の危険がある）。代わりに、consumer から受け取った関数を **loader の呼び出し前に** 使って必要なファイルをすべて読み出し、メモリ上の map として保持する形にする。
 
@@ -87,6 +95,8 @@ fun interface FanboxEmbeddedGuestBundle {
 2. manifest を decode して各モジュールの sha256 を得て、それぞれを `read` で読む
 
 この段階で署名検証は行わない。検証は `ZiplineLoader` の責務であり、host 側で先に検証すると検証ロジックが 2 箇所に分かれる。
+
+読み出した内容は loader が終わるまでメモリ上に保持される。現在の bundle は全モジュール合計で約 800KB（実測: stdlib 213KB、guest 149KB、serialization 130KB、coroutines 118KB、json 99KB、zipline 78KB、他 3 モジュールで 6KB 未満）であり、この規模である限り許容する。guest に大きなロジックを足してこれが桁で増えるなら、`source` を遅延読み出しにする形へ変える。**（agent 仮決め）** 許容上限を数値として強制しない判断。閾値を決めても越えた際の挙動（失敗させるのか退避するのか）に根拠がなく、退化は配信 bundle 側でも同時に起きるため embedded 固有の問題にならない。
 
 **ponytail: manifest を decode するために `ZiplineManifest.decodeJson` を使う。** 独自の JSON 解析は書かない。
 
@@ -116,26 +126,36 @@ D2 の段 1 で manifest が `null` だった場合と、段 2 でいずれか�
 
 既存の `FanboxDiagnosticSink` を使う。新しい診断経路は作らない。
 
-### D5. guest コンストラクタへの引数追加で足りる
+### D5. 引数は guest コンストラクタの末尾に足す
 
-同梱 bundle は guest 経路が有効なときにしか意味を持たないため、既存の guest 用コンストラクタに既定値付きの引数を 1 つ足す。
+同梱 bundle は guest 経路が有効なときにしか意味を持たないため、既存の guest 用コンストラクタに既定値付きの引数を 1 つ足す。新しいコンストラクタや builder は追加しない（ladder 段 1: 不要なら書かない）。
+
+位置は**末尾**とする。
 
 ```kotlin
 constructor(
     guestManifestUrl: String,
     guestTrustedKeyName: String,
     guestTrustedEd25519PublicKey: ByteArray,
-    embeddedGuestBundle: FanboxEmbeddedGuestBundle? = null,
     logLevel: FanboxLogLevel = FanboxLogLevel.NONE,
-    ...
+    ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
+    cookieStorage: FanboxCookieStorage = InMemoryFanboxCookieStorage(),
+    tokenStore: FanboxTokenStore = InMemoryFanboxTokenStore(),
+    embeddedGuestBundle: FanboxEmbeddedGuestBundle? = null,
 )
 ```
 
-新しいコンストラクタや builder は追加しない（ladder 段 1: 不要なら書かない）。`null` が既定なので既存の呼び出しは影響を受けない。
+guest 設定が `logLevel` 以降の 4 引数に分断されて読みにくくなるが、既存 ABI を保つことを優先する。
 
-引数の位置は鍵の直後、`logLevel` の前とする。guest 設定をまとめて置くため。既存 guest コンストラクタの ABI は変わるが、guest 経路は #90 で追加された未公開の prototype であり、README も「opt-in の prototype」と明記している。破壊的変更として扱わない。
+この guest コンストラクタは **v0.1.2 として Maven Central に公開済み**である。
 
-**（agent 仮決め）** 引数位置を末尾ではなく guest 設定群の直後にした判断。末尾に置けば既存 ABI を保てるが、`logLevel` 以降の 4 引数を挟んで guest 設定が分断される。guest 経路が prototype である前提に依拠しているため、この前提が誤っていれば末尾追加へ変える。
+- `v0.1.2` タグの `Fanbox.kt:110` に `guestManifestUrl` を受け取るコンストラクタが存在する
+- 同タグの `api/android/fanbox.api:2` にその ABI が記録されている
+- `https://repo1.maven.org/maven2/me/matsumo/fankt/fanbox/0.1.2/` が実在する（HTTP 200）
+
+したがって既存の引数リストの中間へ挿入すると、位置引数でコンパイルされた既存 consumer のバイナリ互換を破る。README が「opt-in の prototype」と書いていることは、公開済みの ABI を壊してよい根拠にならない。このリポジトリは Kotlin Binary Compatibility Validator（`build.gradle.kts:874` の `abiValidation {}`）で ABI をダンプ管理しており、破壊は検証で顕在化する。
+
+PixiView 自身はこのコンストラクタを使っていないが（現在は `Fanbox(logLevel, ioDispatcher)` のみ）、fankt は Maven Central 上の公開ライブラリであり、他の consumer の不在を証明できない。
 
 ### D6. 同梱 bundle の署名検証失敗は既存経路で吸収される
 
