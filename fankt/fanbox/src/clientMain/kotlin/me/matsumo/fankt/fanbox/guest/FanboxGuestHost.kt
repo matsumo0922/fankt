@@ -29,8 +29,6 @@ import me.matsumo.fankt.fanbox.domain.model.id.FanboxPostId
 import me.matsumo.fankt.fanbox.response.FanboxDiagnosticSink
 import me.matsumo.fankt.fanbox.response.FanboxDiagnostics
 import me.matsumo.fankt.fanbox.transport.FanboxRequestExecutor
-import me.matsumo.fankt.fanbox.guest.EmbeddedBundleFailure.ManifestMissing
-import me.matsumo.fankt.fanbox.guest.EmbeddedBundleFailure.ModulesMissing
 import okio.Buffer
 import okio.ByteString
 import okio.ByteString.Companion.toByteString
@@ -113,7 +111,7 @@ internal class LoadedEmbeddedBundle private constructor(
             bundle: FanboxEmbeddedGuestBundle,
         ): Result<LoadedEmbeddedBundle> {
             val manifestBytes = bundle.read(EMBEDDED_MANIFEST_FILE_NAME)
-                ?: return Result.failure(EmbeddedBundleReadException(ManifestMissing))
+                ?: return failure(EmbeddedBundleFailure.ManifestMissing)
             val manifest = ZiplineManifest.decodeJson(manifestBytes.decodeToString())
 
             val files = mutableMapOf(EMBEDDED_MANIFEST_FILE_NAME to manifestBytes.toByteString())
@@ -124,12 +122,13 @@ internal class LoadedEmbeddedBundle private constructor(
                 if (moduleBytes == null) missing += fileName else files[fileName] = moduleBytes.toByteString()
             }
 
-            if (missing.isNotEmpty()) {
-                return Result.failure(EmbeddedBundleReadException(ModulesMissing(missing)))
-            }
+            if (missing.isNotEmpty()) return failure(EmbeddedBundleFailure.ModulesMissing(missing))
 
             return Result.success(LoadedEmbeddedBundle(files))
         }
+
+        private fun failure(reason: EmbeddedBundleFailure): Result<LoadedEmbeddedBundle> =
+            Result.failure(EmbeddedBundleReadException(reason))
     }
 }
 

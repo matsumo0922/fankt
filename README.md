@@ -48,9 +48,9 @@ Ed25519 public key through the corresponding `Fanbox` constructor. The library e
 production delivery URL nor a default trusted key. Without that explicit configuration, `Fanbox`
 uses the same built-in request and parsing path as before the prototype.
 
-Embedded fallback packaging is not yet exposed to callers: `Fanbox` accepts no embedded bundle
-location, so a consumer that cannot reach the manifest falls through to the built-in path rather
-than to a bundled guest.
+A consumer that also supplies an embedded bundle keeps running delivered code while the manifest is
+unreachable. Without one, an unreachable manifest falls through to the built-in path, where a
+delivered fix does not apply.
 
 #### Bundle delivery
 
@@ -69,6 +69,58 @@ against the previous version keep reading the previous path until they are updat
 
 Builds without the signing key produce an unsigned manifest instead of failing, so that local builds
 and pull request CI pass. The workflow refuses to publish such a manifest.
+
+#### Embedded fallback bundle
+
+Pass a `FanboxEmbeddedGuestBundle` to the corresponding `Fanbox` constructor to keep the guest
+running when the manifest cannot be reached. It reads one file at a time by name, so the bundle can
+live wherever the application already keeps its resources — Android assets, an iOS bundle resource,
+or a directory on disk:
+
+```kotlin
+Fanbox(
+    guestManifestUrl = "https://matsumo0922.github.io/fankt/zipline/v1/manifest.zipline.json",
+    guestTrustedKeyName = "fanboxGuest",
+    guestTrustedEd25519PublicKey = publicKey,
+    embeddedGuestBundle = { fileName ->
+        runCatching { assets.open("fanbox-guest/$fileName").use { it.readBytes() } }.getOrNull()
+    },
+)
+```
+
+Return `null` for a file that is not there. A missing bundle is reported and falls back rather than
+failing the call. `okio` stays out of this boundary, so nothing beyond fankt needs to be added to the
+consumer's dependencies.
+
+**The embedded directory does not hold what the build produces.** The loader looks for a manifest
+named after the application and for modules named by their SHA-256, whereas the build writes
+`manifest.zipline.json` and readable module names:
+
+| | Build output | What the loader reads |
+|---|---|---|
+| Manifest | `manifest.zipline.json` | `fanbox-guest.manifest.zipline.json` |
+| Modules | `kotlin-kotlin-stdlib.zipline`, … | `<sha256 hex>`, no extension |
+
+Copying the build output as-is leaves the manifest unfindable, and the guest then falls back to the
+built-in path without an error. Produce the directory with Zipline's own download task instead, which
+writes exactly what the loader reads:
+
+```kotlin
+val downloadGuestBundle by tasks.creating(ZiplineDownloadTask::class) {
+    applicationName = "fanbox-guest"
+    manifestUrl = "https://matsumo0922.github.io/fankt/zipline/v1/manifest.zipline.json"
+    downloadDir = file("src/androidMain/assets/fanbox-guest")
+}
+```
+
+That task does not verify the signature while downloading. It does not need to: the signature it
+saves is verified at runtime against the public key the application was built with, so a tampered
+bundle is refused then and the built-in path takes over. What the missing build-time check costs is
+the embedded copy being useless, not untrusted code running.
+
+Re-run the task for each release. An embedded bundle that is never refreshed keeps serving whatever
+was current when it was downloaded, which is the behaviour a consumer gets whenever delivery is
+unreachable.
 
 #### Signing keys
 
