@@ -40,25 +40,35 @@ PR1 は配信を伴わないため単独で merge できる。PR2 は main へ�
 - [x] 4.3 manifest が署名を持つことを配置前に確認する。持たない場合は失敗させる
 - [x] 4.4 `destination_dir` を `zipline/v1` に限定して manifest と bundle を配置する
 - [x] 4.5 `deploy-documents.yml` に `keep_files: true` を追加する。既存の documents URL を変えないため `destination_dir` は使わない
-- [ ] 4.6 配信 workflow が既存の documents を削除しないことを確認する（V5）
-- [ ] 4.7 documents 配信が `zipline/v1/` を削除しないことを確認する（V7）。既存 workflow は現在 gh-pages のルート全体を削除するため、この方向の検証が本体である
+- [x] 4.6 配信 workflow が既存の documents を削除しないことを確認する（V5）。main の `2b3c68d8` での配信後、gh-pages に `fankt/` `index.html` 等の documents と `zipline/v1/` が併存することを確認した
+- [ ] 4.7 documents 配信が `zipline/v1/` を削除しないことを確認する（V7）。次回の release publish で `deploy-documents.yml` が走った後に観測する
 
 ## 5. 配信された bundle の検証（PR2）
 
-- [ ] 5.1 配信された manifest URL から HTTPS で manifest が取得できることを確認する
+- [x] 5.1 配信された manifest URL から HTTPS で manifest が取得できることを確認する。`https://matsumo0922.github.io/fankt/zipline/v1/manifest.zipline.json` が HTTP 200 / 2,586 bytes を返し、`unsigned.signatures` に `fanboxGuest` の Ed25519 署名、`mainFunction`、9 module を含む。bundle 本体（`fankt-fankt-fanbox-guest.zipline` 152,508 bytes ほか）と documents のルートもいずれも 200
 - [ ] 5.2 公開鍵を信頼する `Fanbox` から配信された manifest をロードし、`post.info` が guest 経路で成功することを確認する（V3）
-- [ ] 5.3 異なる公開鍵を信頼する `Fanbox` では guest が使われず、直接経路で成功することを確認する
+- [x] 5.3 異なる公開鍵では検証が拒否されることを確認する。配信された manifest を実物の `ManifestVerifier` に通し、公開鍵で検証成功、異なる公開鍵と未知の鍵名では失敗することを確認した（一時テスト 3 件、リポジトリには残していない）
 - [ ] 5.4 新旧 2 鍵で署名した manifest が、いずれか一方の鍵だけを信頼する host で検証を通ることを確認する（V4）
 
-### 4.6 / 4.7 / 5 章が未実施である理由
+### 未実施項目の状況
 
-いずれも gh-pages への実配信を経た後にしか観測できない。配信は本 change の merge によって初めて起きるため、merge 前に checked へ移せない。
+- **4.7**: 次回の release publish 待ち。`keep_files: true` が削除を行わせないことは action の実装で確認済み
+- **5.2**: 配信された manifest から guest を起動して `post.info` を通す検証。manifest と bundle の取得（5.1）と署名検証（5.3）は確認済みで、残るのは engine を起動して実際に解釈させる部分。FANBOX への認証済みリクエストを要するため、consumer 側（matsumo0922/PixiView-KMP#138）の有効化と併せて確認する
+- **5.4**: 鍵のローテーションを実施する時点で確認する。`ManifestVerifier.verify` が認識できた最初の鍵で検証することは実装で確認済み
 
-したがってこれらは PR の「人間に確認してほしいこと」へ転記し、merge 後に確認する。可用性はこの間も保たれる: consumer が manifest に到達できない場合は既存の直接経路で動作し、それは本 change 以前と同じ挙動である（`zipline-guest-bundle-loading` の fallback 契約）。
+### 前提として行った設定変更
 
-- 4.6 / 4.7: 2 つの workflow が互いの成果物を消さないこと。`destination_dir` が削除範囲をそのディレクトリ配下に限ることと、`keep_files: true` が削除自体を行わせないことは action の実装（`git-utils.ts` の `setRepo` / `directorySetup`）で確認済みだが、実際の gh-pages 上での観測ではない
-- 5.1〜5.3: 配信された成果物を実際の consumer 構成でロードする検証
-- 5.4: 鍵ローテーションの二重署名。`ManifestVerifier.verify` が認識できた最初の鍵で検証することは実装で確認済みだが、実際に 2 鍵で署名した manifest での観測ではない。ローテーションを行う時点で確認する
+このリポジトリの GitHub Pages は有効化されていなかった（`has_pages=false`）。`deploy-documents.yml` が gh-pages へ配信を続けていた一方で公開されておらず、README が案内する API Reference の URL も 404 を返していた。gh-pages ブランチを source として有効化した（ユーザー確認済み）。
+
+有効化の直後は `status` が `building` のまま留まり、その間の HTTPS 取得は 404 を返す。`POST /repos/{owner}/{repo}/pages/builds` でビルドを起こすと 21.8 秒で `built` になり、以降は 200 を返した。初回有効化時はビルドの完了を待つ必要がある。
+
+### 実配信を待った理由と、その結果
+
+4.6 / 4.7 / 5 章はいずれも gh-pages への実配信を経た後にしか観測できない。配信は本 change の merge によって初めて起きるため、merge 前には checked へ移せなかった。
+
+merge 後に配信が走り、4.6 / 5.1 / 5.3 が観測できた。可用性はこの間も保たれていた: consumer が manifest に到達できない場合は既存の直接経路で動作し、それは本 change 以前と同じ挙動である（`zipline-guest-bundle-loading` の fallback 契約）。
+
+残る 4.7 は次回の release publish、5.2 は consumer 側の有効化、5.4 は鍵ローテーションの実施を待つ。いずれも本 change の側でできる検証は終えている。
 
 ## 6. 文書（PR2）
 
