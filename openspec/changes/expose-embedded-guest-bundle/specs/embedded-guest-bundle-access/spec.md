@@ -41,6 +41,11 @@ v0.1.2 で公開された `Fanbox` のコンストラクタは Maven Central に
 - **WHEN** 同梱 bundle を受け取る口を追加した後、コンパイル済みの `Fanbox` のコンストラクタ descriptor を列挙する
 - **THEN** v0.1.2 で公開された descriptor がいずれも欠けておらず、差分は追加だけである
 
+#### Scenario: The reason for the separate constructor is recorded in the source
+
+- **WHEN** 追加したコンストラクタの宣言を読む
+- **THEN** 既存の guest コンストラクタへ引数を統合してはならない理由が記されており、統合が公開済み descriptor を失わせることが分かる
+
 ### Requirement: An unreachable delivery target loads the embedded bundle through the public API
 
 Issue #99 の受け入れ条件「配信先へ到達できない場合、同梱 bundle で guest 経路が動作する」に対応する。

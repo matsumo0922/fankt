@@ -174,7 +174,15 @@ constructor(
 
 README が「opt-in の prototype」と書いていることは、公開済みの ABI を壊してよい根拠にならない。PixiView 自身はこのコンストラクタを使っていないが（現在は `Fanbox(logLevel, ioDispatcher)` のみ）、fankt は Maven Central 上の公開ライブラリであり、他の consumer の不在を証明できない。
 
-なお `abiValidation {}` は宣言されているが有効化されていない（`internalDumpKotlinAbi` が `onlyIf` で SKIPPED になり、ダンプが生成されない）。CI にも ABI 検証の step がない。**破壊は自動検証では顕在化しない。** これは本 change のスコープ外の既存問題であり、follow-up として報告する。本 change では `api/*.api` を手で正しい状態に保つ。
+#### ABI の自動検証は機能していない（スコープ外の既存問題）
+
+`abiValidation {}`（`build.gradle.kts:874`）は空ブロックで、`enabled` を立てる呼び出しがリポジトリのどこにも存在しない。Kotlin Gradle Plugin 2.3.21 の `AbiValidationExtensionImpl` は `enabled` の convention を `false` としており、dump / check / update の各タスクは `onlyIf { isEnabled.get() }` でガードされている。したがって `internalDumpKotlinAbi` と `checkKotlinAbi` は恒久的に SKIPPED になる。
+
+`verifyKtorBoundary` は `dependsOn("checkKotlinAbi", ...)` を宣言しているが、Gradle の `dependsOn` は実行順序の指定にすぎず、SKIPPED は失敗として扱われない。実測でも `checkKotlinAbi SKIPPED` のまま `verifyKtorBoundary` が BUILD SUCCESSFUL になる。**チェックイン済みの `.api` に Ktor 型が現れないことは検査されているが、その `.api` が現在のコードを反映しているかは検査されていない。**
+
+`api/*.api` は手で維持されている。#95（`c9cdad18`）のコミットメッセージも "Record the new public constructor in both ABI dumps" と述べており、自動生成の出力ではない。
+
+**破壊は自動検証では顕在化しない。** これは #95 以前から存在する構造であり、本 change が持ち込んだものではない（pre-existing-out-of-scope）。本 change では直さず follow-up として報告し、`api/*.api` を手で正しい状態に保つ。tasks.md 1.4 の descriptor 確認はこの前提のもとで必須になる。
 
 ### D6. 同梱 bundle の署名検証失敗は既存経路で吸収される
 

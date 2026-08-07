@@ -7,7 +7,9 @@
 - [ ] 1.1 `FanboxEmbeddedGuestBundle` を `clientMain` に定義する。`fun interface` で `suspend fun read(fileName: String): ByteArray?` を持つ。KDoc は日本語で書き、ファイル名が manifest 名または sha256 の hex であること、不在時に `null` を返す契約を記す
 - [ ] 1.2 `embeddedGuestBundle: FanboxEmbeddedGuestBundle` を**非既定の必須引数**として受け取る新しい public コンストラクタを追加する。位置は `guestTrustedEd25519PublicKey` の直後。**既存の guest コンストラクタには一切触れない**（引数を足すと既定値の有無に関係なく descriptor が変わり、v0.1.2 で公開済みの ABI が消える。実測で確認済み）
 - [ ] 1.3 `FanboxGuestDeliveryConfig` が公開 API 由来の読み出し経路を保持する形に変える
-- [ ] 1.4 追加後に、コンパイル済み `Fanbox.class` のコンストラクタ descriptor を列挙し、v0.1.2 の 2 行（`api/android/fanbox.api:2-3`）が無傷で残ることを確認する。ABI ダンプの自動生成は機能していないため、この確認は手で行う
+- [ ] 1.4 追加したコンストラクタの KDoc に、既存の guest コンストラクタへ引数を統合してはならない理由を記す。自動検証がないため、将来この 2 つを「整理」して統合する変更が誰にも気づかれずに公開済み descriptor を失わせるリスクがある
+- [ ] 1.5 追加後に、コンパイル済み `Fanbox.class` のコンストラクタ descriptor を列挙し、v0.1.2 の 2 行（`api/android/fanbox.api:2-3`）が無傷で残ることを確認する。ABI ダンプの自動生成は機能していないため、この確認は手で行う
+- [ ] 1.6 `api/fanbox.klib.api` と `api/android/fanbox.api` に追加分を手で記録する（#95 と同じ運用）
 
 ## 2. 内部実装
 
