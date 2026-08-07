@@ -22,22 +22,30 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
+import me.matsumo.fankt.fanbox.FanboxEmbeddedGuestBundle
 import me.matsumo.fankt.fanbox.FanboxExceptionFactory
 import me.matsumo.fankt.fanbox.domain.model.FanboxPostDetail
 import me.matsumo.fankt.fanbox.domain.model.id.FanboxPostId
 import me.matsumo.fankt.fanbox.response.FanboxDiagnosticSink
 import me.matsumo.fankt.fanbox.response.FanboxDiagnostics
 import me.matsumo.fankt.fanbox.transport.FanboxRequestExecutor
+import okio.Buffer
 import okio.ByteString
 import okio.ByteString.Companion.toByteString
+import okio.FileHandle
+import okio.FileMetadata
+import okio.FileNotFoundException
 import okio.FileSystem
 import okio.Path
+import okio.Path.Companion.toPath
+import okio.Sink
+import okio.Source
 
 internal data class FanboxGuestDeliveryConfig(
     val manifestUrl: String,
     val trustedKeyName: String,
     val trustedEd25519PublicKey: ByteArray,
-    val embeddedBundle: EmbeddedGuestBundle? = null,
+    val embeddedBundle: FanboxEmbeddedGuestBundle? = null,
 ) {
     init {
         require(manifestUrl.isNotBlank()) { "Guest manifest URL must not be blank" }
@@ -63,10 +71,109 @@ internal data class FanboxGuestDeliveryConfig(
     }
 }
 
-internal data class EmbeddedGuestBundle(
-    val fileSystem: FileSystem,
-    val directory: Path,
-)
+/**
+ * 同梱 bundle の読み出しに失敗した理由。
+ *
+ * manifest が無い場合と、manifest が参照するモジュールが欠けている場合を区別する。後者は同梱した
+ * ディレクトリのレイアウトの取り違えかコピー漏れを示す。いずれも `FsEmbeddedFetcher` から見ると
+ * 「ファイルが無い」で同じ症状になり、静かに既存経路へ退避するため、ここで区別して報告する。
+ */
+internal sealed interface EmbeddedBundleFailure {
+    data object ManifestMissing : EmbeddedBundleFailure
+    data class ModulesMissing(val fileNames: List<String>) : EmbeddedBundleFailure
+
+    fun describe(): String = when (this) {
+        ManifestMissing ->
+            "embedded guest bundle has no $EMBEDDED_MANIFEST_FILE_NAME"
+        is ModulesMissing ->
+            "embedded guest bundle is missing ${fileNames.size} module(s) referenced by its " +
+                "manifest: ${fileNames.joinToString()}"
+    }
+}
+
+/**
+ * 同梱 bundle の内容をメモリ上に読み込んだもの。
+ *
+ * 公開 API の読み出しは `suspend` だが [okio.FileSystem.source] は同期であり、guest は単一スレッド
+ * で実行されるため橋渡しに `runBlocking` を使えない。そこで loader を呼ぶ前に必要なファイルを
+ * すべて読み出しておく。読み出す対象は manifest を先に読めば決まる。
+ */
+internal class LoadedEmbeddedBundle private constructor(
+    private val filesByName: Map<String, ByteString>,
+) {
+    val fileSystem: FileSystem get() = InMemoryReadOnlyFileSystem(filesByName)
+
+    companion object {
+        val DIRECTORY: Path = "/fanbox-guest-embedded".toPath()
+
+        /** 同梱 bundle を読み出す。読み出せない場合は理由を [EmbeddedBundleFailure] で返す。 */
+        suspend fun read(
+            bundle: FanboxEmbeddedGuestBundle,
+        ): Result<LoadedEmbeddedBundle> {
+            val manifestBytes = bundle.read(EMBEDDED_MANIFEST_FILE_NAME)
+                ?: return failure(EmbeddedBundleFailure.ManifestMissing)
+            val manifest = ZiplineManifest.decodeJson(manifestBytes.decodeToString())
+
+            val files = mutableMapOf(EMBEDDED_MANIFEST_FILE_NAME to manifestBytes.toByteString())
+            val missing = mutableListOf<String>()
+            for (module in manifest.modules.values) {
+                val fileName = module.sha256.hex()
+                val moduleBytes = bundle.read(fileName)
+                if (moduleBytes == null) missing += fileName else files[fileName] = moduleBytes.toByteString()
+            }
+
+            if (missing.isNotEmpty()) return failure(EmbeddedBundleFailure.ModulesMissing(missing))
+
+            return Result.success(LoadedEmbeddedBundle(files))
+        }
+
+        private fun failure(reason: EmbeddedBundleFailure): Result<LoadedEmbeddedBundle> =
+            Result.failure(EmbeddedBundleReadException(reason))
+    }
+}
+
+internal class EmbeddedBundleReadException(
+    val failure: EmbeddedBundleFailure,
+) : Exception(failure.describe())
+
+/**
+ * 読み出し済みの内容だけを返す [FileSystem]。
+ *
+ * embedded 経路が呼ぶのは `exists` と `read` で、それぞれ [metadataOrNull] と [source] に委譲される
+ * （`FsEmbeddedFetcher`）。他の操作は呼ばれた時点でこの前提が崩れているため、黙って空を返さずに
+ * 失敗させる。
+ */
+private class InMemoryReadOnlyFileSystem(
+    private val filesByName: Map<String, ByteString>,
+) : FileSystem() {
+    private fun bytesOrNull(path: Path): ByteString? = filesByName[path.name]
+
+    override fun metadataOrNull(path: Path): FileMetadata? {
+        val bytes = bytesOrNull(path) ?: return null
+        return FileMetadata(isRegularFile = true, size = bytes.size.toLong())
+    }
+
+    override fun source(file: Path): Source {
+        val bytes = bytesOrNull(file) ?: throw FileNotFoundException("no such embedded file: $file")
+        return Buffer().write(bytes)
+    }
+
+    override fun canonicalize(path: Path): Path = unsupported("canonicalize")
+    override fun list(dir: Path): List<Path> = unsupported("list")
+    override fun listOrNull(dir: Path): List<Path>? = unsupported("listOrNull")
+    override fun openReadOnly(file: Path): FileHandle = unsupported("openReadOnly")
+    override fun openReadWrite(file: Path, mustCreate: Boolean, mustExist: Boolean): FileHandle =
+        unsupported("openReadWrite")
+    override fun sink(file: Path, mustCreate: Boolean): Sink = unsupported("sink")
+    override fun appendingSink(file: Path, mustExist: Boolean): Sink = unsupported("appendingSink")
+    override fun createDirectory(dir: Path, mustCreate: Boolean): Unit = unsupported("createDirectory")
+    override fun atomicMove(source: Path, target: Path): Unit = unsupported("atomicMove")
+    override fun delete(path: Path, mustExist: Boolean): Unit = unsupported("delete")
+    override fun createSymlink(source: Path, target: Path): Unit = unsupported("createSymlink")
+
+    private fun unsupported(operation: String): Nothing =
+        error("the embedded guest bundle is read-only; $operation is not available")
+}
 
 @OptIn(DelicateCoroutinesApi::class, ExperimentalCoroutinesApi::class)
 internal class FanboxGuestHost(
@@ -263,12 +370,14 @@ internal class ZiplineGuestLoader(
             if (embedded == null) {
                 Result.failure(IllegalStateException("embedded guest bundle is not configured"))
             } else {
-                load(
-                    loader = newLoader(EmbeddedOnlyZiplineHttpClient)
-                        .withEmbedded(embedded.fileSystem, embedded.directory),
-                    manifestUrl = EMBEDDED_MANIFEST_SENTINEL_URL,
-                    freshnessChecker = AlwaysFresh,
-                )
+                LoadedEmbeddedBundle.read(embedded).mapCatching { loaded ->
+                    load(
+                        loader = newLoader(EmbeddedOnlyZiplineHttpClient)
+                            .withEmbedded(loaded.fileSystem, LoadedEmbeddedBundle.DIRECTORY),
+                        manifestUrl = EMBEDDED_MANIFEST_SENTINEL_URL,
+                        freshnessChecker = AlwaysFresh,
+                    ).getOrThrow()
+                }
             }
         },
         diagnosticSink = diagnosticSink,
@@ -373,3 +482,7 @@ private fun String.isLoopbackHost(): Boolean =
 private const val APPLICATION_NAME = "fanbox-guest"
 private const val POST_DETAIL_ENDPOINT = "post.info"
 private const val EMBEDDED_MANIFEST_SENTINEL_URL = "https://embedded.invalid/manifest.zipline.json"
+
+// Zipline derives this from the application name (`getApplicationManifestFileName`), so it is not
+// the `manifest.zipline.json` that the build produces.
+internal const val EMBEDDED_MANIFEST_FILE_NAME = "$APPLICATION_NAME.manifest.zipline.json"

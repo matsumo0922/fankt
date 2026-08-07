@@ -126,6 +126,43 @@ class Fanbox internal constructor(
         ),
     )
 
+    /**
+     * Enables the signed Zipline guest for `post.info` with a bundle embedded in the application.
+     *
+     * When the manifest URL cannot be reached, the guest is loaded from [embeddedGuestBundle]
+     * instead, so that a delivered fix still applies while the delivery target is unreachable.
+     * A bundle that fails signature verification is not executed; `post.info` falls back to the
+     * built-in direct path.
+     *
+     * The embedded directory does not hold what the build produces. See the README for how to
+     * produce it and for the cadence of replacing it.
+     *
+     * This constructor stands apart from the one without an embedded bundle because each published
+     * constructor owns a JVM descriptor that consumers compile against. A parameter added to an
+     * existing constructor changes that descriptor even when it carries a default value.
+     */
+    constructor(
+        guestManifestUrl: String,
+        guestTrustedKeyName: String,
+        guestTrustedEd25519PublicKey: ByteArray,
+        embeddedGuestBundle: FanboxEmbeddedGuestBundle,
+        logLevel: FanboxLogLevel = FanboxLogLevel.NONE,
+        ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
+        cookieStorage: FanboxCookieStorage = InMemoryFanboxCookieStorage(),
+        tokenStore: FanboxTokenStore = InMemoryFanboxTokenStore(),
+    ) : this(
+        dependencies = createFanboxDependencies(cookieStorage, tokenStore),
+        clientFactory = DefaultFanboxHttpClientFactory,
+        logLevel = logLevel,
+        ioDispatcher = ioDispatcher,
+        guestDeliveryConfig = FanboxGuestDeliveryConfig(
+            manifestUrl = guestManifestUrl,
+            trustedKeyName = guestTrustedKeyName,
+            trustedEd25519PublicKey = guestTrustedEd25519PublicKey.copyOf(),
+            embeddedBundle = embeddedGuestBundle,
+        ),
+    )
+
     internal constructor(
         clientFactory: FanboxHttpClientFactory,
         logLevel: FanboxLogLevel = FanboxLogLevel.NONE,

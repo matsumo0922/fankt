@@ -416,6 +416,14 @@ abstract class VerifyKtorBoundaryTask : DefaultTask() {
                     it.relativeTo(project.projectDir).path
                 }
         }
+        // okio reaches this project only through zipline-loader, which is an implementation
+        // dependency, so a public signature naming an okio type would oblige consumers to declare a
+        // dependency they otherwise never see.
+        val okioAbiFiles = checkedAbiFiles.filter { abi -> abi.readText().containsOkioType() }
+        check(okioAbiFiles.isEmpty()) {
+            "okio types leaked into the public fanbox ABI:\n" +
+                okioAbiFiles.joinToString("\n") { it.relativeTo(project.projectDir).path }
+        }
 
         val genericSignatureViolations = inspectAndroidGenericSignatures(
             abiText = androidAbiFile.get().asFile.readText(),
@@ -677,6 +685,8 @@ abstract class VerifyKtorBoundaryTask : DefaultTask() {
     private fun String.containsDeprecatedDatetimeType(): Boolean =
         DEPRECATED_DATETIME_TYPES.any(this::contains)
 
+    private fun String.containsOkioType(): Boolean = OKIO_TYPE_MARKERS.any(this::contains)
+
     private data class VisibleAndroidClass(
         val methods: MutableSet<VisibleAndroidMember> = linkedSetOf(),
         val fields: MutableSet<VisibleAndroidMember> = linkedSetOf(),
@@ -692,6 +702,7 @@ abstract class VerifyKtorBoundaryTask : DefaultTask() {
         const val KTOR_INTERNAL_PACKAGE = "io/ktor"
         const val DATETIME_MODULE = "org.jetbrains.kotlinx:kotlinx-datetime"
         val KTOR_TYPE_MARKERS = setOf(KTOR_DOTTED_PACKAGE, KTOR_INTERNAL_PACKAGE)
+        val OKIO_TYPE_MARKERS = setOf("okio.", "okio/")
         val DEPRECATED_DATETIME_TYPES = listOf(
             "kotlinx.datetime.Instant",
             "kotlinx.datetime.Clock",
