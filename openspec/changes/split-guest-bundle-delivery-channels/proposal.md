@@ -23,7 +23,7 @@ PixiView-KMP#139 の kill switch は配られた後に止める手段であり�
 
 ## Impact
 
-- `.github/workflows/deploy-guest-bundle.yml`（配信先とconcurrency group）
+- `.github/workflows/deploy-guest-bundle.yml`（配信先）
 - `.github/workflows/promote-guest-bundle.yml`（新規）
 - `README.md` の `#### Bundle delivery` 節と `guestManifestUrl` / `manifestUrl` の例
 - gh-pages 上に `zipline/v1-dev/` が増える。既存の `zipline/v1/` の内容は本 change では変化しない

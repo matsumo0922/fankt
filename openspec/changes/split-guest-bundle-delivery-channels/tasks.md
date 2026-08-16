@@ -1,7 +1,7 @@
 ## 1. 配信 workflow
 
 - [x] 1.1 `deploy-guest-bundle.yml` の `destination_dir` を `zipline/v1-dev` へ変更し、冒頭のコメントを 2 チャンネル構成の説明へ更新する
-- [x] 1.2 `deploy-guest-bundle.yml` の concurrency group を、gh-pages への書き込みを直列化する literal へ変更する
+- [x] 1.2 `promote-guest-bundle.yml` の concurrency group を `deploy-guest-bundle.yml` と共有せず、workflow ごとに分けたままにする
 - [x] 1.3 `promote-guest-bundle.yml` を追加する（`workflow_dispatch` のみ、gh-pages の checkout、manifest の存在と署名の検査、`zipline/v1` への配置）
 
 ## 2. ドキュメント
