@@ -54,21 +54,32 @@ delivered fix does not apply.
 
 #### Bundle delivery
 
-`deploy-guest-bundle.yml` builds, signs and publishes the guest bundle on every push to `main`. The
-manifest is served from GitHub Pages under a path that names the bridge API version:
+The bundle is served from GitHub Pages on two channels. `deploy-guest-bundle.yml` builds, signs and
+publishes to the dev channel on every push to `main`. `promote-guest-bundle.yml` copies the dev
+channel onto the production channel, and runs only when someone starts it from the Actions tab.
 
-```text
-https://matsumo0922.github.io/fankt/zipline/v1/manifest.zipline.json
-```
+| Channel | Manifest URL | Changes when |
+|---|---|---|
+| Production | `https://matsumo0922.github.io/fankt/zipline/v1/manifest.zipline.json` | a promotion is started |
+| Dev | `https://matsumo0922.github.io/fankt/zipline/v1-dev/manifest.zipline.json` | anything lands on `main` |
 
-A consumer keeps reading the version it was built against, so a bundle built for a newer bridge API
-never reaches a host that cannot decode it. Raise the version — and publish under a new path without
-removing the old one — when the signature of a `FanboxGuestService` function changes, or when the
-wire schema of `RequestDescriptor`, `GuestParseResult` or `FanboxPostDetail` changes. Consumers built
-against the previous version keep reading the previous path until they are updated.
+A consumer embeds the production URL, so merging to `main` does not reach it. Check the change on the
+dev channel, then run **Promote Guest Bundle**. Promotion copies the published bytes instead of
+building again, so what reaches production is what was checked, and it refuses a manifest that
+carries no signature. Modules are named relative to the manifest, so a copy resolves them from
+whichever channel it was fetched from.
+
+Not promoting leaves consumers on the last bundle that was promoted.
+
+Both paths name the bridge API version. A consumer keeps reading the version it was built against, so
+a bundle built for a newer bridge API never reaches a host that cannot decode it. Raise the version —
+and publish under a new path without removing the old one — when the signature of a
+`FanboxGuestService` function changes, or when the wire schema of `RequestDescriptor`,
+`GuestParseResult` or `FanboxPostDetail` changes. Consumers built against the previous version keep
+reading the previous path until they are updated.
 
 Builds without the signing key produce an unsigned manifest instead of failing, so that local builds
-and pull request CI pass. The workflow refuses to publish such a manifest.
+and pull request CI pass. Neither workflow publishes such a manifest.
 
 #### Embedded fallback bundle
 

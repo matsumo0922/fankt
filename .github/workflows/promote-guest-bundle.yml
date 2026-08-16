@@ -1,0 +1,57 @@
+name: Promote Guest Bundle
+
+# deploy-guest-bundle.yml publishes every push to main to the dev channel. This places what was
+# checked there into the channel consumers read, and runs only when someone starts it. Merging is
+# therefore no longer enough to reach users, which is the point: the delivered bundle is executed on
+# the next launch, and nothing else stops a bundle before it is delivered.
+on:
+  workflow_dispatch:
+
+# Deliberately not shared with deploy-guest-bundle.yml. A group holds one pending run, and queueing
+# a second one cancels the first: sharing a group would let a push cancel a promotion someone started
+# by hand. Racing the two instead costs a rejected push and a red run, which is visible and can be
+# re-run.
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: false
+
+jobs:
+  promote:
+    name: Promote the dev bundle to the production channel
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+      # The delivery branch, not the source: promotion copies what was published rather than
+      # building again. A rebuild would put bytes nobody checked into the production channel.
+      - name: Check out the delivery branch
+        uses: actions/checkout@v4
+        with:
+          ref: gh-pages
+
+      # deploy-guest-bundle.yml applies the signature check to its own build output. That leaves the
+      # production channel guarded only as long as a deploy run is the sole way content reaches the
+      # dev path, so the check is repeated here against what is actually on the branch.
+      - name: Refuse an unsigned manifest
+        run: |
+          manifest="zipline/v1-dev/manifest.zipline.json"
+          test -f "$manifest" || { echo "::error::$manifest is not on gh-pages; has Deploy Guest Bundle run?"; exit 1; }
+          python3 - "$manifest" <<'PY'
+          import json, sys
+          with open(sys.argv[1]) as f:
+              signatures = json.load(f).get("unsigned", {}).get("signatures") or {}
+          if not signatures:
+              sys.exit("::error::the manifest carries no signature")
+          print(f"manifest signed by: {', '.join(signatures)}")
+          PY
+
+      # keep_files stays off so that a module the new bundle no longer references does not survive
+      # in the production channel. The deletion is scoped to destination_dir, leaving the dev channel
+      # and the documents at the branch root untouched.
+      - name: Publish to the production channel
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./zipline/v1-dev
+          destination_dir: zipline/v1
