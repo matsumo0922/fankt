@@ -8,8 +8,7 @@ PixiView-KMP#139 の kill switch は配られた後に止める手段であり�
 
 - `deploy-guest-bundle.yml` の配信先を `zipline/v1` から `zipline/v1-dev` へ変更する。`main` への push は本番チャンネルを変更しなくなる
 - `promote-guest-bundle.yml` を追加する。`workflow_dispatch` で `zipline/v1-dev` の成果物をそのまま `zipline/v1` へ配置する。再ビルドを行わない
-- promote は配置前に、対象 manifest が署名を持つこと、および他チャンネルを指す `baseUrl` を焼き込んでいないことを検査する
-- gh-pages へ push する 2 つの workflow を同一の concurrency group に置く
+- promote は配置前に、対象 manifest が存在し署名を持つことを検査する
 - **BREAKING**（運用手順）: `main` へのマージだけでは consumer に届かなくなる。届けるには promote の手動実行が要る
 
 ## Capabilities

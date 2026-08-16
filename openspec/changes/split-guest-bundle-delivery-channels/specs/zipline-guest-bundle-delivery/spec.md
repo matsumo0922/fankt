@@ -37,7 +37,7 @@ manifest URL は bridge API バージョンを含むパスの下に置かなけ�
 
 prod チャンネルへの配置は、手動で起動する昇格の workflow だけが行わなければならない（SHALL）。昇格は dev チャンネルに置かれた成果物のバイト列をそのまま配置しなければならず、ビルドをやり直してはならない（SHALL NOT）。やり直すと、dev で検証したものとは別のバイト列が prod へ乗る。
 
-昇格は配置の前に、対象の manifest が署名を持つこと、および他チャンネルを指す base URL を焼き込んでいないことを検査しなければならない（SHALL）。前者は署名のない manifest を配信しない防護を prod チャンネルでも成立させる。後者は base URL が署名の計算対象外であることに由来する。そこへ dev チャンネルの絶対 URL が入った manifest は署名検証を通ったまま prod へ乗り、prod の manifest が dev のモジュールを読ませる。
+昇格は配置の前に、対象の manifest が署名を持つことを検査しなければならない（SHALL）。署名のない manifest を配信しない防護は、dev チャンネルへの配信と prod チャンネルへの昇格の双方で成立していなければならない（SHALL）。前者はビルド出力を対象とするため、それを経ずに配信先へ置かれた内容を昇格させる経路を塞がない。
 
 #### Scenario: Promotion copies the delivered bytes
 
@@ -54,9 +54,9 @@ prod チャンネルへの配置は、手動で起動する昇格の workflow �
 - **WHEN** dev チャンネルの manifest が署名を持たない状態で昇格を実行する
 - **THEN** 昇格は失敗し、prod チャンネルの内容は変化しない
 
-#### Scenario: Promotion refuses a manifest that pins a base URL
+#### Scenario: Promotion refuses a missing manifest
 
-- **WHEN** dev チャンネルの manifest が `null` でない base URL を持つ状態で昇格を実行する
+- **WHEN** dev チャンネルへ配信が一度も成功していない状態で昇格を実行する
 - **THEN** 昇格は失敗し、prod チャンネルの内容は変化しない
 
 #### Scenario: A promoted manifest verifies with the published public key

@@ -65,10 +65,9 @@ channel onto the production channel, and runs only when someone starts it from t
 
 A consumer embeds the production URL, so merging to `main` does not reach it. Check the change on the
 dev channel, then run **Promote Guest Bundle**. Promotion copies the published bytes instead of
-building again, so what reaches production is what was checked. It refuses a manifest that carries no
-signature, and one that pins `baseUrl` to a channel — that field is removed before the signature is
-computed, so a production manifest naming the dev channel would verify on device and then load the
-dev modules.
+building again, so what reaches production is what was checked, and it refuses a manifest that
+carries no signature. Modules are named relative to the manifest, so a copy resolves them from
+whichever channel it was fetched from.
 
 Not promoting leaves consumers on the last bundle that was promoted.
 

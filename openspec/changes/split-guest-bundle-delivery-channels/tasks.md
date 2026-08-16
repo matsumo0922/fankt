@@ -2,7 +2,7 @@
 
 - [x] 1.1 `deploy-guest-bundle.yml` の `destination_dir` を `zipline/v1-dev` へ変更し、冒頭のコメントを 2 チャンネル構成の説明へ更新する
 - [x] 1.2 `deploy-guest-bundle.yml` の concurrency group を、gh-pages への書き込みを直列化する literal へ変更する
-- [x] 1.3 `promote-guest-bundle.yml` を追加する（`workflow_dispatch` のみ、gh-pages の checkout、署名と base URL の検査、`zipline/v1` への配置）
+- [x] 1.3 `promote-guest-bundle.yml` を追加する（`workflow_dispatch` のみ、gh-pages の checkout、manifest の存在と署名の検査、`zipline/v1` への配置）
 
 ## 2. ドキュメント
 
@@ -13,4 +13,4 @@
 
 - [x] 3.1 変更した 2 本の workflow が YAML として解釈でき、`on` と job の構造が意図どおりであることを確認する
 - [x] 3.2 昇格前後の manifest が同一のバイト列であること、および公開済みの Ed25519 公開鍵で署名検証を通ることを、配信中の manifest を対象に確認する
-- [x] 3.3 promote の検査ロジックが、署名のない manifest、`null` でない base URL を持つ manifest、および manifest 自体が存在しない場合を実際に拒否することを確認する
+- [x] 3.3 promote の検査ロジックが、署名のない manifest と、manifest 自体が存在しない場合を実際に拒否することを確認する

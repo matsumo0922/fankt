@@ -13,10 +13,8 @@ on:
       - '**/*.md'
   workflow_dispatch:
 
-# Shared with promote-guest-bundle.yml. Both push to gh-pages, where a concurrent push is rejected
-# as non-fast-forward rather than merged, so they run one at a time.
 concurrency:
-  group: gh-pages-zipline
+  group: ${{ github.workflow }}
   cancel-in-progress: false
 
 jobs:

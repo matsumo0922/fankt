@@ -7,10 +7,12 @@ name: Promote Guest Bundle
 on:
   workflow_dispatch:
 
-# Shared with deploy-guest-bundle.yml. Both push to gh-pages, where a concurrent push is rejected as
-# non-fast-forward rather than merged, so they run one at a time.
+# Deliberately not shared with deploy-guest-bundle.yml. A group holds one pending run, and queueing
+# a second one cancels the first: sharing a group would let a push cancel a promotion someone started
+# by hand. Racing the two instead costs a rejected push and a red run, which is visible and can be
+# re-run.
 concurrency:
-  group: gh-pages-zipline
+  group: ${{ github.workflow }}
   cancel-in-progress: false
 
 jobs:
@@ -31,24 +33,17 @@ jobs:
       # deploy-guest-bundle.yml applies the signature check to its own build output. That leaves the
       # production channel guarded only as long as a deploy run is the sole way content reaches the
       # dev path, so the check is repeated here against what is actually on the branch.
-      - name: Refuse a manifest that is unsigned or bound to a channel
+      - name: Refuse an unsigned manifest
         run: |
           manifest="zipline/v1-dev/manifest.zipline.json"
           test -f "$manifest" || { echo "::error::$manifest is not on gh-pages; has Deploy Guest Bundle run?"; exit 1; }
           python3 - "$manifest" <<'PY'
           import json, sys
           with open(sys.argv[1]) as f:
-              unsigned = json.load(f).get("unsigned", {})
-          if not unsigned.get("signatures"):
+              signatures = json.load(f).get("unsigned", {}).get("signatures") or {}
+          if not signatures:
               sys.exit("::error::the manifest carries no signature")
-          # Everything under "unsigned" is removed before the signature is computed, so a baseUrl
-          # naming the dev channel still verifies on device — and then the production manifest loads
-          # the dev modules. Modules have to stay relative to the manifest for a copy to be a
-          # promotion rather than a redirect.
-          base_url = unsigned.get("baseUrl")
-          if base_url is not None:
-              sys.exit(f"::error::the manifest pins baseUrl to {base_url}; modules must resolve relative to it")
-          print("manifest is signed and resolves its modules relative to its own URL")
+          print(f"manifest signed by: {', '.join(signatures)}")
           PY
 
       # keep_files stays off so that a module the new bundle no longer references does not survive

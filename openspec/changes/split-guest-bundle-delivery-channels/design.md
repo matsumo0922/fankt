@@ -36,7 +36,7 @@ modules:  { ...: { url: "kotlin-kotlin-stdlib.zipline" } }
 
 昇格時に Gradle を回し直すと、dev で検証したものとは別のバイト列が本番へ乗る（依存解決の差、ビルドの非再現性）。gh-pages 上の `zipline/v1-dev` をそのまま `zipline/v1` へ配置する。
 
-コピーで成立する根拠は manifest の構造にある。モジュールは相対 URL で参照され、`baseUrl` は `null` であるため、ディレクトリごと別パスへ置いても manifest の URL を基準に解決できる。バイト列が変わらないため署名も有効なまま維持される。
+コピーで成立する根拠は manifest の構造にある。モジュールは相対 URL で参照され、consumer は取得した manifest の URL を基準にそれを解決する。ディレクトリごと別パスへ置いても、置いた先の URL から解決される。バイト列が変わらないため署名も有効なまま維持される。
 
 ### D3. promote は gh-pages を checkout して peaceiris へ渡す（agent 仮決め）
 
@@ -46,14 +46,15 @@ modules:  { ...: { url: "kotlin-kotlin-stdlib.zipline" } }
 
 `keep_files` は既定の `false` のままとする。`destination_dir` 配下だけが対象になるため、root の Dokka 出力と `zipline/v1-dev` は影響を受けない。旧モジュールが残らないことが目的である（`true` にすると、モジュール名が変わった際に古い `*.zipline` が本番パスへ残り続ける）。
 
-### D4. promote は配置前に 2 点を検査する（agent 仮決め）
+### D4. promote は配置前に manifest の署名を検査する（agent 仮決め）
 
-1. `manifest.zipline.json` が存在し、`unsigned.signatures` が空でないこと
-2. `unsigned.baseUrl` が `null` であること
+`zipline/v1-dev/manifest.zipline.json` が存在し、`unsigned.signatures` が空でないことを確認する。
 
-1 は `deploy-guest-bundle.yml` が既に持つ防護と同じものである。deploy 側の検査はビルド出力に対して働くが、promote が読むのは gh-pages 上の内容であり、deploy を経ずにそこへ置かれた内容を昇格させる経路が残る。両チャンネルで同じ防護が働くことが受け入れ条件であるため、promote 側にも置く。
+`deploy-guest-bundle.yml` が既に持つ防護と同じものである。deploy 側の検査はビルド出力に対して働くが、promote が読むのは gh-pages 上の内容であり、deploy を経ずにそこへ置かれた内容を昇格させる経路が残る。両チャンネルで同じ防護が働くことが受け入れ条件であるため、promote 側にも置く。
 
-2 は本 change が新たに作る危険への防護である。`baseUrl` は署名の計算対象外（`unsigned` 配下）であるため、そこに dev チャンネルの絶対 URL が入った manifest は署名検証を通ったまま本番へ乗り、本番の manifest が dev のモジュールを読ませる。チャンネルを分けたことで初めて成立する失敗であり、コピーが成立する前提（D2）が崩れていないことの検査でもある。
+`unsigned.baseUrl` が他チャンネルを指していないことも検査する案を検討し、採らなかった。`baseUrl` は署名の計算対象外であるため、そこに dev の絶対 URL が入った manifest は署名検証を通る。しかし consumer には届かない。`HttpFetcher.fetchManifest` が manifest を取得した直後に `withBaseUrl` を通し、ディスク上の `baseUrl` を捨てて取得元の URL で上書きするためである（zipline-loader 1.27.0、`commonMain/app/cash/zipline/loader/internal/fetcher/HttpFetcher.kt:76` および `:99-114`）。防ぐ対象の失敗が実装上成立しない。
+
+モジュールの参照先そのもの（`modules[].url`）は `unsigned` の外にあり署名の対象に含まれるため、書き換えれば署名検証で落ちる。参照先の改ざんは既存の署名検証だけで塞がっている。
 
 ### D5. CI では Ed25519 署名そのものを検証しない（agent 仮決め）
 
@@ -63,9 +64,13 @@ modules:  { ...: { url: "kotlin-kotlin-stdlib.zipline" } }
 
 したがって CI へ鍵を持ち込まず、条件の成立は昇格後の manifest を公開鍵で検証した観測をもって示す（tasks 3.2）。
 
-### D6. gh-pages へ push する 2 つの workflow を同一 concurrency group に置く（agent 仮決め）
+### D6. concurrency group は workflow ごとに分けたままにする（agent 仮決め）
 
-本 change で gh-pages の `zipline/` へ書き込む workflow が 2 本になる。同時に走ると後発の push が non-fast-forward で拒否され、run が失敗する。deploy の `group: ${{ github.workflow }}` を両者共通の literal へ変え、`cancel-in-progress: false` のまま直列化する。
+本 change で gh-pages の `zipline/` へ書き込む workflow が 2 本になる。同時に走ると後発の push が non-fast-forward で拒否され、run が失敗する。両者を同一の concurrency group へ入れて直列化する案を検討し、採らなかった。
+
+concurrency group が保持する pending の run は 1 つだけで、そこへ次の run が入ると既存の pending は `cancel-in-progress` の値に関わらず cancel される。deploy と promote が同じ group を共有すると、手動で起動した promote が pending の間に `main` へ push が入っただけで cancel される。昇格したつもりで prod が変わっていない状態になり、通知は出ない。
+
+group を分けた場合に残るのは push の競合だが、peaceiris の push は force ではないため、競合した側は non-fast-forward で失敗する。赤い run として見え、再実行できる。黙って消えるより扱いやすい失敗を選ぶ。
 
 `deploy-documents.yml` は本 change の対象外とする。既に concurrency group を持たず、本 change がその状態を作ったわけではない。
 
@@ -80,7 +85,7 @@ modules:  { ...: { url: "kotlin-kotlin-stdlib.zipline" } }
 - **どの commit が本番に乗っているか分かりにくい** → gh-pages のコミット履歴を辿ることになる。昇格時に元の commit SHA を記録する案は、必要になってから足す
 - **CI が署名の有効性を検査しない**（D5） → 昇格後の観測で示す。実行時には consumer が検証する
 - **dev チャンネルは誰でも取得できる** → 未検証のコードが公開の URL に置かれる。ただし署名鍵は同一であり、consumer は焼き込んだ URL しか読まない。dev を読ませるのは consumer 側の別 change（PixiView-KMP#148）の責務である
-- **`deploy-documents.yml` との push 競合の頻度がわずかに上がる** → gh-pages へ書き込む workflow が 2 本から 3 本に増える。競合しても peaceiris の push は force ではないため、non-fast-forward で run が失敗するだけで、暗黙の上書きは起きない。documents 側に concurrency group が無い状態は本 change が作ったものではないため、対象外とする（D6）
+- **gh-pages への push 競合の頻度が上がる** → 書き込む workflow が 2 本から 3 本に増える（deploy / promote / documents）。競合しても peaceiris の push は force ではないため、non-fast-forward で run が失敗するだけで、暗黙の上書きは起きない。失敗した側を再実行すればよい（D6）
 - **gh-pages の容量が増える** → 現在 `zipline/v1` は 0.8 MB（10 ファイル）、gh-pages 全体で 6.6 MB である。チャンネルの追加でおよそ 0.8 MB 増える。GitHub Pages の推奨上限 1 GB に対して問題にならない
 - **昇格元が存在しない状態での実行** → `main` へのマージ直後や deploy が失敗した状態で昇格を実行すると、`zipline/v1-dev/manifest.zipline.json` が無い。この場合は検査の段階で失敗し、配置のステップに到達しないため prod は変化しない（tasks 3.3 で確認する）
 
