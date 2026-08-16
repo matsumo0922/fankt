@@ -80,6 +80,9 @@ modules:  { ...: { url: "kotlin-kotlin-stdlib.zipline" } }
 - **どの commit が本番に乗っているか分かりにくい** → gh-pages のコミット履歴を辿ることになる。昇格時に元の commit SHA を記録する案は、必要になってから足す
 - **CI が署名の有効性を検査しない**（D5） → 昇格後の観測で示す。実行時には consumer が検証する
 - **dev チャンネルは誰でも取得できる** → 未検証のコードが公開の URL に置かれる。ただし署名鍵は同一であり、consumer は焼き込んだ URL しか読まない。dev を読ませるのは consumer 側の別 change（PixiView-KMP#148）の責務である
+- **`deploy-documents.yml` との push 競合の頻度がわずかに上がる** → gh-pages へ書き込む workflow が 2 本から 3 本に増える。競合しても peaceiris の push は force ではないため、non-fast-forward で run が失敗するだけで、暗黙の上書きは起きない。documents 側に concurrency group が無い状態は本 change が作ったものではないため、対象外とする（D6）
+- **gh-pages の容量が増える** → 現在 `zipline/v1` は 0.8 MB（10 ファイル）、gh-pages 全体で 6.6 MB である。チャンネルの追加でおよそ 0.8 MB 増える。GitHub Pages の推奨上限 1 GB に対して問題にならない
+- **昇格元が存在しない状態での実行** → `main` へのマージ直後や deploy が失敗した状態で昇格を実行すると、`zipline/v1-dev/manifest.zipline.json` が無い。この場合は検査の段階で失敗し、配置のステップに到達しないため prod は変化しない（tasks 3.3 で確認する）
 
 ## Migration Plan
 

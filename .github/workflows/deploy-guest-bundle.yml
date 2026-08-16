@@ -1,9 +1,11 @@
 name: Deploy Guest Bundle
 
 # A FANBOX schema change reaches users through a bundle replacement rather than a store review, so
-# this runs on every push to main instead of on a release. The bridge API version lives in the
-# destination path: a consumer keeps reading the version it was built against, so a bundle built for
-# a newer bridge API never reaches a host that cannot decode it.
+# this runs on every push to main instead of on a release. It publishes to the dev channel, which no
+# consumer reads by default; promote-guest-bundle.yml places what was checked there into the channel
+# consumers do read. The bridge API version lives in both paths: a consumer keeps reading the version
+# it was built against, so a bundle built for a newer bridge API never reaches a host that cannot
+# decode it.
 on:
   push:
     branches: [ main ]
@@ -11,8 +13,10 @@ on:
       - '**/*.md'
   workflow_dispatch:
 
+# Shared with promote-guest-bundle.yml. Both push to gh-pages, where a concurrent push is rejected
+# as non-fast-forward rather than merged, so they run one at a time.
 concurrency:
-  group: ${{ github.workflow }}
+  group: gh-pages-zipline
   cancel-in-progress: false
 
 jobs:
@@ -65,9 +69,9 @@ jobs:
           print(f"manifest signed by: {', '.join(signatures)}")
           PY
 
-      - name: Publish to the versioned path
+      - name: Publish to the dev channel
         uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./fankt/fanbox/build/zipline/GuestProduction
-          destination_dir: zipline/v1
+          destination_dir: zipline/v1-dev
