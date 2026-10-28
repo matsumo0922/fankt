@@ -44,7 +44,10 @@ import me.matsumo.fankt.fanbox.domain.entity.FanboxPostDetailEntity.Body as Post
 import me.matsumo.fankt.fanbox.domain.entity.FanboxPostDetailEntity.Body.PostBody.Block as BlockEntity
 import me.matsumo.fankt.fanbox.domain.entity.FanboxPostDetailEntity.Body.PostBody.Block.Link as LinkEntity
 import me.matsumo.fankt.fanbox.domain.entity.FanboxPostDetailEntity.Body.PostBody.Block.Style as StyleEntity
+import me.matsumo.fankt.fanbox.domain.entity.FanboxPostDetailEntity.Body.PostBody.Embed as EmbedEntity
+import me.matsumo.fankt.fanbox.domain.entity.FanboxPostDetailEntity.Body.PostBody.Image as ImageEntity
 import me.matsumo.fankt.fanbox.domain.model.FanboxPostDetail.Body.Article.Block as ArticleBlock
+
 private val EMBED_SERVICE_PROVIDERS = setOf(
     "twitter",
     "youtube",
@@ -248,7 +251,13 @@ internal class FanboxPostMapper(
     private fun mapArticleBody(post: PostEntity, body: PostBody): Body.Article = Body.Article(
         blocks = body
             .blocks
-            .mapNotNull { rawBlock -> mapArticleBlock(post, body, rawBlock) },
+            .mapNotNull { rawBlock ->
+                mapArticleBlock(
+                    post = post,
+                    body = body,
+                    rawBlock = rawBlock,
+                )
+            },
     )
 
     private fun mapArticleBlock(
@@ -261,12 +270,34 @@ internal class FanboxPostMapper(
             ?.content
 
         return when (blockType) {
-            "p", "header" -> mapArticleText(rawBlock, blockType == "header")
-            "image" -> mapArticleImage(post, body, rawBlock)
-            "file" -> mapArticleFile(post, body, rawBlock)
+            "p", "header" -> mapArticleText(
+                rawBlock = rawBlock,
+                isHeader = blockType == "header",
+            )
+
+            "image" -> mapArticleImage(
+                post = post,
+                body = body,
+                rawBlock = rawBlock,
+            )
+
+            "file" -> mapArticleFile(
+                post = post,
+                body = body,
+                rawBlock = rawBlock,
+            )
+
             "url_embed" -> mapArticleLink(body, rawBlock)
-            "embed" -> mapEmbedBlock(body, decodeKnownBlock(rawBlock), rawBlock.toString())
-            else -> ArticleBlock.Unknown(rawBlock.toString())
+
+            "embed" -> mapEmbedBlock(
+                body = body,
+                block = decodeKnownBlock(rawBlock),
+                rawBlockJson = rawBlock.toString(),
+            )
+
+            else -> ArticleBlock.Unknown(
+                rawJson = rawBlock.toString(),
+            )
         }
     }
 
@@ -323,20 +354,18 @@ internal class FanboxPostMapper(
             ?.let { body.imageMap[it] }
             ?.let { image ->
                 ArticleBlock.Image(
-                    ImageItem(
+                    item = ImageItem(
                         id = FanboxPostItemId(image.id),
                         postId = FanboxPostId(post.id),
                         extension = image.extension,
                         originalUrl = image.originalUrl,
                         thumbnailUrl = image.thumbnailUrl,
-                        aspectRatio = image
-                            .width
-                            .toFloat() / image
-                            .height
-                            .toFloat(),
+                        aspectRatio = image.aspectRatio(),
                     ),
                 )
-            } ?: ArticleBlock.Unknown(rawBlock.toString())
+            } ?: ArticleBlock.Unknown(
+            rawJson = rawBlock.toString(),
+        )
     }
 
     private fun mapArticleFile(
@@ -350,7 +379,7 @@ internal class FanboxPostMapper(
             ?.let { body.fileMap[it] }
             ?.let { file ->
                 ArticleBlock.File(
-                    FileItem(
+                    item = FileItem(
                         id = FanboxPostItemId(file.id),
                         postId = FanboxPostId(post.id),
                         extension = file.extension,
@@ -359,7 +388,9 @@ internal class FanboxPostMapper(
                         url = file.url,
                     ),
                 )
-            } ?: ArticleBlock.Unknown(rawBlock.toString())
+            } ?: ArticleBlock.Unknown(
+            rawJson = rawBlock.toString(),
+        )
     }
 
     private fun mapArticleLink(body: PostBody, rawBlock: JsonObject): ArticleBlock {
@@ -376,8 +407,12 @@ internal class FanboxPostMapper(
                     type = url.type,
                     url = url.url,
                 )
-            } ?: ArticleBlock.Unknown(rawBlock.toString())
+            } ?: ArticleBlock.Unknown(
+            rawJson = rawBlock.toString(),
+        )
     }
+
+    private fun ImageEntity.aspectRatio(): Float = width.toFloat() / height.toFloat()
 
     private fun decodeKnownBlock(rawBlock: JsonObject) =
         formatter.decodeFromJsonElement<BlockEntity>(rawBlock)
@@ -397,7 +432,7 @@ internal class FanboxPostMapper(
             .embedId
             ?.let { body.embedMap[it] }
             ?: return ArticleBlock.Unknown(rawBlockJson)
-        val embed = formatter.decodeFromJsonElement<PostBody.Embed>(rawEmbed)
+        val embed = formatter.decodeFromJsonElement<EmbedEntity>(rawEmbed)
         val contentId = embed.videoId ?: embed.contentId
         val serviceProvider = embed.serviceProvider
         val hasSupportedProvider = serviceProvider != null && serviceProvider in EMBED_SERVICE_PROVIDERS
@@ -424,11 +459,7 @@ internal class FanboxPostMapper(
                     extension = it.extension,
                     originalUrl = it.originalUrl,
                     thumbnailUrl = it.thumbnailUrl,
-                    aspectRatio = it
-                        .width
-                        .toFloat() / it
-                        .height
-                        .toFloat(),
+                    aspectRatio = it.aspectRatio(),
                 )
             },
     )

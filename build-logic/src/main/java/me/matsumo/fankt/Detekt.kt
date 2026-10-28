@@ -35,12 +35,17 @@ internal fun Project.configureDetekt() {
 
     val reportFile = layout.buildDirectory.file("reports/detekt/detekt.xml")
     val analysis = tasks.named<Detekt>("detekt") {
-        finalizedBy(reportMerge)
         setSource(project.fileTree(projectDir))
         include("**/*.kt", "**/*.kts")
         exclude("**/resources/**", "**/build/**", "**/.gradle/**")
 
         reports.checkstyle.outputLocation.set(reportFile)
+    }
+
+    if (this == rootProject) {
+        analysis.configure { finalizedBy(reportMerge) }
+    } else {
+        rootProject.tasks.named<Detekt>("detekt").configure { dependsOn(analysis) }
     }
 
     reportMerge.configure {

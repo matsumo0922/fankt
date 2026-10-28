@@ -13,7 +13,9 @@ import me.matsumo.fankt.fanbox.domain.entity.FanboxCreatorPlanListEntity
 import me.matsumo.fankt.fanbox.domain.entity.FanboxCreatorTagListEntity
 import me.matsumo.fankt.fanbox.domain.model.FanboxCreator
 import me.matsumo.fankt.fanbox.domain.model.FanboxCreatorDetail
+import me.matsumo.fankt.fanbox.domain.model.FanboxCreatorDetail.Platform
 import me.matsumo.fankt.fanbox.domain.model.FanboxCreatorDetail.ProfileItem
+import me.matsumo.fankt.fanbox.domain.model.FanboxCreatorDetail.ProfileLink
 import me.matsumo.fankt.fanbox.domain.model.FanboxCreatorPlan
 import me.matsumo.fankt.fanbox.domain.model.FanboxCreatorPlanDetail
 import me.matsumo.fankt.fanbox.domain.model.FanboxPaymentMethod
@@ -24,6 +26,7 @@ import me.matsumo.fankt.fanbox.domain.model.id.FanboxPlanId
 import me.matsumo.fankt.fanbox.domain.model.id.FanboxUserId
 import kotlin.time.Instant
 import me.matsumo.fankt.fanbox.domain.entity.FanboxCreatorDetailEntity.Body.ProfileItem as ProfileItemEntity
+
 /** クリエイターレスポンスを公開ドメインモデルへ変換する。 */
 internal class FanboxCreatorMapper(
     private val listItemDecoder: FanboxListItemDecoder = FanboxListItemDecoder(),
@@ -81,6 +84,9 @@ internal class FanboxCreatorMapper(
                 )
                 val serviceProvider = profileItem.serviceProvider
                 val videoId = profileItem.videoId
+                val hasVideoContent = !serviceProvider.isNullOrBlank() && !videoId.isNullOrBlank()
+                val isSupportedVideo = profileItem.type == "video" && hasVideoContent
+
                 when {
                     profileItem.type == "image" -> ProfileItem.Image(
                         id = profileItem.id,
@@ -88,7 +94,7 @@ internal class FanboxCreatorMapper(
                         thumbnailUrl = profileItem.thumbnailUrl,
                     )
 
-                    profileItem.type == "video" && !serviceProvider.isNullOrBlank() && !videoId.isNullOrBlank() ->
+                    isSupportedVideo ->
                         ProfileItem.Video(
                             id = profileItem.id,
                             serviceProvider = serviceProvider,
@@ -104,9 +110,9 @@ internal class FanboxCreatorMapper(
                 }
             },
             profileLinks = profileLinks.map { profileLink ->
-                FanboxCreatorDetail.ProfileLink(
+                ProfileLink(
                     url = profileLink,
-                    link = FanboxCreatorDetail.Platform.fromUrl(profileLink),
+                    link = Platform.fromUrl(profileLink),
                 )
             },
             user = user?.let {

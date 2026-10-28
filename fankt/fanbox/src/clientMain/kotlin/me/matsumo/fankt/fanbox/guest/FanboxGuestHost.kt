@@ -405,8 +405,8 @@ internal class ZiplineGuestLoader(
 ) {
     private val manifestVerifier = ManifestVerifier.Builder()
         .addEd25519(
-            config.trustedKeyName,
-            config
+            name = config.trustedKeyName,
+            trustedKey = config
                 .trustedEd25519PublicKey
                 .toByteString(),
         )

@@ -115,9 +115,7 @@ private fun RequestItem(
             horizontalArrangement = Arrangement.spacedBy(16.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            RequestTypeBadge(
-                isPost = isPost,
-            )
+            RequestTypeBadge(isPost)
 
             Text(
                 modifier = Modifier.weight(1f),
@@ -298,6 +296,7 @@ private suspend fun executeRequest(
         .parameters
         .mapNotNull { it.name }
         .map { name -> function.parseParameter(name, params) }
+
     Napier.d { "Call: ${function.name}(${typedParams.joinToString(separator = ", ")})" }
 
     return try {
@@ -320,14 +319,25 @@ private fun KFunction<*>.parseParameter(name: String, params: Map<String, String
 
     return when (type) {
         Int::class -> value.toIntOrNull()
+
         Long::class -> value.toLongOrNull()
+
         Boolean::class -> value.toBooleanStrictOrNull()
+
         FanboxPostId::class -> FanboxPostId(value)
-        FanboxUserId::class -> FanboxUserId(value.toLong())
+
+        FanboxUserId::class -> FanboxUserId(
+            value = value.toLong(),
+        )
+
         FanboxCreatorId::class -> FanboxCreatorId(value)
+
         FanboxPlanId::class -> FanboxPlanId(value)
+
         FanboxCommentId::class -> FanboxCommentId(value)
+
         FanboxNewsLetterId::class -> FanboxNewsLetterId(value)
+
         else -> value
     }
 }
@@ -356,29 +366,24 @@ private fun List<KFunction<*>>.sortedFunctions(): List<KFunction<*>> {
 
     val sortedGroup = grouped.values
         .sortedBy { group ->
-            val name = group
-                .first()
-                .name
-            val action = actionOrder
-                .find { name.startsWith(it) }
-                .orEmpty()
-
-            actionOrder
-                .indexOf(action)
-                .takeIf { it != -1 } ?: Int.MAX_VALUE
+            actionIndex(
+                name = group
+                    .first()
+                    .name,
+                actionOrder = actionOrder,
+            )
         }
-        .map { group ->
-            group.sortedBy { function ->
-                val name = function.name
-                val action = actionOrder
-                    .find { name.startsWith(it) }
-                    .orEmpty()
-
-                actionOrder
-                    .indexOf(action)
-                    .takeIf { it != -1 } ?: Int.MAX_VALUE
-            }
-        }
+        .map { group -> group.sortedBy { function -> actionIndex(function.name, actionOrder) } }
 
     return sortedGroup.flatten()
+}
+
+private fun actionIndex(name: String, actionOrder: List<String>): Int {
+    val action = actionOrder
+        .find { name.startsWith(it) }
+        .orEmpty()
+
+    return actionOrder
+        .indexOf(action)
+        .takeIf { it != -1 } ?: Int.MAX_VALUE
 }

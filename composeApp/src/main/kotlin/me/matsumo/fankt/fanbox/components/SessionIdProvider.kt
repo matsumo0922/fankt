@@ -3,22 +3,19 @@ package me.matsumo.fankt.fanbox.components
 import android.content.Context
 import java.io.File
 
-private const val FILE_NAME = "fanbox_session_id.txt"
-
-fun getFanboxSessionId(context: Context): String = File(
-    context
-        .applicationContext
-        .filesDir,
-    FILE_NAME,
-).takeIf {
-    it.exists()
-}?.readText().orEmpty()
+fun getFanboxSessionId(context: Context): String = context.sessionIdFile()
+    .takeIf { it.exists() }
+    ?.readText()
+    .orEmpty()
 
 fun setFanboxSessionId(context: Context, sessionId: String) {
-    File(
-        context
-            .applicationContext
-            .filesDir,
-        FILE_NAME,
-    ).writeText(sessionId)
+    context.sessionIdFile()
+        .writeText(sessionId)
+}
+
+private fun Context.sessionIdFile(): File {
+    val appContext = applicationContext
+    val filesDir = appContext.filesDir
+
+    return File(filesDir, "fanbox_session_id.txt")
 }

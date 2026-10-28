@@ -473,8 +473,9 @@ publishing; it remains on macOS because the Kotlin Multiplatform publication inc
 
 ### 静的解析
 
-`./gradlew detekt` は全モジュールと、ルートのビルド定義・`build-logic`・独立 consumer を型情報なしで解析する。
-結果は各モジュールの `build/reports/detekt/` に出力し、通常タスクの XML をルートの `build/reports/detekt/merge.xml` に統合する。
+`./gradlew detekt` と `./gradlew :detekt` は全モジュールと、ルートのビルド定義・`build-logic`・独立 consumer を型情報なしで解析する。
+結果は各モジュールの `build/reports/detekt/` に出力し、ルートの通常解析に依存する各モジュールの XML を `build/reports/detekt/merge.xml` に統合する。
+モジュールを指定した通常解析は、そのモジュールのレポートだけを更新し、統合処理を起動しない。
 統合処理は別の解析タスクやコンパイルを起動しない。
 型情報ありの解析には `:composeApp:detektDebug`、KMP の Android target には `:fankt:fanbox:detektDebugAndroid` など、各 target のタスクを使う。
 生成コードは解析対象から除外する。
@@ -483,6 +484,7 @@ publishing; it remains on macOS because the Kotlin Multiplatform publication inc
 `FunctionSignature` と `ClassSignature` はデフォルト引数を持つ短い宣言の複数行表記と両立しないため無効とし、宣言の改行は `AGENTS.md` に従ってレビューする。
 テストのシナリオ数・期待値・fixture には production の関数数・関数長・クラス長の上限を適用しない。
 endpoint の集約と外部 API の必須 override は、理由を記した宣言単位の抑制を使用する。
+認証操作を独立に差し替える `FanboxDependencies` の構築時の引数数にも、宣言単位の抑制を使用する。
 公開 API の例外伝播は `AGENTS.md` のプロジェクト規約に従う。
 
 ## Contributing golden fixtures

@@ -29,6 +29,7 @@ import me.matsumo.fankt.fanbox.domain.entity.FanboxMetaDataEntity.Context.Privac
 import me.matsumo.fankt.fanbox.domain.entity.FanboxMetaDataEntity.Context.User as MetadataUserEntity
 import me.matsumo.fankt.fanbox.domain.model.FanboxMetaData.Context as MetadataContext
 import me.matsumo.fankt.fanbox.domain.model.FanboxMetaData.Context.User as MetadataUser
+
 /** ユーザー・通知・支払いレスポンスを公開ドメインモデルへ変換する。 */
 internal class FanboxUserMapper(
     private val postMapper: FanboxPostMapper,
@@ -75,7 +76,10 @@ internal class FanboxUserMapper(
                 .items,
             deserializer = BellItem.serializer(),
         ) { item, _ ->
-            FanboxTolerantResult(mapBell(item), emptyList())
+            FanboxTolerantResult(
+                value = mapBell(item),
+                mismatches = emptyList(),
+            )
         }
         return FanboxTolerantResult(
             value = PageNumberInfo(

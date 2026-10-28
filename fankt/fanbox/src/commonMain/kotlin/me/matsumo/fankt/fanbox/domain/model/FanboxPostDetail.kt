@@ -6,6 +6,7 @@ import me.matsumo.fankt.fanbox.domain.model.FanboxPostDetail.Body.Article.Block
 import me.matsumo.fankt.fanbox.domain.model.id.FanboxPostId
 import me.matsumo.fankt.fanbox.domain.model.id.FanboxPostItemId
 import kotlin.time.Instant
+
 /** 本文と前後の記事を含む FANBOX の投稿詳細。 */
 @Serializable
 data class FanboxPostDetail(
@@ -96,13 +97,9 @@ data class FanboxPostDetail(
                     )
 
                     /**
-
                      * FANBOX の UTF-16 code unit 座標による未検証のリンク範囲。
-
                      * 適用前に [offset] と [length] を所属する Text の本文の境界と照合する。
-
                      * 遷移前に [url] をアプリの URL・scheme ポリシーで検証する。
-
                      */
                     @Serializable
                     data class LinkSpan(
@@ -121,15 +118,10 @@ data class FanboxPostDetail(
                 data class File(val item: FileItem) : Block
 
                 /**
-
                  * 記事ブロックから参照する URL の埋め込み。
-
                  * [type] は FANBOX の埋め込み種別で、`default` は [url]、`html` と `html.card` は未検証の [html]、`fanbox.post` は [post] を持つ。
-
                  * 未知の種別も保持し、種別固有のメタデータを推測して補完しない。
-
                  * 表示前に [html] を呼び出し側でサニタイズする。
-
                  */
                 @Serializable
                 data class Link(
@@ -141,11 +133,8 @@ data class FanboxPostDetail(
                 ) : Block
 
                 /**
-
                  * 外部サービスが提供する記事の埋め込み。
-
                  * fanbox の [url] はリダイレクト元のため、リダイレクト解決の通信は呼び出し側で行う。
-
                  */
                 @Serializable
                 data class Embed(
@@ -173,11 +162,8 @@ data class FanboxPostDetail(
                 }
 
                 /**
-
                  * 既知の種別で表現できない記事ブロック。
-
                  * [rawJson] は元のブロックの JSON、またはフォールバックの原因になった参照先 map の要素の JSON を保持する。
-
                  */
                 @Serializable
                 data class Unknown(val rawJson: String) : Block
@@ -217,11 +203,8 @@ data class FanboxPostDetail(
         }
 
         /**
-
          * FANBOX から受信した未サニタイズの HTML。
-
          * [html] は未検証のため、表示前に呼び出し側でサニタイズする。
-
          */
         @Serializable
         data class Html(val html: String) : Body

@@ -329,7 +329,11 @@ class Fanbox internal constructor(
         cursor: FanboxCursor?,
         nextCursor: FanboxCursor?,
     ): PageCursorInfo<FanboxPost> = post
-        .getCreatorPosts(creatorId, cursor, nextCursor)
+        .getCreatorPosts(
+            creatorId = creatorId,
+            cursor = cursor,
+            nextCursor = nextCursor,
+        )
         .value
 
     /** Returns creator posts and reports each skipped item on the caller's coroutine context. */
@@ -339,7 +343,11 @@ class Fanbox internal constructor(
         nextCursor: FanboxCursor?,
         onItemSchemaMismatch: (FanboxListItemSchemaMismatch) -> Unit,
     ): PageCursorInfo<FanboxPost> = post
-        .getCreatorPosts(creatorId, cursor, nextCursor)
+        .getCreatorPosts(
+            creatorId = creatorId,
+            cursor = cursor,
+            nextCursor = nextCursor,
+        )
         .notifyMismatches(onItemSchemaMismatch)
 
     /** @throws FanboxException when the FANBOX request or response decoding fails. */
@@ -367,7 +375,11 @@ class Fanbox internal constructor(
         query: String,
         creatorId: FanboxCreatorId?,
         page: Int,
-    ): PageNumberInfo<FanboxPost> = post.getPostFromQuery(query, creatorId, page)
+    ): PageNumberInfo<FanboxPost> = post.getPostFromQuery(
+        query = query,
+        creatorId = creatorId,
+        page = page,
+    )
 
     /** @throws FanboxException when the FANBOX request fails. */
     suspend fun likePost(postId: FanboxPostId) {
@@ -509,7 +521,11 @@ class Fanbox internal constructor(
      *
      * The returned notifications are left unread.
      */
-    suspend fun getBells(page: Int, onItemSchemaMismatch: (FanboxListItemSchemaMismatch) -> Unit): PageNumberInfo<FanboxBell> = getBells(page, onItemSchemaMismatch, markNotificationsRead = false)
+    suspend fun getBells(page: Int, onItemSchemaMismatch: (FanboxListItemSchemaMismatch) -> Unit): PageNumberInfo<FanboxBell> = getBells(
+        page = page,
+        onItemSchemaMismatch = onItemSchemaMismatch,
+        markNotificationsRead = false,
+    )
 
     /**
      * Returns notifications and reports each skipped item on the caller's coroutine context.
@@ -660,7 +676,7 @@ private suspend fun deliverDownload(response: HttpResponse, callbacks: DownloadC
         deliveredBytes += chunk.size
         if (contentLength != null) {
             callbacks.report(
-                (deliveredBytes.toDouble() / contentLength)
+                progress = (deliveredBytes.toDouble() / contentLength)
                     .toFloat()
                     .coerceIn(0f, 1f),
             )

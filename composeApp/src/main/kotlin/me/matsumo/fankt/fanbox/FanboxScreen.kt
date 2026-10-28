@@ -102,7 +102,9 @@ private fun FanboxTopAppBar(
     CenterAlignedTopAppBar(
         modifier = modifier,
         title = {
-            Text("FANBOX")
+            Text(
+                text = "FANBOX",
+            )
         },
         navigationIcon = {
             IconButton(onBackClick) {
@@ -138,7 +140,11 @@ private fun FanboxBottomBar(
             value = sessionId,
             onValueChange = onSessionIdChange,
             singleLine = true,
-            placeholder = { Text("FANBOXSESSID") },
+            placeholder = {
+                Text(
+                    text = "FANBOXSESSID",
+                )
+            },
         )
     }
 }

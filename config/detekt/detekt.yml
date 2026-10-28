@@ -4,14 +4,14 @@
 
 complexity:
   active: true
-  # 論理演算子2つ以上（条件3つ以上）の条件式を検出する。Boolean 変数への切り出し方は rules/kotlin.md を参照
+  # 論理演算子2つ以上（条件3つ以上）の条件式を検出する。Boolean 変数への切り出し方は AGENTS.md を参照
   ComplexCondition:
     active: true
     allowedConditions: 2
   LongMethod:
     active: true
     # 長い期待値や fixture を持つテストは production の上限で分割しない。
-    excludes: ['**/src/*Test/**']
+    excludes: ['**/src/*Test/**', '**/src/test/**']
     # Composable は UI 構造の記述で行数が伸びるため除外
     ignoreAnnotated:
       - 'Composable'
@@ -23,13 +23,13 @@ complexity:
       - 'Composable'
   TooManyFunctions:
     active: true
-    excludes: ['**/src/*Test/**']
+    excludes: ['**/src/*Test/**', '**/src/test/**']
     # 小さな private Composable へ分割するスタイルと衝突するため private は数えない
     ignorePrivate: true
 
   LargeClass:
     active: true
-    excludes: ['**/src/*Test/**']
+    excludes: ['**/src/*Test/**', '**/src/test/**']
 
 coroutines:
   active: true
@@ -54,7 +54,7 @@ naming:
     active: false
   TopLevelPropertyNaming:
     active: false
-  # 一文字変数を検出する（`i` ではなく `index`）。命名の意味づけは rules/kotlin.md を参照
+  # 一文字変数を検出する（`i` ではなく `index`）。命名の意味づけは AGENTS.md を参照
   VariableMinLength:
     active: true
     minimumVariableNameLength: 2
@@ -96,7 +96,7 @@ style:
   MaxChainedCallsOnSameLine:
     active: true
     maxChainedCalls: 2
-  # UnusedPrivateFunction / UnusedPrivateProperty は型情報が必要なため、full モードのタスクでだけ実行される（README.md の「実行タスク」を参照）
+  # UnusedPrivateFunction / UnusedPrivateProperty は型情報が必要なため、full モードのタスクでだけ実行される（README.md の「静的解析」を参照）
   UnusedPrivateFunction:
     active: true
     # Compose の Preview 関数は呼び出されないため除外
@@ -111,7 +111,7 @@ style:
 
 comments:
   # UndocumentedPublicClass は Activity / Fragment / Dialog / ViewModel をクラス名で除外できないため使わない。
-  # KDoc の規約（対象クラスと日本語での記述）は rules/kotlin.md で扱う
+  # KDoc の規約（対象クラスと日本語での記述）は AGENTS.md で扱う
   active: false
 
 potential-bugs:
@@ -125,7 +125,7 @@ ktlint:
   autoCorrect: true
   MaximumLineLength:
     active: false
-  # 引数の折り返しは行長ではなく引数の数で判断するため無効化し、FunctionSignature で強制する
+  # 引数の折り返しは行長では判断しない。AGENTS.md の引数数・デフォルト値の規約をレビューする
   ArgumentListWrapping:
     active: false
   ParameterListWrapping:

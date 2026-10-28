@@ -66,10 +66,10 @@ internal class KtorFanboxRequestExecutor(
             throw failure
         } catch (failure: IOException) {
             throw FanboxFailureInterpreter.network(
-                descriptor
+                endpoint = descriptor
                     .endpointId
                     .value,
-                failure,
+                cause = failure,
             )
         }
     }
@@ -170,7 +170,7 @@ internal class KtorFanboxRequestExecutor(
         }
 
         return ResponseOutcome.Complete(
-            FanboxRawResponse(
+            response = FanboxRawResponse(
                 statusCode = response
                     .status
                     .value,

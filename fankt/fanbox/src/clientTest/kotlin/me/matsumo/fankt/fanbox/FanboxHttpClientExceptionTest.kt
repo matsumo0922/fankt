@@ -253,7 +253,7 @@ class FanboxHttpClientExceptionTest {
         )
     }
 
-    private fun io.ktor.client.engine.mock.MockRequestHandleScope.respondJson(status: HttpStatusCode, body: String) = respond(
+    private fun MockRequestHandleScope.respondJson(status: HttpStatusCode, body: String) = respond(
         content = body,
         status = status,
         headers = headersOf(HttpHeaders.ContentType, ContentType.Application.Json.toString()),
