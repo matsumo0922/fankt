@@ -1,6 +1,5 @@
 <!-- agents-rules:kotlin:begin -->
 <!-- この区間は Agents リポジトリが管理する。編集は Agents の rules/kotlin.md で行い、make link-project で更新する -->
-
 # Kotlin / Jetpack Compose 規約
 
 Kotlin プロジェクト共通のコーディング規約。整形など静的解析で判定できる規約（trailing comma、メソッドチェーンの改行、Composable の `modifier` 引数、ラムダ引数名の時制、Immutable なコレクション型の強制など）は
@@ -40,9 +39,9 @@ Kotlin プロジェクト共通のコーディング規約。整形など静的�
 - 定数名は参照箇所から値を隠す。`side * BadgeSizeRatio` は宣言まで辿らないと `0.3f` だと分からず、読む手間だけが増える
 - 値に理由が要る場合は、定数の KDoc ではなく使用箇所のコメントとして書く
 - 次のものは参照が1箇所でも定数のまま残す。インライン化すると意味が変わる
-    - 複数の分岐で比較対象になる sentinel（`if (text == UnavailableText)` のような値）。リテラルを散らすと、値を変えたときに片方だけ直す事故になる
-    - `remember` の key として同一性が比較される値。呼び出しごとに新しい instance を作ると key が毎回変わり、再計算が走る
-    - `Paint` のように、生成を避けて process 内で共有している instance
+  - 複数の分岐で比較対象になる sentinel（`if (text == UnavailableText)` のような値）。リテラルを散らすと、値を変えたときに片方だけ直す事故になる
+  - `remember` の key として同一性が比較される値。呼び出しごとに新しい instance を作ると key が毎回変わり、再計算が走る
+  - `Paint` のように、生成を避けて process 内で共有している instance
 
 ### 段落
 
@@ -157,5 +156,4 @@ HomeTopAppBar(
     onNavigationClick = { viewModel.close() },
 )
 ```
-
 <!-- agents-rules:kotlin:end -->
