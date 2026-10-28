@@ -529,31 +529,29 @@ class FanboxUserMapperGoldenTest {
         creatorId: String,
         coverUrl: String?,
         excerpt: String,
-    ): FanboxBell.PostPublished {
-        return FanboxBell.PostPublished(
+    ): FanboxBell.PostPublished = FanboxBell.PostPublished(
+        id = FanboxPostId(postId),
+        notifiedDatetime = Instant.parse(notifiedDatetime),
+        post = FanboxPost(
             id = FanboxPostId(postId),
-            notifiedDatetime = Instant.parse(notifiedDatetime),
-            post = FanboxPost(
-                id = FanboxPostId(postId),
-                title = title,
-                cover = coverUrl?.let { FanboxCover(url = it, type = "cover_image") },
-                user = FanboxUser(
-                    userId = FanboxUserId(userId),
-                    creatorId = FanboxCreatorId(creatorId),
-                    name = userName,
-                    iconUrl = userIconUrl,
-                ),
-                excerpt = excerpt,
-                feeRequired = feeRequired,
-                hasAdultContent = false,
-                isLiked = false,
-                isRestricted = isRestricted,
-                likeCount = likeCount,
-                commentCount = commentCount,
-                tags = tags,
-                publishedDatetime = Instant.parse(publishedDatetime),
-                updatedDatetime = Instant.parse(updatedDatetime),
+            title = title,
+            cover = coverUrl?.let { FanboxCover(url = it, type = "cover_image") },
+            user = FanboxUser(
+                userId = FanboxUserId(userId),
+                creatorId = FanboxCreatorId(creatorId),
+                name = userName,
+                iconUrl = userIconUrl,
             ),
-        )
-    }
+            excerpt = excerpt,
+            feeRequired = feeRequired,
+            hasAdultContent = false,
+            isLiked = false,
+            isRestricted = isRestricted,
+            likeCount = likeCount,
+            commentCount = commentCount,
+            tags = tags,
+            publishedDatetime = Instant.parse(publishedDatetime),
+            updatedDatetime = Instant.parse(updatedDatetime),
+        ),
+    )
 }

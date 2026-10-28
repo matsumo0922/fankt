@@ -65,10 +65,7 @@ private fun ResolvedComponentResult.allComponentIdentities(): List<String> {
 }
 
 private object AndroidKotlinMetadataInspector {
-    fun inspect(
-        classFiles: List<File>,
-        forbiddenTypeMarkers: Set<String>,
-    ): Result {
+    fun inspect(classFiles: List<File>, forbiddenTypeMarkers: Set<String>): Result {
         val violations = mutableListOf<String>()
         var metadataFiles = 0
         var visibleTypeAliases = 0
@@ -169,10 +166,12 @@ private object AndroidKotlinMetadataInspector {
                     classifier.name
                         .takeIf { name -> forbiddenTypeMarkers.any(name::contains) }
                         ?.let(result::add)
+
                 is KmClassifier.TypeAlias ->
                     classifier.name
                         .takeIf { name -> forbiddenTypeMarkers.any(name::contains) }
                         ?.let(result::add)
+
                 is KmClassifier.TypeParameter -> Unit
             }
             type.arguments.forEach { projection -> projection.type?.let(::visit) }
@@ -354,6 +353,19 @@ abstract class VerifyKtorBoundaryTask : DefaultTask() {
 
     @TaskAction
     fun verify() {
+        verifyDependencyDeclarations()
+        verifyProductionSources()
+        verifyAbiFiles()
+        verifyAndroidSignatures()
+
+        val metadataFiles = androidModuleMetadata.files.filter { it.isFile }
+        check(metadataFiles.isNotEmpty()) { "No Android Gradle module metadata was generated" }
+        verifyAndroidApiMetadata(metadataFiles)
+        verifyAndroidRuntimeMetadata(metadataFiles)
+        verifyPublishedMetadata()
+    }
+
+    private fun verifyDependencyDeclarations() {
         val forbiddenApiDeclarations = apiDependencyDeclarations.get().filter { "io.ktor:" in it }
         check(forbiddenApiDeclarations.isEmpty()) {
             "Ktor must be an implementation dependency, but API declarations were found:\n" +
@@ -382,7 +394,9 @@ abstract class VerifyKtorBoundaryTask : DefaultTask() {
             "The infra-api bundle still contains kotlinx-datetime dependencies:\n" +
                 datetimeInfraApiDependencies.joinToString("\n")
         }
+    }
 
+    private fun verifyProductionSources() {
         // This literal scan is an early supplemental signal; dependency, ABI, and metadata gates
         // below enforce the complete published boundary.
         val productionKotlinSourceFiles = productionKotlinFiles.files.filter(File::isFile)
@@ -397,7 +411,9 @@ abstract class VerifyKtorBoundaryTask : DefaultTask() {
                     it.relativeTo(project.projectDir).path
                 }
         }
+    }
 
+    private fun verifyAbiFiles() {
         val checkedAbiFiles = abiFiles.files.filter { it.isFile }
         check(checkedAbiFiles.isNotEmpty()) {
             "No checked-in fanbox ABI files were found; run :fankt:fanbox:updateLegacyAbi"
@@ -424,7 +440,9 @@ abstract class VerifyKtorBoundaryTask : DefaultTask() {
             "okio types leaked into the public fanbox ABI:\n" +
                 okioAbiFiles.joinToString("\n") { it.relativeTo(project.projectDir).path }
         }
+    }
 
+    private fun verifyAndroidSignatures() {
         val genericSignatureViolations = inspectAndroidGenericSignatures(
             abiText = androidAbiFile.get().asFile.readText(),
             classFiles = androidClassFiles.files.filter { it.isFile },
@@ -454,9 +472,9 @@ abstract class VerifyKtorBoundaryTask : DefaultTask() {
             "Deprecated kotlinx-datetime types leaked through Android public/protected type aliases:\n" +
                 datetimeTypeAliasInspection.violations.joinToString("\n")
         }
+    }
 
-        val metadataFiles = androidModuleMetadata.files.filter { it.isFile }
-        check(metadataFiles.isNotEmpty()) { "No Android Gradle module metadata was generated" }
+    private fun verifyAndroidApiMetadata(metadataFiles: List<File>) {
         val apiViolations = metadataFiles.flatMap { metadataFile ->
             val metadata = JsonSlurper().parse(metadataFile) as Map<*, *>
             val variants = metadata["variants"] as? List<*> ?: emptyList<Any>()
@@ -480,7 +498,9 @@ abstract class VerifyKtorBoundaryTask : DefaultTask() {
             "Ktor dependencies leaked into Android API publication metadata:\n" +
                 apiViolations.joinToString("\n")
         }
+    }
 
+    private fun verifyAndroidRuntimeMetadata(metadataFiles: List<File>) {
         val publishedRuntimeKtorDependencies = metadataFiles.flatMap { metadataFile ->
             val metadata = JsonSlurper().parse(metadataFile) as Map<*, *>
             val variants = metadata["variants"] as? List<*> ?: emptyList<Any>()
@@ -505,7 +525,9 @@ abstract class VerifyKtorBoundaryTask : DefaultTask() {
             "Android runtime publication metadata is missing required Ktor dependencies:\n" +
                 missingRuntimeDependencies.joinToString("\n")
         }
+    }
 
+    private fun verifyPublishedMetadata() {
         val publishedMetadataFiles = publishedModuleMetadata.files.filter { it.isFile }
         val missingPublicationMetadataTasks =
             requiredPublicationMetadataTaskNames.get().toSet() -
@@ -558,10 +580,7 @@ abstract class VerifyKtorBoundaryTask : DefaultTask() {
         }
     }
 
-    private fun inspectAndroidGenericSignatures(
-        abiText: String,
-        classFiles: List<File>,
-    ): List<String> {
+    private fun inspectAndroidGenericSignatures(abiText: String, classFiles: List<File>): List<String> {
         val visibleApi = parseVisibleAndroidApi(abiText)
         check(visibleApi.isNotEmpty()) { "Android ABI baseline contains no visible classes" }
         check(classFiles.isNotEmpty()) { "No compiled Android release classes were found" }

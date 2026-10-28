@@ -14,6 +14,7 @@ import org.gradle.plugins.signing.SigningExtension
 import org.jetbrains.dokka.gradle.DokkaExtension
 import org.jetbrains.dokka.gradle.engine.parameters.VisibilityModifier
 
+/** ライブラリの Maven publication を構成する Gradle plugin。 */
 class MavenPublishPlugin : Plugin<Project> {
     override fun apply(target: Project) {
         with(target) {
@@ -53,7 +54,7 @@ class MavenPublishPlugin : Plugin<Project> {
                     setOf(
                         VisibilityModifier.Public,
                         // VisibilityModifier.Internal,
-                    )
+                    ),
                 )
             }
 

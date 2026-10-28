@@ -488,7 +488,11 @@ class FanboxAuthStorageTest {
         override val cookies = delegate.cookies
         override suspend fun snapshot() = delegate.snapshot()
         override suspend fun upsert(cookie: FanboxCookieRecord) = delegate.upsert(cookie)
-        override suspend fun delete(domain: String, path: String, name: String) =
+        override suspend fun delete(
+            domain: String,
+            path: String,
+            name: String,
+        ) =
             delegate.delete(domain, path, name)
         override suspend fun deleteExpired(nowEpochMilliseconds: Long) =
             delegate.deleteExpired(nowEpochMilliseconds)
@@ -503,7 +507,11 @@ class FanboxAuthStorageTest {
         override val cookies = delegate.cookies
         override suspend fun snapshot() = delegate.snapshot()
         override suspend fun upsert(cookie: FanboxCookieRecord) = delegate.upsert(cookie)
-        override suspend fun delete(domain: String, path: String, name: String) =
+        override suspend fun delete(
+            domain: String,
+            path: String,
+            name: String,
+        ) =
             delegate.delete(domain, path, name)
         override suspend fun deleteExpired(nowEpochMilliseconds: Long) {
             cleanupAttempts += 1
@@ -519,7 +527,11 @@ class FanboxAuthStorageTest {
         override val cookies = delegate.cookies
         override suspend fun snapshot() = delegate.snapshot()
         override suspend fun upsert(cookie: FanboxCookieRecord) = delegate.upsert(cookie)
-        override suspend fun delete(domain: String, path: String, name: String) =
+        override suspend fun delete(
+            domain: String,
+            path: String,
+            name: String,
+        ) =
             delegate.delete(domain, path, name)
         override suspend fun deleteExpired(nowEpochMilliseconds: Long) {
             cleanupAttempts += 1
@@ -535,7 +547,11 @@ class FanboxAuthStorageTest {
         override val cookies = delegate.cookies
         override suspend fun snapshot() = delegate.snapshot()
         override suspend fun upsert(cookie: FanboxCookieRecord) = delegate.upsert(cookie)
-        override suspend fun delete(domain: String, path: String, name: String) =
+        override suspend fun delete(
+            domain: String,
+            path: String,
+            name: String,
+        ) =
             delegate.delete(domain, path, name)
         override suspend fun deleteExpired(nowEpochMilliseconds: Long): Unit =
             throw CancellationException("cleanup cancelled")
@@ -559,7 +575,11 @@ class FanboxAuthStorageTest {
             return snapshot
         }
         override suspend fun upsert(cookie: FanboxCookieRecord) = delegate.upsert(cookie)
-        override suspend fun delete(domain: String, path: String, name: String) =
+        override suspend fun delete(
+            domain: String,
+            path: String,
+            name: String,
+        ) =
             delegate.delete(domain, path, name)
         override suspend fun deleteExpired(nowEpochMilliseconds: Long) =
             delegate.deleteExpired(nowEpochMilliseconds)
@@ -578,7 +598,11 @@ class FanboxAuthStorageTest {
             upsertCalls += 1
             delegate.upsert(cookie)
         }
-        override suspend fun delete(domain: String, path: String, name: String) =
+        override suspend fun delete(
+            domain: String,
+            path: String,
+            name: String,
+        ) =
             delegate.delete(domain, path, name)
         override suspend fun deleteExpired(nowEpochMilliseconds: Long) =
             delegate.deleteExpired(nowEpochMilliseconds)
@@ -604,7 +628,11 @@ class FanboxAuthStorageTest {
         override suspend fun upsert(cookie: FanboxCookieRecord) {
             upserts += cookie
         }
-        override suspend fun delete(domain: String, path: String, name: String) {
+        override suspend fun delete(
+            domain: String,
+            path: String,
+            name: String,
+        ) {
             deletedIdentity = CookieIdentity(domain, path, name)
         }
         override suspend fun deleteExpired(nowEpochMilliseconds: Long) =

@@ -471,6 +471,20 @@ guest production bundle build, and bridge API verification in one Ubuntu job. Do
 changes skip the job. The library release workflow verifies the published FANBOX boundary before
 publishing; it remains on macOS because the Kotlin Multiplatform publication includes Apple targets.
 
+### 静的解析
+
+`./gradlew detekt` は全モジュールと、ルートのビルド定義・`build-logic`・独立 consumer を型情報なしで解析する。
+結果は各モジュールの `build/reports/detekt/` に出力し、通常タスクの XML をルートの `build/reports/detekt/merge.xml` に統合する。
+統合処理は別の解析タスクやコンパイルを起動しない。
+型情報ありの解析には `:composeApp:detektDebug`、KMP の Android target には `:fankt:fanbox:detektDebugAndroid` など、各 target のタスクを使う。
+生成コードは解析対象から除外する。
+
+設定は detekt 2.0.0-alpha.6、ktlint wrapper、Compose rules 0.6.8 を使用する。
+`FunctionSignature` と `ClassSignature` はデフォルト引数を持つ短い宣言の複数行表記と両立しないため無効とし、宣言の改行は `AGENTS.md` に従ってレビューする。
+テストのシナリオ数・期待値・fixture には production の関数数・関数長・クラス長の上限を適用しない。
+endpoint の集約と外部 API の必須 override は、理由を記した宣言単位の抑制を使用する。
+公開 API の例外伝播は `AGENTS.md` のプロジェクト規約に従う。
+
 ## Contributing golden fixtures
 
 The `:fankt:fanbox` golden tests keep anonymized endpoint responses as Kotlin raw strings under

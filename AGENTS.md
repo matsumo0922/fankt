@@ -157,3 +157,10 @@ HomeTopAppBar(
 )
 ```
 <!-- agents-rules:kotlin:end -->
+
+
+# fankt 固有の規約
+
+- 公開 API と、それを支える transport / parser / storage の失敗経路は、既存の `FanboxException` による例外契約を維持する。`Result` 規約への移行は [Issue #117](https://github.com/matsumo0922/fankt/issues/117) で扱う。coroutine cancellation、collector / callback の失敗は元の例外を伝播する。
+- API の異なる endpoint を集約する facade と endpoint 定義、および外部の抽象クラスが要求する override 群は、関数数だけを理由に分割しない。該当宣言に理由付きの `TooManyFunctions` 抑制を置く。
+- テストのシナリオ数、期待値のオブジェクト構築、JSON fixture の大きさは production の複雑度上限の対象外とする。テスト・Gradle の DSL が宣言を並べるラムダは、3文制限の対象外とする。

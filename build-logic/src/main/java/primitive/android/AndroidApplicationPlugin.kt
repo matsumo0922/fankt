@@ -6,6 +6,7 @@ import me.matsumo.fankt.version
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 
+/** Android アプリのビルド設定を適用する Gradle plugin。 */
 class AndroidApplicationPlugin : Plugin<Project> {
     override fun apply(target: Project) {
         with(target) {
@@ -36,7 +37,7 @@ class AndroidApplicationPlugin : Plugin<Project> {
                             "asm-license.txt",
                             "cglib-license.txt",
                             "mozilla/public-suffix-list.txt",
-                        )
+                        ),
                     )
                 }
             }

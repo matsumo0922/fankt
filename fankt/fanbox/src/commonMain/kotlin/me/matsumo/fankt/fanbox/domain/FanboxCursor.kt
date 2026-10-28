@@ -27,6 +27,8 @@ internal fun String.translateToCursor(): FanboxCursor {
         maxPublishedDatetime = url.queryValue("maxPublishedDatetime"),
         firstId = url.queryValue("firstId"),
         maxId = url.queryValue("maxId"),
-        limit = url.queryValue("limit")?.toInt(),
+        limit = url
+            .queryValue("limit")
+            ?.toInt(),
     )
 }

@@ -965,11 +965,9 @@ internal object FanboxPostJsonFixtures {
         }
         """.trimIndent()
 
-    private fun syntheticUnsupportedPostInfo(type: String, bodyJson: String): String {
-        return postInfoText
-            .replaceFirst(oldValue = "\"body\": null", newValue = "\"body\": $bodyJson")
-            .replaceFirst(oldValue = "\"type\": \"text\"", newValue = "\"type\": \"$type\"")
-    }
+    private fun syntheticUnsupportedPostInfo(type: String, bodyJson: String): String = postInfoText
+        .replaceFirst(oldValue = "\"body\": null", newValue = "\"body\": $bodyJson")
+        .replaceFirst(oldValue = "\"type\": \"text\"", newValue = "\"type\": \"$type\"")
 
     private fun hybridLegacyPostInfo(type: String, bodyJson: String): String {
         val root = Json.parseToJsonElement(postInfoImage).jsonObject

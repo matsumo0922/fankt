@@ -213,10 +213,7 @@ private class SubscriptionCountingFlow<T> {
  * Collects [flow] in a child that captures its own outcome as a value, so a thrown
  * [IllegalStateException] cannot cancel the enclosing scope before the assertion runs.
  */
-private fun <T> CoroutineScope.collectOutcome(
-    flow: Flow<T>,
-    received: Channel<T>,
-): Deferred<Throwable?> = async(start = CoroutineStart.UNDISPATCHED) {
+private fun <T> CoroutineScope.collectOutcome(flow: Flow<T>, received: Channel<T>): Deferred<Throwable?> = async(start = CoroutineStart.UNDISPATCHED) {
     runCatching {
         flow.collect { value -> received.send(value) }
     }.exceptionOrNull()

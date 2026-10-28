@@ -42,7 +42,9 @@ internal fun FanboxScreen(
     modifier: Modifier = Modifier,
     viewModel: FanboxViewModel = viewModel(FanboxViewModel::class),
 ) {
-    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val uiState by viewModel
+        .uiState
+        .collectAsStateWithLifecycle()
 
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
@@ -61,14 +63,14 @@ internal fun FanboxScreen(
             FanboxTopAppBar(
                 modifier = Modifier.fillMaxWidth(),
                 scrollBehavior = behavior,
-                onBackClicked = terminate,
+                onBackClick = terminate,
             )
         },
         bottomBar = {
             FanboxBottomBar(
                 modifier = Modifier.fillMaxWidth(),
                 sessionId = sessionId,
-                onSessionIdChanged = {
+                onSessionIdChange = {
                     scope.launch {
                         sessionId = it
                         setFanboxSessionId(context, sessionId)
@@ -93,7 +95,7 @@ internal fun FanboxScreen(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun FanboxTopAppBar(
-    onBackClicked: () -> Unit,
+    onBackClick: () -> Unit,
     scrollBehavior: TopAppBarScrollBehavior,
     modifier: Modifier = Modifier,
 ) {
@@ -103,7 +105,7 @@ private fun FanboxTopAppBar(
             Text("FANBOX")
         },
         navigationIcon = {
-            IconButton(onBackClicked) {
+            IconButton(onBackClick) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                     contentDescription = "Back",
@@ -117,7 +119,7 @@ private fun FanboxTopAppBar(
 @Composable
 private fun FanboxBottomBar(
     sessionId: String,
-    onSessionIdChanged: (String) -> Unit,
+    onSessionIdChange: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Column(
@@ -134,7 +136,7 @@ private fun FanboxBottomBar(
                 .padding(bottom = 8.dp)
                 .fillMaxWidth(),
             value = sessionId,
-            onValueChange = onSessionIdChanged,
+            onValueChange = onSessionIdChange,
             singleLine = true,
             placeholder = { Text("FANBOXSESSID") },
         )

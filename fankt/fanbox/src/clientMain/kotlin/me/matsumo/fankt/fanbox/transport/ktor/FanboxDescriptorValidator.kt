@@ -13,12 +13,14 @@ import me.matsumo.fankt.fanbox.transport.InvalidRequestDescriptorException
 import me.matsumo.fankt.fanbox.transport.TrustedFanboxEndpoint
 import me.matsumo.fankt.fanbox.transport.TrustedFanboxEndpointPolicy
 
+/** 信頼済みのポリシー・URL・HTTP メソッドを保持するリクエスト。 */
 internal data class ValidatedFanboxRequest(
     val policy: TrustedFanboxEndpoint,
     val url: Url,
     val method: FanboxHttpMethod,
 )
 
+/** descriptor とリダイレクト先が信頼済み endpoint の条件を満たすか検証する。 */
 internal object FanboxDescriptorValidator {
     private val SCHEME_PREFIX = Regex("^[A-Za-z][A-Za-z0-9+.-]*:")
 
@@ -30,18 +32,34 @@ internal object FanboxDescriptorValidator {
         }
 
         validateRelativePath(descriptor)
-        descriptor.query.forEach { parameter ->
-            if (parameter.name.isEmpty() || parameter.name.hasControlCharacter()) {
-                invalid("FANBOX query parameter name is invalid")
+        descriptor
+            .query
+            .forEach { parameter ->
+                if (parameter
+                        .name
+                        .isEmpty() || parameter
+                        .name
+                        .hasControlCharacter()
+                ) {
+                    invalid("FANBOX query parameter name is invalid")
+                }
             }
-        }
 
         val url = try {
             URLBuilder(policy.origin).apply {
-                encodedPath = if (descriptor.path.isEmpty()) "/" else "/${descriptor.path}"
-                descriptor.query.forEach { parameter ->
-                    parameters.append(parameter.name, parameter.value)
+                encodedPath = if (descriptor
+                        .path
+                        .isEmpty()
+                ) {
+                    "/"
+                } else {
+                    "/${descriptor.path}"
                 }
+                descriptor
+                    .query
+                    .forEach { parameter ->
+                        parameters.append(parameter.name, parameter.value)
+                    }
             }.build()
         } catch (_: IllegalArgumentException) {
             invalid("FANBOX request URL is malformed")
@@ -57,7 +75,11 @@ internal object FanboxDescriptorValidator {
         redirectedMethod: FanboxHttpMethod,
         policy: TrustedFanboxEndpoint,
     ): Url {
-        if (location.isNullOrEmpty() || location != location.trim() || location.hasControlCharacter()) {
+        if (location.isNullOrEmpty()) {
+            invalid("FANBOX redirect location is invalid")
+        }
+        val hasInvalidLocation = location != location.trim() || location.hasControlCharacter()
+        if (hasInvalidLocation) {
             invalid("FANBOX redirect location is invalid")
         }
         if (redirectedMethod != policy.method) {
@@ -65,7 +87,9 @@ internal object FanboxDescriptorValidator {
         }
 
         val redirectedUrl = try {
-            URLBuilder(currentUrl).takeFrom(location).build()
+            URLBuilder(currentUrl)
+                .takeFrom(location)
+                .build()
         } catch (_: IllegalArgumentException) {
             invalid("FANBOX redirect location is malformed")
         }
@@ -84,22 +108,11 @@ internal object FanboxDescriptorValidator {
         if (descriptor.endpointId == FanboxEndpointIds.homepage) {
             invalid("FANBOX homepage path must be empty")
         }
-        if (
-            path.startsWith('/') ||
-            path.startsWith("//") ||
-            SCHEME_PREFIX.containsMatchIn(path) ||
-            path.contains('@') ||
-            path.contains('?') ||
-            path.contains('#') ||
-            path.contains('\\') ||
-            path.contains('%') ||
-            path.hasControlCharacter() ||
-            path.any(Char::isWhitespace)
-        ) {
+        if (!path.isPlainRelativePath()) {
             invalid("FANBOX path must be a plain relative path")
         }
         val segments = path.split('/')
-        if (segments.any { segment -> segment.isEmpty() || segment == "." || segment == ".." }) {
+        if (segments.any { segment -> segment.isEmpty() || segment.isDotSegment() }) {
             invalid("FANBOX path contains an invalid traversal segment")
         }
     }
@@ -110,29 +123,50 @@ internal object FanboxDescriptorValidator {
         } catch (_: IllegalArgumentException) {
             invalid("Trusted FANBOX origin is malformed")
         }
-        if (
-            url.protocol != URLProtocol.HTTPS ||
+        val hasWrongOrigin = url.protocol != URLProtocol.HTTPS ||
             url.protocol != trustedOrigin.protocol ||
             url.host != trustedOrigin.host ||
-            url.port != trustedOrigin.port ||
-            !url.user.isNullOrEmpty() ||
-            !url.password.isNullOrEmpty() ||
-            url.fragment.isNotEmpty()
-        ) {
+            url.port != trustedOrigin.port
+        val hasCredentials = !url
+            .user
+            .isNullOrEmpty() || !url
+            .password
+            .isNullOrEmpty()
+        val escapedOrigin = hasWrongOrigin || hasCredentials || url
+            .fragment
+            .isNotEmpty()
+        if (escapedOrigin) {
             invalid("FANBOX request escaped its trusted origin")
         }
 
         val decodedSegments = try {
-            url.encodedPath.split('/').map(String::decodeURLPart)
+            url
+                .encodedPath
+                .split('/')
+                .map(String::decodeURLPart)
         } catch (_: IllegalArgumentException) {
             invalid("FANBOX request path is malformed")
         }
-        if (decodedSegments.any { segment -> segment == "." || segment == ".." || segment.contains('\\') }) {
+        if (decodedSegments.any { segment -> segment.isDotSegment() || segment.contains('\\') }) {
             invalid("FANBOX request path contains a traversal segment")
         }
     }
 
-    private fun String.hasControlCharacter(): Boolean = any { character -> character.code < 0x20 || character.code == 0x7f }
+    private fun String.isPlainRelativePath(): Boolean {
+        val hasForbiddenPrefix = startsWith('/') || SCHEME_PREFIX.containsMatchIn(this)
+        val hasReservedCharacter = any { character -> character in "@?#\\%" }
+        val hasWhitespace = hasControlCharacter() || any(Char::isWhitespace)
+        val isInvalidPath = hasForbiddenPrefix || hasReservedCharacter || hasWhitespace
+
+        return !isInvalidPath
+    }
+
+    private fun String.isDotSegment(): Boolean = this == "." || this == ".."
+
+    private fun String.hasControlCharacter(): Boolean = any { character ->
+        character.code < 0x20 ||
+            character.code == 0x7f
+    }
 
     private fun invalid(message: String): Nothing = throw InvalidRequestDescriptorException(message)
 }

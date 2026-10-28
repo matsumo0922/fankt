@@ -498,10 +498,7 @@ class FanboxDownloadTest {
         )
     }
 
-    private fun <T> startWithContext(
-        context: CoroutineContext,
-        block: suspend () -> T,
-    ): CompletableDeferred<Result<T>> {
+    private fun <T> startWithContext(context: CoroutineContext, block: suspend () -> T): CompletableDeferred<Result<T>> {
         val completion = CompletableDeferred<Result<T>>()
         block.startCoroutine(
             object : Continuation<T> {

@@ -92,7 +92,11 @@ public sealed class FanboxException(
         fun httpMessage(statusCode: Int, endpoint: String): String =
             "FANBOX request failed (HTTP $statusCode, endpoint: $endpoint)"
 
-        fun diagnosticMessage(label: String, statusCode: Int?, endpoint: String): String = buildString {
+        fun diagnosticMessage(
+            label: String,
+            statusCode: Int?,
+            endpoint: String,
+        ): String = buildString {
             append(label)
             append(" (endpoint: ")
             append(endpoint)

@@ -167,10 +167,7 @@ class FanboxCreatorProfileItemTest {
         }
     }
 
-    private fun video(
-        serviceProvider: String,
-        videoId: String,
-    ) = FanboxCreatorDetail.ProfileItem.Video(
+    private fun video(serviceProvider: String, videoId: String) = FanboxCreatorDetail.ProfileItem.Video(
         id = "$serviceProvider-$videoId",
         serviceProvider = serviceProvider,
         videoId = videoId,

@@ -64,7 +64,7 @@ private val excludeMethod = setOf(
 )
 
 @Composable
-fun FanboxRequestsContent(
+internal fun FanboxRequestsContent(
     classInstance: Fanbox,
     modifier: Modifier = Modifier,
 ) {
@@ -97,41 +97,11 @@ private fun RequestItem(
 
     var requestResult by remember { mutableStateOf<Any?>(null) }
     var isExpanded by rememberSaveable { mutableStateOf(false) }
-    val isPost = (function.returnType.jvmErasure == Unit::class)
-
-    suspend fun request() {
-        val typedParams = function.parameters
-            .mapNotNull { it.name }
-            .map {
-                val type = function.parameters.first { param -> param.name == it }.type.jvmErasure
-                val param = params[it] ?: getDefaultValue(it) ?: return@map null
-
-                when (type) {
-                    Int::class -> param.toIntOrNull()
-                    Long::class -> param.toLongOrNull()
-                    Boolean::class -> param.toBooleanStrictOrNull()
-                    FanboxPostId::class -> FanboxPostId(param)
-                    FanboxUserId::class -> FanboxUserId(param.toLong())
-                    FanboxCreatorId::class -> FanboxCreatorId(param)
-                    FanboxPlanId::class -> FanboxPlanId(param)
-                    FanboxCommentId::class -> FanboxCommentId(param)
-                    FanboxNewsLetterId::class -> FanboxNewsLetterId(param)
-                    else -> param
-                }
-            }
-
-        Napier.d { "Call: ${function.name}(${typedParams.joinToString(separator = ", ")})" }
-
-        requestResult = try {
-            function.callSuspend(classInstance, *typedParams.toTypedArray())
-        } catch (e: FanboxException) {
-            Napier.e { "Error calling function: ${function.name}: ${e.message}" }
-            e
-        } catch (e: Throwable) {
-            Napier.e(e) { "Error calling function: ${function.name}" }
-            e
-        }
-    }
+    val isPost = (
+        function
+            .returnType
+            .jvmErasure == Unit::class
+        )
 
     Column(
         modifier = modifier.animateContentSize(),
@@ -145,7 +115,9 @@ private fun RequestItem(
             horizontalArrangement = Arrangement.spacedBy(16.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            RequestTypeBadge(isPost)
+            RequestTypeBadge(
+                isPost = isPost,
+            )
 
             Text(
                 modifier = Modifier.weight(1f),
@@ -170,8 +142,11 @@ private fun RequestItem(
                 ParameterItem(
                     modifier = Modifier.padding(horizontal = 16.dp),
                     name = key,
-                    type = parameter.type.jvmErasure.simpleName ?: "Unknown",
-                    onValueChanged = { params[key] = it },
+                    type = parameter
+                        .type
+                        .jvmErasure
+                        .simpleName ?: "Unknown",
+                    onValueChange = { params[key] = it },
                 )
             }
 
@@ -211,11 +186,17 @@ private fun RequestItem(
                 onClick = {
                     scope.launch {
                         requestResult = null
-                        request()
+                        requestResult = executeRequest(
+                            function = function,
+                            classInstance = classInstance,
+                            params = params,
+                        )
                     }
                 },
             ) {
-                Text("Request")
+                Text(
+                    text = "Request",
+                )
             }
         }
     }
@@ -225,7 +206,7 @@ private fun RequestItem(
 private fun ParameterItem(
     name: String,
     type: String,
-    onValueChanged: (String) -> Unit,
+    onValueChange: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val (value, setValue) = remember { mutableStateOf("") }
@@ -241,7 +222,10 @@ private fun ParameterItem(
         ) {
             Text(
                 text = name,
-                style = MaterialTheme.typography.bodyMedium.bold(),
+                style = MaterialTheme
+                    .typography
+                    .bodyMedium
+                    .bold(),
             )
 
             Text(
@@ -256,13 +240,13 @@ private fun ParameterItem(
             value = value,
             onValueChange = {
                 setValue.invoke(it)
-                onValueChanged.invoke(it)
+                onValueChange.invoke(it)
             },
             keyboardOptions = KeyboardOptions(
                 imeAction = ImeAction.Done,
             ),
             keyboardActions = KeyboardActions(
-                onDone = { onValueChanged.invoke(value) },
+                onDone = { onValueChange.invoke(value) },
             ),
             singleLine = true,
             placeholder = getDefaultValue(name)?.let { { Text(it) } },
@@ -297,42 +281,102 @@ private fun RequestTypeBadge(
         Text(
             modifier = Modifier.padding(8.dp, 4.dp),
             text = text,
-            style = MaterialTheme.typography.bodyMedium.bold(),
+            style = MaterialTheme
+                .typography
+                .bodyMedium
+                .bold(),
         )
     }
 }
 
-private fun getDefaultValue(paramName: String): String? {
-    return when (paramName) {
-        "page" -> "1"
-        "offset" -> "1"
-        "creatorId" -> "rosumerii"
-        "userId" -> "67345848"
-        "postId" -> "8909488"
-        else -> null
+private suspend fun executeRequest(
+    function: KFunction<*>,
+    classInstance: Fanbox,
+    params: Map<String, String>,
+): Any? {
+    val typedParams = function
+        .parameters
+        .mapNotNull { it.name }
+        .map { name -> function.parseParameter(name, params) }
+    Napier.d { "Call: ${function.name}(${typedParams.joinToString(separator = ", ")})" }
+
+    return try {
+        function.callSuspend(classInstance, *typedParams.toTypedArray())
+    } catch (failure: FanboxException) {
+        Napier.e { "Error calling function: ${function.name}: ${failure.message}" }
+        failure
+    } catch (failure: Throwable) {
+        Napier.e(failure) { "Error calling function: ${function.name}" }
+        failure
     }
+}
+
+private fun KFunction<*>.parseParameter(name: String, params: Map<String, String>): Any? {
+    val type = parameters
+        .first { parameter -> parameter.name == name }
+        .type
+        .jvmErasure
+    val value = params[name] ?: getDefaultValue(name) ?: return null
+
+    return when (type) {
+        Int::class -> value.toIntOrNull()
+        Long::class -> value.toLongOrNull()
+        Boolean::class -> value.toBooleanStrictOrNull()
+        FanboxPostId::class -> FanboxPostId(value)
+        FanboxUserId::class -> FanboxUserId(value.toLong())
+        FanboxCreatorId::class -> FanboxCreatorId(value)
+        FanboxPlanId::class -> FanboxPlanId(value)
+        FanboxCommentId::class -> FanboxCommentId(value)
+        FanboxNewsLetterId::class -> FanboxNewsLetterId(value)
+        else -> value
+    }
+}
+
+private fun getDefaultValue(paramName: String): String? = when (paramName) {
+    "page" -> "1"
+    "offset" -> "1"
+    "creatorId" -> "rosumerii"
+    "userId" -> "67345848"
+    "postId" -> "8909488"
+    else -> null
 }
 
 private fun List<KFunction<*>>.sortedFunctions(): List<KFunction<*>> {
     val actionOrder = listOf("add", "delete", "follow", "unfollow", "like", "get", "search")
     val grouped = groupBy { function ->
-        val action = actionOrder.find { function.name.startsWith(it) } ?: ""
-        function.name.removePrefix(action)
+        val action = actionOrder.find {
+            function
+                .name
+                .startsWith(it)
+        }.orEmpty()
+        function
+            .name
+            .removePrefix(action)
     }
 
     val sortedGroup = grouped.values
         .sortedBy { group ->
-            val name = group.first().name
-            val action = actionOrder.find { name.startsWith(it) } ?: ""
+            val name = group
+                .first()
+                .name
+            val action = actionOrder
+                .find { name.startsWith(it) }
+                .orEmpty()
 
-            actionOrder.indexOf(action).takeIf { it != -1 } ?: Int.MAX_VALUE
+            actionOrder
+                .indexOf(action)
+                .takeIf { it != -1 } ?: Int.MAX_VALUE
         }
         .map { group ->
             group.sortedBy { function ->
                 val name = function.name
-                val action = actionOrder.find { name.startsWith(it) } ?: ""
+                val action = actionOrder
+                    .find { name.startsWith(it) }
+                    .orEmpty()
 
-                actionOrder.indexOf(action).takeIf { it != -1 } ?: Int.MAX_VALUE
+                actionOrder
+                    .indexOf(action)
+                    .takeIf { it != -1 } ?: Int.MAX_VALUE
             }
         }
 

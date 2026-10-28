@@ -20,17 +20,13 @@ internal fun Project.commonExt(configure: CommonExtension<*, *, *, *, *, *>.() -
     (this as ExtensionAware).extensions.configure(plugin, configure)
 }
 
-internal fun Project.isApplicationProject(): Boolean {
-    return project.extensions.findByType(BaseAppModuleExtension::class.java) != null
-}
+internal fun Project.isApplicationProject(): Boolean =
+    project.extensions.findByType(BaseAppModuleExtension::class.java) != null
 
-internal fun Project.isLibraryProject(): Boolean {
-    return project.extensions.findByType(LibraryExtension::class.java) != null
-}
+internal fun Project.isLibraryProject(): Boolean = project.extensions.findByType(LibraryExtension::class.java) != null
 
-internal fun Project.isMultiplatformProject(): Boolean {
-    return project.extensions.findByType(KotlinMultiplatformExtension::class.java) != null
-}
+internal fun Project.isMultiplatformProject(): Boolean =
+    project.extensions.findByType(KotlinMultiplatformExtension::class.java) != null
 
 fun Project.androidApplication(action: BaseAppModuleExtension.() -> Unit) {
     extensions.configure(action)
@@ -50,7 +46,7 @@ fun Project.setupAndroid() {
                 annotationProcessorOptions {
                     arguments += mapOf(
                         "room.schemaLocation" to "$projectDir/schemas",
-                        "room.incremental" to "true"
+                        "room.incremental" to "true",
                     )
                 }
             }

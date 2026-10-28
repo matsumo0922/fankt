@@ -11,15 +11,21 @@ import me.matsumo.fankt.fanbox.FanboxCookieRecord
 import me.matsumo.fankt.fanbox.FanboxCookieStorage
 import me.matsumo.fankt.fanbox.domain.model.db.CookieEntity
 
+/** Room に Cookie を保存する Ktor 向けの保存領域。 */
 internal class PersistentCookieStorage(
     private val cookieDao: CookieDao,
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
 ) : FanboxCookieStorage {
     override val cookies: Flow<List<FanboxCookieRecord>> =
-        cookieDao.getAllCookies().map { entities -> entities.map(CookieEntity::toRecord) }
+        cookieDao
+            .getAllCookies()
+            .map { entities -> entities.map(CookieEntity::toRecord) }
 
     override suspend fun snapshot(): List<FanboxCookieRecord> = withContext(ioDispatcher) {
-        cookieDao.getAllCookies().first().map(CookieEntity::toRecord)
+        cookieDao
+            .getAllCookies()
+            .first()
+            .map(CookieEntity::toRecord)
     }
 
     override suspend fun upsert(cookie: FanboxCookieRecord) {
@@ -28,7 +34,11 @@ internal class PersistentCookieStorage(
         }
     }
 
-    override suspend fun delete(domain: String, path: String, name: String) {
+    override suspend fun delete(
+        domain: String,
+        path: String,
+        name: String,
+    ) {
         withContext(ioDispatcher) {
             cookieDao.delete(domain.canonicalDomain(), path.canonicalPath(), name)
         }
@@ -73,6 +83,8 @@ private fun FanboxCookieRecord.toLegacyEntity(): CookieEntity = CookieEntity(
     secure = secure,
 )
 
-private fun String.canonicalDomain(): String = trim().trimStart('.').lowercase()
+private fun String.canonicalDomain(): String = trim()
+    .trimStart('.')
+    .lowercase()
 
 private fun String.canonicalPath(): String = takeIf { startsWith('/') } ?: "/"

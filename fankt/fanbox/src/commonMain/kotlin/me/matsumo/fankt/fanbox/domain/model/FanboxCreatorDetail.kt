@@ -20,7 +20,9 @@ data class FanboxCreatorDetail(
     val profileLinks: List<ProfileLink>,
     val user: FanboxUser?,
 ) {
-    val supportingBrowserUrl get() = "https://www.fanbox.cc/creators/supporting/@${user?.creatorId?.value}"
+    val supportingBrowserUrl get() = "https://www.fanbox.cc/creators/supporting/@${user
+        ?.creatorId
+        ?.value}"
 
     /** A profile item classified from the `creator.get` item type. */
     @Serializable
@@ -96,7 +98,11 @@ data class FanboxCreatorDetail(
 
         companion object {
             fun fromUrl(url: String): Platform {
-                val hostname = FanboxUrlParts.parse(url).host.orEmpty().lowercase()
+                val hostname = FanboxUrlParts
+                    .parse(url)
+                    .host
+                    .orEmpty()
+                    .lowercase()
 
                 return when {
                     "booth.pm" in hostname -> BOOTH

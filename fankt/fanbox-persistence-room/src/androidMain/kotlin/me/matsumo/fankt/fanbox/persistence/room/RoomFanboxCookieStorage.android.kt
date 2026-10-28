@@ -32,6 +32,9 @@ public fun createRoomFanboxCookieStorage(
 }
 
 internal fun roomFanboxDatabasePath(context: Context): String =
-    context.applicationContext.getDatabasePath(DATABASE_NAME).absolutePath
+    context
+        .applicationContext
+        .getDatabasePath(DATABASE_NAME)
+        .absolutePath
 
 private const val DATABASE_NAME: String = "fankt.db"

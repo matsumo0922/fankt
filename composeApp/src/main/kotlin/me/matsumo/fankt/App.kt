@@ -48,7 +48,7 @@ internal fun FanktApp(
     NavHost(
         modifier = modifier.background(MaterialTheme.colorScheme.surface),
         navController = navController,
-        startDestination = NavHostRoute,
+        startDestination = NAV_HOST_ROUTE,
         enterTransition = { NavigateAnimation.Horizontal.enter },
         exitTransition = { NavigateAnimation.Horizontal.exit },
         popEnterTransition = { NavigateAnimation.Horizontal.popEnter },
@@ -65,9 +65,11 @@ internal fun FanktApp(
     }
 }
 
+/** 画面遷移に使用するアニメーション。 */
 object NavigateAnimation {
     val decelerateEasing = CubicBezierEasing(0.0f, 0.0f, 0.0f, 1.0f)
 
+    /** 左右方向の画面遷移。 */
     object Horizontal {
         private const val DURATION_FADE = 300
         private const val DURATION_SLIDE = 300

@@ -54,7 +54,11 @@ public class RoomFanboxCookieStorage internal constructor(
 
     override suspend fun upsert(cookie: FanboxCookieRecord): Unit = requireOpen { backend.upsert(cookie) }
 
-    override suspend fun delete(domain: String, path: String, name: String): Unit =
+    override suspend fun delete(
+        domain: String,
+        path: String,
+        name: String,
+    ): Unit =
         requireOpen { backend.delete(domain, path, name) }
 
     override suspend fun deleteExpired(nowEpochMilliseconds: Long): Unit =
@@ -102,10 +106,7 @@ public class RoomFanboxCookieStorage internal constructor(
  * `catch` receives neither the collecting coroutine's own cancellation nor an exception thrown by
  * the downstream collector, so neither is rewritten.
  */
-internal fun <T> closeAwareFlow(
-    upstream: Flow<T>,
-    closeSignal: CompletableDeferred<Unit>,
-): Flow<T> = flow {
+internal fun <T> closeAwareFlow(upstream: Flow<T>, closeSignal: CompletableDeferred<Unit>): Flow<T> = flow {
     check(!closeSignal.isCompleted) { CLOSED_MESSAGE }
     emitAll(
         merge(
@@ -133,10 +134,7 @@ private fun closedFailure(): IllegalStateException = IllegalStateException(CLOSE
 
 internal const val CLOSED_MESSAGE: String = "Room FANBOX Cookie storage is closed"
 
-internal fun newRoomFanboxCookieStorage(
-    database: FanktDatabase,
-    ioDispatcher: CoroutineDispatcher,
-): RoomFanboxCookieStorage = RoomFanboxCookieStorage(
+internal fun newRoomFanboxCookieStorage(database: FanktDatabase, ioDispatcher: CoroutineDispatcher): RoomFanboxCookieStorage = RoomFanboxCookieStorage(
     database = database,
     backend = PersistentCookieStorage(database.cookieDao(), ioDispatcher),
 )

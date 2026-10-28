@@ -18,15 +18,22 @@ internal val FanboxDownloadDestinationPlugin = createClientPlugin(
     val csrfTokenProvider = pluginConfig.csrfTokenProvider
 
     on(SendingRequest) { request, _ ->
-        val url = request.url.build()
+        val url = request
+            .url
+            .build()
         validateFanboxDownloadUrl(url)
 
         if (url.isFanboxHost()) {
-            if (!request.headers.contains(FANBOX_CSRF_HEADER)) {
+            if (!request
+                    .headers
+                    .contains(FANBOX_CSRF_HEADER)
+            ) {
                 request.header(FANBOX_CSRF_HEADER, csrfTokenProvider().orEmpty())
             }
         } else {
-            request.headers.remove(FANBOX_CSRF_HEADER)
+            request
+                .headers
+                .remove(FANBOX_CSRF_HEADER)
         }
     }
 }
@@ -49,7 +56,9 @@ private fun Url.isAllowedFanboxDownloadHost(): Boolean {
     return normalizedHost.isFanboxHost() || normalizedHost in EXTERNAL_MEDIA_HOSTS
 }
 
-private fun Url.isFanboxHost(): Boolean = host.lowercase().isFanboxHost()
+private fun Url.isFanboxHost(): Boolean = host
+    .lowercase()
+    .isFanboxHost()
 
 private fun String.isFanboxHost(): Boolean = this == FANBOX_HOST || endsWith(".$FANBOX_HOST")
 

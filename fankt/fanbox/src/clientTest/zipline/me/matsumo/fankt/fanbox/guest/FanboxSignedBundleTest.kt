@@ -256,7 +256,9 @@ class FanboxSignedBundleTest {
             loaded.zipline?.close()
         }
 
-        fun config(embedded: SignedBundle? = null): FanboxGuestDeliveryConfig = FanboxGuestDeliveryConfig(
+        fun config(
+            embedded: SignedBundle? = null,
+        ): FanboxGuestDeliveryConfig = FanboxGuestDeliveryConfig(
             manifestUrl = MANIFEST_URL,
             trustedKeyName = TRUSTED_KEY_NAME,
             trustedEd25519PublicKey = keyPair.publicKey.toByteArray(),
@@ -287,10 +289,9 @@ class FanboxSignedBundleTest {
         private val manifestJson: String,
         private val modulesByFileName: Map<String, ByteString>,
     ) : ZiplineHttpClient() {
-        override suspend fun download(
-            url: String,
-            requestHeaders: List<Pair<String, String>>,
-        ): ByteString = if (url == MANIFEST_URL) {
+        override suspend fun download(url: String, requestHeaders: List<Pair<String, String>>): ByteString = if (url ==
+            MANIFEST_URL
+        ) {
             manifestJson.encodeToByteArray().toByteString()
         } else {
             modulesByFileName[url.substringAfterLast('/')]
@@ -299,10 +300,7 @@ class FanboxSignedBundleTest {
     }
 
     private object UnreachableZiplineHttpClient : ZiplineHttpClient() {
-        override suspend fun download(
-            url: String,
-            requestHeaders: List<Pair<String, String>>,
-        ): ByteString = error("network unavailable")
+        override suspend fun download(url: String, requestHeaders: List<Pair<String, String>>): ByteString = error("network unavailable")
     }
 
     private companion object {

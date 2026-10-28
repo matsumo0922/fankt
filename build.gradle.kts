@@ -1,3 +1,5 @@
+import dev.detekt.gradle.Detekt
+
 plugins {
     // Android
     alias(libs.plugins.android.application) apply false
@@ -19,8 +21,13 @@ plugins {
     alias(libs.plugins.maven.publish) apply false
 
     // Others
-    alias(libs.plugins.detekt) apply false
+    id("matsumo.primitive.detekt")
     alias(libs.plugins.ktorfit) apply false
     alias(libs.plugins.room) apply false
     alias(libs.plugins.ksp) apply false
+}
+
+// 各モジュールの解析に含まれないビルド定義と独立 consumer も検査する。
+tasks.named<Detekt>("detekt") {
+    setSource(files("build.gradle.kts", "settings.gradle.kts", "build-logic", "compatibility-tests"))
 }

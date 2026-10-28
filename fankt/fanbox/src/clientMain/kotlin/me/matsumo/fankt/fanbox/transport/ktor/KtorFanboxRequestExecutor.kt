@@ -29,6 +29,7 @@ import me.matsumo.fankt.fanbox.transport.InvalidRequestDescriptorException
 import me.matsumo.fankt.fanbox.transport.TrustedFanboxEndpoint
 import kotlin.time.Clock
 
+/** 信頼済み endpoint の descriptor を Ktor で実行する。 */
 internal class KtorFanboxRequestExecutor(
     internal val client: HttpClient,
     private val logLevel: FanboxLogLevel = FanboxLogLevel.NONE,
@@ -43,7 +44,11 @@ internal class KtorFanboxRequestExecutor(
 
     override suspend fun execute(descriptor: RequestDescriptor): FanboxRawResponse {
         val validated = FanboxDescriptorValidator.validate(descriptor)
-        when (validated.policy.credentialBehavior) {
+        when (
+            validated
+                .policy
+                .credentialBehavior
+        ) {
             FanboxCredentialBehavior.SHARED_FANBOX_AUTHENTICATION -> Unit
         }
         return try {
@@ -60,7 +65,12 @@ internal class KtorFanboxRequestExecutor(
         } catch (failure: InvalidRequestDescriptorException) {
             throw failure
         } catch (failure: IOException) {
-            throw FanboxFailureInterpreter.network(descriptor.endpointId.value, failure)
+            throw FanboxFailureInterpreter.network(
+                descriptor
+                    .endpointId
+                    .value,
+                failure,
+            )
         }
     }
 
@@ -79,54 +89,25 @@ internal class KtorFanboxRequestExecutor(
                 this.method = method.toKtorMethod()
                 headers.appendAll(additionalHeaders(descriptor))
                 if (method == FanboxHttpMethod.POST) {
-                    descriptor.jsonBody?.let { body ->
-                        setBody(TextContent(body, ContentType.Application.Json))
-                    }
+                    descriptor
+                        .jsonBody
+                        ?.let { body ->
+                            setBody(TextContent(body, ContentType.Application.Json))
+                        }
                 }
             }.execute { response ->
-                if (response.status.isHandledRedirect()) {
-                    if (method == FanboxHttpMethod.POST) {
-                        throw InvalidRequestDescriptorException("FANBOX POST redirects are not supported")
-                    }
-                    if (redirectCount >= maxRedirects) {
-                        throw InvalidRequestDescriptorException("FANBOX redirect limit exceeded")
-                    }
-                    return@execute ResponseOutcome.Redirect(
-                        url = FanboxDescriptorValidator.validateRedirect(
-                            currentUrl = url,
-                            location = response.headers[HttpHeaders.Location],
-                            redirectedMethod = method,
-                            policy = policy,
-                        ),
-                        method = method,
-                    )
-                }
-
-                if (!response.status.isSuccess()) {
-                    val failure = FanboxFailureInterpreter.httpFailure(
-                        endpoint = descriptor.endpointId.value,
-                        statusCode = response.status.value,
-                        rawBody = response.diagnosticBodyOrNull(),
-                        retryAfter = response.headers[HttpHeaders.RetryAfter],
-                        nowEpochMilliseconds = nowEpochMilliseconds(),
-                    )
-                    if (logLevel != FanboxLogLevel.NONE) {
-                        failure.rawBody?.let { fragment -> Napier.d { "FANBOX response: $fragment" } }
-                    }
-                    throw failure
-                }
-
-                ResponseOutcome.Complete(
-                    FanboxRawResponse(
-                        statusCode = response.status.value,
-                        headers = response.headers.entries().associate { (name, values) -> name to values.toList() },
-                        bodyText = response.bodyAsText(),
-                    ),
+                readResponse(
+                    descriptor = descriptor,
+                    policy = policy,
+                    url = url,
+                    redirectCount = redirectCount,
+                    response = response,
                 )
             }
 
             when (outcome) {
                 is ResponseOutcome.Complete -> return outcome.response
+
                 is ResponseOutcome.Redirect -> {
                     url = outcome.url
                     method = outcome.method
@@ -136,9 +117,77 @@ internal class KtorFanboxRequestExecutor(
         }
     }
 
+    private suspend fun readResponse(
+        descriptor: RequestDescriptor,
+        policy: TrustedFanboxEndpoint,
+        url: Url,
+        redirectCount: Int,
+        response: HttpResponse,
+    ): ResponseOutcome {
+        val method = policy.method
+        if (response
+                .status
+                .isHandledRedirect()
+        ) {
+            if (method == FanboxHttpMethod.POST) {
+                throw InvalidRequestDescriptorException("FANBOX POST redirects are not supported")
+            }
+            if (redirectCount >= maxRedirects) {
+                throw InvalidRequestDescriptorException("FANBOX redirect limit exceeded")
+            }
+            return ResponseOutcome.Redirect(
+                url = FanboxDescriptorValidator.validateRedirect(
+                    currentUrl = url,
+                    location = response.headers[HttpHeaders.Location],
+                    redirectedMethod = method,
+                    policy = policy,
+                ),
+                method = method,
+            )
+        }
+
+        if (!response
+                .status
+                .isSuccess()
+        ) {
+            val failure = FanboxFailureInterpreter.httpFailure(
+                endpoint = descriptor
+                    .endpointId
+                    .value,
+                statusCode = response
+                    .status
+                    .value,
+                rawBody = response.diagnosticBodyOrNull(),
+                retryAfter = response.headers[HttpHeaders.RetryAfter],
+                nowEpochMilliseconds = nowEpochMilliseconds(),
+            )
+            if (logLevel != FanboxLogLevel.NONE) {
+                failure
+                    .rawBody
+                    ?.let { fragment -> Napier.d { "FANBOX response: $fragment" } }
+            }
+            throw failure
+        }
+
+        return ResponseOutcome.Complete(
+            FanboxRawResponse(
+                statusCode = response
+                    .status
+                    .value,
+                headers = response
+                    .headers
+                    .entries()
+                    .associate { (name, values) -> name to values.toList() },
+                bodyText = response.bodyAsText(),
+            ),
+        )
+    }
+
     private sealed interface ResponseOutcome {
+        /** 本文の読み取りが完了したレスポンス。 */
         data class Complete(val response: FanboxRawResponse) : ResponseOutcome
 
+        /** 検証済みのリダイレクト先と HTTP メソッド。 */
         data class Redirect(
             val url: Url,
             val method: FanboxHttpMethod,

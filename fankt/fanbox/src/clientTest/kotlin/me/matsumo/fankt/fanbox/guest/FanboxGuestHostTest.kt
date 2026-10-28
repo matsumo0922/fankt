@@ -133,9 +133,7 @@ class FanboxGuestHostTest {
      * and returns what the loader reported. Returning null means both stages failed.
      */
     @OptIn(DelicateCoroutinesApi::class, ExperimentalCoroutinesApi::class)
-    private suspend fun loadEmbeddedAndReportFailures(
-        bundle: FanboxEmbeddedGuestBundle,
-    ): List<String> {
+    private suspend fun loadEmbeddedAndReportFailures(bundle: FanboxEmbeddedGuestBundle): List<String> {
         val diagnostics = mutableListOf<String>()
         val dispatcher = newSingleThreadContext("FanboxZiplineTest")
 
@@ -144,10 +142,7 @@ class FanboxGuestHostTest {
                 config = CONFIG.copy(embeddedBundle = bundle),
                 dispatcher = dispatcher,
                 httpClient = object : ZiplineHttpClient() {
-                    override suspend fun download(
-                        url: String,
-                        requestHeaders: List<Pair<String, String>>,
-                    ): ByteString = error("network unavailable")
+                    override suspend fun download(url: String, requestHeaders: List<Pair<String, String>>): ByteString = error("network unavailable")
                 },
                 diagnosticSink = FanboxDiagnosticSink(diagnostics::add),
             )

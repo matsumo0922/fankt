@@ -3,10 +3,12 @@
 package me.matsumo.fankt.theme
 
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.layout.Box
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 
 private val md_theme_light_primary = Color(0xFF00658B)
@@ -136,12 +138,19 @@ val DarkBlueColorScheme = darkColorScheme(
 )
 
 @Composable
-fun FanktTheme(
+internal fun FanktTheme(
+    modifier: Modifier = Modifier,
     content: @Composable () -> Unit,
 ) {
     MaterialTheme(
         colorScheme = if (isSystemInDarkTheme()) DarkBlueColorScheme else LightBlueColorScheme,
         typography = FanktTypography,
-        content = content,
-    )
+    ) {
+        Box(
+            modifier = modifier,
+            propagateMinConstraints = true,
+        ) {
+            content()
+        }
+    }
 }

@@ -8,6 +8,9 @@ import me.matsumo.fankt.fanbox.domain.model.id.FanboxCreatorId
 import me.matsumo.fankt.fanbox.domain.model.id.FanboxPostId
 import me.matsumo.fankt.fanbox.domain.model.id.FanboxUserId
 
+/** FANBOX の各 endpoint に対応する request descriptor を生成する。 */
+// FANBOX endpoint の定義を一箇所に集約する。
+@Suppress("TooManyFunctions")
 internal object FanboxEndpoints {
     private const val DEFAULT_LOAD_SIZE = 20
 
@@ -48,7 +51,11 @@ internal object FanboxEndpoints {
         query("postId" to postId.value),
     )
 
-    fun postComments(postId: FanboxPostId, offset: Int, loadSize: Int = DEFAULT_LOAD_SIZE): RequestDescriptor = get(
+    fun postComments(
+        postId: FanboxPostId,
+        offset: Int,
+        loadSize: Int = DEFAULT_LOAD_SIZE,
+    ): RequestDescriptor = get(
         FanboxEndpointIds.postGetComments,
         "post.getComments",
         query(
@@ -58,7 +65,11 @@ internal object FanboxEndpoints {
         ),
     )
 
-    fun taggedPosts(tag: String, creatorId: FanboxCreatorId?, page: Int = 0): RequestDescriptor = get(
+    fun taggedPosts(
+        tag: String,
+        creatorId: FanboxCreatorId?,
+        page: Int = 0,
+    ): RequestDescriptor = get(
         FanboxEndpointIds.postListTagged,
         "post.listTagged",
         query(
@@ -118,7 +129,9 @@ internal object FanboxEndpoints {
         "creator.listPixiv",
     )
 
-    fun recommendedCreators(loadSize: Int = DEFAULT_LOAD_SIZE): RequestDescriptor = get(
+    fun recommendedCreators(
+        loadSize: Int = DEFAULT_LOAD_SIZE,
+    ): RequestDescriptor = get(
         FanboxEndpointIds.creatorListRecommended,
         "creator.listRecommended",
         query("limit" to loadSize.toString()),
@@ -145,16 +158,33 @@ internal object FanboxEndpoints {
     fun followCreator(userId: FanboxUserId): RequestDescriptor = post(
         FanboxEndpointIds.followCreate,
         "follow.create",
-        buildJsonObject { put("creatorUserId", userId.value.toString()) }.toString(),
+        buildJsonObject {
+            put(
+                "creatorUserId",
+                userId
+                    .value
+                    .toString(),
+            )
+        }.toString(),
     )
 
     fun unfollowCreator(userId: FanboxUserId): RequestDescriptor = post(
         FanboxEndpointIds.followDelete,
         "follow.delete",
-        buildJsonObject { put("creatorUserId", userId.value.toString()) }.toString(),
+        buildJsonObject {
+            put(
+                "creatorUserId",
+                userId
+                    .value
+                    .toString(),
+            )
+        }.toString(),
     )
 
-    fun searchCreators(query: String, page: Int = 0): RequestDescriptor = get(
+    fun searchCreators(
+        query: String,
+        page: Int = 0,
+    ): RequestDescriptor = get(
         FanboxEndpointIds.creatorSearch,
         "creator.search",
         query("q" to query, "page" to page.toString()),
@@ -228,7 +258,11 @@ internal object FanboxEndpoints {
         query: List<FanboxQueryParameter> = emptyList(),
     ) = RequestDescriptor(endpointId, path, FanboxHttpMethod.GET, query)
 
-    private fun post(endpointId: FanboxEndpointId, path: String, jsonBody: String) = RequestDescriptor(
+    private fun post(
+        endpointId: FanboxEndpointId,
+        path: String,
+        jsonBody: String,
+    ) = RequestDescriptor(
         endpointId = endpointId,
         path = path,
         method = FanboxHttpMethod.POST,

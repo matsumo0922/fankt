@@ -124,7 +124,11 @@ class PersistentCookieStorageTest {
             cookies.forEach { insert(it) }
         }
 
-        override suspend fun delete(domain: String, path: String, name: String) {
+        override suspend fun delete(
+            domain: String,
+            path: String,
+            name: String,
+        ) {
             state.value = state.value.filterNot { it.identity == Triple(domain, path, name) }
         }
 

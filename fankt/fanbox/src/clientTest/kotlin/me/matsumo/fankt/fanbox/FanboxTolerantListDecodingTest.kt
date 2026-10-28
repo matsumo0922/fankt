@@ -166,7 +166,9 @@ class FanboxTolerantListDecodingTest {
         assertEquals("value", value)
         assertEquals(listOf(first, second), events)
         assertFailsWith<IllegalArgumentException> {
-            FanboxTolerantResult("unused", listOf(first)).notifyMismatches { throw IllegalArgumentException("consumer") }
+            FanboxTolerantResult("unused", listOf(first)).notifyMismatches {
+                throw IllegalArgumentException("consumer")
+            }
         }
     }
 
