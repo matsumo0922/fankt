@@ -5,7 +5,6 @@ import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonElement
 import me.matsumo.fankt.fanbox.response.FanboxDiagnosticSink
-import me.matsumo.fankt.fanbox.response.FanboxDiagnostics
 
 /**
  * Identifies one item skipped from a FANBOX list response.
@@ -20,7 +19,6 @@ internal data class FanboxTolerantResult<T>(val value: T, val mismatches: List<F
 
 internal class FanboxListItemDecoder(
     private val formatter: Json = createFanboxJson(),
-    private val includeRawFragment: Boolean = false,
     private val diagnosticSink: FanboxDiagnosticSink = FanboxDiagnosticSink.none,
 ) {
     fun <T, R> decodeAndMap(
@@ -40,28 +38,17 @@ internal class FanboxListItemDecoder(
                 values += transformed.value
                 mismatches += transformed.mismatches
             } catch (_: SerializationException) {
-                mismatches += reportMismatch(endpoint, indexPath, item)
+                mismatches += reportMismatch(endpoint, indexPath)
             } catch (_: IllegalArgumentException) {
-                mismatches += reportMismatch(endpoint, indexPath, item)
+                mismatches += reportMismatch(endpoint, indexPath)
             }
         }
 
         return FanboxTolerantResult(values, mismatches)
     }
 
-    private fun reportMismatch(
-        endpoint: String,
-        indexPath: List<Int>,
-        item: JsonElement,
-    ): FanboxListItemSchemaMismatch {
-        diagnosticSink.report(
-            FanboxDiagnostics.listItemMismatchMessage(
-                endpoint = endpoint,
-                indexPath = indexPath,
-                item = item,
-                includeRawFragment = includeRawFragment,
-            ),
-        )
+    private fun reportMismatch(endpoint: String, indexPath: List<Int>): FanboxListItemSchemaMismatch {
+        diagnosticSink.report("FANBOX list item schema mismatch (endpoint: $endpoint, indexPath: $indexPath)")
         return FanboxListItemSchemaMismatch(endpoint, indexPath)
     }
 }

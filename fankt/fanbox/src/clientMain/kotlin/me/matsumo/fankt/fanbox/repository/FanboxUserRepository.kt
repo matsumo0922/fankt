@@ -13,7 +13,6 @@ import me.matsumo.fankt.fanbox.transport.FanboxRequestExecutor
 internal class FanboxUserRepository(
     private val requestExecutor: FanboxRequestExecutor,
     private val diagnosticSink: FanboxDiagnosticSink = FanboxDiagnosticSink.none,
-    private val includeRawFragment: Boolean = false,
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
 ) {
     suspend fun getSupportedPlans() = withContext(ioDispatcher) {
@@ -27,7 +26,6 @@ internal class FanboxUserRepository(
             body = response.bodyText,
             statusCode = response.statusCode,
             diagnosticSink = diagnosticSink,
-            includeRawFragment = includeRawFragment,
         )
     }
 
@@ -57,7 +55,6 @@ internal class FanboxUserRepository(
             body = response.bodyText,
             statusCode = response.statusCode,
             diagnosticSink = diagnosticSink,
-            includeRawFragment = includeRawFragment,
         )
     }
 

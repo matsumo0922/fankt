@@ -4,22 +4,28 @@
 
 package me.matsumo.fankt.fanbox.guest
 
+import app.cash.zipline.Zipline
 import app.cash.zipline.ZiplineManifest
 import app.cash.zipline.loader.ManifestSigner.Builder
+import app.cash.zipline.loader.ZiplineCache
 import app.cash.zipline.loader.ZiplineHttpClient
+import app.cash.zipline.loader.internal.tink.subtle.KeyPair
 import app.cash.zipline.loader.internal.tink.subtle.newKeyPairFromSeed
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.mock.MockEngine
+import io.ktor.client.engine.mock.respond
+import io.ktor.client.plugins.HttpRequestTimeoutException
+import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.newSingleThreadContext
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
-import me.matsumo.fankt.fanbox.FanboxEmbeddedGuestBundle
-import me.matsumo.fankt.fanbox.domain.model.id.FanboxPostId
-import me.matsumo.fankt.fanbox.response.FanboxDiagnosticSink
-import me.matsumo.fankt.fanbox.transport.FanboxRawResponse
-import me.matsumo.fankt.fanbox.transport.FanboxRequestExecutor
+import me.matsumo.fankt.fanbox.FanboxGuestCache
+import me.matsumo.fankt.fanbox.FanboxHttpClientFactory
 import okio.ByteString
 import okio.ByteString.Companion.toByteString
 import okio.FileSystem
@@ -28,9 +34,11 @@ import okio.Path.Companion.toPath
 import kotlin.random.Random
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 import kotlin.test.assertIs
 import kotlin.test.assertNotNull
-import kotlin.test.assertTrue
+import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.seconds
 
 @OptIn(DelicateCoroutinesApi::class, ExperimentalCoroutinesApi::class)
 class FanboxSignedBundleTest {
@@ -38,182 +46,142 @@ class FanboxSignedBundleTest {
     @Test
     fun validSignatureLoadsGuestBundle(): Unit = runBlocking {
         withBundleFixture {
-            val remote = signedBundle(FIXED_BUNDLE_DIRECTORY)
-            val loaded = loadGuest(remote = remote)
+            val result = loadGuest(signedBundle(FIXED_BUNDLE_DIRECTORY)).parseAndClose()
 
-            try {
-                assertIs<GuestParseResult.Success>(
-                    parse(
-                        assertNotNull(loaded),
-                        RESPONSE_BODY,
-                    ),
-                )
-            } finally {
-                loaded?.let { closeGuest(it) }
-            }
+            assertIs<GuestParseResult.Success>(result)
         }
     }
 
     @Test
-    fun tamperedSignatureFallsBackToEmbeddedBundle(): Unit = runBlocking {
+    fun tamperedSignatureIsRefused(): Unit = runBlocking {
         withBundleFixture {
-            val remote = signedBundle(LEGACY_BUNDLE_DIRECTORY, tamperSignature = true)
-            val embedded = signedBundle(FIXED_BUNDLE_DIRECTORY)
-            val diagnostics = mutableListOf<String>()
-            val loaded = loadGuest(remote, embedded, diagnostics)
+            val remote = signedBundle(FIXED_BUNDLE_DIRECTORY, tamperSignature = true)
 
-            try {
-                assertIs<GuestParseResult.Success>(
-                    parse(
-                        assertNotNull(loaded),
-                        RESPONSE_BODY,
-                    ),
-                )
-                assertTrue(diagnostics.any { "remote manifest failed" in it })
-            } finally {
-                loaded?.let { closeGuest(it) }
-            }
+            assertFailsWith<IllegalStateException> { loadGuest(remote) }
         }
     }
 
     @Test
-    fun unknownSigningKeyFallsBackToEmbeddedBundle(): Unit = runBlocking {
+    fun unknownSigningKeyIsRefused(): Unit = runBlocking {
         withBundleFixture {
-            val remote = signedBundle(LEGACY_BUNDLE_DIRECTORY, signingKeyName = "unknown")
-            val embedded = signedBundle(FIXED_BUNDLE_DIRECTORY)
-            val diagnostics = mutableListOf<String>()
-            val loaded = loadGuest(remote, embedded, diagnostics)
+            val remote = signedBundle(FIXED_BUNDLE_DIRECTORY, signingKeyName = "unknown")
 
-            try {
-                assertIs<GuestParseResult.Success>(
-                    parse(
-                        assertNotNull(loaded),
-                        RESPONSE_BODY,
-                    ),
-                )
-                assertTrue(diagnostics.any { "remote manifest failed" in it })
-            } finally {
-                loaded?.let { closeGuest(it) }
-            }
-        }
-    }
-
-    @Test
-    fun embeddedSignatureFailureUsesDirectPath(): Unit = runBlocking {
-        withBundleFixture {
-            val embedded = signedBundle(FIXED_BUNDLE_DIRECTORY, tamperSignature = true)
-            var directCalls = 0
-            val host = FanboxGuestHost(
-                config = config(embedded),
-                httpClientFactory = {
-                    HttpClient(MockEngine { error("network unavailable") })
-                },
-                diagnosticSink = FanboxDiagnosticSink.none,
-            )
-
-            try {
-                val actual = host.getPostDetail(POST_ID, successfulExecutor()) {
-                    directCalls += 1
-                    DIRECT_POST
-                }
-
-                assertEquals(DIRECT_POST, actual)
-                assertEquals(1, directCalls)
-            } finally {
-                host.close()
-            }
-        }
-    }
-
-    @Test
-    fun unreachableManifestUsesEmbeddedBundle(): Unit = runBlocking {
-        withBundleFixture {
-            val embedded = signedBundle(FIXED_BUNDLE_DIRECTORY)
-            val diagnostics = mutableListOf<String>()
-            val loaded = loadGuest(remote = null, embedded = embedded, diagnostics = diagnostics)
-
-            try {
-                assertIs<GuestParseResult.Success>(
-                    parse(
-                        assertNotNull(loaded),
-                        RESPONSE_BODY,
-                    ),
-                )
-                assertTrue(diagnostics.any { "remote manifest failed" in it })
-            } finally {
-                loaded?.let { closeGuest(it) }
-            }
+            assertFailsWith<IllegalStateException> { loadGuest(remote) }
         }
     }
 
     @Test
     fun manifestReplacementChangesResponseInterpretation(): Unit = runBlocking {
         withBundleFixture {
-            val legacy = signedBundle(LEGACY_BUNDLE_DIRECTORY)
-            val fixed = signedBundle(FIXED_BUNDLE_DIRECTORY)
-
-            val legacyGuest = assertNotNull(loadGuest(remote = legacy))
-            val legacyResult = try {
-                parse(legacyGuest, RESPONSE_BODY)
-            } finally {
-                closeGuest(legacyGuest)
-            }
-            val fixedGuest = assertNotNull(loadGuest(remote = fixed))
-            val fixedResult = try {
-                parse(fixedGuest, RESPONSE_BODY)
-            } finally {
-                closeGuest(fixedGuest)
-            }
+            val legacyResult = loadGuest(signedBundle(LEGACY_BUNDLE_DIRECTORY)).parseAndClose()
+            val fixedResult = loadGuest(signedBundle(FIXED_BUNDLE_DIRECTORY)).parseAndClose()
 
             assertIs<GuestParseResult.SchemaMismatch>(legacyResult)
             assertIs<GuestParseResult.Success>(fixedResult)
         }
     }
 
-    private suspend fun BundleFixture.loadGuest(
-        remote: SignedBundle?,
-        embedded: SignedBundle? = null,
-        diagnostics: MutableList<String> = mutableListOf(),
-    ): LoadedGuest? = withContext(dispatcher) {
-        ZiplineGuestLoader(
-            config = config(embedded),
-            dispatcher = dispatcher,
-            httpClient = remote?.httpClient ?: UnreachableZiplineHttpClient,
-            diagnosticSink = FanboxDiagnosticSink(diagnostics::add),
-        ).load() ?: error(diagnostics.joinToString("\n"))
-    }
+    @Test
+    fun cachedModulesAreNotDownloadedAgain(): Unit = runBlocking {
+        withBundleFixture {
+            val remote = signedBundle(FIXED_BUNDLE_DIRECTORY)
+            loadGuest(remote).parseAndClose()
+            remote.httpClient.downloadedUrls.clear()
 
-    private fun successfulExecutor(): FanboxRequestExecutor = FanboxRequestExecutor {
-        FanboxRawResponse(
-            statusCode = 200,
-            headers = emptyMap(),
-            bodyText = RESPONSE_BODY,
-        )
-    }
+            loadGuest(remote).parseAndClose()
 
-    private suspend fun <T> withBundleFixture(block: suspend BundleFixture.() -> T): T {
-        val fixture = BundleFixture()
-        return try {
-            fixture.block()
-        } finally {
-            fixture.close()
+            assertEquals(listOf(MANIFEST_URL), remote.httpClient.downloadedUrls)
         }
     }
+
+    @Test
+    fun cachedBundleDoesNotRunWhenTheManifestIsUnreachable(): Unit = runBlocking {
+        withBundleFixture {
+            loadGuest(signedBundle(FIXED_BUNDLE_DIRECTORY)).parseAndClose()
+
+            assertFailsWith<IllegalStateException> { loadGuest(httpClient = UnreachableZiplineHttpClient) }
+        }
+    }
+
+    @Test
+    fun aCacheWrittenUnderAnotherKeyDoesNotBlockLoading(): Unit = runBlocking {
+        withBundleFixture {
+            loadGuest(signedBundle(FIXED_BUNDLE_DIRECTORY)).parseAndClose()
+            val rotatedKey = newKeyPairFromSeed(Random.nextBytes(32).toByteString())
+
+            val result = loadGuest(
+                remote = signedBundle(FIXED_BUNDLE_DIRECTORY, keyPair = rotatedKey),
+                keyPair = rotatedKey,
+            ).parseAndClose()
+
+            assertIs<GuestParseResult.Success>(result)
+        }
+    }
+
+    @Test
+    fun aLoadCancelledAfterTheEngineIsBuiltClosesIt(): Unit = runBlocking {
+        withBundleFixture {
+            val remote = signedBundle(FIXED_BUNDLE_DIRECTORY)
+            var built: Zipline? = null
+            lateinit var loadJob: Job
+
+            // Cancelling inside the initializer lets the engine finish building, so the cancellation
+            // lands after Zipline would have closed it on a failure of its own.
+            loadJob = launch(dispatcher, start = CoroutineStart.LAZY) {
+                loadZiplineGuest(
+                    config = config(),
+                    dispatcher = dispatcher,
+                    httpClient = remote.httpClient,
+                    initializer = { zipline ->
+                        built = zipline
+                        loadJob.cancel()
+                    },
+                )
+            }
+            loadJob.join()
+
+            val engine = assertNotNull(built)
+            withContext(dispatcher) {
+                assertFailsWith<IllegalStateException> { engine.take<FanboxGuestService>(FANBOX_GUEST_SERVICE_NAME) }
+            }
+        }
+    }
+
+    @Test
+    fun aSlowRequestEndsTheLoad(): Unit = runBlocking {
+        withBundleFixture {
+            val slowClientFactory = FanboxHttpClientFactory { block ->
+                HttpClient(
+                    engine = MockEngine {
+                        delay(10.seconds)
+                        respond("")
+                    },
+                    block = block,
+                )
+            }
+
+            createGuestHttpClient(slowClientFactory, requestTimeout = 100.milliseconds).use { client ->
+                assertFailsWith<HttpRequestTimeoutException> { loadGuest(httpClient = KtorZiplineHttpClient(client)) }
+            }
+        }
+    }
+
+    private suspend fun <T> withBundleFixture(block: suspend BundleFixture.() -> T): T = BundleFixture().use { it.block() }
 
     private class BundleFixture : AutoCloseable {
         val dispatcher = newSingleThreadContext("FanboxSignedBundleTest")
         private val fileSystem = FileSystem.SYSTEM
         private val root = FileSystem.SYSTEM_TEMPORARY_DIRECTORY / "fankt-signed-bundle-${Random.nextLong()}"
         private val keyPair = newKeyPairFromSeed(Random.nextBytes(32).toByteString())
-
-        init {
-            fileSystem.createDirectories(root)
+        private val cache = FanboxGuestCache { directoryName, maxSizeInBytes ->
+            ZiplineCache(fileSystem, root / directoryName, maxSizeInBytes)
         }
 
         fun signedBundle(
             sourceDirectoryName: String,
             signingKeyName: String = TRUSTED_KEY_NAME,
             tamperSignature: Boolean = false,
+            keyPair: KeyPair = this.keyPair,
         ): SignedBundle {
             val sourceDirectory = findBundleDirectory(sourceDirectoryName)
             val unsignedManifest = ZiplineManifest.decodeJson(
@@ -231,39 +199,34 @@ class FanboxSignedBundleTest {
                 )
             }
 
-            // The embedded stage reads through the public API, so the bundle is held by file name
-            // rather than written to disk. The names follow what the loader looks for: the manifest
-            // carries the application name, and each module is named by its SHA-256.
-            val embeddedFiles = mutableMapOf(
-                EMBEDDED_MANIFEST_FILE_NAME to manifest.encodeJson().encodeToByteArray(),
-            )
             val modulesByFileName = manifest.modules.values.associate { module ->
-                val bytes = fileSystem.read(sourceDirectory / module.url) { readByteString() }
-                embeddedFiles[module.sha256.hex()] = bytes.toByteArray()
-                module.url.substringAfterLast('/') to bytes
+                module.url.substringAfterLast('/') to fileSystem.read(sourceDirectory / module.url) { readByteString() }
             }
-            return SignedBundle(
-                embedded = FanboxEmbeddedGuestBundle(embeddedFiles::get),
-                httpClient = BundleZiplineHttpClient(manifest.encodeJson(), modulesByFileName),
-            )
+            return SignedBundle(BundleZiplineHttpClient(manifest.encodeJson(), modulesByFileName))
         }
 
-        private suspend fun parse(loaded: LoadedGuest, body: String): GuestParseResult = withContext(dispatcher) {
-            loaded.service.parsePostDetail(body, 200)
+        suspend fun loadGuest(
+            remote: SignedBundle? = null,
+            keyPair: KeyPair = this.keyPair,
+            httpClient: ZiplineHttpClient = checkNotNull(remote).httpClient,
+        ): LoadedGuest = withContext(dispatcher) {
+            loadZiplineGuest(config(keyPair), dispatcher, httpClient)
         }
 
-        suspend fun closeGuest(loaded: LoadedGuest) = withContext(dispatcher) {
-            loaded.zipline?.close()
-        }
-
-        fun config(
-            embedded: SignedBundle? = null,
-        ): FanboxGuestDeliveryConfig = FanboxGuestDeliveryConfig(
+        fun config(keyPair: KeyPair = this.keyPair) = FanboxGuestDeliveryConfig(
             manifestUrl = MANIFEST_URL,
             trustedKeyName = TRUSTED_KEY_NAME,
-            trustedEd25519PublicKey = keyPair.publicKey.toByteArray(),
-            embeddedBundle = embedded?.embedded,
+            trustedEd25519PublicKey = keyPair.publicKey,
+            cache = cache,
         )
+
+        suspend fun LoadedGuest.parseAndClose(): GuestParseResult = withContext(dispatcher) {
+            try {
+                service.parsePostDetail(RESPONSE_BODY, 200)
+            } finally {
+                zipline?.close()
+            }
+        }
 
         override fun close() {
             fileSystem.deleteRecursively(root)
@@ -280,16 +243,17 @@ class FanboxSignedBundleTest {
         }
     }
 
-    private data class SignedBundle(val embedded: FanboxEmbeddedGuestBundle, val httpClient: ZiplineHttpClient)
+    private data class SignedBundle(val httpClient: BundleZiplineHttpClient)
 
     private class BundleZiplineHttpClient(private val manifestJson: String, private val modulesByFileName: Map<String, ByteString>) : ZiplineHttpClient() {
-        override suspend fun download(url: String, requestHeaders: List<Pair<String, String>>): ByteString = if (url ==
-            MANIFEST_URL
-        ) {
-            manifestJson.encodeToByteArray().toByteString()
-        } else {
-            modulesByFileName[url.substringAfterLast('/')]
-                ?: error("Unexpected bundle URL: $url")
+        val downloadedUrls = mutableListOf<String>()
+
+        override suspend fun download(url: String, requestHeaders: List<Pair<String, String>>): ByteString {
+            downloadedUrls += url
+
+            if (url == MANIFEST_URL) return manifestJson.encodeToByteArray().toByteString()
+
+            return modulesByFileName[url.substringAfterLast('/')] ?: error("Unexpected bundle URL: $url")
         }
     }
 
@@ -304,10 +268,5 @@ class FanboxSignedBundleTest {
         const val MANIFEST_URL = "https://example.invalid/manifest.zipline.json"
         const val RESPONSE_BODY =
             """{"body":{"post":{"body":{"text":"OTA fixture"},"commentCount":0,"creatorId":"fixture-creator","excerpt":"Fixture excerpt","feeRequired":0,"hasAdultContent":false,"id":"10000001","imageForShare":"https://example.invalid/share.png","isLiked":false,"isRestricted":false,"likeCount":0,"nextPost":null,"prevPost":null,"publishedDatetime":"2026-01-01T00:00:00Z","tags":[],"title":"Fixture title","type":"text","updatedDatetime":"2026-01-01T00:00:00Z","coverImageUrl":null,"user":null}}}"""
-        val POST_ID = FanboxPostId("10000001")
-        val DIRECT_POST = me.matsumo.fankt.fanbox.response.FanboxResponses.postDetail(
-            RESPONSE_BODY,
-            200,
-        )
     }
 }

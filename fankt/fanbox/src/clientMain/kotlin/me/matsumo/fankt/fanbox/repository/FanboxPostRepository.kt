@@ -20,7 +20,6 @@ import me.matsumo.fankt.fanbox.transport.FanboxRequestExecutor
 internal class FanboxPostRepository(
     private val requestExecutor: FanboxRequestExecutor,
     private val diagnosticSink: FanboxDiagnosticSink = FanboxDiagnosticSink.none,
-    private val includeRawFragment: Boolean = false,
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
     private val guestHost: FanboxGuestHost? = null,
 ) {
@@ -31,7 +30,6 @@ internal class FanboxPostRepository(
             body = response.bodyText,
             statusCode = response.statusCode,
             diagnosticSink = diagnosticSink,
-            includeRawFragment = includeRawFragment,
         )
     }
 
@@ -41,7 +39,6 @@ internal class FanboxPostRepository(
             body = response.bodyText,
             statusCode = response.statusCode,
             diagnosticSink = diagnosticSink,
-            includeRawFragment = includeRawFragment,
         )
     }
 
@@ -68,7 +65,6 @@ internal class FanboxPostRepository(
             nextCursor = resolvedNextCursor,
             statusCode = response.statusCode,
             diagnosticSink = diagnosticSink,
-            includeRawFragment = includeRawFragment,
         )
     }
 
@@ -76,12 +72,13 @@ internal class FanboxPostRepository(
         fetchCreatorPostsPagination(creatorId)
     }
 
+    // The guest parses only a response to a request it built, so one call never mixes the two paths.
     suspend fun getPostDetail(postId: FanboxPostId) = withContext(ioDispatcher) {
-        suspend fun direct() = requestExecutor.execute(FanboxEndpoints.postDetail(postId)).let { response ->
-            FanboxResponses.postDetail(response.bodyText, response.statusCode)
-        }
+        val guestDescriptor = guestHost?.buildPostDetailRequest(postId)
+        val response = requestExecutor.execute(guestDescriptor ?: FanboxEndpoints.postDetail(postId))
+        val guestPost = guestDescriptor?.let { guestHost.parsePostDetail(response) }
 
-        guestHost?.getPostDetail(postId, requestExecutor, ::direct) ?: direct()
+        guestPost ?: FanboxResponses.postDetail(response.bodyText, response.statusCode)
     }
 
     suspend fun getPostComment(postId: FanboxPostId, offset: Int) = withContext(ioDispatcher) {
@@ -90,7 +87,6 @@ internal class FanboxPostRepository(
             body = response.bodyText,
             statusCode = response.statusCode,
             diagnosticSink = diagnosticSink,
-            includeRawFragment = includeRawFragment,
         )
     }
 

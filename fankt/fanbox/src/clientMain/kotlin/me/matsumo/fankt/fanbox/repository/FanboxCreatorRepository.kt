@@ -14,7 +14,6 @@ import me.matsumo.fankt.fanbox.transport.FanboxRequestExecutor
 internal class FanboxCreatorRepository(
     private val requestExecutor: FanboxRequestExecutor,
     private val diagnosticSink: FanboxDiagnosticSink = FanboxDiagnosticSink.none,
-    private val includeRawFragment: Boolean = false,
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
 ) {
     suspend fun getCreatorDetail(creatorId: FanboxCreatorId) = withContext(ioDispatcher) {
@@ -28,7 +27,6 @@ internal class FanboxCreatorRepository(
             body = response.bodyText,
             statusCode = response.statusCode,
             diagnosticSink = diagnosticSink,
-            includeRawFragment = includeRawFragment,
         )
     }
 
@@ -38,7 +36,6 @@ internal class FanboxCreatorRepository(
             body = response.bodyText,
             statusCode = response.statusCode,
             diagnosticSink = diagnosticSink,
-            includeRawFragment = includeRawFragment,
         )
     }
 
@@ -48,7 +45,6 @@ internal class FanboxCreatorRepository(
             body = response.bodyText,
             statusCode = response.statusCode,
             diagnosticSink = diagnosticSink,
-            includeRawFragment = includeRawFragment,
         )
     }
 
@@ -58,7 +54,6 @@ internal class FanboxCreatorRepository(
             body = response.bodyText,
             statusCode = response.statusCode,
             diagnosticSink = diagnosticSink,
-            includeRawFragment = includeRawFragment,
         )
     }
 
