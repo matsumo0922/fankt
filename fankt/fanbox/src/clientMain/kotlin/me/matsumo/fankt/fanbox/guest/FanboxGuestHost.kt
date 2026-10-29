@@ -139,11 +139,16 @@ internal data class LoadedGuest(
     val zipline: Zipline? = null,
 )
 
-/** 署名を検証した配信 bundle から guest をロードする。[dispatcher] の上で呼び出す。 */
+/**
+ * 署名を検証した配信 bundle から guest をロードする。[dispatcher] の上で呼び出す。
+ *
+ * [initializer] は Zipline の生成後、guest の main function の前に呼ばれる。
+ */
 internal suspend fun loadZiplineGuest(
     config: FanboxGuestDeliveryConfig,
     dispatcher: CoroutineDispatcher,
     httpClient: ZiplineHttpClient,
+    initializer: suspend (Zipline) -> Unit = {},
 ): LoadedGuest {
     val manifestVerifier = Builder()
         .addEd25519(name = config.trustedKeyName, trustedKey = config.trustedEd25519PublicKey)
@@ -157,14 +162,31 @@ internal suspend fun loadZiplineGuest(
         .sha256()
         .hex()
 
-    return config.cache.open(cacheDirectoryName, 10L * 1024 * 1024).use { cache ->
-        val result = ZiplineLoader(dispatcher, manifestVerifier, httpClient)
-            .withCache(cache)
-            .loadOnce(applicationName = "fanbox-guest", freshnessChecker = AlwaysStale, manifestUrl = config.manifestUrl)
+    var created: Zipline? = null
 
-        when (result) {
-            is LoadResult.Success -> LoadedGuest(result.zipline.take(FANBOX_GUEST_SERVICE_NAME), result.zipline)
-            is LoadResult.Failure -> throw result.exception
+    return config.cache.open(cacheDirectoryName, 10L * 1024 * 1024).use { cache ->
+        try {
+            val result = ZiplineLoader(dispatcher, manifestVerifier, httpClient)
+                .withCache(cache)
+                .loadOnce(
+                    applicationName = "fanbox-guest",
+                    freshnessChecker = AlwaysStale,
+                    manifestUrl = config.manifestUrl,
+                    initializer = { zipline ->
+                        created = zipline
+                        initializer(zipline)
+                    },
+                )
+
+            when (result) {
+                is LoadResult.Success -> LoadedGuest(result.zipline.take(FANBOX_GUEST_SERVICE_NAME), result.zipline)
+                is LoadResult.Failure -> throw result.exception
+            }
+        } catch (failure: Throwable) {
+            // Zipline closes an instance that fails while it is built, but not one that a
+            // cancellation catches between being built and being returned.
+            created?.close()
+            throw failure
         }
     }
 }
