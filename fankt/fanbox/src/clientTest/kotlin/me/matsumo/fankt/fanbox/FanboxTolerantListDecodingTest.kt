@@ -19,7 +19,6 @@ import me.matsumo.fankt.fanbox.response.FanboxDiagnosticSink
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
-import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 class FanboxTolerantListDecodingTest {
@@ -173,36 +172,21 @@ class FanboxTolerantListDecodingTest {
     }
 
     @Test
-    fun rawFragmentIsDefaultPrivateAndLoggingOptInIsBoundedAndRedacted() {
+    fun listItemDiagnosticNamesTheItemWithoutItsContent() {
         val logs = mutableListOf<String>()
         val formatter = createFanboxJson()
         val entity = formatter.decodeFromString<me.matsumo.fankt.fanbox.domain.entity.FanboxPostListEntity>(
             FanboxTolerantListJsonFixtures.timelineMixed,
         )
-        FanboxPostMapper(
-            FanboxListItemDecoder(
-                formatter = formatter,
-                includeRawFragment = false,
-                diagnosticSink = FanboxDiagnosticSink(logs::add),
-            ),
-        ).map(entity, "post.listHome")
-        val privateLog = logs.last()
-        assertTrue("endpoint: post.listHome" in privateLog)
-        assertTrue("indexPath: [1]" in privateLog)
-        assertFalse("private item content" in privateLog)
-        assertFalse("fixture-credential" in privateLog)
 
         FanboxPostMapper(
             FanboxListItemDecoder(
                 formatter = formatter,
-                includeRawFragment = true,
                 diagnosticSink = FanboxDiagnosticSink(logs::add),
             ),
         ).map(entity, "post.listHome")
-        val diagnosticLog = logs.last()
-        assertTrue("[REDACTED]" in diagnosticLog)
-        assertFalse("fixture-credential-must-be-redacted" in diagnosticLog)
-        assertTrue(diagnosticLog.length <= FanboxExceptionFactory.MAX_RAW_BODY_LENGTH + 128)
+
+        assertEquals("FANBOX list item schema mismatch (endpoint: post.listHome, indexPath: [1])", logs.last())
     }
 
     private fun productionFanbox(

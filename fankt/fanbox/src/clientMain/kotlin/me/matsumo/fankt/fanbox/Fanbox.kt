@@ -38,6 +38,9 @@ import me.matsumo.fankt.fanbox.domain.model.id.FanboxPostId
 import me.matsumo.fankt.fanbox.domain.model.id.FanboxUserId
 import me.matsumo.fankt.fanbox.guest.FanboxGuestDeliveryConfig
 import me.matsumo.fankt.fanbox.guest.FanboxGuestHost
+import me.matsumo.fankt.fanbox.guest.KtorZiplineHttpClient
+import me.matsumo.fankt.fanbox.guest.createGuestHttpClient
+import me.matsumo.fankt.fanbox.guest.loadZiplineGuest
 import me.matsumo.fankt.fanbox.repository.FanboxCreatorRepository
 import me.matsumo.fankt.fanbox.repository.FanboxPostRepository
 import me.matsumo.fankt.fanbox.repository.FanboxSearchRepository
@@ -45,6 +48,7 @@ import me.matsumo.fankt.fanbox.repository.FanboxUserRepository
 import me.matsumo.fankt.fanbox.response.FanboxDiagnosticSink
 import me.matsumo.fankt.fanbox.transport.FanboxRequestExecutor
 import me.matsumo.fankt.fanbox.transport.ktor.KtorFanboxRequestExecutor
+import okio.ByteString.Companion.toByteString
 
 /**
  * pixivFANBOX API へのアクセスを提供する。
@@ -98,13 +102,16 @@ class Fanbox internal constructor(
     )
 
     /**
-     * Enables the signed Zipline guest for `post.info`. Both the manifest URL and trusted Ed25519
-     * public key are required; the other constructor keeps using the built-in direct path.
+     * Enables the signed Zipline guest for `post.info`. The guest loads in the background from
+     * [guestManifestUrl] once this instance is created, and modules already in [guestCache] are not
+     * downloaded again. Until the guest has loaded, or when it fails, `post.info` uses the built-in
+     * request builder and parser.
      */
     constructor(
         guestManifestUrl: String,
         guestTrustedKeyName: String,
         guestTrustedEd25519PublicKey: ByteArray,
+        guestCache: FanboxGuestCache,
         logLevel: FanboxLogLevel = FanboxLogLevel.NONE,
         ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
         cookieStorage: FanboxCookieStorage = InMemoryFanboxCookieStorage(),
@@ -117,44 +124,8 @@ class Fanbox internal constructor(
         guestDeliveryConfig = FanboxGuestDeliveryConfig(
             manifestUrl = guestManifestUrl,
             trustedKeyName = guestTrustedKeyName,
-            trustedEd25519PublicKey = guestTrustedEd25519PublicKey.copyOf(),
-        ),
-    )
-
-    /**
-     * Enables the signed Zipline guest for `post.info` with a bundle embedded in the application.
-     *
-     * When the manifest URL cannot be reached, the guest is loaded from [embeddedGuestBundle]
-     * instead, so that a delivered fix still applies while the delivery target is unreachable.
-     * A bundle that fails signature verification is not executed; `post.info` falls back to the
-     * built-in direct path.
-     *
-     * The embedded directory does not hold what the build produces. See the README for how to
-     * produce it and for the cadence of replacing it.
-     *
-     * This constructor stands apart from the one without an embedded bundle because each published
-     * constructor owns a JVM descriptor that consumers compile against. A parameter added to an
-     * existing constructor changes that descriptor even when it carries a default value.
-     */
-    constructor(
-        guestManifestUrl: String,
-        guestTrustedKeyName: String,
-        guestTrustedEd25519PublicKey: ByteArray,
-        embeddedGuestBundle: FanboxEmbeddedGuestBundle,
-        logLevel: FanboxLogLevel = FanboxLogLevel.NONE,
-        ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
-        cookieStorage: FanboxCookieStorage = InMemoryFanboxCookieStorage(),
-        tokenStore: FanboxTokenStore = InMemoryFanboxTokenStore(),
-    ) : this(
-        dependencies = createFanboxDependencies(cookieStorage, tokenStore),
-        clientFactory = DefaultFanboxHttpClientFactory,
-        logLevel = logLevel,
-        ioDispatcher = ioDispatcher,
-        guestDeliveryConfig = FanboxGuestDeliveryConfig(
-            manifestUrl = guestManifestUrl,
-            trustedKeyName = guestTrustedKeyName,
-            trustedEd25519PublicKey = guestTrustedEd25519PublicKey.copyOf(),
-            embeddedBundle = embeddedGuestBundle,
+            trustedEd25519PublicKey = guestTrustedEd25519PublicKey.toByteString(),
+            cache = guestCache,
         ),
     )
 
@@ -197,32 +168,24 @@ class Fanbox internal constructor(
             )
             val downloadClient = buildOwnedDownloadClient()
             val diagnosticSink = FanboxDiagnosticSink { message -> Napier.w { message } }
-            val includeRawFragment = logLevel != FanboxLogLevel.NONE
             val guestHost = guestDeliveryConfig?.let { config ->
-                FanboxGuestHost(
-                    config = config,
-                    httpClientFactory = {
-                        clientFactory.create {
-                            expectSuccess = true
-                            followRedirects = false
-                        }
-                    },
-                    diagnosticSink = diagnosticSink,
-                )
+                FanboxGuestHost(diagnosticSink) { dispatcher ->
+                    createGuestHttpClient(clientFactory).use { client ->
+                        loadZiplineGuest(config, dispatcher, KtorZiplineHttpClient(client))
+                    }
+                }
             }
 
             return FanboxResources(
                 post = FanboxPostRepository(
                     requestExecutor = requestExecutor,
                     diagnosticSink = diagnosticSink,
-                    includeRawFragment = includeRawFragment,
                     ioDispatcher = ioDispatcher,
                     guestHost = guestHost,
                 ),
                 creator = FanboxCreatorRepository(
                     requestExecutor = requestExecutor,
                     diagnosticSink = diagnosticSink,
-                    includeRawFragment = includeRawFragment,
                     ioDispatcher = ioDispatcher,
                 ),
                 search = FanboxSearchRepository(
@@ -232,7 +195,6 @@ class Fanbox internal constructor(
                 user = FanboxUserRepository(
                     requestExecutor = requestExecutor,
                     diagnosticSink = diagnosticSink,
-                    includeRawFragment = includeRawFragment,
                     ioDispatcher = ioDispatcher,
                 ),
                 requestExecutor = requestExecutor,

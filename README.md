@@ -43,14 +43,37 @@ running it as a [Zipline](https://github.com/cashapp/zipline) guest inside this 
 ### Zipline OTA prototype
 
 The FANBOX client includes an opt-in OTA prototype for the `post.info` request builder and response
-parser. It starts the guest engine only when the caller supplies both a manifest URL and a trusted
-Ed25519 public key through the corresponding `Fanbox` constructor. The library embeds neither a
+parser. It starts the guest engine only when the caller supplies a manifest URL, a trusted Ed25519
+public key and a cache through the corresponding `Fanbox` constructor. The library embeds neither a
 production delivery URL nor a default trusted key. Without that explicit configuration, `Fanbox`
 uses the same built-in request and parsing path as before the prototype.
 
-A consumer that also supplies an embedded bundle keeps running delivered code while the manifest is
-unreachable. Without one, an unreachable manifest falls through to the built-in path, where a
-delivered fix does not apply.
+```kotlin
+Fanbox(
+    guestManifestUrl = "https://matsumo0922.github.io/fankt/zipline/v1/manifest.zipline.json",
+    guestTrustedKeyName = "fanboxGuest",
+    guestTrustedEd25519PublicKey = publicKey,
+    // On iOS: FanboxGuestCache(directoryPath)
+    guestCache = FanboxGuestCache(context, File(context.cacheDir, "fanbox-guest")),
+)
+```
+
+The guest loads in the background as soon as the `Fanbox` is created, and calls never wait for it.
+`post.info` uses the built-in request builder and parser until the guest has loaded, and whenever the
+guest fails to build the request or to parse the response. A response the guest cannot parse goes to
+the built-in parser as is, without a second request, and the built-in `SchemaMismatch` is thrown only
+when that parser rejects it too. A failed call does not stop the guest for later calls.
+
+#### Loading and caching
+
+Every load fetches the manifest from the delivery URL. Modules whose SHA-256 is already in the cache
+are not downloaded again, so a load whose manifest has not changed downloads only the manifest. When
+the manifest cannot be reached, the guest does not load and `post.info` stays on the built-in path for
+the life of the `Fanbox`: a cached bundle never runs on its own.
+
+Each HTTP request of a load gives up after 10 seconds. The cache keeps up to 10 MiB in a subdirectory
+per trusted key, so a cache written under a previous key never blocks loading. Give each `Fanbox` its
+own cache directory.
 
 #### Bundle delivery
 
@@ -81,63 +104,6 @@ reading the previous path until they are updated.
 Builds without the signing key produce an unsigned manifest instead of failing, so that local builds
 and pull request CI pass. Neither workflow publishes such a manifest.
 
-#### Embedded fallback bundle
-
-Pass a `FanboxEmbeddedGuestBundle` to the corresponding `Fanbox` constructor to keep the guest
-running when the manifest cannot be reached. It reads one file at a time by name, so the bundle can
-live wherever the application already keeps its resources — Android assets, an iOS bundle resource,
-or a directory on disk:
-
-```kotlin
-Fanbox(
-    guestManifestUrl = "https://matsumo0922.github.io/fankt/zipline/v1/manifest.zipline.json",
-    guestTrustedKeyName = "fanboxGuest",
-    guestTrustedEd25519PublicKey = publicKey,
-    embeddedGuestBundle = { fileName ->
-        runCatching { assets.open("fanbox-guest/$fileName").use { it.readBytes() } }.getOrNull()
-    },
-)
-```
-
-Return `null` for a file that is not there. A missing bundle is reported and falls back rather than
-failing the call. `okio` stays out of this boundary, so nothing beyond fankt needs to be added to the
-consumer's dependencies.
-
-**The embedded directory does not hold what the build produces.** The loader looks for a manifest
-named after the application and for modules named by their SHA-256, whereas the build writes
-`manifest.zipline.json` and readable module names:
-
-| | Build output | What the loader reads |
-|---|---|---|
-| Manifest | `manifest.zipline.json` | `fanbox-guest.manifest.zipline.json` |
-| Modules | `kotlin-kotlin-stdlib.zipline`, … | `<sha256 hex>`, no extension |
-
-Copying the build output as-is leaves the manifest unfindable, and the guest then falls back to the
-built-in path without an error. Produce the directory with Zipline's own download task instead, which
-writes exactly what the loader reads:
-
-```kotlin
-val downloadGuestBundle by tasks.creating(ZiplineDownloadTask::class) {
-    applicationName = "fanbox-guest"
-    manifestUrl = "https://matsumo0922.github.io/fankt/zipline/v1/manifest.zipline.json"
-    downloadDir = file("src/androidMain/assets/fanbox-guest")
-}
-```
-
-The task runs inside the build, so its own classpath has to satisfy Zipline: a project whose
-buildscript pins `kotlin-stdlib` below the version Zipline was compiled against fails with
-`NoClassDefFoundError` before reaching the network. Copy the layout by other means if the project
-cannot move that pin.
-
-That task does not verify the signature while downloading. It does not need to: the signature it
-saves is verified at runtime against the public key the application was built with, so a tampered
-bundle is refused then and the built-in path takes over. What the missing build-time check costs is
-the embedded copy being useless, not untrusted code running.
-
-Re-run the task for each release. An embedded bundle that is never refreshed keeps serving whatever
-was current when it was downloaded, which is the behaviour a consumer gets whenever delivery is
-unreachable.
-
 #### Signing keys
 
 `./gradlew :fankt:fanbox:generateZiplineManifestKeyPairEd25519` prints a key pair. The private key
@@ -153,8 +119,7 @@ cannot be changed without shipping a new one.
 #### Stopping a delivery
 
 Deleting the manifest from the `gh-pages` branch stops the delivery: consumers fail to reach it and
-fall back, first to their embedded bundle if they have one and then to the built-in path. Reverting
-the offending commit on `main` republishes a working bundle.
+use the built-in path. Reverting the offending commit on `main` republishes a working bundle.
 
 ## Usage
 
@@ -411,9 +376,8 @@ bounded to 2,048 Kotlin characters; downloads retain no response fragment.
 Home, supporting, and creator post lists, comments, bells, followed/recommended creator lists, and
 creator/supporting plan lists decode and map each item independently. When one item no longer
 matches the FANBOX schema, the library skips that item, preserves the other items and pagination
-value, and writes a Napier warning with the endpoint and zero-based `indexPath`. Raw item fragments
-are included only when `Fanbox` logging is enabled; they are structurally credential-redacted and
-limited to 2,048 characters.
+value, and writes a Napier warning with the endpoint and zero-based `indexPath`. The warning does not
+include the item itself.
 
 Callback overloads report every skipped item on the caller's coroutine context before returning the
 partial result:

@@ -11,11 +11,7 @@ internal class RealFanboxGuestService : FanboxGuestService {
 
     override fun buildPostDetailRequest(postId: String): RequestDescriptor = FanboxEndpoints.postDetail(FanboxPostId(postId))
 
-    // The host executes the request and raises its own failure for a non-2xx response, so only a
-    // successful body reaches here: a FanboxException at this point is a parsing verdict, not an
-    // HTTP one. Anything else is the guest itself breaking, which the host must not confuse with a
-    // FANBOX schema change — hence Throwable rather than RuntimeException, since a Kotlin/JS engine
-    // failure need not be one.
+    // Throwable rather than RuntimeException: a Kotlin/JS engine failure need not be one.
     override fun parsePostDetail(body: String, statusCode: Int): GuestParseResult = try {
         GuestParseResult.Success(FanboxResponses.postDetail(body, statusCode))
     } catch (failure: FanboxException) {

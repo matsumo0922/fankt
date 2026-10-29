@@ -73,7 +73,6 @@ class FanboxResponsesTest {
             body = FanboxTolerantListJsonFixtures.supportingPlansMixed,
             statusCode = 206,
             diagnosticSink = FanboxDiagnosticSink(logs::add),
-            includeRawFragment = true,
         )
 
         assertEquals("plan.listSupporting", strict.endpoint)

@@ -92,8 +92,7 @@ internal object FanboxResponses {
         body: String,
         statusCode: Int = 200,
         diagnosticSink: FanboxDiagnosticSink = FanboxDiagnosticSink.none,
-        includeRawFragment: Boolean = false,
-    ): FanboxTolerantResult<PageCursorInfo<FanboxPost>> = withMappers(body, statusCode, FanboxEndpointIds.postListHome, diagnosticSink, includeRawFragment) { mappers ->
+    ): FanboxTolerantResult<PageCursorInfo<FanboxPost>> = withMappers(body, statusCode, FanboxEndpointIds.postListHome, diagnosticSink) { mappers ->
         mappers.post.map(decode(body, FanboxPostListEntity.serializer()), "post.listHome")
     }
 
@@ -101,13 +100,11 @@ internal object FanboxResponses {
         body: String,
         statusCode: Int = 200,
         diagnosticSink: FanboxDiagnosticSink = FanboxDiagnosticSink.none,
-        includeRawFragment: Boolean = false,
     ): FanboxTolerantResult<PageCursorInfo<FanboxPost>> = withMappers(
         body,
         statusCode,
         FanboxEndpointIds.postListSupporting,
         diagnosticSink,
-        includeRawFragment,
     ) { mappers ->
         mappers.post.map(decode(body, FanboxPostListEntity.serializer()), "post.listSupporting")
     }
@@ -117,13 +114,11 @@ internal object FanboxResponses {
         nextCursor: FanboxCursor?,
         statusCode: Int = 200,
         diagnosticSink: FanboxDiagnosticSink = FanboxDiagnosticSink.none,
-        includeRawFragment: Boolean = false,
     ): FanboxTolerantResult<PageCursorInfo<FanboxPost>> = withMappers(
         body,
         statusCode,
         FanboxEndpointIds.postListCreator,
         diagnosticSink,
-        includeRawFragment,
     ) { mappers ->
         mappers.post.map(
             decode(body, FanboxCreatorPostItemsEntity.serializer()),
@@ -150,13 +145,11 @@ internal object FanboxResponses {
         body: String,
         statusCode: Int = 200,
         diagnosticSink: FanboxDiagnosticSink = FanboxDiagnosticSink.none,
-        includeRawFragment: Boolean = false,
     ): FanboxTolerantResult<PageOffsetInfo<FanboxComment>> = withMappers(
         body,
         statusCode,
         FanboxEndpointIds.postGetComments,
         diagnosticSink,
-        includeRawFragment,
     ) { mappers ->
         mappers.post.map(decode(body, FanboxPostCommentListEntity.serializer()), "post.getComments")
     }
@@ -195,52 +188,44 @@ internal object FanboxResponses {
         body: String,
         statusCode: Int = 200,
         diagnosticSink: FanboxDiagnosticSink = FanboxDiagnosticSink.none,
-        includeRawFragment: Boolean = false,
     ): FanboxTolerantResult<List<FanboxCreatorDetail>> = creatorList(
         body,
         statusCode,
         FanboxEndpointIds.creatorListFollowing,
         diagnosticSink,
-        includeRawFragment,
     )
 
     fun followingPixivCreators(
         body: String,
         statusCode: Int = 200,
         diagnosticSink: FanboxDiagnosticSink = FanboxDiagnosticSink.none,
-        includeRawFragment: Boolean = false,
     ): FanboxTolerantResult<List<FanboxCreatorDetail>> = creatorList(
         body,
         statusCode,
         FanboxEndpointIds.creatorListPixiv,
         diagnosticSink,
-        includeRawFragment,
     )
 
     fun recommendedCreators(
         body: String,
         statusCode: Int = 200,
         diagnosticSink: FanboxDiagnosticSink = FanboxDiagnosticSink.none,
-        includeRawFragment: Boolean = false,
     ): FanboxTolerantResult<List<FanboxCreatorDetail>> = creatorList(
         body,
         statusCode,
         FanboxEndpointIds.creatorListRecommended,
         diagnosticSink,
-        includeRawFragment,
     )
 
     fun creatorPlans(
         body: String,
         statusCode: Int = 200,
         diagnosticSink: FanboxDiagnosticSink = FanboxDiagnosticSink.none,
-        includeRawFragment: Boolean = false,
     ): FanboxTolerantResult<List<FanboxCreatorPlan>> = withMappers(
         body,
         statusCode,
         FanboxEndpointIds.planListCreator,
         diagnosticSink,
-        includeRawFragment,
     ) { mappers ->
         mappers.creator.map(decode(body, FanboxCreatorPlanListEntity.serializer()), "plan.listCreator")
     }
@@ -292,13 +277,11 @@ internal object FanboxResponses {
         body: String,
         statusCode: Int = 200,
         diagnosticSink: FanboxDiagnosticSink = FanboxDiagnosticSink.none,
-        includeRawFragment: Boolean = false,
     ): FanboxTolerantResult<List<FanboxCreatorPlan>> = withMappers(
         body = body,
         statusCode = statusCode,
         endpointId = FanboxEndpointIds.planListSupporting,
         diagnosticSink = diagnosticSink,
-        includeRawFragment = includeRawFragment,
     ) { mappers ->
         mappers.user.map(
             decode(body, FanboxCreatorPlanListEntity.serializer()),
@@ -331,13 +314,11 @@ internal object FanboxResponses {
         body: String,
         statusCode: Int = 200,
         diagnosticSink: FanboxDiagnosticSink = FanboxDiagnosticSink.none,
-        includeRawFragment: Boolean = false,
     ): FanboxTolerantResult<PageNumberInfo<FanboxBell>> = withMappers(
         body,
         statusCode,
         FanboxEndpointIds.bellList,
         diagnosticSink,
-        includeRawFragment,
     ) { mappers ->
         mappers.user.map(decode(body, FanboxBellListEntity.serializer()), "bell.list")
     }
@@ -355,8 +336,7 @@ internal object FanboxResponses {
         statusCode: Int,
         endpointId: FanboxEndpointId,
         diagnosticSink: FanboxDiagnosticSink,
-        includeRawFragment: Boolean,
-    ): FanboxTolerantResult<List<FanboxCreatorDetail>> = withMappers(body, statusCode, endpointId, diagnosticSink, includeRawFragment) { mappers ->
+    ): FanboxTolerantResult<List<FanboxCreatorDetail>> = withMappers(body, statusCode, endpointId, diagnosticSink) { mappers ->
         mappers.creator.map(decode(body, FanboxCreatorListEntity.serializer()), endpointId.value)
     }
 
@@ -367,10 +347,9 @@ internal object FanboxResponses {
         statusCode: Int,
         endpointId: FanboxEndpointId,
         diagnosticSink: FanboxDiagnosticSink = FanboxDiagnosticSink.none,
-        includeRawFragment: Boolean = false,
         block: (Mappers) -> T,
     ): T = try {
-        block(createMappers(diagnosticSink, includeRawFragment))
+        block(createMappers(diagnosticSink))
     } catch (failure: FanboxException) {
         throw failure
     } catch (failure: SerializationException) {
@@ -379,8 +358,8 @@ internal object FanboxResponses {
         throw FanboxFailureInterpreter.schemaMismatch(statusCode, body, endpointId.value, failure)
     }
 
-    private fun createMappers(diagnosticSink: FanboxDiagnosticSink, includeRawFragment: Boolean): Mappers {
-        val decoder = FanboxListItemDecoder(formatter, includeRawFragment, diagnosticSink)
+    private fun createMappers(diagnosticSink: FanboxDiagnosticSink): Mappers {
+        val decoder = FanboxListItemDecoder(formatter, diagnosticSink)
         val post = FanboxPostMapper(decoder, formatter)
         val creator = FanboxCreatorMapper(decoder, formatter)
         val user = FanboxUserMapper(post, creator, decoder)

@@ -24,11 +24,9 @@ internal interface FanboxGuestService : ZiplineService {
 /**
  * The outcome of a guest-side response interpretation.
  *
- * Guest failures travel as a value rather than as an exception because an exception crossing the
- * Zipline bridge arrives as an opaque type. Without the distinction below, a FANBOX schema change
- * and a broken guest engine become the same event: treating the former as the latter retreats to
- * the host-side path on every schema change, leaving the delivery path silently dead, while
- * treating the latter as the former reports an engine failure as a response problem.
+ * Failures travel as a value because an exception crossing the Zipline bridge arrives as an opaque
+ * type. The host parses the same response with its built-in parser whenever the result is not
+ * [Success].
  */
 @Serializable
 internal sealed interface GuestParseResult {
@@ -36,17 +34,11 @@ internal sealed interface GuestParseResult {
     @Serializable
     data class Success(val postDetail: FanboxPostDetail) : GuestParseResult
 
-    /**
-     * The response did not match the schema. The guest bundle is healthy; FANBOX changed. The host
-     * reports this to its caller and keeps using the guest.
-     */
+    /** The guest's parser rejected the response. */
     @Serializable
     data class SchemaMismatch(val diagnostic: String) : GuestParseResult
 
-    /**
-     * The guest itself failed. The host stops using the guest for the rest of this instance's life
-     * rather than calling a broken engine once per request.
-     */
+    /** The guest failed for a reason other than the response. */
     @Serializable
     data class GuestFailure(val diagnostic: String) : GuestParseResult
 }

@@ -1,404 +1,151 @@
 package me.matsumo.fankt.fanbox.guest
 
 import app.cash.zipline.ZiplineApiMismatchException
-import app.cash.zipline.loader.LoadResult
-import app.cash.zipline.loader.ZiplineHttpClient
 import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.DelicateCoroutinesApi
-import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.newSingleThreadContext
+import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.yield
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
-import me.matsumo.fankt.fanbox.FanboxEmbeddedGuestBundle
 import me.matsumo.fankt.fanbox.FanboxException
+import me.matsumo.fankt.fanbox.domain.model.FanboxPostDetail
 import me.matsumo.fankt.fanbox.domain.model.id.FanboxPostId
 import me.matsumo.fankt.fanbox.endpoint.FanboxEndpoints
 import me.matsumo.fankt.fanbox.endpoint.RequestDescriptor
 import me.matsumo.fankt.fanbox.fixture.FanboxPostJsonFixtures
+import me.matsumo.fankt.fanbox.repository.FanboxPostRepository
 import me.matsumo.fankt.fanbox.response.FanboxDiagnosticSink
 import me.matsumo.fankt.fanbox.response.FanboxResponses
 import me.matsumo.fankt.fanbox.transport.FanboxRawResponse
 import me.matsumo.fankt.fanbox.transport.FanboxRequestExecutor
-import okio.ByteString
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertIs
 import kotlin.test.assertNull
-import kotlin.test.assertSame
 import kotlin.test.assertTrue
 
 class FanboxGuestHostTest {
 
     @Test
-    fun loadResultFailureFallsBackToEmbeddedBundle() = runBlocking {
-        val expected = Any()
-        val diagnostics = mutableListOf<String>()
+    fun guestResultIsReturned() = runBlocking {
+        val fixture = GuestFixture(parse = { _, _ -> GuestParseResult.Success(GUEST_POST) })
 
-        val actual = loadGuestWithFallback(
-            remote = {
-                LoadResult.Failure(IllegalStateException("network")).mapSuccess { error("success") }
-            },
-            embedded = { Result.success(expected) },
-            diagnosticSink = FanboxDiagnosticSink(diagnostics::add),
-        )
-
-        assertSame(expected, actual)
-        assertEquals(1, diagnostics.size)
-        assertTrue("remote manifest failed" in diagnostics.single())
-    }
-
-    @Test
-    fun thrownLocalFailureFallsBackToEmbeddedBundle() = runBlocking {
-        val expected = Any()
-        val diagnostics = mutableListOf<String>()
-
-        val actual = loadGuestWithFallback(
-            remote = { throw IllegalStateException("signature") },
-            embedded = { Result.success(expected) },
-            diagnosticSink = FanboxDiagnosticSink(diagnostics::add),
-        )
-
-        assertSame(expected, actual)
-        assertEquals(1, diagnostics.size)
-        assertTrue("remote manifest threw" in diagnostics.single())
-    }
-
-    @Test
-    fun embeddedFailureFallsBackToDirectPath() = runBlocking {
-        val diagnostics = mutableListOf<String>()
-
-        val actual = loadGuestWithFallback<Any>(
-            remote = { Result.failure(IllegalStateException("network")) },
-            embedded = { throw IllegalStateException("embedded signature") },
-            diagnosticSink = FanboxDiagnosticSink(diagnostics::add),
-        )
-
-        assertNull(actual)
-        assertEquals(2, diagnostics.size)
-        assertTrue("embedded bundle threw" in diagnostics.last())
-    }
-
-    /**
-     * The manifest is rejected before its signature is examined, because a manifest read from a
-     * local source is required to carry `freshAtEpochMs`. Either way the failure arrives as an
-     * exception rather than a `LoadResult.Failure`, which is the asymmetry this covers: the embedded
-     * stage must absorb it instead of letting it reach the caller.
-     */
-    @Test
-    fun anUnusableEmbeddedManifestFallsBackToDirectPath() = runBlocking {
-        val diagnostics = loadEmbeddedAndReportFailures { fileName ->
-            UNSIGNED_MANIFEST.encodeToByteArray().takeIf { fileName == EMBEDDED_MANIFEST_FILE_NAME }
+        fixture.use {
+            assertEquals(GUEST_POST, it.getPostDetail())
+            assertEquals(1, it.requests.size)
         }
-
-        assertEquals(2, diagnostics.size)
-        assertTrue("remote manifest failed" in diagnostics.first(), diagnostics.first())
-        assertTrue("embedded bundle failed" in diagnostics.last(), diagnostics.last())
     }
 
     @Test
-    fun aMissingEmbeddedManifestIsReportedAsSuch() = runBlocking {
-        val diagnostics = loadEmbeddedAndReportFailures { null }
-
-        assertTrue("has no $EMBEDDED_MANIFEST_FILE_NAME" in diagnostics.last(), diagnostics.last())
-    }
-
-    @Test
-    fun aMissingEmbeddedModuleIsDistinguishedFromAMissingManifest() = runBlocking {
-        val diagnostics = loadEmbeddedAndReportFailures { fileName ->
-            MANIFEST_WITH_ONE_MODULE.encodeToByteArray().takeIf { fileName == EMBEDDED_MANIFEST_FILE_NAME }
-        }
-
-        val reported = diagnostics.last()
-        assertTrue("missing 1 module(s)" in reported, reported)
-        assertTrue(MODULE_SHA256_HEX in reported, reported)
-    }
-
-    @Test
-    fun anEmbeddedReadFailureFallsBackToTheDirectPath() = runBlocking {
-        val diagnostics = loadEmbeddedAndReportFailures { error("asset unavailable") }
-
-        assertTrue("embedded bundle threw" in diagnostics.last(), diagnostics.last())
-    }
-
-    /**
-     * Loads the guest with an unreachable manifest URL so that only the embedded stage can succeed,
-     * and returns what the loader reported. Returning null means both stages failed.
-     */
-    @OptIn(DelicateCoroutinesApi::class, ExperimentalCoroutinesApi::class)
-    private suspend fun loadEmbeddedAndReportFailures(bundle: FanboxEmbeddedGuestBundle): List<String> {
-        val diagnostics = mutableListOf<String>()
-        val dispatcher = newSingleThreadContext("FanboxZiplineTest")
-
-        try {
-            val loader = ZiplineGuestLoader(
-                config = CONFIG.copy(embeddedBundle = bundle),
-                dispatcher = dispatcher,
-                httpClient = object : ZiplineHttpClient() {
-                    override suspend fun download(url: String, requestHeaders: List<Pair<String, String>>): ByteString = error("network unavailable")
-                },
-                diagnosticSink = FanboxDiagnosticSink(diagnostics::add),
-            )
-
-            assertNull(loader.load())
-        } finally {
-            dispatcher.close()
-        }
-
-        return diagnostics
-    }
-
-    @Test
-    fun schemaMismatchDoesNotUseDirectPath() = runBlocking {
-        var directCalls = 0
-        val host = hostWithService(
-            parse = { _, _ -> GuestParseResult.SchemaMismatch("changed schema") },
+    fun guestParseFailuresUseTheBuiltInParserOnTheSameResponse() = runBlocking {
+        val failures = listOf<(String, Int) -> GuestParseResult>(
+            { _, _ -> GuestParseResult.SchemaMismatch("changed schema") },
+            { _, _ -> GuestParseResult.GuestFailure("broken guest") },
+            { _, _ -> throw SerializationException("unexpected discriminator") },
+            { _, _ -> throw ZiplineApiMismatchException("no such method") },
         )
-        try {
-            val failure = assertFailsWith<FanboxException.SchemaMismatch> {
-                host.getPostDetail(POST_ID, successfulExecutor()) {
-                    directCalls += 1
-                    DIRECT_POST
-                }
+
+        for (parse in failures) {
+            GuestFixture(parse = parse).use { fixture ->
+                assertEquals(BUILT_IN_POST, fixture.getPostDetail())
+                // The built-in parser reads the response already received instead of requesting it again.
+                assertEquals(1, fixture.requests.size)
+                assertTrue(fixture.diagnostics.single().startsWith("Zipline guest parsePostDetail failed"))
             }
-
-            assertEquals(0, directCalls)
-            assertEquals("post.info", failure.endpoint)
-            assertEquals(200, failure.statusCode)
-        } finally {
-            host.close()
         }
     }
 
     @Test
-    fun guestFailureMakesDirectFallbackSticky() = runBlocking {
+    fun responseRejectedByBothParsersThrowsTheBuiltInSchemaMismatch() = runBlocking {
+        val fixture = GuestFixture(
+            parse = { _, _ -> GuestParseResult.SchemaMismatch("changed schema") },
+            responseBody = """{"body":{}}""",
+        )
+
+        fixture.use {
+            val failure = assertFailsWith<FanboxException.SchemaMismatch> { it.getPostDetail() }
+
+            assertEquals("post.info", failure.endpoint)
+            assertEquals(1, it.requests.size)
+        }
+    }
+
+    @Test
+    fun aFailedCallDoesNotStopTheGuest() = runBlocking {
         var parseCalls = 0
-        var directCalls = 0
-        val host = hostWithService(
+        val fixture = GuestFixture(
             parse = { _, _ ->
                 parseCalls += 1
-                GuestParseResult.GuestFailure("broken guest")
+                if (parseCalls == 1) GuestParseResult.GuestFailure("broken post") else GuestParseResult.Success(GUEST_POST)
             },
         )
-        try {
-            repeat(2) {
-                val actual = host.getPostDetail(POST_ID, successfulExecutor()) {
-                    directCalls += 1
-                    DIRECT_POST
-                }
-                assertEquals(DIRECT_POST, actual)
-            }
 
-            assertEquals(1, parseCalls)
-            assertEquals(2, directCalls)
-        } finally {
-            host.close()
-        }
-    }
-
-    /**
-     * A bridge call fails with a type that neither `CancellationException` nor `ZiplineException`
-     * covers when this host cannot decode what the guest returned, or when the bundle's bridge API
-     * differs from what it expects. Those arrive as `SerializationException` and
-     * `ZiplineApiMismatchException`, and the latter extends `Exception` directly.
-     */
-    @Test
-    fun aParseFailureOutsideZiplineExceptionFallsBackToDirectPath() = runBlocking {
-        val diagnostics = mutableListOf<String>()
-        var directCalls = 0
-        val host = hostWithService(
-            parse = { _, _ -> throw SerializationException("unexpected discriminator") },
-            diagnosticSink = { message -> diagnostics += message },
-        )
-        try {
-            repeat(2) {
-                val actual = host.getPostDetail(POST_ID, successfulExecutor()) {
-                    directCalls += 1
-                    DIRECT_POST
-                }
-                assertEquals(DIRECT_POST, actual)
-            }
-
-            assertEquals(2, directCalls)
-            assertTrue(diagnostics.any { "using direct path" in it })
-        } finally {
-            host.close()
+        fixture.use {
+            assertEquals(BUILT_IN_POST, it.getPostDetail())
+            assertEquals(GUEST_POST, it.getPostDetail())
         }
     }
 
     @Test
-    fun aDescriptorFailureOutsideZiplineExceptionFallsBackToDirectPath() = runBlocking {
-        var directCalls = 0
-        val host = hostWithService(
-            parse = { _, _ -> error("parse must not run once the descriptor call failed") },
+    fun aRequestBuildFailureUsesTheBuiltInPathForTheWholeCall() = runBlocking {
+        val fixture = GuestFixture(
+            parse = { _, _ -> error("parse must not run once the request was built by the built-in path") },
             buildRequest = { throw ZiplineApiMismatchException("no such method") },
         )
-        try {
-            val actual = host.getPostDetail(POST_ID, successfulExecutor()) {
-                directCalls += 1
-                DIRECT_POST
-            }
 
-            assertEquals(DIRECT_POST, actual)
-            assertEquals(1, directCalls)
-        } finally {
-            host.close()
+        fixture.use {
+            assertEquals(BUILT_IN_POST, it.getPostDetail())
+            assertEquals(listOf(FanboxEndpoints.postDetail(POST_ID)), it.requests)
+            assertTrue(it.diagnostics.single().startsWith("Zipline guest buildPostDetailRequest failed"))
+        }
+    }
+
+    @Test
+    fun callsDoNotWaitForTheGuestToLoad() = runBlocking {
+        val fixture = GuestFixture(
+            parse = { _, _ -> error("the guest has not loaded") },
+            load = { awaitCancellation() },
+            awaitLoad = false,
+        )
+
+        fixture.use {
+            assertEquals(BUILT_IN_POST, it.getPostDetail())
+        }
+    }
+
+    @Test
+    fun aLoadFailureUsesTheBuiltInPath() = runBlocking {
+        val fixture = GuestFixture(
+            parse = { _, _ -> error("the guest failed to load") },
+            load = { error("manifest unreachable") },
+        )
+
+        fixture.use {
+            assertEquals(BUILT_IN_POST, it.getPostDetail())
+            assertTrue(it.diagnostics.single().startsWith("Zipline guest load failed"))
         }
     }
 
     @Test
     fun cancellationIsNotTreatedAsAGuestFailure() = runBlocking {
-        var directCalls = 0
-        val host = hostWithService(
-            parse = { _, _ -> throw CancellationException("caller went away") },
-        )
-        try {
-            assertFailsWith<CancellationException> {
-                host.getPostDetail(POST_ID, successfulExecutor()) {
-                    directCalls += 1
-                    DIRECT_POST
-                }
-            }
+        val fixture = GuestFixture(parse = { _, _ -> throw CancellationException("caller went away") })
 
-            assertEquals(0, directCalls)
-        } finally {
-            host.close()
+        fixture.use {
+            assertFailsWith<CancellationException> { it.getPostDetail() }
+            assertTrue(it.diagnostics.isEmpty())
         }
     }
 
     @Test
-    fun constructionDoesNotInitializeGuest() {
-        var loadCalls = 0
-        val host = FanboxGuestHost(
-            config = CONFIG,
-            httpClientFactory = { error("HTTP client must not be created during construction") },
-            diagnosticSink = FanboxDiagnosticSink.none,
-            loadGuestOverride = {
-                loadCalls += 1
-                null
-            },
-        )
+    fun aClosedHostDoesNotUseTheGuest() = runBlocking {
+        val fixture = GuestFixture(parse = { _, _ -> GuestParseResult.Success(GUEST_POST) })
+        fixture.host.awaitLoad()
 
-        host.close()
+        fixture.close()
 
-        assertEquals(0, loadCalls)
-    }
-
-    @Test
-    fun initializationFailureIsNotRetried() = runBlocking {
-        var loadCalls = 0
-        var directCalls = 0
-        val host = FanboxGuestHost(
-            config = CONFIG,
-            httpClientFactory = { error("HTTP client must not be created by the override") },
-            diagnosticSink = FanboxDiagnosticSink.none,
-            loadGuestOverride = {
-                loadCalls += 1
-                null
-            },
-        )
-        try {
-            repeat(2) {
-                host.getPostDetail(POST_ID, successfulExecutor()) {
-                    directCalls += 1
-                    DIRECT_POST
-                }
-            }
-
-            assertEquals(1, loadCalls)
-            assertEquals(2, directCalls)
-        } finally {
-            host.close()
-        }
-    }
-
-    @Test
-    fun concurrentCallersShareOneInitialization() = runBlocking {
-        var loadCalls = 0
-        val host = FanboxGuestHost(
-            config = CONFIG,
-            httpClientFactory = { error("HTTP client must not be created by the override") },
-            diagnosticSink = FanboxDiagnosticSink.none,
-            loadGuestOverride = {
-                loadCalls += 1
-                // Loading is slow enough in practice that a second caller arrives during it; the
-                // yield reproduces that without a timing assumption.
-                yield()
-                LoadedGuest(service = StubGuestService { _, _ -> GuestParseResult.Success(GUEST_POST) })
-            },
-        )
-        try {
-            val results = List(4) {
-                async { host.getPostDetail(POST_ID, successfulExecutor()) { DIRECT_POST } }
-            }.awaitAll()
-
-            // A second engine would mean two QuickJS instances on one dispatcher, which Zipline's
-            // thread-confinement does not allow.
-            assertEquals(1, loadCalls)
-            assertTrue(results.all { it == GUEST_POST })
-        } finally {
-            host.close()
-        }
-    }
-
-    @Test
-    fun concurrentCallersDisableTheGuestOnce() = runBlocking {
-        var loadCalls = 0
-        var directCalls = 0
-        val host = FanboxGuestHost(
-            config = CONFIG,
-            httpClientFactory = { error("HTTP client must not be created by the override") },
-            diagnosticSink = FanboxDiagnosticSink.none,
-            loadGuestOverride = {
-                loadCalls += 1
-                LoadedGuest(service = StubGuestService { _, _ -> GuestParseResult.GuestFailure("broken") })
-            },
-        )
-        try {
-            val results = List(4) {
-                async {
-                    host.getPostDetail(POST_ID, successfulExecutor()) {
-                        directCalls += 1
-                        DIRECT_POST
-                    }
-                }
-            }.awaitAll()
-
-            // Every caller falls back, and none of them reloads the guest that just failed.
-            assertEquals(1, loadCalls)
-            assertEquals(4, directCalls)
-            assertTrue(results.all { it == DIRECT_POST })
-        } finally {
-            host.close()
-        }
-    }
-
-    @Test
-    fun closingAnInitializedHostStopsUsingTheGuest() = runBlocking {
-        var loadCalls = 0
-        val host = FanboxGuestHost(
-            config = CONFIG,
-            httpClientFactory = { error("HTTP client must not be created by the override") },
-            diagnosticSink = FanboxDiagnosticSink.none,
-            loadGuestOverride = {
-                loadCalls += 1
-                LoadedGuest(service = StubGuestService { _, _ -> GuestParseResult.Success(GUEST_POST) })
-            },
-        )
-        assertEquals(GUEST_POST, host.getPostDetail(POST_ID, successfulExecutor()) { DIRECT_POST })
-        assertEquals(1, loadCalls)
-
-        host.close()
-
-        // Closing releases the engine, so the guest is gone rather than reloaded on the next call.
-        assertEquals(DIRECT_POST, host.getPostDetail(POST_ID, successfulExecutor()) { DIRECT_POST })
-        assertEquals(1, loadCalls)
+        assertNull(fixture.host.buildPostDetailRequest(POST_ID))
     }
 
     @Test
@@ -410,65 +157,48 @@ class FanboxGuestHostTest {
         assertEquals(post, assertIs<GuestParseResult.Success>(decoded).postDetail)
     }
 
-    private class StubGuestService(private val parse: (String, Int) -> GuestParseResult) : FanboxGuestService {
-        override fun buildPostDetailRequest(postId: String): RequestDescriptor = FanboxEndpoints.postDetail(FanboxPostId(postId))
+    /** 偽の guest を持つ host と、それを使う repository の組。 */
+    private class GuestFixture(
+        parse: (String, Int) -> GuestParseResult,
+        buildRequest: (String) -> RequestDescriptor = { postId -> FanboxEndpoints.postDetail(FanboxPostId(postId)) },
+        responseBody: String = FanboxPostJsonFixtures.postInfoTextHybrid,
+        load: suspend () -> LoadedGuest = { LoadedGuest(StubGuestService(buildRequest, parse)) },
+        private val awaitLoad: Boolean = true,
+    ) : AutoCloseable {
+        val requests = mutableListOf<RequestDescriptor>()
+        val diagnostics = mutableListOf<String>()
+        val host = FanboxGuestHost(FanboxDiagnosticSink(diagnostics::add)) { load() }
+        private val repository = FanboxPostRepository(
+            requestExecutor = FanboxRequestExecutor { descriptor ->
+                requests += descriptor
+                FanboxRawResponse(statusCode = 200, headers = emptyMap(), bodyText = responseBody)
+            },
+            guestHost = host,
+        )
+
+        suspend fun getPostDetail(): FanboxPostDetail {
+            if (awaitLoad) host.awaitLoad()
+
+            return repository.getPostDetail(POST_ID)
+        }
+
+        override fun close() = host.close()
+    }
+
+    private class StubGuestService(
+        private val buildRequest: (String) -> RequestDescriptor,
+        private val parse: (String, Int) -> GuestParseResult,
+    ) : FanboxGuestService {
+        override fun buildPostDetailRequest(postId: String): RequestDescriptor = buildRequest(postId)
 
         override fun parsePostDetail(body: String, statusCode: Int): GuestParseResult = parse(body, statusCode)
     }
 
-    private fun hostWithService(
-        parse: (String, Int) -> GuestParseResult,
-        buildRequest: (String) -> RequestDescriptor = { postId ->
-            FanboxEndpoints.postDetail(FanboxPostId(postId))
-        },
-        diagnosticSink: FanboxDiagnosticSink = FanboxDiagnosticSink.none,
-    ): FanboxGuestHost = FanboxGuestHost(
-        config = CONFIG,
-        httpClientFactory = { error("HTTP client must not be created by the override") },
-        diagnosticSink = diagnosticSink,
-        loadGuestOverride = {
-            LoadedGuest(
-                service = object : FanboxGuestService {
-                    override fun buildPostDetailRequest(postId: String): RequestDescriptor = buildRequest(postId)
-
-                    override fun parsePostDetail(body: String, statusCode: Int): GuestParseResult = parse(body, statusCode)
-                },
-            )
-        },
-    )
-
-    private fun successfulExecutor(): FanboxRequestExecutor = FanboxRequestExecutor {
-        FanboxRawResponse(
-            statusCode = 200,
-            headers = emptyMap(),
-            bodyText = FanboxPostJsonFixtures.postInfoTextHybrid,
-        )
-    }
-
     private companion object {
         val POST_ID = FanboxPostId("10000001")
-        val CONFIG = FanboxGuestDeliveryConfig(
-            manifestUrl = "https://example.invalid/manifest.zipline.json",
-            trustedKeyName = "test",
-            trustedEd25519PublicKey = ByteArray(32),
-        )
-        val DIRECT_POST = FanboxResponses.postDetail(FanboxPostJsonFixtures.postInfoTextHybrid, 200)
+        val BUILT_IN_POST = FanboxResponses.postDetail(FanboxPostJsonFixtures.postInfoTextHybrid, 200)
 
-        // A different post than DIRECT_POST, so a test can tell which path produced its result.
+        // A different post than BUILT_IN_POST, so a test can tell which path produced its result.
         val GUEST_POST = FanboxResponses.postDetail(FanboxPostJsonFixtures.postInfoArticleA, 200)
-        const val UNSIGNED_MANIFEST =
-            "{\"unsigned\":{\"signatures\":{},\"freshAtEpochMs\":null,\"baseUrl\":null}," +
-                "\"modules\":{},\"mainModuleId\":\"./main.js\",\"mainFunction\":null," +
-                "\"version\":null,\"metadata\":{}}"
-
-        const val MODULE_SHA256_HEX =
-            "0000000000000000000000000000000000000000000000000000000000000001"
-
-        const val MANIFEST_WITH_ONE_MODULE =
-            "{\"unsigned\":{\"signatures\":{},\"freshAtEpochMs\":null,\"baseUrl\":null}," +
-                "\"modules\":{\"./main.js\":{\"url\":\"main.zipline\"," +
-                "\"sha256\":\"$MODULE_SHA256_HEX\"}}," +
-                "\"mainModuleId\":\"./main.js\",\"mainFunction\":null," +
-                "\"version\":null,\"metadata\":{}}"
     }
 }
