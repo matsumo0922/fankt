@@ -40,17 +40,35 @@ import kotlin.concurrent.Volatile
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
-/** guest manifest の配信先・検証鍵・キャッシュの設定。 */
+/** guest manifest の配信先・検証鍵・キャッシュの設定。[trustedKeys] は鍵名から Ed25519 公開鍵への対応。 */
 internal class FanboxGuestDeliveryConfig(
     val manifestUrl: String,
-    val trustedKeyName: String,
-    val trustedEd25519PublicKey: ByteString,
+    val trustedKeys: Map<String, ByteString>,
     val cache: FanboxGuestCache,
 ) {
     init {
         require(Url(manifestUrl).protocol == URLProtocol.HTTPS) { "Guest manifest URL must use HTTPS: $manifestUrl" }
-        require(trustedEd25519PublicKey.size == 32) { "Guest Ed25519 public key must contain 32 bytes" }
+        require(trustedKeys.isNotEmpty()) { "At least one trusted guest key is required" }
+        require(trustedKeys.values.all { it.size == 32 }) { "Guest Ed25519 public keys must contain 32 bytes" }
     }
+
+    /**
+     * 信頼する鍵の組ごとのキャッシュのディレクトリ名。
+     *
+     * Zipline はキャッシュ済み manifest の署名を鮮度の判定より先に検証し、失敗するとロードを諦める。
+     * 鍵の組が変わったときに古いキャッシュがロードを塞がないよう、組ごとに分ける。
+     */
+    val cacheDirectoryName: String = Buffer()
+        .apply {
+            trustedKeys.entries.sortedBy { it.key }.forEach { (name, key) ->
+                // The length fixes where a name ends, so that two different sets never write the same bytes.
+                writeInt(name.encodeToByteArray().size)
+                writeUtf8(name)
+                write(key)
+            }
+        }
+        .sha256()
+        .hex()
 }
 
 /**
@@ -151,20 +169,12 @@ internal suspend fun loadZiplineGuest(
     initializer: suspend (Zipline) -> Unit = {},
 ): LoadedGuest {
     val manifestVerifier = Builder()
-        .addEd25519(name = config.trustedKeyName, trustedKey = config.trustedEd25519PublicKey)
+        .apply { config.trustedKeys.forEach { (name, key) -> addEd25519(name = name, trustedKey = key) } }
         .build()
-
-    // Zipline verifies a cached manifest before checking its freshness and gives up when that fails,
-    // so a cache written under another key would block every load. One directory per key avoids it.
-    val cacheDirectoryName = Buffer()
-        .writeUtf8(config.trustedKeyName)
-        .write(config.trustedEd25519PublicKey)
-        .sha256()
-        .hex()
 
     var created: Zipline? = null
 
-    return config.cache.open(cacheDirectoryName, 10L * 1024 * 1024).use { cache ->
+    return config.cache.open(config.cacheDirectoryName, 10L * 1024 * 1024).use { cache ->
         try {
             val result = ZiplineLoader(dispatcher, manifestVerifier, httpClient)
                 .withCache(cache)

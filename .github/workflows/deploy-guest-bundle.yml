@@ -43,10 +43,13 @@ jobs:
       - name: Build the signed guest bundle
         env:
           SIGNING_PRIVATE_KEY_HEX: ${{ secrets.ZIPLINE_SIGNING_PRIVATE_KEY_HEX }}
+          # Unset in normal operation. Set to the recovery key's name only while signing with it.
+          SIGNING_KEY_NAME: ${{ vars.ZIPLINE_SIGNING_KEY_NAME || 'fanboxGuest' }}
         run: >-
           ./gradlew
           :fankt:fanbox:compileProductionExecutableKotlinGuestZipline
           -PfanboxZiplineSigningPrivateKeyHex="$SIGNING_PRIVATE_KEY_HEX"
+          -PfanboxZiplineSigningKeyName="$SIGNING_KEY_NAME"
 
       # The build succeeds without the key so that local builds and pull request CI pass, which
       # means an unsigned manifest can reach this point when the secret is missing. A consumer
