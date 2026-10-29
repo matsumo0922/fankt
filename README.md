@@ -116,10 +116,52 @@ transition produces a manifest that an application trusting either key accepts. 
 only once the applications that embed it are no longer in use — a public key compiled into a release
 cannot be changed without shipping a new one.
 
-#### Stopping a delivery
+#### Stopping and rolling back a delivery
 
-Deleting the manifest from the `gh-pages` branch stops the delivery: consumers fail to reach it and
-use the built-in path. Reverting the offending commit on `main` republishes a working bundle.
+Each channel is a directory on the `gh-pages` branch. A consumer loads the guest when it creates a
+`Fanbox`, so a change here reaches it the next time it creates one; a `Fanbox` that has already
+loaded keeps running what it loaded.
+
+| Goal | Production (`zipline/v1`) | Dev (`zipline/v1-dev`) |
+|---|---|---|
+| Stop | Delete the manifest | Delete the manifest |
+| Return to an earlier bundle | Restore the directory from the `gh-pages` history | Revert on `main` |
+| Deliver a fix | Merge to `main`, check the dev channel, then promote | Merge to `main` |
+
+Work on `gh-pages` in a separate worktree, and do not run **Deploy Guest Bundle** or **Promote
+Guest Bundle** meanwhile. If the push is rejected, another run moved the branch: remove the worktree
+and start again from the latest `origin/gh-pages`.
+
+**To stop**, delete the manifest. Consumers then fail to load the guest and use the built-in path:
+
+```sh
+git fetch origin gh-pages
+git worktree add --detach ../fankt-gh-pages origin/gh-pages
+cd ../fankt-gh-pages
+git rm zipline/v1/manifest.zipline.json
+git commit -m "Stop the production guest bundle"
+git push origin HEAD:gh-pages
+```
+
+**To return production to an earlier bundle**, pick the commit that published it and restore the
+directory as it was there:
+
+```sh
+git log --oneline -- zipline/v1
+git rm -r -q zipline/v1
+git checkout <commit> -- zipline/v1
+git commit -m "Roll back the production guest bundle to <commit>"
+git push origin HEAD:gh-pages
+```
+
+The restored manifest keeps its original signature, so consumers accept it only if they still trust
+the key that signed it. The dev channel still holds the bundle that was rolled back, and the next
+promotion would deliver it again: land the fix on `main` before promoting.
+
+**A consumer's own switch**, such as a remote configuration flag that stops creating the guest, stops
+only that consumer, and when it takes effect depends on that consumer. Deleting the manifest stops
+every consumer at once. Use the consumer's switch when the delivery itself cannot be trusted, for
+example after a signing key leaks.
 
 ## Usage
 
