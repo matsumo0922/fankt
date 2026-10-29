@@ -39,9 +39,7 @@ class RoomFanboxCookieStorageTest {
         val databasePath = roomFanboxDatabasePath()
         databaseSidecars(databasePath).forEach { path ->
             if (NSFileManager.defaultManager.fileExistsAtPath(path)) {
-                check(NSFileManager.defaultManager.removeItemAtPath(path, error = null)) {
-                    "Unable to delete test database file: $path"
-                }
+                check(NSFileManager.defaultManager.removeItemAtPath(path, error = null)) { "Unable to delete test database file: $path" }
             }
         }
     }

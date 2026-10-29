@@ -82,7 +82,9 @@ class FanboxCreatorProfileItemTest {
         assertEquals("gallery", future.type)
         assertEquals(
             "1",
-            createFanboxJson().parseToJsonElement(future.rawJson).jsonObject["future"]?.jsonObject?.get("value")?.jsonPrimitive?.content,
+            createFanboxJson()
+                .parseToJsonElement(future.rawJson).jsonObject["future"]?.jsonObject
+                ?.get("value")?.jsonPrimitive?.content,
         )
 
         assertEquals("incomplete-1", assertIs<FanboxCreatorDetail.ProfileItem.Unknown>(actual.profileItems[1]).id)

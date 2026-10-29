@@ -61,7 +61,13 @@ class PersistentCookieStorageTest {
         storage.replaceAll(listOf(record("first", "value"), record("second", "value")))
 
         assertEquals(1, dao.replaceAllCalls)
-        assertEquals(setOf("first", "second"), storage.snapshot().map { it.name }.toSet())
+        assertEquals(
+            setOf("first", "second"),
+            storage
+                .snapshot()
+                .map { it.name }
+                .toSet(),
+        )
     }
 
     @Test

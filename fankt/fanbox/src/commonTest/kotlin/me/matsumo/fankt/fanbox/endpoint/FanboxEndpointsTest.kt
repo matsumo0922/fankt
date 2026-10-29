@@ -94,7 +94,10 @@ class FanboxEndpointsTest {
         )
         assertEquals(
             descriptors.map { it.endpointId.value }.toSet() - "homepage",
-            descriptors.map { it.path }.filter(String::isNotEmpty).toSet(),
+            descriptors
+                .map { it.path }
+                .filter(String::isNotEmpty)
+                .toSet(),
         )
         val expectedQueryNames = mapOf(
             FanboxEndpointIds.postListHome to listOf(
@@ -166,28 +169,44 @@ class FanboxEndpointsTest {
 
     @Test
     fun postBodiesPreserveStringTypesAndNullableParentOmission() {
-        val root = FanboxEndpoints.addComment(
-            postId = FanboxPostId("post-id"),
-            rootCommentId = null,
-            parentCommentId = null,
-            body = "root",
-        ).jsonBody.orEmpty().let(Json::parseToJsonElement).jsonObject
-        val reply = FanboxEndpoints.addComment(
-            postId = FanboxPostId("post-id"),
-            rootCommentId = FanboxCommentId("root-id"),
-            parentCommentId = FanboxCommentId("parent-id"),
-            body = "reply",
-        ).jsonBody.orEmpty().let(Json::parseToJsonElement).jsonObject
-        val follow = FanboxEndpoints.followCreator(FanboxUserId(1234567890123))
-            .jsonBody.orEmpty().let(Json::parseToJsonElement).jsonObject
-        val unfollow = FanboxEndpoints.unfollowCreator(FanboxUserId(1234567890123))
-            .jsonBody.orEmpty().let(Json::parseToJsonElement).jsonObject
-        val postLike = FanboxEndpoints.likePost(FanboxPostId("post-id"))
-            .jsonBody.orEmpty().let(Json::parseToJsonElement).jsonObject
-        val commentLike = FanboxEndpoints.likeComment(FanboxCommentId("comment-id"))
-            .jsonBody.orEmpty().let(Json::parseToJsonElement).jsonObject
-        val commentDelete = FanboxEndpoints.deleteComment(FanboxCommentId("comment-id"))
-            .jsonBody.orEmpty().let(Json::parseToJsonElement).jsonObject
+        val root = FanboxEndpoints
+            .addComment(
+                postId = FanboxPostId("post-id"),
+                rootCommentId = null,
+                parentCommentId = null,
+                body = "root",
+            ).jsonBody
+            .orEmpty()
+            .let(Json::parseToJsonElement).jsonObject
+        val reply = FanboxEndpoints
+            .addComment(
+                postId = FanboxPostId("post-id"),
+                rootCommentId = FanboxCommentId("root-id"),
+                parentCommentId = FanboxCommentId("parent-id"),
+                body = "reply",
+            ).jsonBody
+            .orEmpty()
+            .let(Json::parseToJsonElement).jsonObject
+        val follow = FanboxEndpoints
+            .followCreator(FanboxUserId(1234567890123)).jsonBody
+            .orEmpty()
+            .let(Json::parseToJsonElement).jsonObject
+        val unfollow = FanboxEndpoints
+            .unfollowCreator(FanboxUserId(1234567890123)).jsonBody
+            .orEmpty()
+            .let(Json::parseToJsonElement).jsonObject
+        val postLike = FanboxEndpoints
+            .likePost(FanboxPostId("post-id")).jsonBody
+            .orEmpty()
+            .let(Json::parseToJsonElement).jsonObject
+        val commentLike = FanboxEndpoints
+            .likeComment(FanboxCommentId("comment-id")).jsonBody
+            .orEmpty()
+            .let(Json::parseToJsonElement).jsonObject
+        val commentDelete = FanboxEndpoints
+            .deleteComment(FanboxCommentId("comment-id")).jsonBody
+            .orEmpty()
+            .let(Json::parseToJsonElement).jsonObject
 
         assertFalse("rootCommentId" in root)
         assertFalse("parentCommentId" in root)

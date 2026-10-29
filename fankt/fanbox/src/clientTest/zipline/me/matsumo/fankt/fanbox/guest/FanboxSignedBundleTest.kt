@@ -219,7 +219,8 @@ class FanboxSignedBundleTest {
             val unsignedManifest = ZiplineManifest.decodeJson(
                 fileSystem.read(sourceDirectory / "manifest.zipline.json") { readUtf8() },
             )
-            var manifest = ManifestSigner.Builder()
+            var manifest = ManifestSigner
+                .Builder()
                 .addEd25519(signingKeyName, keyPair.privateKey)
                 .build()
                 .sign(unsignedManifest.copy(freshAtEpochMs = 0L))

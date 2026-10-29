@@ -112,9 +112,11 @@ private object AndroidKotlinMetadataInspector {
             object : ClassVisitor(Opcodes.ASM9) {
                 override fun visitAnnotation(descriptor: String, visible: Boolean): AnnotationVisitor? {
                     if (descriptor != "Lkotlin/Metadata;") return null
-                    return MetadataHeader().also { metadataHeader ->
-                        header = metadataHeader
-                    }.asAnnotationVisitor()
+                    return MetadataHeader()
+                        .also { metadataHeader ->
+                            header = metadataHeader
+                        }
+                        .asAnnotationVisitor()
                 }
             },
             ClassReader.SKIP_CODE or ClassReader.SKIP_DEBUG or ClassReader.SKIP_FRAMES,
@@ -233,9 +235,7 @@ abstract class StripUnpublishedVariantsTask : DefaultTask() {
             val name = (variant as? Map<String, Any?>)?.get("name") as? String ?: return@removeAll false
             targets.any(name::startsWith)
         }
-        check(removed) {
-            "No unpublished target variant was found in $file; the target names may be stale"
-        }
+        check(removed) { "No unpublished target variant was found in $file; the target names may be stale" }
 
         file.writeText(
             text = JsonOutput.prettyPrint(JsonOutput.toJson(module)),
@@ -257,15 +257,9 @@ abstract class VerifyPersistenceBoundaryTask : DefaultTask() {
     @TaskAction
     fun verify() {
         val configurationNames = inspectedConfigurationNames.get()
-        check("releaseCompileClasspath" in configurationNames) {
-            "Android release dependency configuration was not inspected"
-        }
-        check(configurationNames.any { it.matches(Regex("ios.*CompileKlibraries")) }) {
-            "iOS dependency configurations were not inspected"
-        }
-        check("jsCompileClasspath" in configurationNames) {
-            "Kotlin/JS dependency configuration was not inspected"
-        }
+        check("releaseCompileClasspath" in configurationNames) { "Android release dependency configuration was not inspected" }
+        check(configurationNames.any { it.matches(Regex("ios.*CompileKlibraries")) }) { "iOS dependency configurations were not inspected" }
+        check("jsCompileClasspath" in configurationNames) { "Kotlin/JS dependency configuration was not inspected" }
 
         val forbiddenMarkers = listOf(
             "androidx.room:",
@@ -276,25 +270,20 @@ abstract class VerifyPersistenceBoundaryTask : DefaultTask() {
         val violations = dependencyIdentities.get().mapNotNull { identity ->
             forbiddenMarkers.firstOrNull(identity::contains)?.let { marker -> "$identity ($marker)" }
         }
-        check(violations.isEmpty()) {
-            "Core FANBOX dependency boundary violations:\n${violations.joinToString("\n")}"
-        }
+        check(violations.isEmpty()) { "Core FANBOX dependency boundary violations:\n${violations.joinToString("\n")}" }
 
         val manifests = aarFiles.files
         check(manifests.isNotEmpty()) { "No release AAR was produced for manifest verification" }
         manifests.forEach { aar ->
             val manifest = ZipFile(aar).use { archive ->
-                val entry = checkNotNull(archive.getEntry("AndroidManifest.xml")) {
-                    "${aar.name}: AndroidManifest.xml is missing from the AAR"
-                }
-                archive.getInputStream(entry).bufferedReader().use { it.readText() }
+                val entry = checkNotNull(archive.getEntry("AndroidManifest.xml")) { "${aar.name}: AndroidManifest.xml is missing from the AAR" }
+                archive
+                    .getInputStream(entry)
+                    .bufferedReader()
+                    .use { it.readText() }
             }
-            check("androidx.startup.InitializationProvider" !in manifest) {
-                "${aar.name}: merged AndroidManifest.xml contains androidx.startup.InitializationProvider"
-            }
-            check("FanktInitializer" !in manifest) {
-                "${aar.name}: merged AndroidManifest.xml contains FanktInitializer"
-            }
+            check("androidx.startup.InitializationProvider" !in manifest) { "${aar.name}: merged AndroidManifest.xml contains androidx.startup.InitializationProvider" }
+            check("FanktInitializer" !in manifest) { "${aar.name}: merged AndroidManifest.xml contains FanktInitializer" }
         }
     }
 }
@@ -362,78 +351,45 @@ abstract class VerifyKtorBoundaryTask : DefaultTask() {
 
     private fun verifyDependencyDeclarations() {
         val forbiddenApiDeclarations = apiDependencyDeclarations.get().filter { "io.ktor:" in it }
-        check(forbiddenApiDeclarations.isEmpty()) {
-            "Ktor must be an implementation dependency, but API declarations were found:\n" +
-                forbiddenApiDeclarations.joinToString("\n")
-        }
+        check(forbiddenApiDeclarations.isEmpty()) { "Ktor must be an implementation dependency, but API declarations were found:\n" + forbiddenApiDeclarations.joinToString("\n") }
 
         val collectedFanboxDependencyDeclarations = fanboxDependencyDeclarations.get()
-        check(collectedFanboxDependencyDeclarations.isNotEmpty()) {
-            "No FANBOX source set dependency declarations were collected"
-        }
+        check(collectedFanboxDependencyDeclarations.isNotEmpty()) { "No FANBOX source set dependency declarations were collected" }
         val datetimeDependencyDeclarations = collectedFanboxDependencyDeclarations.filter {
             DATETIME_MODULE in it
         }
-        check(datetimeDependencyDeclarations.isEmpty()) {
-            "FANBOX source sets still declare kotlinx-datetime dependencies:\n" +
-                datetimeDependencyDeclarations.joinToString("\n")
-        }
+        check(datetimeDependencyDeclarations.isEmpty()) { "FANBOX source sets still declare kotlinx-datetime dependencies:\n" + datetimeDependencyDeclarations.joinToString("\n") }
         val collectedInfraApiBundleDependencies = infraApiBundleDependencies.get()
-        check(collectedInfraApiBundleDependencies.isNotEmpty()) {
-            "The infra-api bundle resolved to no dependencies"
-        }
+        check(collectedInfraApiBundleDependencies.isNotEmpty()) { "The infra-api bundle resolved to no dependencies" }
         val datetimeInfraApiDependencies = collectedInfraApiBundleDependencies.filter {
             DATETIME_MODULE in it
         }
-        check(datetimeInfraApiDependencies.isEmpty()) {
-            "The infra-api bundle still contains kotlinx-datetime dependencies:\n" +
-                datetimeInfraApiDependencies.joinToString("\n")
-        }
+        check(datetimeInfraApiDependencies.isEmpty()) { "The infra-api bundle still contains kotlinx-datetime dependencies:\n" + datetimeInfraApiDependencies.joinToString("\n") }
     }
 
     private fun verifyProductionSources() {
         // This literal scan is an early supplemental signal; dependency, ABI, and metadata gates
         // below enforce the complete published boundary.
         val productionKotlinSourceFiles = productionKotlinFiles.files.filter(File::isFile)
-        check(productionKotlinSourceFiles.isNotEmpty()) {
-            "No production Kotlin sources were scanned"
-        }
+        check(productionKotlinSourceFiles.isNotEmpty()) { "No production Kotlin sources were scanned" }
         val deprecatedDatetimeSourceViolations = productionKotlinSourceFiles.filter { source -> source.readText().containsDeprecatedDatetimeType() }
-        check(deprecatedDatetimeSourceViolations.isEmpty()) {
-            "Deprecated kotlinx-datetime Instant or Clock remains in production source:\n" +
-                deprecatedDatetimeSourceViolations.joinToString("\n") {
-                    it.relativeTo(project.projectDir).path
-                }
-        }
+        check(deprecatedDatetimeSourceViolations.isEmpty()) { "Deprecated kotlinx-datetime Instant or Clock remains in production source:\n" + deprecatedDatetimeSourceViolations.joinToString("\n") { it.relativeTo(project.projectDir).path } }
     }
 
     private fun verifyAbiFiles() {
         val checkedAbiFiles = abiFiles.files.filter { it.isFile }
-        check(checkedAbiFiles.isNotEmpty()) {
-            "No checked-in fanbox ABI files were found; run :fankt:fanbox:updateLegacyAbi"
-        }
+        check(checkedAbiFiles.isNotEmpty()) { "No checked-in fanbox ABI files were found; run :fankt:fanbox:updateLegacyAbi" }
         val leakingAbiFiles = checkedAbiFiles.filter { abi -> abi.readText().containsKtorType() }
-        check(leakingAbiFiles.isEmpty()) {
-            "Ktor types leaked into the public fanbox ABI:\n" +
-                leakingAbiFiles.joinToString("\n") { it.relativeTo(project.projectDir).path }
-        }
+        check(leakingAbiFiles.isEmpty()) { "Ktor types leaked into the public fanbox ABI:\n" + leakingAbiFiles.joinToString("\n") { it.relativeTo(project.projectDir).path } }
         val deprecatedDatetimeAbiFiles = checkedAbiFiles.filter { abi ->
             abi.readText().containsDeprecatedDatetimeType()
         }
-        check(deprecatedDatetimeAbiFiles.isEmpty()) {
-            "Deprecated kotlinx-datetime Instant or Clock leaked into the public fanbox ABI:\n" +
-                deprecatedDatetimeAbiFiles.joinToString("\n") {
-                    it.relativeTo(project.projectDir).path
-                }
-        }
+        check(deprecatedDatetimeAbiFiles.isEmpty()) { "Deprecated kotlinx-datetime Instant or Clock leaked into the public fanbox ABI:\n" + deprecatedDatetimeAbiFiles.joinToString("\n") { it.relativeTo(project.projectDir).path } }
         // okio reaches this project only through zipline-loader, which is an implementation
         // dependency, so a public signature naming an okio type would oblige consumers to declare a
         // dependency they otherwise never see.
         val okioAbiFiles = checkedAbiFiles.filter { abi -> abi.readText().containsOkioType() }
-        check(okioAbiFiles.isEmpty()) {
-            "okio types leaked into the public fanbox ABI:\n" +
-                okioAbiFiles.joinToString("\n") { it.relativeTo(project.projectDir).path }
-        }
+        check(okioAbiFiles.isEmpty()) { "okio types leaked into the public fanbox ABI:\n" + okioAbiFiles.joinToString("\n") { it.relativeTo(project.projectDir).path } }
     }
 
     private fun verifyAndroidSignatures() {
@@ -441,31 +397,20 @@ abstract class VerifyKtorBoundaryTask : DefaultTask() {
             abiText = androidAbiFile.get().asFile.readText(),
             classFiles = androidClassFiles.files.filter { it.isFile },
         )
-        check(genericSignatureViolations.isEmpty()) {
-            "Ktor types leaked into Android public/protected generic signatures:\n" +
-                genericSignatureViolations.joinToString("\n")
-        }
+        check(genericSignatureViolations.isEmpty()) { "Ktor types leaked into Android public/protected generic signatures:\n" + genericSignatureViolations.joinToString("\n") }
 
         val typeAliasClassFiles = androidClassFiles.files.filter { it.isFile }
         val typeAliasInspection = AndroidKotlinMetadataInspector.inspect(
             classFiles = typeAliasClassFiles,
             forbiddenTypeMarkers = KTOR_TYPE_MARKERS,
         )
-        check(typeAliasInspection.metadataFiles > 0) {
-            "No Android Kotlin metadata was inspected"
-        }
-        check(typeAliasInspection.violations.isEmpty()) {
-            "Ktor types leaked through Android public/protected type aliases:\n" +
-                typeAliasInspection.violations.joinToString("\n")
-        }
+        check(typeAliasInspection.metadataFiles > 0) { "No Android Kotlin metadata was inspected" }
+        check(typeAliasInspection.violations.isEmpty()) { "Ktor types leaked through Android public/protected type aliases:\n" + typeAliasInspection.violations.joinToString("\n") }
         val datetimeTypeAliasInspection = AndroidKotlinMetadataInspector.inspect(
             classFiles = typeAliasClassFiles,
             forbiddenTypeMarkers = DEPRECATED_DATETIME_TYPES.toSet(),
         )
-        check(datetimeTypeAliasInspection.violations.isEmpty()) {
-            "Deprecated kotlinx-datetime types leaked through Android public/protected type aliases:\n" +
-                datetimeTypeAliasInspection.violations.joinToString("\n")
-        }
+        check(datetimeTypeAliasInspection.violations.isEmpty()) { "Deprecated kotlinx-datetime types leaked through Android public/protected type aliases:\n" + datetimeTypeAliasInspection.violations.joinToString("\n") }
     }
 
     private fun verifyAndroidApiMetadata(metadataFiles: List<File>) {
@@ -488,10 +433,7 @@ abstract class VerifyKtorBoundaryTask : DefaultTask() {
                 }
             }
         }
-        check(apiViolations.isEmpty()) {
-            "Ktor dependencies leaked into Android API publication metadata:\n" +
-                apiViolations.joinToString("\n")
-        }
+        check(apiViolations.isEmpty()) { "Ktor dependencies leaked into Android API publication metadata:\n" + apiViolations.joinToString("\n") }
     }
 
     private fun verifyAndroidRuntimeMetadata(metadataFiles: List<File>) {
@@ -515,10 +457,7 @@ abstract class VerifyKtorBoundaryTask : DefaultTask() {
         }.toSet()
         val missingRuntimeDependencies =
             requiredAndroidRuntimeKtorDependencies.get().toSet() - publishedRuntimeKtorDependencies
-        check(missingRuntimeDependencies.isEmpty()) {
-            "Android runtime publication metadata is missing required Ktor dependencies:\n" +
-                missingRuntimeDependencies.joinToString("\n")
-        }
+        check(missingRuntimeDependencies.isEmpty()) { "Android runtime publication metadata is missing required Ktor dependencies:\n" + missingRuntimeDependencies.joinToString("\n") }
     }
 
     private fun verifyPublishedMetadata() {
@@ -526,10 +465,7 @@ abstract class VerifyKtorBoundaryTask : DefaultTask() {
         val missingPublicationMetadataTasks =
             requiredPublicationMetadataTaskNames.get().toSet() -
                 publicationMetadataTaskNames.get().toSet()
-        check(missingPublicationMetadataTasks.isEmpty()) {
-            "FANBOX publication metadata tasks were not inspected:\n" +
-                missingPublicationMetadataTasks.joinToString("\n")
-        }
+        check(missingPublicationMetadataTasks.isEmpty()) { "FANBOX publication metadata tasks were not inspected:\n" + missingPublicationMetadataTasks.joinToString("\n") }
         val requiredPublishedMetadataOutputs = requiredPublishedModuleMetadata.files
         check(
             requiredPublishedMetadataOutputs.size ==
@@ -540,13 +476,8 @@ abstract class VerifyKtorBoundaryTask : DefaultTask() {
                 "${requiredPublicationMetadataTaskNames.get().size} tasks"
         }
         val missingPublishedMetadataOutputs = requiredPublishedMetadataOutputs.filterNot(File::isFile)
-        check(missingPublishedMetadataOutputs.isEmpty()) {
-            "Required FANBOX publication metadata was not generated:\n" +
-                missingPublishedMetadataOutputs.joinToString("\n") { it.path }
-        }
-        check(publishedMetadataFiles.isNotEmpty()) {
-            "No Android or Kotlin Multiplatform publication metadata was generated"
-        }
+        check(missingPublishedMetadataOutputs.isEmpty()) { "Required FANBOX publication metadata was not generated:\n" + missingPublishedMetadataOutputs.joinToString("\n") { it.path } }
+        check(publishedMetadataFiles.isNotEmpty()) { "No Android or Kotlin Multiplatform publication metadata was generated" }
         val datetimeMetadataViolations = publishedMetadataFiles.flatMap { metadataFile ->
             val metadata = JsonSlurper().parse(metadataFile) as Map<*, *>
             val variants = metadata["variants"] as? List<*> ?: emptyList<Any>()
@@ -568,10 +499,7 @@ abstract class VerifyKtorBoundaryTask : DefaultTask() {
                 }
             }
         }
-        check(datetimeMetadataViolations.isEmpty()) {
-            "kotlinx-datetime leaked into published FANBOX metadata:\n" +
-                datetimeMetadataViolations.joinToString("\n")
-        }
+        check(datetimeMetadataViolations.isEmpty()) { "kotlinx-datetime leaked into published FANBOX metadata:\n" + datetimeMetadataViolations.joinToString("\n") }
     }
 
     private fun inspectAndroidGenericSignatures(abiText: String, classFiles: List<File>): List<String> {
@@ -641,20 +569,12 @@ abstract class VerifyKtorBoundaryTask : DefaultTask() {
                 ClassReader.SKIP_CODE or ClassReader.SKIP_DEBUG or ClassReader.SKIP_FRAMES,
             )
         }
-        check(matchedClasses == visibleApi.keys) {
-            "Compiled Android classes did not cover the checked ABI:\n" +
-                (visibleApi.keys - matchedClasses).joinToString("\n")
-        }
+        check(matchedClasses == visibleApi.keys) { "Compiled Android classes did not cover the checked ABI:\n" + (visibleApi.keys - matchedClasses).joinToString("\n") }
         val expectedMembers = visibleApi.values.sumOf { visible ->
             visible.fields.size + visible.methods.size
         }
-        check(matchedMembers == expectedMembers) {
-            "Compiled Android members did not cover the checked ABI: " +
-                "matched $matchedMembers of $expectedMembers"
-        }
-        check(genericSignatures > 0) {
-            "No Android generic Signature attributes were inspected"
-        }
+        check(matchedMembers == expectedMembers) { "Compiled Android members did not cover the checked ABI: " + "matched $matchedMembers of $expectedMembers" }
+        check(genericSignatures > 0) { "No Android generic Signature attributes were inspected" }
         return violations.sorted()
     }
 
@@ -744,9 +664,7 @@ abstract class VerifyPortableImportBoundaryTask : DefaultTask() {
                 importedName?.takeIf { name -> roots.any { root -> name == root || name.startsWith("$root.") } }?.let { name -> "${source.relativeTo(baseDirectory).path}: import $name" }
             }
         }.sorted()
-        check(violations.isEmpty()) {
-            "Forbidden imports in the portable FANBOX core:\n${violations.joinToString("\n")}"
-        }
+        check(violations.isEmpty()) { "Forbidden imports in the portable FANBOX core:\n${violations.joinToString("\n")}" }
     }
 }
 
@@ -763,12 +681,8 @@ abstract class VerifyKtorTypeAliasFixtureTask : DefaultTask() {
             classFiles = classFiles,
             forbiddenTypeMarkers = setOf("io.ktor", "io/ktor"),
         )
-        check(ktorInspection.metadataFiles > 0) {
-            "Android Ktor typealias regression fixture contains no Kotlin metadata"
-        }
-        check(ktorInspection.visibleTypeAliases > 0) {
-            "Android Ktor typealias regression fixture contains no public/protected typealias metadata"
-        }
+        check(ktorInspection.metadataFiles > 0) { "Android Ktor typealias regression fixture contains no Kotlin metadata" }
+        check(ktorInspection.visibleTypeAliases > 0) { "Android Ktor typealias regression fixture contains no public/protected typealias metadata" }
         check(
             ktorInspection.violations.any { violation ->
                 "AndroidKtorClientAlias" in violation && "io/ktor/client/HttpClient" in violation

@@ -39,43 +39,28 @@ abstract class VerifyPublishedConsumerTask : DefaultTask() {
     fun verify() {
         val resolvedCompileComponents = compileComponents.get()
         val expectedFanbox = "me.matsumo.fankt:fanbox:${fanktVersion.get()}"
-        check(expectedFanbox in resolvedCompileComponents) {
-            "The fixture did not resolve the isolated fanbox publication"
-        }
+        check(expectedFanbox in resolvedCompileComponents) { "The fixture did not resolve the isolated fanbox publication" }
         val compileKtorComponents = resolvedCompileComponents.filter { it.startsWith("io.ktor:") }
-        check(compileKtorComponents.isEmpty()) {
-            "Ktor leaked onto the published consumer compile classpath:\n" +
-                compileKtorComponents.joinToString("\n")
-        }
+        check(compileKtorComponents.isEmpty()) { "Ktor leaked onto the published consumer compile classpath:\n" + compileKtorComponents.joinToString("\n") }
         val compileDatetimeComponents = resolvedCompileComponents.filter { it.isKotlinxDatetime() }
-        check(compileDatetimeComponents.isEmpty()) {
-            "kotlinx-datetime leaked onto the published consumer compile classpath:\n" +
-                compileDatetimeComponents.joinToString("\n")
-        }
+        check(compileDatetimeComponents.isEmpty()) { "kotlinx-datetime leaked onto the published consumer compile classpath:\n" + compileDatetimeComponents.joinToString("\n") }
 
         val selectedKtorComponents = runtimeComponents.get().filter { it.startsWith("io.ktor:") }
         check(selectedKtorComponents.isNotEmpty()) { "The fixture did not resolve runtime Ktor modules" }
-        check(selectedKtorComponents.all { it.endsWith(":${selectedKtorVersion.get()}") }) {
-            "The consumer-selected Ktor version was not honored:\n" +
-                selectedKtorComponents.joinToString("\n")
-        }
+        check(selectedKtorComponents.all { it.endsWith(":${selectedKtorVersion.get()}") }) { "The consumer-selected Ktor version was not honored:\n" + selectedKtorComponents.joinToString("\n") }
         val runtimeDatetimeComponents = runtimeComponents.get().filter { it.isKotlinxDatetime() }
-        check(runtimeDatetimeComponents.isEmpty()) {
-            "kotlinx-datetime leaked onto the published consumer runtime classpath:\n" +
-                runtimeDatetimeComponents.joinToString("\n")
-        }
+        check(runtimeDatetimeComponents.isEmpty()) { "kotlinx-datetime leaked onto the published consumer runtime classpath:\n" + runtimeDatetimeComponents.joinToString("\n") }
 
         val resolvedArtifacts = resolvedFanktArtifacts.files
         check(resolvedArtifacts.isNotEmpty()) { "No me.matsumo.fankt compile artifacts were resolved" }
-        val localArtifacts = localFanktRepository.get().asFile
+        val localArtifacts = localFanktRepository
+            .get().asFile
             .walkTopDown()
             .filter { localFile ->
                 localFile.isFile && localFile.parentFile.name == fanktVersion.get()
             }
             .toList()
-        check(localArtifacts.isNotEmpty()) {
-            "The isolated repository contains no me.matsumo.fankt:${fanktVersion.get()} artifacts"
-        }
+        check(localArtifacts.isNotEmpty()) { "The isolated repository contains no me.matsumo.fankt:${fanktVersion.get()} artifacts" }
         val unmatchedArtifacts = resolvedArtifacts.filterNot { resolvedArtifact ->
             localArtifacts.any { localArtifact ->
                 localArtifact.extension == resolvedArtifact.extension &&
@@ -83,22 +68,21 @@ abstract class VerifyPublishedConsumerTask : DefaultTask() {
                     localArtifact.sha256().contentEquals(resolvedArtifact.sha256())
             }
         }
-        check(unmatchedArtifacts.isEmpty()) {
-            "Resolved fankt artifacts do not match the isolated local publication:\n" +
-                unmatchedArtifacts.joinToString("\n")
-        }
+        check(unmatchedArtifacts.isEmpty()) { "Resolved fankt artifacts do not match the isolated local publication:\n" + unmatchedArtifacts.joinToString("\n") }
     }
 
     private fun File.sha256(): ByteArray {
         val digest = MessageDigest.getInstance("SHA-256")
-        inputStream().buffered().use { input ->
-            val buffer = ByteArray(DEFAULT_BUFFER_SIZE)
-            while (true) {
-                val read = input.read(buffer)
-                if (read < 0) break
-                digest.update(buffer, 0, read)
+        inputStream()
+            .buffered()
+            .use { input ->
+                val buffer = ByteArray(DEFAULT_BUFFER_SIZE)
+                while (true) {
+                    val read = input.read(buffer)
+                    if (read < 0) break
+                    digest.update(buffer, 0, read)
+                }
             }
-        }
         return digest.digest()
     }
 

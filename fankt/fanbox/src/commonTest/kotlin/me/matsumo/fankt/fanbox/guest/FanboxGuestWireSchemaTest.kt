@@ -42,7 +42,9 @@ class FanboxGuestWireSchemaTest {
     fun httpMethodConstantsAreUnchanged() {
         assertEquals(
             listOf("GET", "POST"),
-            serializer<RequestDescriptor>().descriptor.elementNamed("method").elementNames(),
+            serializer<RequestDescriptor>().descriptor
+                .elementNamed("method")
+                .elementNames(),
         )
     }
 

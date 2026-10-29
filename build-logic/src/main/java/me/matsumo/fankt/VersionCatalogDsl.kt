@@ -14,8 +14,12 @@ internal val Project.libs: VersionCatalog
 
 internal fun VersionCatalog.version(name: String): String = findVersion(name).get().requiredVersion
 
-internal fun VersionCatalog.library(name: String): MinimalExternalModuleDependency = findLibrary(name).get().get()
+internal fun VersionCatalog.library(name: String): MinimalExternalModuleDependency = findLibrary(name)
+    .get()
+    .get()
 
-internal fun VersionCatalog.plugin(name: String): PluginDependency = findPlugin(name).get().get()
+internal fun VersionCatalog.plugin(name: String): PluginDependency = findPlugin(name)
+    .get()
+    .get()
 
 internal fun VersionCatalog.bundle(name: String): Provider<ExternalModuleDependencyBundle> = findBundle(name).get()

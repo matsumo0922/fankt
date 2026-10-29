@@ -16,7 +16,9 @@ internal class LegacyFanboxGuestService : FanboxGuestService {
     override fun buildPostDetailRequest(postId: String): RequestDescriptor = FanboxEndpoints.postDetail(FanboxPostId(postId))
 
     override fun parsePostDetail(body: String, statusCode: Int): GuestParseResult = try {
-        val legacyPost = createFanboxJson().parseToJsonElement(body).jsonObject.getValue("body")
+        val legacyPost = createFanboxJson()
+            .parseToJsonElement(body).jsonObject
+            .getValue("body")
         val normalized = buildJsonObject {
             put("body", buildJsonObject { put("post", legacyPost) })
         }

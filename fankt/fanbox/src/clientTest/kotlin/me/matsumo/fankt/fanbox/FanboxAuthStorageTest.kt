@@ -72,7 +72,13 @@ class FanboxAuthStorageTest {
         assertEquals("two", storage.snapshot().single().value)
 
         storage.replaceAll(listOf(record("second", "value"), record("third", "value")))
-        assertEquals(setOf("second", "third"), storage.snapshot().map { it.name }.toSet())
+        assertEquals(
+            setOf("second", "third"),
+            storage
+                .snapshot()
+                .map { it.name }
+                .toSet(),
+        )
 
         storage.delete("fanbox.cc", "/", "second")
         assertEquals(listOf("third"), storage.snapshot().map { it.name })
@@ -138,7 +144,10 @@ class FanboxAuthStorageTest {
 
         assertEquals(
             setOf("account", "secure"),
-            adapter.get(Url("https://api.fanbox.cc/account/profile")).map { it.name }.toSet(),
+            adapter
+                .get(Url("https://api.fanbox.cc/account/profile"))
+                .map { it.name }
+                .toSet(),
         )
         assertEquals(listOf("secure"), adapter.get(Url("https://api.fanbox.cc/accounting")).map { it.name })
         assertTrue(adapter.get(Url("http://api.fanbox.cc/account/profile")).isEmpty())
@@ -205,8 +214,20 @@ class FanboxAuthStorageTest {
         )
         val adapter = FanboxCookiesStorageAdapter(storage) { NOW }
 
-        assertEquals(setOf("future", "session"), adapter.get(Url("https://api.fanbox.cc/")).map { it.name }.toSet())
-        assertEquals(setOf("future", "session"), adapter.get(Url("https://api.fanbox.cc/")).map { it.name }.toSet())
+        assertEquals(
+            setOf("future", "session"),
+            adapter
+                .get(Url("https://api.fanbox.cc/"))
+                .map { it.name }
+                .toSet(),
+        )
+        assertEquals(
+            setOf("future", "session"),
+            adapter
+                .get(Url("https://api.fanbox.cc/"))
+                .map { it.name }
+                .toSet(),
+        )
         assertEquals(2, storage.cleanupAttempts)
         assertFalse(storage.snapshot().any { it.name == "past" || it.name == "boundary" })
     }
@@ -227,7 +248,13 @@ class FanboxAuthStorageTest {
             assertEquals(1, storage.replaceAllCalls)
             assertEquals(0, storage.clearCalls)
             assertEquals(0, storage.upsertCalls)
-            assertEquals(setOf("first", "second"), storage.snapshot().map { it.name }.toSet())
+            assertEquals(
+                setOf("first", "second"),
+                storage
+                    .snapshot()
+                    .map { it.name }
+                    .toSet(),
+            )
         } finally {
             fanbox.close()
         }

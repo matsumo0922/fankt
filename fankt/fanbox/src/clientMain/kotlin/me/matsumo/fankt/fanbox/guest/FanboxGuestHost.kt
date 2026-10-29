@@ -53,21 +53,11 @@ internal data class FanboxGuestDeliveryConfig(
         val parsedManifestUrl = Url(manifestUrl)
         val isLocalDevelopment =
             parsedManifestUrl.protocol == URLProtocol.HTTP && parsedManifestUrl.host.isLoopbackHost()
-        require(parsedManifestUrl.protocol == URLProtocol.HTTPS || isLocalDevelopment) {
-            "Guest manifest URL must use HTTPS, except for a loopback development server"
-        }
-        require(
-            parsedManifestUrl.user.isNullOrEmpty() && parsedManifestUrl.password.isNullOrEmpty(),
-        ) {
-            "Guest manifest URL must not contain credentials"
-        }
-        require(
-            parsedManifestUrl.fragment.isEmpty(),
-        ) { "Guest manifest URL must not contain a fragment" }
+        require(parsedManifestUrl.protocol == URLProtocol.HTTPS || isLocalDevelopment) { "Guest manifest URL must use HTTPS, except for a loopback development server" }
+        require(parsedManifestUrl.user.isNullOrEmpty() && parsedManifestUrl.password.isNullOrEmpty()) { "Guest manifest URL must not contain credentials" }
+        require(parsedManifestUrl.fragment.isEmpty()) { "Guest manifest URL must not contain a fragment" }
         require(trustedKeyName.isNotBlank()) { "Guest trusted key name must not be blank" }
-        require(trustedEd25519PublicKey.size == ED25519_PUBLIC_KEY_SIZE) {
-            "Guest Ed25519 public key must contain $ED25519_PUBLIC_KEY_SIZE bytes"
-        }
+        require(trustedEd25519PublicKey.size == ED25519_PUBLIC_KEY_SIZE) { "Guest Ed25519 public key must contain $ED25519_PUBLIC_KEY_SIZE bytes" }
     }
 
     private companion object {
@@ -336,7 +326,8 @@ internal class FanboxGuestHost(
         }
         diagnosticSink.report(
             "Zipline guest execution failed; using direct path" +
-                diagnostic.takeIf(String::isNotBlank)
+                diagnostic
+                    .takeIf(String::isNotBlank)
                     ?.let(FanboxDiagnostics::sanitizeFragment)
                     ?.let { " ($it)" }
                     .orEmpty(),
@@ -369,7 +360,8 @@ internal class ZiplineGuestLoader(
     private val httpClient: ZiplineHttpClient,
     private val diagnosticSink: FanboxDiagnosticSink,
 ) {
-    private val manifestVerifier = ManifestVerifier.Builder()
+    private val manifestVerifier = ManifestVerifier
+        .Builder()
         .addEd25519(
             name = config.trustedKeyName,
             trustedKey = config.trustedEd25519PublicKey.toByteString(),
@@ -467,11 +459,14 @@ private suspend fun <T : Any> loadGuestAttempt(
 
 /** Zipline loader の HTTP 通信を Ktor へ橋渡しする。 */
 private class KtorZiplineHttpClient(private val client: HttpClient) : ZiplineHttpClient() {
-    override suspend fun download(url: String, requestHeaders: List<Pair<String, String>>): ByteString = client.get(url) {
-        headers {
-            requestHeaders.forEach { (name, value) -> append(name, value) }
+    override suspend fun download(url: String, requestHeaders: List<Pair<String, String>>): ByteString = client
+        .get(url) {
+            headers {
+                requestHeaders.forEach { (name, value) -> append(name, value) }
+            }
         }
-    }.body<ByteArray>().toByteString()
+        .body<ByteArray>()
+        .toByteString()
 }
 
 /** キャッシュを常に再検証する鮮度ポリシー。 */

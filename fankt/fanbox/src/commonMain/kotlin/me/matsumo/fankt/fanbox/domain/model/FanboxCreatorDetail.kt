@@ -94,8 +94,7 @@ data class FanboxCreatorDetail(
         companion object {
             fun fromUrl(url: String): Platform {
                 val hostname = FanboxUrlParts
-                    .parse(url)
-                    .host
+                    .parse(url).host
                     .orEmpty()
                     .lowercase()
 

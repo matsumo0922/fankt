@@ -3,7 +3,8 @@ package me.matsumo.fankt.fanbox.components
 import android.content.Context
 import java.io.File
 
-fun getFanboxSessionId(context: Context): String = context.sessionIdFile()
+fun getFanboxSessionId(context: Context): String = context
+    .sessionIdFile()
     .takeIf { it.exists() }
     ?.readText()
     .orEmpty()

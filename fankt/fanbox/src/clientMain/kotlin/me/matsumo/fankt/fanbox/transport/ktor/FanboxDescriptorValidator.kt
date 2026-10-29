@@ -39,16 +39,18 @@ internal object FanboxDescriptorValidator {
         }
 
         val url = try {
-            URLBuilder(policy.origin).apply {
-                encodedPath = if (descriptor.path.isEmpty()) {
-                    "/"
-                } else {
-                    "/${descriptor.path}"
+            URLBuilder(policy.origin)
+                .apply {
+                    encodedPath = if (descriptor.path.isEmpty()) {
+                        "/"
+                    } else {
+                        "/${descriptor.path}"
+                    }
+                    descriptor.query.forEach { parameter ->
+                        parameters.append(parameter.name, parameter.value)
+                    }
                 }
-                descriptor.query.forEach { parameter ->
-                    parameters.append(parameter.name, parameter.value)
-                }
-            }.build()
+                .build()
         } catch (_: IllegalArgumentException) {
             invalid("FANBOX request URL is malformed")
         }

@@ -99,23 +99,15 @@ internal class FanboxUserMapper(
             FanboxBell.Comment(
                 id = FanboxCommentId(item.id),
                 notifiedDatetime = Instant.parse(item.notifiedDatetime),
-                comment = requireNotNull(item.postCommentBody) {
-                    "postCommentBody is required for post_comment"
-                },
-                isRootComment = requireNotNull(item.isRootComment) {
-                    "isRootComment is required for post_comment"
-                },
+                comment = requireNotNull(item.postCommentBody) { "postCommentBody is required for post_comment" },
+                isRootComment = requireNotNull(item.isRootComment) { "isRootComment is required for post_comment" },
                 creatorId = FanboxCreatorId(
-                    requireNotNull(item.creatorId) {
-                        "creatorId is required for post_comment"
-                    },
+                    requireNotNull(item.creatorId) { "creatorId is required for post_comment" },
                 ),
                 postId = FanboxPostId(requireNotNull(item.postId) { "postId is required for post_comment" }),
                 postTitle = requireNotNull(item.postTitle) { "postTitle is required for post_comment" },
                 userName = requireNotNull(item.userName) { "userName is required for post_comment" },
-                userProfileIconUrl = requireNotNull(item.userProfileImg) {
-                    "userProfileImg is required for post_comment"
-                },
+                userProfileIconUrl = requireNotNull(item.userProfileImg) { "userProfileImg is required for post_comment" },
             )
         }
 
@@ -123,18 +115,12 @@ internal class FanboxUserMapper(
             FanboxBell.Like(
                 id = item.id,
                 notifiedDatetime = Instant.parse(item.notifiedDatetime),
-                comment = requireNotNull(item.postCommentBody) {
-                    "postCommentBody is required for post_comment_like"
-                },
+                comment = requireNotNull(item.postCommentBody) { "postCommentBody is required for post_comment_like" },
                 creatorId = FanboxCreatorId(
-                    requireNotNull(item.creatorId) {
-                        "creatorId is required for post_comment_like"
-                    },
+                    requireNotNull(item.creatorId) { "creatorId is required for post_comment_like" },
                 ),
                 postId = FanboxPostId(
-                    requireNotNull(item.postId) {
-                        "postId is required for post_comment_like"
-                    },
+                    requireNotNull(item.postId) { "postId is required for post_comment_like" },
                 ),
                 count = requireNotNull(item.count) { "count is required for post_comment_like" },
             )

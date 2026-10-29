@@ -1024,7 +1024,8 @@ internal object FanboxPostJsonFixtures {
         ).toString()
     }
 
-    private fun responseDerivedEmbeddedFanboxPostInfo() = Json.parseToJsonElement(postInfoArticleB).jsonObject
+    private fun responseDerivedEmbeddedFanboxPostInfo() = Json
+        .parseToJsonElement(postInfoArticleB).jsonObject
         .getValue("body").jsonObject
         .getValue("post").jsonObject
         .getValue("body").jsonObject

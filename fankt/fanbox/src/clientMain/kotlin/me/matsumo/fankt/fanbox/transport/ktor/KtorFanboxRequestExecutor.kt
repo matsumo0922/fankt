@@ -44,9 +44,7 @@ internal class KtorFanboxRequestExecutor(
 
     override suspend fun execute(descriptor: RequestDescriptor): FanboxRawResponse {
         val validated = FanboxDescriptorValidator.validate(descriptor)
-        when (
-            validated.policy.credentialBehavior
-        ) {
+        when (validated.policy.credentialBehavior) {
             FanboxCredentialBehavior.SHARED_FANBOX_AUTHENTICATION -> Unit
         }
         return try {

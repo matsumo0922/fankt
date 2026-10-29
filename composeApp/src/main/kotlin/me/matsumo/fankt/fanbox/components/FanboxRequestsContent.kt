@@ -95,9 +95,7 @@ private fun RequestItem(
 
     var requestResult by remember { mutableStateOf<Any?>(null) }
     var isExpanded by rememberSaveable { mutableStateOf(false) }
-    val isPost = (
-        function.returnType.jvmErasure == Unit::class
-        )
+    val isPost = function.returnType.jvmErasure == Unit::class
 
     Column(
         modifier = modifier.animateContentSize(),
