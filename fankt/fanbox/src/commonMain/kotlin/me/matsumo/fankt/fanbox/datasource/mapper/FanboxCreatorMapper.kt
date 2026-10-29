@@ -35,35 +35,25 @@ internal class FanboxCreatorMapper(
 
     fun map(entity: FanboxCreatorEntity): FanboxCreator = FanboxCreator(
         creatorId = FanboxCreatorId(
-            entity
-                .creatorId
-                .orEmpty(),
+            entity.creatorId.orEmpty(),
         ),
-        user = entity
-            .user
-            ?.let {
-                FanboxUser(
-                    userId = FanboxUserId(
-                        it
-                            .userId
-                            .toLong(),
-                    ),
-                    creatorId = entity
-                        .creatorId
-                        ?.let { id -> FanboxCreatorId(id) },
-                    name = it.name,
-                    iconUrl = it.iconUrl,
-                )
-            },
+        user = entity.user?.let {
+            FanboxUser(
+                userId = FanboxUserId(
+                    it.userId.toLong(),
+                ),
+                creatorId = entity.creatorId?.let { id -> FanboxCreatorId(id) },
+                name = it.name,
+                iconUrl = it.iconUrl,
+            )
+        },
     )
 
     fun map(entity: FanboxCreatorDetailEntity): FanboxCreatorDetail = map(entity.body)
 
     fun map(entity: FanboxCreatorListEntity, endpoint: String): FanboxTolerantResult<List<FanboxCreatorDetail>> = listItemDecoder.decodeAndMap(
         endpoint = endpoint,
-        items = entity
-            .body
-            .creators,
+        items = entity.body.creators,
         deserializer = FanboxCreatorDetailEntity.Body.serializer(),
     ) { item, _ -> FanboxTolerantResult(map(item), emptyList()) }
 
@@ -118,9 +108,7 @@ internal class FanboxCreatorMapper(
             user = user?.let {
                 FanboxUser(
                     userId = FanboxUserId(
-                        it
-                            .userId
-                            .toLong(),
+                        it.userId.toLong(),
                     ),
                     creatorId = FanboxCreatorId(creatorId),
                     name = it.name,
@@ -132,9 +120,7 @@ internal class FanboxCreatorMapper(
 
     fun map(entity: FanboxCreatorPlanListEntity, endpoint: String): FanboxTolerantResult<List<FanboxCreatorPlan>> = listItemDecoder.decodeAndMap(
         endpoint = endpoint,
-        items = entity
-            .body
-            .plans,
+        items = entity.body.plans,
         deserializer = FanboxCreatorPlanListEntity.Plan.serializer(),
     ) { item, _ -> FanboxTolerantResult(map(item), emptyList()) }
 
@@ -150,9 +136,7 @@ internal class FanboxCreatorMapper(
             user = user?.let { user ->
                 FanboxUser(
                     userId = FanboxUserId(
-                        user
-                            .userId
-                            .toLong(),
+                        user.userId.toLong(),
                     ),
                     creatorId = creatorId?.let { id -> FanboxCreatorId(id) },
                     name = user.name,
@@ -172,22 +156,16 @@ internal class FanboxCreatorMapper(
                 coverImageUrl = plan.coverImageUrl,
                 hasAdultContent = plan.hasAdultContent,
                 paymentMethod = FanboxPaymentMethod.fromString(plan.paymentMethod),
-                user = plan
-                    .user
-                    ?.let {
-                        FanboxUser(
-                            userId = FanboxUserId(
-                                it
-                                    .userId
-                                    .toLong(),
-                            ),
-                            creatorId = plan
-                                .creatorId
-                                ?.let { id -> FanboxCreatorId(id) },
-                            name = it.name,
-                            iconUrl = it.iconUrl,
-                        )
-                    },
+                user = plan.user?.let {
+                    FanboxUser(
+                        userId = FanboxUserId(
+                            it.userId.toLong(),
+                        ),
+                        creatorId = plan.creatorId?.let { id -> FanboxCreatorId(id) },
+                        name = it.name,
+                        iconUrl = it.iconUrl,
+                    )
+                },
             ),
             supportStartDatetime = supportStartDatetime,
             supportTransactions = supportTransactions.map {
@@ -198,20 +176,11 @@ internal class FanboxCreatorMapper(
                     targetMonth = it.targetMonth,
                     user = FanboxUser(
                         userId = FanboxUserId(
-                            it
-                                .supporter
-                                .userId
-                                .toLong(),
+                            it.supporter.userId.toLong(),
                         ),
-                        creatorId = plan
-                            .creatorId
-                            ?.let { id -> FanboxCreatorId(id) },
-                        name = it
-                            .supporter
-                            .name,
-                        iconUrl = it
-                            .supporter
-                            .iconUrl,
+                        creatorId = plan.creatorId?.let { id -> FanboxCreatorId(id) },
+                        name = it.supporter.name,
+                        iconUrl = it.supporter.iconUrl,
                     ),
                 )
             },
@@ -219,14 +188,11 @@ internal class FanboxCreatorMapper(
         )
     }
 
-    fun map(entity: FanboxCreatorTagListEntity): List<FanboxTag> = entity
-        .body
-        .featuredTags
-        .map {
-            FanboxTag(
-                name = it.tag,
-                count = it.count,
-                coverImageUrl = it.coverImageUrl,
-            )
-        }
+    fun map(entity: FanboxCreatorTagListEntity): List<FanboxTag> = entity.body.featuredTags.map {
+        FanboxTag(
+            name = it.tag,
+            count = it.count,
+            coverImageUrl = it.coverImageUrl,
+        )
+    }
 }

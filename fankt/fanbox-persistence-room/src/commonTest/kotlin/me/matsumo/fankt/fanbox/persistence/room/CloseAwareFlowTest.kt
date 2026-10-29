@@ -219,8 +219,7 @@ private fun <T> CoroutineScope.collectOutcome(flow: Flow<T>, received: Channel<T
     }.exceptionOrNull()
 }
 
-private suspend fun Deferred<Throwable?>.awaitFailure(): Throwable =
-    checkNotNull(awaitOutcome()) { "The collection completed without failing" }
+private suspend fun Deferred<Throwable?>.awaitFailure(): Throwable = checkNotNull(awaitOutcome()) { "The collection completed without failing" }
 
 /**
  * Waits for the captured outcome without rethrowing a cancellation of this child itself, so a test
@@ -232,7 +231,6 @@ private suspend fun Deferred<Throwable?>.awaitOutcome(): Throwable? {
     return runCatching { getCompleted() }.fold(onSuccess = { it }, onFailure = { it })
 }
 
-private suspend fun <T> Channel<T>.receiveWithTimeout(): T =
-    withTimeout(TIMEOUT_MILLISECONDS) { receive() }
+private suspend fun <T> Channel<T>.receiveWithTimeout(): T = withTimeout(TIMEOUT_MILLISECONDS) { receive() }
 
 private const val TIMEOUT_MILLISECONDS: Long = 5_000

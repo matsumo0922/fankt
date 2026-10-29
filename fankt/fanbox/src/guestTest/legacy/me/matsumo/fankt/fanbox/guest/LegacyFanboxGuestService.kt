@@ -13,8 +13,7 @@ import me.matsumo.fankt.fanbox.response.FanboxResponses
 
 internal class LegacyFanboxGuestService : FanboxGuestService {
 
-    override fun buildPostDetailRequest(postId: String): RequestDescriptor =
-        FanboxEndpoints.postDetail(FanboxPostId(postId))
+    override fun buildPostDetailRequest(postId: String): RequestDescriptor = FanboxEndpoints.postDetail(FanboxPostId(postId))
 
     override fun parsePostDetail(body: String, statusCode: Int): GuestParseResult = try {
         val legacyPost = createFanboxJson().parseToJsonElement(body).jsonObject.getValue("body")

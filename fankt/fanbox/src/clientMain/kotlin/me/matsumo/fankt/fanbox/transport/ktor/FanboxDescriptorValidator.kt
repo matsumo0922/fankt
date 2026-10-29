@@ -32,34 +32,22 @@ internal object FanboxDescriptorValidator {
         }
 
         validateRelativePath(descriptor)
-        descriptor
-            .query
-            .forEach { parameter ->
-                if (parameter
-                        .name
-                        .isEmpty() || parameter
-                        .name
-                        .hasControlCharacter()
-                ) {
-                    invalid("FANBOX query parameter name is invalid")
-                }
+        descriptor.query.forEach { parameter ->
+            if (parameter.name.isEmpty() || parameter.name.hasControlCharacter()) {
+                invalid("FANBOX query parameter name is invalid")
             }
+        }
 
         val url = try {
             URLBuilder(policy.origin).apply {
-                encodedPath = if (descriptor
-                        .path
-                        .isEmpty()
-                ) {
+                encodedPath = if (descriptor.path.isEmpty()) {
                     "/"
                 } else {
                     "/${descriptor.path}"
                 }
-                descriptor
-                    .query
-                    .forEach { parameter ->
-                        parameters.append(parameter.name, parameter.value)
-                    }
+                descriptor.query.forEach { parameter ->
+                    parameters.append(parameter.name, parameter.value)
+                }
             }.build()
         } catch (_: IllegalArgumentException) {
             invalid("FANBOX request URL is malformed")
@@ -127,23 +115,14 @@ internal object FanboxDescriptorValidator {
             url.protocol != trustedOrigin.protocol ||
             url.host != trustedOrigin.host ||
             url.port != trustedOrigin.port
-        val hasCredentials = !url
-            .user
-            .isNullOrEmpty() || !url
-            .password
-            .isNullOrEmpty()
-        val escapedOrigin = hasWrongOrigin || hasCredentials || url
-            .fragment
-            .isNotEmpty()
+        val hasCredentials = !url.user.isNullOrEmpty() || !url.password.isNullOrEmpty()
+        val escapedOrigin = hasWrongOrigin || hasCredentials || url.fragment.isNotEmpty()
         if (escapedOrigin) {
             invalid("FANBOX request escaped its trusted origin")
         }
 
         val decodedSegments = try {
-            url
-                .encodedPath
-                .split('/')
-                .map(String::decodeURLPart)
+            url.encodedPath.split('/').map(String::decodeURLPart)
         } catch (_: IllegalArgumentException) {
             invalid("FANBOX request path is malformed")
         }

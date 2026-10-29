@@ -6,24 +6,16 @@ internal data class FanboxUrlParts(
     val encodedPath: String,
     val query: List<FanboxUrlQueryParameter>,
 ) {
-    fun queryValue(name: String): String? = query
-        .firstOrNull { it.name == name }
-        ?.value
+    fun queryValue(name: String): String? = query.firstOrNull { it.name == name }?.value
 
     companion object {
         fun parse(value: String): FanboxUrlParts {
-            val fragmentStart = value
-                .indexOf('#')
-                .takeIf { it >= 0 } ?: value.length
-            val queryStart = value
-                .indexOf('?')
-                .takeIf { it in 0 until fragmentStart }
+            val fragmentStart = value.indexOf('#').takeIf { it >= 0 } ?: value.length
+            val queryStart = value.indexOf('?').takeIf { it in 0 until fragmentStart }
             val pathEnd = queryStart ?: fragmentStart
             val authorityStart = authorityStart(value, pathEnd)
             val authorityEnd = authorityStart?.let { start ->
-                value
-                    .indexOf('/', start)
-                    .takeIf { it in start until pathEnd } ?: pathEnd
+                value.indexOf('/', start).takeIf { it in start until pathEnd } ?: pathEnd
             }
             val host = authorityStart?.let { start ->
                 parseHost(value.substring(start, checkNotNull(authorityEnd)))
@@ -43,12 +35,8 @@ internal data class FanboxUrlParts(
             if (schemeSeparator <= 0 || schemeSeparator >= pathEnd) return null
             val scheme = value.substring(0, schemeSeparator)
             require(
-                scheme
-                    .first()
-                    .isAsciiLetter() &&
-                    scheme
-                        .drop(1)
-                        .all { it.isAsciiLetter() || it.isAsciiDigit() || it in "+-." },
+                scheme.first().isAsciiLetter() &&
+                    scheme.drop(1).all { it.isAsciiLetter() || it.isAsciiDigit() || it in "+-." },
             ) {
                 "Malformed URL scheme"
             }
@@ -63,24 +51,20 @@ internal data class FanboxUrlParts(
                 require(end > 0) { "Malformed IPv6 host" }
                 hostAndPort.substring(1, end)
             } else {
-                hostAndPort
-                    .substringBefore(':')
-                    .also { require(it.isNotEmpty()) { "URL host is empty" } }
+                hostAndPort.substringBefore(':').also { require(it.isNotEmpty()) { "URL host is empty" } }
             }
         }
 
         private fun parseQuery(value: String): List<FanboxUrlQueryParameter> {
             if (value.isEmpty()) return emptyList()
-            return value
-                .split('&')
-                .mapNotNull { pair ->
-                    val separator = pair.indexOf('=')
-                    if (separator < 0) return@mapNotNull null
-                    FanboxUrlQueryParameter(
-                        name = percentDecode(pair.substring(0, separator)),
-                        value = percentDecode(pair.substring(separator + 1)),
-                    )
-                }
+            return value.split('&').mapNotNull { pair ->
+                val separator = pair.indexOf('=')
+                if (separator < 0) return@mapNotNull null
+                FanboxUrlQueryParameter(
+                    name = percentDecode(pair.substring(0, separator)),
+                    value = percentDecode(pair.substring(separator + 1)),
+                )
+            }
         }
 
         private fun Char.isAsciiLetter(): Boolean = this in 'A'..'Z' || this in 'a'..'z'
@@ -93,9 +77,7 @@ internal data class FanboxUrlParts(
             while (index < value.length) {
                 val char = value[index]
                 if (char == '+') {
-                    bytes += ' '
-                        .code
-                        .toByte()
+                    bytes += ' '.code.toByte()
                     index += 1
                 } else if (char == '%') {
                     require(index + 2 < value.length) { "Malformed percent escape" }
@@ -121,9 +103,7 @@ internal data class FanboxUrlParts(
                 }
             }
             return runCatching {
-                bytes
-                    .toByteArray()
-                    .decodeToString(throwOnInvalidSequence = true)
+                bytes.toByteArray().decodeToString(throwOnInvalidSequence = true)
             }.getOrElse { cause ->
                 throw IllegalArgumentException("Malformed UTF-8 escape", cause)
             }
@@ -132,7 +112,4 @@ internal data class FanboxUrlParts(
 }
 
 /** URL のクエリ名と値の組。 */
-internal data class FanboxUrlQueryParameter(
-    val name: String,
-    val value: String,
-)
+internal data class FanboxUrlQueryParameter(val name: String, val value: String)

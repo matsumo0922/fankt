@@ -29,28 +29,21 @@ class FanboxViewModel(
         }
 
         viewModelScope.launch(ioDispatcher) {
-            fanbox
-                .cookies
-                .collect { cookies ->
-                    uiState.update { state ->
-                        state.copy(
-                            sessionId = cookies
-                                .find { it.name == "FANBOXSESSID" }
-                                ?.value
-                                .orEmpty(),
-                        )
-                    }
+            fanbox.cookies.collect { cookies ->
+                uiState.update { state ->
+                    state.copy(
+                        sessionId = cookies.find { it.name == "FANBOXSESSID" }?.value.orEmpty(),
+                    )
                 }
+            }
         }
 
         viewModelScope.launch(ioDispatcher) {
-            fanbox
-                .csrfToken
-                .collect {
-                    uiState.update { state ->
-                        state.copy(csrfToken = it.orEmpty())
-                    }
+            fanbox.csrfToken.collect {
+                uiState.update { state ->
+                    state.copy(csrfToken = it.orEmpty())
                 }
+            }
         }
     }
 

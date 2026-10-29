@@ -42,9 +42,7 @@ internal fun FanboxScreen(
     modifier: Modifier = Modifier,
     viewModel: FanboxViewModel = viewModel(FanboxViewModel::class),
 ) {
-    val uiState by viewModel
-        .uiState
-        .collectAsStateWithLifecycle()
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
     val scope = rememberCoroutineScope()
     val context = LocalContext.current

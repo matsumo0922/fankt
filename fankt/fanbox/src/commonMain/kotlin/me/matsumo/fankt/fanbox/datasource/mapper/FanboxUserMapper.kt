@@ -38,42 +38,32 @@ internal class FanboxUserMapper(
 ) {
     fun map(entity: FanboxCreatorPlanListEntity, endpoint: String): FanboxTolerantResult<List<FanboxCreatorPlan>> = creatorMapper.map(entity, endpoint)
 
-    fun map(entity: FanboxCreatorPlanListStrictEntity): List<FanboxCreatorPlan> = entity
-        .body
-        .plans
-        .map(creatorMapper::map)
+    fun map(entity: FanboxCreatorPlanListStrictEntity): List<FanboxCreatorPlan> = entity.body.plans.map(creatorMapper::map)
 
-    fun map(entity: FanboxPaidRecordListEntity): List<FanboxPaidRecord> = entity
-        .body
-        .payments
-        .map {
-            FanboxPaidRecord(
-                id = it.id,
-                paidAmount = it.paidAmount,
-                paymentDateTime = Instant.parse(it.paymentDatetime),
-                paymentMethod = FanboxPaymentMethod.fromString(it.paymentMethod),
-                creator = creatorMapper.map(it.creator),
-            )
-        }
+    fun map(entity: FanboxPaidRecordListEntity): List<FanboxPaidRecord> = entity.body.payments.map {
+        FanboxPaidRecord(
+            id = it.id,
+            paidAmount = it.paidAmount,
+            paymentDateTime = Instant.parse(it.paymentDatetime),
+            paymentMethod = FanboxPaymentMethod.fromString(it.paymentMethod),
+            creator = creatorMapper.map(it.creator),
+        )
+    }
 
-    fun map(entity: FanboxNewsLettersEntity): List<FanboxNewsLetter> = entity
-        .body
-        .map {
-            FanboxNewsLetter(
-                id = FanboxNewsLetterId(it.id),
-                body = it.body,
-                createdAt = Instant.parse(it.createdAt),
-                creator = creatorMapper.map(it.creator),
-                isRead = it.isRead,
-            )
-        }
+    fun map(entity: FanboxNewsLettersEntity): List<FanboxNewsLetter> = entity.body.map {
+        FanboxNewsLetter(
+            id = FanboxNewsLetterId(it.id),
+            body = it.body,
+            createdAt = Instant.parse(it.createdAt),
+            creator = creatorMapper.map(it.creator),
+            isRead = it.isRead,
+        )
+    }
 
     fun map(entity: FanboxBellListEntity, endpoint: String): FanboxTolerantResult<PageNumberInfo<FanboxBell>> {
         val decoded = listItemDecoder.decodeAndMap(
             endpoint = endpoint,
-            items = entity
-                .body
-                .items,
+            items = entity.body.items,
             deserializer = BellItem.serializer(),
         ) { item, _ ->
             FanboxTolerantResult(
@@ -84,15 +74,12 @@ internal class FanboxUserMapper(
         return FanboxTolerantResult(
             value = PageNumberInfo(
                 contents = decoded.value,
-                nextPage = entity
-                    .body
-                    .nextUrl
-                    ?.let {
-                        FanboxUrlParts
-                            .parse(it)
-                            .queryValue("page")
-                            ?.toIntOrNull()
-                    },
+                nextPage = entity.body.nextUrl?.let {
+                    FanboxUrlParts
+                        .parse(it)
+                        .queryValue("page")
+                        ?.toIntOrNull()
+                },
             ),
             mismatches = decoded.mismatches,
         )
@@ -159,9 +146,7 @@ internal class FanboxUserMapper(
     fun map(entity: FanboxMetaDataEntity): FanboxMetaData = FanboxMetaData(
         apiUrl = entity.apiUrl,
         csrfToken = entity.csrfToken,
-        context = entity
-            .context
-            ?.let(::mapContext),
+        context = entity.context?.let(::mapContext),
     )
 
     private fun mapContext(context: MetadataContextEntity): MetadataContext = MetadataContext(
@@ -177,9 +162,7 @@ internal class FanboxUserMapper(
     )
 
     private fun mapMetadataUser(entity: MetadataUserEntity): MetadataUser = MetadataUser(
-        creatorId = entity
-            .creatorId
-            ?.let { id -> FanboxCreatorId(id) },
+        creatorId = entity.creatorId?.let { id -> FanboxCreatorId(id) },
         fanboxUserStatus = entity.fanboxUserStatus,
         hasAdultContent = entity.hasAdultContent ?: false,
         hasUnpaidPayments = entity.hasUnpaidPayments,
@@ -191,8 +174,6 @@ internal class FanboxUserMapper(
         name = entity.name,
         planCount = entity.planCount,
         showAdultContent = entity.showAdultContent,
-        userId = entity
-            .userId
-            ?.let { id -> FanboxUserId(id.toLong()) },
+        userId = entity.userId?.let { id -> FanboxUserId(id.toLong()) },
     )
 }

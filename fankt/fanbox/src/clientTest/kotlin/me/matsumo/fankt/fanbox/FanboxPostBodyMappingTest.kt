@@ -144,8 +144,7 @@ class FanboxPostBodyMappingTest {
         val fanbox = createFanbox(FanboxPostJsonFixtures.postInfoArticleUrlEmbeds)
         try {
             val actual = fanbox.getPostDetail(FanboxPostId("10000003"))
-            val links = assertIs<FanboxPostDetail.Body.Article>(actual.body).blocks
-                .filterIsInstance<FanboxPostDetail.Body.Article.Block.Link>()
+            val links = assertIs<FanboxPostDetail.Body.Article>(actual.body).blocks.filterIsInstance<FanboxPostDetail.Body.Article.Block.Link>()
 
             assertEquals(
                 listOf("default", "html", "html.card", "fanbox.post"),

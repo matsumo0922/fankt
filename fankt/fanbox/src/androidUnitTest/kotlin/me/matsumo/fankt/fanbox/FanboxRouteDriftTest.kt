@@ -69,9 +69,7 @@ class FanboxRouteDriftTest {
         assertEquals(FanboxHttpMethod.GET, strictDescriptor.method)
         assertEquals(
             listOf("plan.listSupporting.strict", "plan.listSupporting.tolerant"),
-            fanboxResponseOperations
-                .filter { it.endpointId == FanboxEndpointIds.planListSupporting }
-                .map { it.name },
+            fanboxResponseOperations.filter { it.endpointId == FanboxEndpointIds.planListSupporting }.map { it.name },
         )
         assertEquals(
             setOf(FanboxEndpointIds.planListSupporting),

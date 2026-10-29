@@ -69,9 +69,7 @@ internal fun FanboxRequestsContent(
     modifier: Modifier = Modifier,
 ) {
     val functions = remember {
-        classInstance::class.memberFunctions
-            .filter { it.visibility == KVisibility.PUBLIC && it.isSuspend && it.name !in excludeMethod }
-            .sortedFunctions()
+        classInstance::class.memberFunctions.filter { it.visibility == KVisibility.PUBLIC && it.isSuspend && it.name !in excludeMethod }.sortedFunctions()
     }
 
     LazyColumn(
@@ -98,9 +96,7 @@ private fun RequestItem(
     var requestResult by remember { mutableStateOf<Any?>(null) }
     var isExpanded by rememberSaveable { mutableStateOf(false) }
     val isPost = (
-        function
-            .returnType
-            .jvmErasure == Unit::class
+        function.returnType.jvmErasure == Unit::class
         )
 
     Column(
@@ -140,10 +136,7 @@ private fun RequestItem(
                 ParameterItem(
                     modifier = Modifier.padding(horizontal = 16.dp),
                     name = key,
-                    type = parameter
-                        .type
-                        .jvmErasure
-                        .simpleName ?: "Unknown",
+                    type = parameter.type.jvmErasure.simpleName ?: "Unknown",
                     onValueChange = { params[key] = it },
                 )
             }
@@ -220,10 +213,7 @@ private fun ParameterItem(
         ) {
             Text(
                 text = name,
-                style = MaterialTheme
-                    .typography
-                    .bodyMedium
-                    .bold(),
+                style = MaterialTheme.typography.bodyMedium.bold(),
             )
 
             Text(
@@ -279,10 +269,7 @@ private fun RequestTypeBadge(
         Text(
             modifier = Modifier.padding(8.dp, 4.dp),
             text = text,
-            style = MaterialTheme
-                .typography
-                .bodyMedium
-                .bold(),
+            style = MaterialTheme.typography.bodyMedium.bold(),
         )
     }
 }
@@ -292,10 +279,7 @@ private suspend fun executeRequest(
     classInstance: Fanbox,
     params: Map<String, String>,
 ): Any? {
-    val typedParams = function
-        .parameters
-        .mapNotNull { it.name }
-        .map { name -> function.parseParameter(name, params) }
+    val typedParams = function.parameters.mapNotNull { it.name }.map { name -> function.parseParameter(name, params) }
 
     Napier.d { "Call: ${function.name}(${typedParams.joinToString(separator = ", ")})" }
 
@@ -311,10 +295,7 @@ private suspend fun executeRequest(
 }
 
 private fun KFunction<*>.parseParameter(name: String, params: Map<String, String>): Any? {
-    val type = parameters
-        .first { parameter -> parameter.name == name }
-        .type
-        .jvmErasure
+    val type = parameters.first { parameter -> parameter.name == name }.type.jvmErasure
     val value = params[name] ?: getDefaultValue(name) ?: return null
 
     return when (type) {
@@ -355,35 +336,23 @@ private fun List<KFunction<*>>.sortedFunctions(): List<KFunction<*>> {
     val actionOrder = listOf("add", "delete", "follow", "unfollow", "like", "get", "search")
     val grouped = groupBy { function ->
         val action = actionOrder.find {
-            function
-                .name
-                .startsWith(it)
+            function.name.startsWith(it)
         }.orEmpty()
-        function
-            .name
-            .removePrefix(action)
+        function.name.removePrefix(action)
     }
 
-    val sortedGroup = grouped.values
-        .sortedBy { group ->
-            actionIndex(
-                name = group
-                    .first()
-                    .name,
-                actionOrder = actionOrder,
-            )
-        }
-        .map { group -> group.sortedBy { function -> actionIndex(function.name, actionOrder) } }
+    val sortedGroup = grouped.values.sortedBy { group ->
+        actionIndex(
+            name = group.first().name,
+            actionOrder = actionOrder,
+        )
+    }.map { group -> group.sortedBy { function -> actionIndex(function.name, actionOrder) } }
 
     return sortedGroup.flatten()
 }
 
 private fun actionIndex(name: String, actionOrder: List<String>): Int {
-    val action = actionOrder
-        .find { name.startsWith(it) }
-        .orEmpty()
+    val action = actionOrder.find { name.startsWith(it) }.orEmpty()
 
-    return actionOrder
-        .indexOf(action)
-        .takeIf { it != -1 } ?: Int.MAX_VALUE
+    return actionOrder.indexOf(action).takeIf { it != -1 } ?: Int.MAX_VALUE
 }

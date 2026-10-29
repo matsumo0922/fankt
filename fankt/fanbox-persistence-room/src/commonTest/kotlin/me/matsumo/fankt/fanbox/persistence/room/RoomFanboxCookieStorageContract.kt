@@ -142,10 +142,9 @@ private fun CoroutineScope.collectStorageOutcome(cookies: Flow<List<FanboxCookie
     runCatching { cookies.collect { records -> observed.send(records) } }.exceptionOrNull()
 }
 
-private suspend fun Deferred<Throwable?>.awaitFailure(): Throwable =
-    checkNotNull(withTimeout(CONTRACT_TIMEOUT_MILLISECONDS) { await() }) {
-        "The collection completed without failing"
-    }
+private suspend fun Deferred<Throwable?>.awaitFailure(): Throwable = checkNotNull(withTimeout(CONTRACT_TIMEOUT_MILLISECONDS) { await() }) {
+    "The collection completed without failing"
+}
 
 private suspend fun Channel<List<FanboxCookieRecord>>.awaitRecordNamed(name: String) {
     withTimeout(CONTRACT_TIMEOUT_MILLISECONDS) {

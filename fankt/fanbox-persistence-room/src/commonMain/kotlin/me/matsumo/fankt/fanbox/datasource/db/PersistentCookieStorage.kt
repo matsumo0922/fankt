@@ -17,9 +17,7 @@ internal class PersistentCookieStorage(
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
 ) : FanboxCookieStorage {
     override val cookies: Flow<List<FanboxCookieRecord>> =
-        cookieDao
-            .getAllCookies()
-            .map { entities -> entities.map(CookieEntity::toRecord) }
+        cookieDao.getAllCookies().map { entities -> entities.map(CookieEntity::toRecord) }
 
     override suspend fun snapshot(): List<FanboxCookieRecord> = withContext(ioDispatcher) {
         cookieDao

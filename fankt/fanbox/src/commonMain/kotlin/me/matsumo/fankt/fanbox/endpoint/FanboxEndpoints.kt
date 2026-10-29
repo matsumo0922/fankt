@@ -161,9 +161,7 @@ internal object FanboxEndpoints {
         buildJsonObject {
             put(
                 "creatorUserId",
-                userId
-                    .value
-                    .toString(),
+                userId.value.toString(),
             )
         }.toString(),
     )
@@ -174,9 +172,7 @@ internal object FanboxEndpoints {
         buildJsonObject {
             put(
                 "creatorUserId",
-                userId
-                    .value
-                    .toString(),
+                userId.value.toString(),
             )
         }.toString(),
     )
@@ -269,6 +265,5 @@ internal object FanboxEndpoints {
         jsonBody = jsonBody,
     )
 
-    private fun query(vararg values: Pair<String, String?>): List<FanboxQueryParameter> =
-        values.mapNotNull { (name, value) -> value?.let { FanboxQueryParameter(name, it) } }
+    private fun query(vararg values: Pair<String, String?>): List<FanboxQueryParameter> = values.mapNotNull { (name, value) -> value?.let { FanboxQueryParameter(name, it) } }
 }

@@ -61,6 +61,7 @@ import me.matsumo.fankt.fanbox.transport.ktor.KtorFanboxRequestExecutor
  * 永続化には保存領域を明示的に注入し、Room を使う場合は `fanbox-persistence-room` を使用する。
  * [close] は注入された保存領域を終了・消去しないため、保存領域を閉じる前にこの [Fanbox] を閉じる。
  */
+// 既存の例外契約を維持する。Result への移行は https://github.com/matsumo0922/fankt/issues/117 で扱う。
 // 公開 API の facade として endpoint を集約する。
 @Suppress("TooManyFunctions")
 class Fanbox internal constructor(
@@ -299,9 +300,7 @@ class Fanbox internal constructor(
     }
 
     /** @throws FanboxException when the FANBOX request or response decoding fails. */
-    suspend fun getHomePosts(cursor: FanboxCursor?): PageCursorInfo<FanboxPost> = post
-        .getHomePosts(cursor)
-        .value
+    suspend fun getHomePosts(cursor: FanboxCursor?): PageCursorInfo<FanboxPost> = post.getHomePosts(cursor).value
 
     /**
      * Returns home posts and reports each skipped item before returning.
@@ -309,32 +308,24 @@ class Fanbox internal constructor(
      * [onItemSchemaMismatch] runs on the caller's coroutine context. An exception from the callback
      * is propagated to the caller.
      */
-    suspend fun getHomePosts(cursor: FanboxCursor?, onItemSchemaMismatch: (FanboxListItemSchemaMismatch) -> Unit): PageCursorInfo<FanboxPost> = post
-        .getHomePosts(cursor)
-        .notifyMismatches(onItemSchemaMismatch)
+    suspend fun getHomePosts(cursor: FanboxCursor?, onItemSchemaMismatch: (FanboxListItemSchemaMismatch) -> Unit): PageCursorInfo<FanboxPost> = post.getHomePosts(cursor).notifyMismatches(onItemSchemaMismatch)
 
     /** @throws FanboxException when the FANBOX request or response decoding fails. */
-    suspend fun getSupportedPosts(cursor: FanboxCursor?): PageCursorInfo<FanboxPost> = post
-        .getSupportedPosts(cursor)
-        .value
+    suspend fun getSupportedPosts(cursor: FanboxCursor?): PageCursorInfo<FanboxPost> = post.getSupportedPosts(cursor).value
 
     /** Returns supported posts and reports each skipped item on the caller's coroutine context. */
-    suspend fun getSupportedPosts(cursor: FanboxCursor?, onItemSchemaMismatch: (FanboxListItemSchemaMismatch) -> Unit): PageCursorInfo<FanboxPost> = post
-        .getSupportedPosts(cursor)
-        .notifyMismatches(onItemSchemaMismatch)
+    suspend fun getSupportedPosts(cursor: FanboxCursor?, onItemSchemaMismatch: (FanboxListItemSchemaMismatch) -> Unit): PageCursorInfo<FanboxPost> = post.getSupportedPosts(cursor).notifyMismatches(onItemSchemaMismatch)
 
     /** @throws FanboxException when the FANBOX request or response decoding fails. */
     suspend fun getCreatorPosts(
         creatorId: FanboxCreatorId,
         cursor: FanboxCursor?,
         nextCursor: FanboxCursor?,
-    ): PageCursorInfo<FanboxPost> = post
-        .getCreatorPosts(
-            creatorId = creatorId,
-            cursor = cursor,
-            nextCursor = nextCursor,
-        )
-        .value
+    ): PageCursorInfo<FanboxPost> = post.getCreatorPosts(
+        creatorId = creatorId,
+        cursor = cursor,
+        nextCursor = nextCursor,
+    ).value
 
     /** Returns creator posts and reports each skipped item on the caller's coroutine context. */
     suspend fun getCreatorPosts(
@@ -342,13 +333,11 @@ class Fanbox internal constructor(
         cursor: FanboxCursor?,
         nextCursor: FanboxCursor?,
         onItemSchemaMismatch: (FanboxListItemSchemaMismatch) -> Unit,
-    ): PageCursorInfo<FanboxPost> = post
-        .getCreatorPosts(
-            creatorId = creatorId,
-            cursor = cursor,
-            nextCursor = nextCursor,
-        )
-        .notifyMismatches(onItemSchemaMismatch)
+    ): PageCursorInfo<FanboxPost> = post.getCreatorPosts(
+        creatorId = creatorId,
+        cursor = cursor,
+        nextCursor = nextCursor,
+    ).notifyMismatches(onItemSchemaMismatch)
 
     /** @throws FanboxException when the FANBOX request or response decoding fails. */
     suspend fun getCreatorPostsPagination(creatorId: FanboxCreatorId): List<FanboxCursor> = post.getCreatorPostsPagination(creatorId)
@@ -357,18 +346,14 @@ class Fanbox internal constructor(
     suspend fun getPostDetail(postId: FanboxPostId): FanboxPostDetail = post.getPostDetail(postId)
 
     /** @throws FanboxException when the FANBOX request or response decoding fails. */
-    suspend fun getPostComment(postId: FanboxPostId, offset: Int): PageOffsetInfo<FanboxComment> = post
-        .getPostComment(postId, offset)
-        .value
+    suspend fun getPostComment(postId: FanboxPostId, offset: Int): PageOffsetInfo<FanboxComment> = post.getPostComment(postId, offset).value
 
     /** Returns comments and reports each skipped comment or reply on the caller's coroutine context. */
     suspend fun getPostComment(
         postId: FanboxPostId,
         offset: Int,
         onItemSchemaMismatch: (FanboxListItemSchemaMismatch) -> Unit,
-    ): PageOffsetInfo<FanboxComment> = post
-        .getPostComment(postId, offset)
-        .notifyMismatches(onItemSchemaMismatch)
+    ): PageOffsetInfo<FanboxComment> = post.getPostComment(postId, offset).notifyMismatches(onItemSchemaMismatch)
 
     /** @throws FanboxException when the FANBOX request or response decoding fails. */
     suspend fun getPostFromQuery(
@@ -414,44 +399,28 @@ class Fanbox internal constructor(
     suspend fun getCreatorDetail(creatorId: FanboxCreatorId): FanboxCreatorDetail = creator.getCreatorDetail(creatorId)
 
     /** @throws FanboxException when the FANBOX request or response decoding fails. */
-    suspend fun getFollowingCreators(): List<FanboxCreatorDetail> = creator
-        .getFollowingCreators()
-        .value
+    suspend fun getFollowingCreators(): List<FanboxCreatorDetail> = creator.getFollowingCreators().value
 
     /** Returns followed creators and reports each skipped item on the caller's coroutine context. */
-    suspend fun getFollowingCreators(onItemSchemaMismatch: (FanboxListItemSchemaMismatch) -> Unit): List<FanboxCreatorDetail> = creator
-        .getFollowingCreators()
-        .notifyMismatches(onItemSchemaMismatch)
+    suspend fun getFollowingCreators(onItemSchemaMismatch: (FanboxListItemSchemaMismatch) -> Unit): List<FanboxCreatorDetail> = creator.getFollowingCreators().notifyMismatches(onItemSchemaMismatch)
 
     /** @throws FanboxException when the FANBOX request or response decoding fails. */
-    suspend fun getFollowingPixivCreators(): List<FanboxCreatorDetail> = creator
-        .getFollowingPixivCreators()
-        .value
+    suspend fun getFollowingPixivCreators(): List<FanboxCreatorDetail> = creator.getFollowingPixivCreators().value
 
     /** Returns followed pixiv creators and reports each skipped item on the caller's coroutine context. */
-    suspend fun getFollowingPixivCreators(onItemSchemaMismatch: (FanboxListItemSchemaMismatch) -> Unit): List<FanboxCreatorDetail> = creator
-        .getFollowingPixivCreators()
-        .notifyMismatches(onItemSchemaMismatch)
+    suspend fun getFollowingPixivCreators(onItemSchemaMismatch: (FanboxListItemSchemaMismatch) -> Unit): List<FanboxCreatorDetail> = creator.getFollowingPixivCreators().notifyMismatches(onItemSchemaMismatch)
 
     /** @throws FanboxException when the FANBOX request or response decoding fails. */
-    suspend fun getRecommendedCreators(): List<FanboxCreatorDetail> = creator
-        .getRecommendedCreators()
-        .value
+    suspend fun getRecommendedCreators(): List<FanboxCreatorDetail> = creator.getRecommendedCreators().value
 
     /** Returns recommended creators and reports each skipped item on the caller's coroutine context. */
-    suspend fun getRecommendedCreators(onItemSchemaMismatch: (FanboxListItemSchemaMismatch) -> Unit): List<FanboxCreatorDetail> = creator
-        .getRecommendedCreators()
-        .notifyMismatches(onItemSchemaMismatch)
+    suspend fun getRecommendedCreators(onItemSchemaMismatch: (FanboxListItemSchemaMismatch) -> Unit): List<FanboxCreatorDetail> = creator.getRecommendedCreators().notifyMismatches(onItemSchemaMismatch)
 
     /** @throws FanboxException when the FANBOX request or response decoding fails. */
-    suspend fun getCreatorPlans(creatorId: FanboxCreatorId): List<FanboxCreatorPlan> = creator
-        .getCreatorPlans(creatorId)
-        .value
+    suspend fun getCreatorPlans(creatorId: FanboxCreatorId): List<FanboxCreatorPlan> = creator.getCreatorPlans(creatorId).value
 
     /** Returns creator plans and reports each skipped item on the caller's coroutine context. */
-    suspend fun getCreatorPlans(creatorId: FanboxCreatorId, onItemSchemaMismatch: (FanboxListItemSchemaMismatch) -> Unit): List<FanboxCreatorPlan> = creator
-        .getCreatorPlans(creatorId)
-        .notifyMismatches(onItemSchemaMismatch)
+    suspend fun getCreatorPlans(creatorId: FanboxCreatorId, onItemSchemaMismatch: (FanboxListItemSchemaMismatch) -> Unit): List<FanboxCreatorPlan> = creator.getCreatorPlans(creatorId).notifyMismatches(onItemSchemaMismatch)
 
     /** @throws FanboxException when the FANBOX request or response decoding fails. */
     suspend fun getCreatorPlanDetail(creatorId: FanboxCreatorId): FanboxCreatorPlanDetail = creator.getCreatorPlanDetail(creatorId)
@@ -484,9 +453,7 @@ class Fanbox internal constructor(
      * The no-callback overload remains strict and fails the whole request when any plan item cannot
      * be decoded. Use this overload to opt into partial results.
      */
-    suspend fun getSupportedPlans(onItemSchemaMismatch: (FanboxListItemSchemaMismatch) -> Unit): List<FanboxCreatorPlan> = user
-        .getSupportedPlansTolerant()
-        .notifyMismatches(onItemSchemaMismatch)
+    suspend fun getSupportedPlans(onItemSchemaMismatch: (FanboxListItemSchemaMismatch) -> Unit): List<FanboxCreatorPlan> = user.getSupportedPlansTolerant().notifyMismatches(onItemSchemaMismatch)
 
     /** @throws FanboxException when the FANBOX request or response decoding fails. */
     suspend fun getPaidRecords(): List<FanboxPaidRecord> = user.getPaidRecords()
@@ -512,9 +479,7 @@ class Fanbox internal constructor(
      *
      * @throws FanboxException when the FANBOX request or response decoding fails.
      */
-    suspend fun getBells(page: Int, markNotificationsRead: Boolean): PageNumberInfo<FanboxBell> = user
-        .getBells(page, markNotificationsRead)
-        .value
+    suspend fun getBells(page: Int, markNotificationsRead: Boolean): PageNumberInfo<FanboxBell> = user.getBells(page, markNotificationsRead).value
 
     /**
      * Returns notifications and reports each skipped item on the caller's coroutine context.
@@ -537,9 +502,7 @@ class Fanbox internal constructor(
         page: Int,
         onItemSchemaMismatch: (FanboxListItemSchemaMismatch) -> Unit,
         markNotificationsRead: Boolean,
-    ): PageNumberInfo<FanboxBell> = user
-        .getBells(page, markNotificationsRead)
-        .notifyMismatches(onItemSchemaMismatch)
+    ): PageNumberInfo<FanboxBell> = user.getBells(page, markNotificationsRead).notifyMismatches(onItemSchemaMismatch)
 
     /** @throws FanboxException when homepage metadata cannot be fetched or decoded. */
     suspend fun getMetadata(): FanboxMetaData = user.getMetadata()
@@ -578,11 +541,9 @@ class Fanbox internal constructor(
         try {
             try {
                 withContext(downloadJob) {
-                    client
-                        .prepareGet(validatedUrl.toString())
-                        .execute { response ->
-                            deliverDownload(response, callbacks)
-                        }
+                    client.prepareGet(validatedUrl.toString()).execute { response ->
+                        deliverDownload(response, callbacks)
+                    }
                 }
             } catch (failure: Throwable) {
                 throw callbacks.failure ?: failure
@@ -598,9 +559,7 @@ class Fanbox internal constructor(
 
         var failure: Throwable? = null
         try {
-            resources
-                .guestHost
-                ?.close()
+            resources.guestHost?.close()
         } catch (closeFailure: Throwable) {
             failure = closeFailure
         }
@@ -634,10 +593,7 @@ private data class FanboxResources(
 )
 
 /** ダウンロードの callback が投げた例外を保持し、transport の失敗と区別する。 */
-private class DownloadCallbacks(
-    private val onProgress: (Float) -> Unit,
-    private val onChunk: suspend (ByteArray) -> Unit,
-) {
+private class DownloadCallbacks(private val onProgress: (Float) -> Unit, private val onChunk: suspend (ByteArray) -> Unit) {
     var failure: Throwable? = null
         private set
 
@@ -656,9 +612,7 @@ private class DownloadCallbacks(
 }
 
 private suspend fun deliverDownload(response: HttpResponse, callbacks: DownloadCallbacks) {
-    val contentLength = response.headers[HttpHeaders.ContentLength]
-        ?.toLongOrNull()
-        ?.takeIf { it > 0L }
+    val contentLength = response.headers[HttpHeaders.ContentLength]?.toLongOrNull()?.takeIf { it > 0L }
     val channel = normalizeDownloadTransport { response.bodyAsChannel() }
     val buffer = ByteArray(64 * 1_024)
     var deliveredBytes = 0L
@@ -676,9 +630,7 @@ private suspend fun deliverDownload(response: HttpResponse, callbacks: DownloadC
         deliveredBytes += chunk.size
         if (contentLength != null) {
             callbacks.report(
-                progress = (deliveredBytes.toDouble() / contentLength)
-                    .toFloat()
-                    .coerceIn(0f, 1f),
+                progress = (deliveredBytes.toDouble() / contentLength).toFloat().coerceIn(0f, 1f),
             )
         }
     }

@@ -20,9 +20,7 @@ data class FanboxCreatorDetail(
     val profileLinks: List<ProfileLink>,
     val user: FanboxUser?,
 ) {
-    val supportingBrowserUrl get() = "https://www.fanbox.cc/creators/supporting/@${user
-        ?.creatorId
-        ?.value}"
+    val supportingBrowserUrl get() = "https://www.fanbox.cc/creators/supporting/@${user?.creatorId?.value}"
 
     /** A profile item classified from the `creator.get` item type. */
     @Serializable
@@ -77,10 +75,7 @@ data class FanboxCreatorDetail(
     }
 
     @Serializable
-    data class ProfileLink(
-        val url: String,
-        val link: Platform,
-    )
+    data class ProfileLink(val url: String, val link: Platform)
 
     @Serializable
     enum class Platform {

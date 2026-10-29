@@ -65,8 +65,7 @@ internal object FanboxFailureInterpreter {
         cause = cause,
     )
 
-    fun network(endpoint: String, cause: Throwable): FanboxException.Network =
-        FanboxException.Network(endpoint, cause)
+    fun network(endpoint: String, cause: Throwable): FanboxException.Network = FanboxException.Network(endpoint, cause)
 
     fun parseRetryAfter(value: String?, nowEpochMilliseconds: Long): Duration? {
         if (value == null) return null
@@ -76,9 +75,7 @@ internal object FanboxFailureInterpreter {
             .toLongOrNull()
             ?.let { seconds ->
                 if (seconds < 0) return null
-                return seconds
-                    .seconds
-                    .takeIf { it.isFinite() }
+                return seconds.seconds.takeIf { it.isFinite() }
             }
 
         val targetEpochMilliseconds = parseHttpDate(value) ?: return null
@@ -89,9 +86,7 @@ internal object FanboxFailureInterpreter {
             return null
         }
         if (targetEpochMilliseconds <= nowEpochMilliseconds) return Duration.ZERO
-        return deltaMilliseconds
-            .milliseconds
-            .takeIf { it.isFinite() }
+        return deltaMilliseconds.milliseconds.takeIf { it.isFinite() }
     }
 
     private fun parseHttpDate(value: String): Long? {
@@ -104,39 +99,27 @@ internal object FanboxFailureInterpreter {
         val second = match.groupValues[6].toIntOrNull() ?: return null
         val iso = buildString {
             append(
-                year
-                    .toString()
-                    .padStart(4, '0'),
+                year.toString().padStart(4, '0'),
             )
             append('-')
             append(
-                month
-                    .toString()
-                    .padStart(2, '0'),
+                month.toString().padStart(2, '0'),
             )
             append('-')
             append(
-                day
-                    .toString()
-                    .padStart(2, '0'),
+                day.toString().padStart(2, '0'),
             )
             append('T')
             append(
-                hour
-                    .toString()
-                    .padStart(2, '0'),
+                hour.toString().padStart(2, '0'),
             )
             append(':')
             append(
-                minute
-                    .toString()
-                    .padStart(2, '0'),
+                minute.toString().padStart(2, '0'),
             )
             append(':')
             append(
-                second
-                    .toString()
-                    .padStart(2, '0'),
+                second.toString().padStart(2, '0'),
             )
             append('Z')
         }

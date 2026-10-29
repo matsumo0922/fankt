@@ -66,18 +66,13 @@ internal class FanboxPostMapper(
     fun map(entity: FanboxPostListEntity, endpoint: String): FanboxTolerantResult<PageCursorInfo<FanboxPost>> {
         val decoded = listItemDecoder.decodeAndMap(
             endpoint = endpoint,
-            items = entity
-                .body
-                .items,
+            items = entity.body.items,
             deserializer = FanboxPostEntity.serializer(),
         ) { item, _ -> FanboxTolerantResult(map(item), emptyList()) }
         return FanboxTolerantResult(
             value = PageCursorInfo(
                 contents = decoded.value,
-                cursor = entity
-                    .body
-                    .nextUrl
-                    ?.translateToCursor(),
+                cursor = entity.body.nextUrl?.translateToCursor(),
             ),
             mismatches = decoded.mismatches,
         )
@@ -90,9 +85,7 @@ internal class FanboxPostMapper(
     ): FanboxTolerantResult<PageCursorInfo<FanboxPost>> {
         val decoded = listItemDecoder.decodeAndMap(
             endpoint = endpoint,
-            items = entity
-                .body
-                .posts,
+            items = entity.body.posts,
             deserializer = FanboxPostEntity.serializer(),
         ) { item, _ -> FanboxTolerantResult(map(item), emptyList()) }
         return FanboxTolerantResult(
@@ -117,34 +110,26 @@ internal class FanboxPostMapper(
         isRestricted = entity.isRestricted,
         hasAdultContent = entity.hasAdultContent,
         tags = entity.tags,
-        cover = entity
-            .cover
-            ?.let { cover ->
-                FanboxCover(
-                    type = cover.type,
-                    url = cover.url,
-                )
-            },
-        user = entity
-            .user
-            ?.let {
-                FanboxUser(
-                    userId = FanboxUserId(
-                        it
-                            .userId
-                            .toLong(),
-                    ),
-                    creatorId = FanboxCreatorId(entity.creatorId),
-                    name = it.name,
-                    iconUrl = it.iconUrl,
-                )
-            },
+        cover = entity.cover?.let { cover ->
+            FanboxCover(
+                type = cover.type,
+                url = cover.url,
+            )
+        },
+        user = entity.user?.let {
+            FanboxUser(
+                userId = FanboxUserId(
+                    it.userId.toLong(),
+                ),
+                creatorId = FanboxCreatorId(entity.creatorId),
+                name = it.name,
+                iconUrl = it.iconUrl,
+            )
+        },
     )
 
     fun map(entity: FanboxPostDetailEntity): FanboxPostDetail {
-        val post = entity
-            .body
-            .post
+        val post = entity.body.post
         val bodyBlock = mapBody(post)
 
         return FanboxPostDetail(
@@ -160,40 +145,32 @@ internal class FanboxPostMapper(
             isRestricted = post.isRestricted,
             hasAdultContent = post.hasAdultContent,
             tags = post.tags,
-            user = post
-                .user
-                ?.let {
-                    FanboxUser(
-                        userId = FanboxUserId(
-                            it
-                                .userId
-                                .toLong(),
-                        ),
-                        creatorId = FanboxCreatorId(post.creatorId),
-                        name = it.name,
-                        iconUrl = it.iconUrl,
-                    )
-                },
+            user = post.user?.let {
+                FanboxUser(
+                    userId = FanboxUserId(
+                        it.userId.toLong(),
+                    ),
+                    creatorId = FanboxCreatorId(post.creatorId),
+                    name = it.name,
+                    iconUrl = it.iconUrl,
+                )
+            },
             body = bodyBlock,
             excerpt = post.excerpt,
-            nextPost = post
-                .nextPost
-                ?.let {
-                    OtherPost(
-                        id = FanboxPostId(it.id),
-                        title = it.title,
-                        publishedDatetime = Instant.parse(it.publishedDatetime),
-                    )
-                },
-            prevPost = post
-                .prevPost
-                ?.let {
-                    OtherPost(
-                        id = FanboxPostId(it.id),
-                        title = it.title,
-                        publishedDatetime = Instant.parse(it.publishedDatetime),
-                    )
-                },
+            nextPost = post.nextPost?.let {
+                OtherPost(
+                    id = FanboxPostId(it.id),
+                    title = it.title,
+                    publishedDatetime = Instant.parse(it.publishedDatetime),
+                )
+            },
+            prevPost = post.prevPost?.let {
+                OtherPost(
+                    id = FanboxPostId(it.id),
+                    title = it.title,
+                    publishedDatetime = Instant.parse(it.publishedDatetime),
+                )
+            },
             imageForShare = post.imageForShare,
         )
     }
@@ -207,9 +184,7 @@ internal class FanboxPostMapper(
             "file" -> mapFileBody(post, formatter.decodeFromJsonElement(requireKnownBody(post)))
 
             "text" -> mapLegacyBody(post) { body ->
-                body
-                    .text
-                    ?.let { Body.Text(it) }
+                body.text?.let { Body.Text(it) }
             }
 
             "video" -> mapLegacyBody(post) { body ->
@@ -220,9 +195,7 @@ internal class FanboxPostMapper(
             }
 
             "entry" -> mapLegacyBody(post) { body ->
-                body
-                    .html
-                    ?.let { Body.Html(it) }
+                body.html?.let { Body.Html(it) }
             }
 
             else -> unknownBody(post)
@@ -240,24 +213,19 @@ internal class FanboxPostMapper(
 
     private fun unknownBody(post: PostEntity) = Body.Unknown(
         type = post.type,
-        rawBodyJson = post
-            .body
-            ?.toString(),
+        rawBodyJson = post.body?.toString(),
     )
 
-    private fun requireKnownBody(post: PostEntity) =
-        post.body ?: throw SerializationException("post.body is null for known post type '${post.type}'")
+    private fun requireKnownBody(post: PostEntity) = post.body ?: throw SerializationException("post.body is null for known post type '${post.type}'")
 
     private fun mapArticleBody(post: PostEntity, body: PostBody): Body.Article = Body.Article(
-        blocks = body
-            .blocks
-            .mapNotNull { rawBlock ->
-                mapArticleBlock(
-                    post = post,
-                    body = body,
-                    rawBlock = rawBlock,
-                )
-            },
+        blocks = body.blocks.mapNotNull { rawBlock ->
+            mapArticleBlock(
+                post = post,
+                body = body,
+                rawBlock = rawBlock,
+            )
+        },
     )
 
     private fun mapArticleBlock(
@@ -265,9 +233,7 @@ internal class FanboxPostMapper(
         body: PostBody,
         rawBlock: JsonObject,
     ): ArticleBlock? {
-        val blockType = (rawBlock["type"] as? JsonPrimitive)
-            ?.takeIf { it.isString }
-            ?.content
+        val blockType = (rawBlock["type"] as? JsonPrimitive)?.takeIf { it.isString }?.content
 
         return when (blockType) {
             "p", "header" -> mapArticleText(
@@ -307,14 +273,8 @@ internal class FanboxPostMapper(
 
         return ArticleBlock.Text(
             text = text,
-            styles = block
-                .styles
-                .orEmpty()
-                .mapNotNull(::mapStyleSpan),
-            links = block
-                .links
-                .orEmpty()
-                .mapNotNull(::mapLinkSpan),
+            styles = block.styles.orEmpty().mapNotNull(::mapStyleSpan),
+            links = block.links.orEmpty().mapNotNull(::mapLinkSpan),
             isHeader = isHeader,
         )
     }
@@ -349,21 +309,18 @@ internal class FanboxPostMapper(
         rawBlock: JsonObject,
     ): ArticleBlock {
         val block = decodeKnownBlock(rawBlock)
-        return block
-            .imageId
-            ?.let { body.imageMap[it] }
-            ?.let { image ->
-                ArticleBlock.Image(
-                    item = ImageItem(
-                        id = FanboxPostItemId(image.id),
-                        postId = FanboxPostId(post.id),
-                        extension = image.extension,
-                        originalUrl = image.originalUrl,
-                        thumbnailUrl = image.thumbnailUrl,
-                        aspectRatio = image.aspectRatio(),
-                    ),
-                )
-            } ?: ArticleBlock.Unknown(
+        return block.imageId?.let { body.imageMap[it] }?.let { image ->
+            ArticleBlock.Image(
+                item = ImageItem(
+                    id = FanboxPostItemId(image.id),
+                    postId = FanboxPostId(post.id),
+                    extension = image.extension,
+                    originalUrl = image.originalUrl,
+                    thumbnailUrl = image.thumbnailUrl,
+                    aspectRatio = image.aspectRatio(),
+                ),
+            )
+        } ?: ArticleBlock.Unknown(
             rawJson = rawBlock.toString(),
         )
     }
@@ -374,48 +331,39 @@ internal class FanboxPostMapper(
         rawBlock: JsonObject,
     ): ArticleBlock {
         val block = decodeKnownBlock(rawBlock)
-        return block
-            .fileId
-            ?.let { body.fileMap[it] }
-            ?.let { file ->
-                ArticleBlock.File(
-                    item = FileItem(
-                        id = FanboxPostItemId(file.id),
-                        postId = FanboxPostId(post.id),
-                        extension = file.extension,
-                        name = file.name,
-                        size = file.size,
-                        url = file.url,
-                    ),
-                )
-            } ?: ArticleBlock.Unknown(
+        return block.fileId?.let { body.fileMap[it] }?.let { file ->
+            ArticleBlock.File(
+                item = FileItem(
+                    id = FanboxPostItemId(file.id),
+                    postId = FanboxPostId(post.id),
+                    extension = file.extension,
+                    name = file.name,
+                    size = file.size,
+                    url = file.url,
+                ),
+            )
+        } ?: ArticleBlock.Unknown(
             rawJson = rawBlock.toString(),
         )
     }
 
     private fun mapArticleLink(body: PostBody, rawBlock: JsonObject): ArticleBlock {
         val block = decodeKnownBlock(rawBlock)
-        return block
-            .urlEmbedId
-            ?.let { body.urlEmbedMap[it] }
-            ?.let { url ->
-                ArticleBlock.Link(
-                    html = url.html,
-                    post = url
-                        .postInfo
-                        ?.let { map(it) },
-                    type = url.type,
-                    url = url.url,
-                )
-            } ?: ArticleBlock.Unknown(
+        return block.urlEmbedId?.let { body.urlEmbedMap[it] }?.let { url ->
+            ArticleBlock.Link(
+                html = url.html,
+                post = url.postInfo?.let { map(it) },
+                type = url.type,
+                url = url.url,
+            )
+        } ?: ArticleBlock.Unknown(
             rawJson = rawBlock.toString(),
         )
     }
 
     private fun ImageEntity.aspectRatio(): Float = width.toFloat() / height.toFloat()
 
-    private fun decodeKnownBlock(rawBlock: JsonObject) =
-        formatter.decodeFromJsonElement<BlockEntity>(rawBlock)
+    private fun decodeKnownBlock(rawBlock: JsonObject) = formatter.decodeFromJsonElement<BlockEntity>(rawBlock)
 
     private fun decodeTextBlock(rawBlock: JsonObject): BlockEntity = try {
         decodeKnownBlock(rawBlock)
@@ -428,9 +376,7 @@ internal class FanboxPostMapper(
         block: BlockEntity,
         rawBlockJson: String,
     ): ArticleBlock {
-        val rawEmbed = block
-            .embedId
-            ?.let { body.embedMap[it] }
+        val rawEmbed = block.embedId?.let { body.embedMap[it] }
             ?: return ArticleBlock.Unknown(rawBlockJson)
         val embed = formatter.decodeFromJsonElement<EmbedEntity>(rawEmbed)
         val contentId = embed.videoId ?: embed.contentId
@@ -447,63 +393,48 @@ internal class FanboxPostMapper(
     }
 
     private fun mapImageBody(post: PostEntity, body: PostBody): Body.Image = Body.Image(
-        text = body
-            .text
-            .orEmpty(),
-        images = body
-            .images
-            .map {
-                ImageItem(
-                    id = FanboxPostItemId(it.id),
-                    postId = FanboxPostId(post.id),
-                    extension = it.extension,
-                    originalUrl = it.originalUrl,
-                    thumbnailUrl = it.thumbnailUrl,
-                    aspectRatio = it.aspectRatio(),
-                )
-            },
+        text = body.text.orEmpty(),
+        images = body.images.map {
+            ImageItem(
+                id = FanboxPostItemId(it.id),
+                postId = FanboxPostId(post.id),
+                extension = it.extension,
+                originalUrl = it.originalUrl,
+                thumbnailUrl = it.thumbnailUrl,
+                aspectRatio = it.aspectRatio(),
+            )
+        },
     )
 
     private fun mapFileBody(post: PostEntity, body: PostBody): Body.File = Body.File(
-        text = body
-            .text
-            .orEmpty(),
-        files = body
-            .files
-            .map {
-                FileItem(
-                    id = FanboxPostItemId(it.id),
-                    postId = FanboxPostId(post.id),
-                    name = it.name,
-                    extension = it.extension,
-                    size = it.size,
-                    url = it.url,
-                )
-            },
+        text = body.text.orEmpty(),
+        files = body.files.map {
+            FileItem(
+                id = FanboxPostItemId(it.id),
+                postId = FanboxPostId(post.id),
+                name = it.name,
+                extension = it.extension,
+                size = it.size,
+                url = it.url,
+            )
+        },
     )
 
     fun map(entity: FanboxPostCommentListEntity, endpoint: String): FanboxTolerantResult<PageOffsetInfo<FanboxComment>> {
         val decoded = listItemDecoder.decodeAndMap(
             endpoint = endpoint,
-            items = entity
-                .body
-                .commentList
-                .items,
+            items = entity.body.commentList.items,
             deserializer = FanboxCommentListEntity.Item.serializer(),
         ) { item, indexPath -> mapComment(item, endpoint, indexPath) }
         return FanboxTolerantResult(
             value = PageOffsetInfo(
                 contents = decoded.value,
-                offset = entity
-                    .body
-                    .commentList
-                    .nextUrl
-                    ?.let {
-                        FanboxUrlParts
-                            .parse(it)
-                            .queryValue("offset")
-                            ?.toIntOrNull()
-                    },
+                offset = entity.body.commentList.nextUrl?.let {
+                    FanboxUrlParts
+                        .parse(it)
+                        .queryValue("offset")
+                        ?.toIntOrNull()
+                },
             ),
             mismatches = decoded.mismatches,
         )
@@ -531,15 +462,11 @@ internal class FanboxPostMapper(
                     likeCount = likeCount,
                     parentCommentId = FanboxCommentId(parentCommentId),
                     rootCommentId = FanboxCommentId(rootCommentId),
-                    replies = decodedReplies
-                        .value
-                        .sortedBy { it.createdDatetime },
+                    replies = decodedReplies.value.sortedBy { it.createdDatetime },
                     user = user?.let {
                         FanboxUser(
                             userId = FanboxUserId(
-                                it
-                                    .userId
-                                    .toLong(),
+                                it.userId.toLong(),
                             ),
                             creatorId = null,
                             name = it.name,
@@ -553,25 +480,16 @@ internal class FanboxPostMapper(
     }
 
     fun map(entity: FanboxPostSearchEntity): PageNumberInfo<FanboxPost> = PageNumberInfo(
-        contents = entity
-            .body
-            .items
-            .map { map(it) },
-        nextPage = entity
-            .body
-            .nextUrl
-            ?.let {
-                FanboxUrlParts
-                    .parse(it)
-                    .queryValue("page")
-                    ?.toIntOrNull()
-            },
+        contents = entity.body.items.map { map(it) },
+        nextPage = entity.body.nextUrl?.let {
+            FanboxUrlParts
+                .parse(it)
+                .queryValue("page")
+                ?.toIntOrNull()
+        },
     )
 
-    fun map(entity: FanboxCreatorPostsPaginateEntity): List<FanboxCursor> = entity
-        .body
-        .pageUrls
-        .map {
-            it.translateToCursor()
-        }
+    fun map(entity: FanboxCreatorPostsPaginateEntity): List<FanboxCursor> = entity.body.pageUrls.map {
+        it.translateToCursor()
+    }
 }

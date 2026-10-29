@@ -9,8 +9,7 @@ import me.matsumo.fankt.fanbox.response.FanboxResponses
 
 internal class RealFanboxGuestService : FanboxGuestService {
 
-    override fun buildPostDetailRequest(postId: String): RequestDescriptor =
-        FanboxEndpoints.postDetail(FanboxPostId(postId))
+    override fun buildPostDetailRequest(postId: String): RequestDescriptor = FanboxEndpoints.postDetail(FanboxPostId(postId))
 
     // The host executes the request and raises its own failure for a non-2xx response, so only a
     // successful body reaches here: a FanboxException at this point is a parsing verdict, not an
@@ -25,8 +24,7 @@ internal class RealFanboxGuestService : FanboxGuestService {
         GuestParseResult.GuestFailure(failure.describe())
     }
 
-    private fun Throwable.describe(): String =
-        message?.takeIf(String::isNotBlank) ?: this::class.simpleName.orEmpty()
+    private fun Throwable.describe(): String = message?.takeIf(String::isNotBlank) ?: this::class.simpleName.orEmpty()
 }
 
 @OptIn(ExperimentalJsExport::class)

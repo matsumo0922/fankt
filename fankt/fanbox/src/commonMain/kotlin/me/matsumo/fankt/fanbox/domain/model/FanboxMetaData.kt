@@ -11,10 +11,7 @@ data class FanboxMetaData(
     val csrfToken: String,
 ) {
     @Serializable
-    data class Context(
-        val privacyPolicy: PrivacyPolicy,
-        val user: User,
-    ) {
+    data class Context(val privacyPolicy: PrivacyPolicy, val user: User) {
         @Serializable
         data class PrivacyPolicy(
             val policyUrl: String,

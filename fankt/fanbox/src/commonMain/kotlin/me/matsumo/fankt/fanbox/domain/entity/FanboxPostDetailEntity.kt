@@ -6,15 +6,9 @@ import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
 
 @Serializable
-internal data class FanboxPostDetailEntity(
-    @SerialName("body")
-    val body: ResponseBody,
-) {
+internal data class FanboxPostDetailEntity(@SerialName("body") val body: ResponseBody) {
     @Serializable
-    data class ResponseBody(
-        @SerialName("post")
-        val post: Body,
-    )
+    data class ResponseBody(@SerialName("post") val post: Body)
 
     @Serializable
     data class Body(

@@ -137,14 +137,10 @@ class FanboxGuestWireSchemaTest {
 
         val value = descriptor.getElementDescriptor(1)
 
-        return (0 until value.elementsCount)
-            .map { index -> value.getElementDescriptor(index).serialName }
-            .sorted()
+        return (0 until value.elementsCount).map { index -> value.getElementDescriptor(index).serialName }.sorted()
     }
 }
 
-private fun SerialDescriptor.elementNames(): List<String> =
-    (0 until elementsCount).map { index -> getElementName(index) }
+private fun SerialDescriptor.elementNames(): List<String> = (0 until elementsCount).map { index -> getElementName(index) }
 
-private fun SerialDescriptor.elementNamed(name: String): SerialDescriptor =
-    getElementDescriptor(getElementIndex(name))
+private fun SerialDescriptor.elementNamed(name: String): SerialDescriptor = getElementDescriptor(getElementIndex(name))

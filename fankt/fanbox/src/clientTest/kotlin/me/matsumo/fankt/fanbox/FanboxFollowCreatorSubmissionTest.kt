@@ -79,8 +79,5 @@ class FanboxFollowCreatorSubmissionTest {
         )
     }
 
-    private data class Fixture(
-        val fanbox: Fanbox,
-        val requestBodies: List<String>,
-    )
+    private data class Fixture(val fanbox: Fanbox, val requestBodies: List<String>)
 }

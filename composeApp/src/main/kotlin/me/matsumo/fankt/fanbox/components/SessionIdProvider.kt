@@ -9,8 +9,7 @@ fun getFanboxSessionId(context: Context): String = context.sessionIdFile()
     .orEmpty()
 
 fun setFanboxSessionId(context: Context, sessionId: String) {
-    context.sessionIdFile()
-        .writeText(sessionId)
+    context.sessionIdFile().writeText(sessionId)
 }
 
 private fun Context.sessionIdFile(): File {

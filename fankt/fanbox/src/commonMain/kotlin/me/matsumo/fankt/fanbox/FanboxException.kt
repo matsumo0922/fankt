@@ -24,22 +24,13 @@ public sealed class FanboxException(
 ) : Exception(message, cause) {
 
     /** The request requires a valid FANBOX session. */
-    public class Unauthorized internal constructor(
-        rawBody: String?,
-        endpoint: String,
-    ) : FanboxException(401, rawBody, endpoint, httpMessage(401, endpoint))
+    public class Unauthorized internal constructor(rawBody: String?, endpoint: String) : FanboxException(401, rawBody, endpoint, httpMessage(401, endpoint))
 
     /** The server refused the request. */
-    public open class Forbidden internal constructor(
-        rawBody: String?,
-        endpoint: String,
-    ) : FanboxException(403, rawBody, endpoint, httpMessage(403, endpoint))
+    public open class Forbidden internal constructor(rawBody: String?, endpoint: String) : FanboxException(403, rawBody, endpoint, httpMessage(403, endpoint))
 
     /** The requested FANBOX resource was not found. */
-    public class NotFound internal constructor(
-        rawBody: String?,
-        endpoint: String,
-    ) : FanboxException(404, rawBody, endpoint, httpMessage(404, endpoint))
+    public class NotFound internal constructor(rawBody: String?, endpoint: String) : FanboxException(404, rawBody, endpoint, httpMessage(404, endpoint))
 
     /** The request was rate limited. */
     public class RateLimited internal constructor(
@@ -77,20 +68,17 @@ public sealed class FanboxException(
     )
 
     /** The request failed before a response was available. */
-    public class Network internal constructor(
-        endpoint: String,
-        cause: Throwable,
-    ) : FanboxException(
-        statusCode = null,
-        rawBody = null,
-        endpoint = endpoint,
-        message = diagnosticMessage("Network request failed", null, endpoint),
-        cause = cause,
-    )
+    public class Network internal constructor(endpoint: String, cause: Throwable) :
+        FanboxException(
+            statusCode = null,
+            rawBody = null,
+            endpoint = endpoint,
+            message = diagnosticMessage("Network request failed", null, endpoint),
+            cause = cause,
+        )
 
     private companion object {
-        fun httpMessage(statusCode: Int, endpoint: String): String =
-            "FANBOX request failed (HTTP $statusCode, endpoint: $endpoint)"
+        fun httpMessage(statusCode: Int, endpoint: String): String = "FANBOX request failed (HTTP $statusCode, endpoint: $endpoint)"
 
         fun diagnosticMessage(
             label: String,

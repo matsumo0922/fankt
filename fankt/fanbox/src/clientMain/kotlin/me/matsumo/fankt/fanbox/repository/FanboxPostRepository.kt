@@ -77,11 +77,9 @@ internal class FanboxPostRepository(
     }
 
     suspend fun getPostDetail(postId: FanboxPostId) = withContext(ioDispatcher) {
-        suspend fun direct() = requestExecutor
-            .execute(FanboxEndpoints.postDetail(postId))
-            .let { response ->
-                FanboxResponses.postDetail(response.bodyText, response.statusCode)
-            }
+        suspend fun direct() = requestExecutor.execute(FanboxEndpoints.postDetail(postId)).let { response ->
+            FanboxResponses.postDetail(response.bodyText, response.statusCode)
+        }
 
         guestHost?.getPostDetail(postId, requestExecutor, ::direct) ?: direct()
     }

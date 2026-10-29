@@ -4,10 +4,7 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 @Serializable
-internal data class FanboxCreatorPlanDetailEntity(
-    @SerialName("body")
-    val body: Body,
-) {
+internal data class FanboxCreatorPlanDetailEntity(@SerialName("body") val body: Body) {
     @Serializable
     data class Body(
         @SerialName("plan")

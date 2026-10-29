@@ -280,15 +280,9 @@ class FanboxSignedBundleTest {
         }
     }
 
-    private data class SignedBundle(
-        val embedded: FanboxEmbeddedGuestBundle,
-        val httpClient: ZiplineHttpClient,
-    )
+    private data class SignedBundle(val embedded: FanboxEmbeddedGuestBundle, val httpClient: ZiplineHttpClient)
 
-    private class BundleZiplineHttpClient(
-        private val manifestJson: String,
-        private val modulesByFileName: Map<String, ByteString>,
-    ) : ZiplineHttpClient() {
+    private class BundleZiplineHttpClient(private val manifestJson: String, private val modulesByFileName: Map<String, ByteString>) : ZiplineHttpClient() {
         override suspend fun download(url: String, requestHeaders: List<Pair<String, String>>): ByteString = if (url ==
             MANIFEST_URL
         ) {

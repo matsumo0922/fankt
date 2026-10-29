@@ -14,15 +14,9 @@ import me.matsumo.fankt.fanbox.response.FanboxDiagnostics
  * a failed second reply under the first comment uses `[0, 1]`. Callback overloads report the event
  * on the caller's coroutine context before returning their partial result.
  */
-public data class FanboxListItemSchemaMismatch(
-    public val endpoint: String,
-    public val indexPath: List<Int>,
-)
+public data class FanboxListItemSchemaMismatch(public val endpoint: String, public val indexPath: List<Int>)
 
-internal data class FanboxTolerantResult<T>(
-    val value: T,
-    val mismatches: List<FanboxListItemSchemaMismatch>,
-)
+internal data class FanboxTolerantResult<T>(val value: T, val mismatches: List<FanboxListItemSchemaMismatch>)
 
 internal class FanboxListItemDecoder(
     private val formatter: Json = createFanboxJson(),

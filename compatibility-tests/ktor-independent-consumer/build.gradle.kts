@@ -102,8 +102,7 @@ abstract class VerifyPublishedConsumerTask : DefaultTask() {
         return digest.digest()
     }
 
-    private fun String.isKotlinxDatetime(): Boolean =
-        startsWith("org.jetbrains.kotlinx:kotlinx-datetime:")
+    private fun String.isKotlinxDatetime(): Boolean = startsWith("org.jetbrains.kotlinx:kotlinx-datetime:")
 }
 
 plugins {
@@ -174,8 +173,7 @@ tasks.register<VerifyPublishedConsumerTask>("verifyKtorSelection") {
     )
 }
 
-fun componentIdentities(configuration: Configuration): List<String> =
-    configuration.incoming.resolutionResult.allComponents.map { component ->
-        component.moduleVersion?.let { "${it.group}:${it.name}:${it.version}" }
-            ?: component.id.displayName
-    }
+fun componentIdentities(configuration: Configuration): List<String> = configuration.incoming.resolutionResult.allComponents.map { component ->
+    component.moduleVersion?.let { "${it.group}:${it.name}:${it.version}" }
+        ?: component.id.displayName
+}

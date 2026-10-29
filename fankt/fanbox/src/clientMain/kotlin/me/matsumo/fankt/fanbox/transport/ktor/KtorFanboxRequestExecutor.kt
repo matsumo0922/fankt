@@ -45,9 +45,7 @@ internal class KtorFanboxRequestExecutor(
     override suspend fun execute(descriptor: RequestDescriptor): FanboxRawResponse {
         val validated = FanboxDescriptorValidator.validate(descriptor)
         when (
-            validated
-                .policy
-                .credentialBehavior
+            validated.policy.credentialBehavior
         ) {
             FanboxCredentialBehavior.SHARED_FANBOX_AUTHENTICATION -> Unit
         }
@@ -66,9 +64,7 @@ internal class KtorFanboxRequestExecutor(
             throw failure
         } catch (failure: IOException) {
             throw FanboxFailureInterpreter.network(
-                endpoint = descriptor
-                    .endpointId
-                    .value,
+                endpoint = descriptor.endpointId.value,
                 cause = failure,
             )
         }
@@ -89,11 +85,9 @@ internal class KtorFanboxRequestExecutor(
                 this.method = method.toKtorMethod()
                 headers.appendAll(additionalHeaders(descriptor))
                 if (method == FanboxHttpMethod.POST) {
-                    descriptor
-                        .jsonBody
-                        ?.let { body ->
-                            setBody(TextContent(body, ContentType.Application.Json))
-                        }
+                    descriptor.jsonBody?.let { body ->
+                        setBody(TextContent(body, ContentType.Application.Json))
+                    }
                 }
             }.execute { response ->
                 readResponse(
@@ -125,10 +119,7 @@ internal class KtorFanboxRequestExecutor(
         response: HttpResponse,
     ): ResponseOutcome {
         val method = policy.method
-        if (response
-                .status
-                .isHandledRedirect()
-        ) {
+        if (response.status.isHandledRedirect()) {
             if (method == FanboxHttpMethod.POST) {
                 throw InvalidRequestDescriptorException("FANBOX POST redirects are not supported")
             }
@@ -146,38 +137,24 @@ internal class KtorFanboxRequestExecutor(
             )
         }
 
-        if (!response
-                .status
-                .isSuccess()
-        ) {
+        if (!response.status.isSuccess()) {
             val failure = FanboxFailureInterpreter.httpFailure(
-                endpoint = descriptor
-                    .endpointId
-                    .value,
-                statusCode = response
-                    .status
-                    .value,
+                endpoint = descriptor.endpointId.value,
+                statusCode = response.status.value,
                 rawBody = response.diagnosticBodyOrNull(),
                 retryAfter = response.headers[HttpHeaders.RetryAfter],
                 nowEpochMilliseconds = nowEpochMilliseconds(),
             )
             if (logLevel != FanboxLogLevel.NONE) {
-                failure
-                    .rawBody
-                    ?.let { fragment -> Napier.d { "FANBOX response: $fragment" } }
+                failure.rawBody?.let { fragment -> Napier.d { "FANBOX response: $fragment" } }
             }
             throw failure
         }
 
         return ResponseOutcome.Complete(
             response = FanboxRawResponse(
-                statusCode = response
-                    .status
-                    .value,
-                headers = response
-                    .headers
-                    .entries()
-                    .associate { (name, values) -> name to values.toList() },
+                statusCode = response.status.value,
+                headers = response.headers.entries().associate { (name, values) -> name to values.toList() },
                 bodyText = response.bodyAsText(),
             ),
         )
@@ -188,10 +165,7 @@ internal class KtorFanboxRequestExecutor(
         data class Complete(val response: FanboxRawResponse) : ResponseOutcome
 
         /** 検証済みのリダイレクト先と HTTP メソッド。 */
-        data class Redirect(
-            val url: Url,
-            val method: FanboxHttpMethod,
-        ) : ResponseOutcome
+        data class Redirect(val url: Url, val method: FanboxHttpMethod) : ResponseOutcome
     }
 
     private fun FanboxHttpMethod.toKtorMethod(): HttpMethod = when (this) {

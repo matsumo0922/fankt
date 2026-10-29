@@ -29,20 +29,16 @@ data class FanboxPostDetail(
     val prevPost: OtherPost?,
     val user: FanboxUser?,
 ) {
-    val browserUrl get() = "https://www.fanbox.cc/@${user
-        ?.creatorId
-        ?.value}/posts/${id.value}"
+    val browserUrl get() = "https://www.fanbox.cc/@${user?.creatorId?.value}/posts/${id.value}"
 
     @Serializable
     sealed interface Body {
         val imageItems
             get() = when (this) {
                 is Article ->
-                    blocks
-                        .filterIsInstance<Block.Image>()
-                        .map {
-                            it.item
-                        }
+                    blocks.filterIsInstance<Block.Image>().map {
+                        it.item
+                    }
 
                 is Image -> images
 
@@ -55,10 +51,9 @@ data class FanboxPostDetail(
 
         val fileItems
             get() = when (this) {
-                is Article -> blocks.filterIsInstance<Block.File>()
-                    .map {
-                        it.item
-                    }
+                is Article -> blocks.filterIsInstance<Block.File>().map {
+                    it.item
+                }
 
                 is Image -> emptyList()
 
@@ -137,10 +132,7 @@ data class FanboxPostDetail(
                  * fanbox の [url] はリダイレクト元のため、リダイレクト解決の通信は呼び出し側で行う。
                  */
                 @Serializable
-                data class Embed(
-                    val serviceProvider: String,
-                    val contentId: String,
-                ) : Block {
+                data class Embed(val serviceProvider: String, val contentId: String) : Block {
                     val url: String?
                         get() = when (serviceProvider) {
                             "twitter" -> "https://twitter.com/_/status/$contentId"
@@ -172,17 +164,11 @@ data class FanboxPostDetail(
 
         /** 投稿本文の画像情報。 */
         @Serializable
-        data class Image(
-            val text: String,
-            val images: List<ImageItem>,
-        ) : Body
+        data class Image(val text: String, val images: List<ImageItem>) : Body
 
         /** 投稿本文の添付ファイル情報。 */
         @Serializable
-        data class File(
-            val text: String,
-            val files: List<FileItem>,
-        ) : Body
+        data class File(val text: String, val files: List<FileItem>) : Body
 
         /** プレーンテキストの投稿本文。 */
         @Serializable
@@ -190,10 +176,7 @@ data class FanboxPostDetail(
 
         /** 配信サービスと動画 ID を持つ投稿本文。 */
         @Serializable
-        data class Video(
-            val serviceProvider: String,
-            val videoId: String,
-        ) : Body {
+        data class Video(val serviceProvider: String, val videoId: String) : Body {
             val url: String?
                 get() = when (serviceProvider) {
                     "youtube" -> "https://www.youtube.com/watch?v=$videoId"
@@ -256,10 +239,7 @@ data class FanboxPostDetail(
         val size: Long,
         val url: String,
     ) {
-        fun asImageItem(): ImageItem? = if (!extension
-                .lowercase()
-                .contains(Regex("""(jpg|jpeg|png|gif)"""))
-        ) {
+        fun asImageItem(): ImageItem? = if (!extension.lowercase().contains(Regex("""(jpg|jpeg|png|gif)"""))) {
             null
         } else {
             ImageItem(
@@ -272,10 +252,7 @@ data class FanboxPostDetail(
             )
         }
 
-        fun asVideoItem(): VideoItem? = if (!extension
-                .lowercase()
-                .contains(Regex("""(mp4|webm)"""))
-        ) {
+        fun asVideoItem(): VideoItem? = if (!extension.lowercase().contains(Regex("""(mp4|webm)"""))) {
             null
         } else {
             VideoItem(

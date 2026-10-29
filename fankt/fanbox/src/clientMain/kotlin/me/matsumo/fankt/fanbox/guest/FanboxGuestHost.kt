@@ -52,25 +52,17 @@ internal data class FanboxGuestDeliveryConfig(
         require(manifestUrl.isNotBlank()) { "Guest manifest URL must not be blank" }
         val parsedManifestUrl = Url(manifestUrl)
         val isLocalDevelopment =
-            parsedManifestUrl.protocol == URLProtocol.HTTP && parsedManifestUrl
-                .host
-                .isLoopbackHost()
+            parsedManifestUrl.protocol == URLProtocol.HTTP && parsedManifestUrl.host.isLoopbackHost()
         require(parsedManifestUrl.protocol == URLProtocol.HTTPS || isLocalDevelopment) {
             "Guest manifest URL must use HTTPS, except for a loopback development server"
         }
         require(
-            parsedManifestUrl
-                .user
-                .isNullOrEmpty() && parsedManifestUrl
-                .password
-                .isNullOrEmpty(),
+            parsedManifestUrl.user.isNullOrEmpty() && parsedManifestUrl.password.isNullOrEmpty(),
         ) {
             "Guest manifest URL must not contain credentials"
         }
         require(
-            parsedManifestUrl
-                .fragment
-                .isEmpty(),
+            parsedManifestUrl.fragment.isEmpty(),
         ) { "Guest manifest URL must not contain a fragment" }
         require(trustedKeyName.isNotBlank()) { "Guest trusted key name must not be blank" }
         require(trustedEd25519PublicKey.size == ED25519_PUBLIC_KEY_SIZE) {
@@ -114,9 +106,7 @@ internal sealed interface EmbeddedBundleFailure {
  * で実行されるため橋渡しに `runBlocking` を使えない。そこで loader を呼ぶ前に必要なファイルを
  * すべて読み出しておく。読み出す対象は manifest を先に読めば決まる。
  */
-internal class LoadedEmbeddedBundle private constructor(
-    private val filesByName: Map<String, ByteString>,
-) {
+internal class LoadedEmbeddedBundle private constructor(private val filesByName: Map<String, ByteString>) {
     val fileSystem: FileSystem get() = InMemoryReadOnlyFileSystem(filesByName)
 
     companion object {
@@ -130,12 +120,8 @@ internal class LoadedEmbeddedBundle private constructor(
 
             val files = mutableMapOf(EMBEDDED_MANIFEST_FILE_NAME to manifestBytes.toByteString())
             val missing = mutableListOf<String>()
-            for (module in manifest
-                .modules
-                .values) {
-                val fileName = module
-                    .sha256
-                    .hex()
+            for (module in manifest.modules.values) {
+                val fileName = module.sha256.hex()
                 val moduleBytes = bundle.read(fileName)
                 if (moduleBytes == null) missing += fileName else files[fileName] = moduleBytes.toByteString()
             }
@@ -145,15 +131,12 @@ internal class LoadedEmbeddedBundle private constructor(
             return Result.success(LoadedEmbeddedBundle(files))
         }
 
-        private fun failure(reason: EmbeddedBundleFailure): Result<LoadedEmbeddedBundle> =
-            Result.failure(EmbeddedBundleReadException(reason))
+        private fun failure(reason: EmbeddedBundleFailure): Result<LoadedEmbeddedBundle> = Result.failure(EmbeddedBundleReadException(reason))
     }
 }
 
 /** 組み込み bundle の読み取り失敗。 */
-internal class EmbeddedBundleReadException(
-    val failure: EmbeddedBundleFailure,
-) : Exception(failure.describe())
+internal class EmbeddedBundleReadException(val failure: EmbeddedBundleFailure) : Exception(failure.describe())
 
 /**
  * 読み出し済みの内容だけを返す [FileSystem]。
@@ -162,20 +145,14 @@ internal class EmbeddedBundleReadException(
  * （`FsEmbeddedFetcher`）。他の操作は呼ばれた時点でこの前提が崩れているため、黙って空を返さずに
  * 失敗させる。
  */
-// FileSystem が要求する操作をすべて override する。
-@Suppress("TooManyFunctions")
-private class InMemoryReadOnlyFileSystem(
-    private val filesByName: Map<String, ByteString>,
-) : FileSystem() {
+private class InMemoryReadOnlyFileSystem(private val filesByName: Map<String, ByteString>) : FileSystem() {
     private fun bytesOrNull(path: Path): ByteString? = filesByName[path.name]
 
     override fun metadataOrNull(path: Path): FileMetadata? {
         val bytes = bytesOrNull(path) ?: return null
         return FileMetadata(
             isRegularFile = true,
-            size = bytes
-                .size
-                .toLong(),
+            size = bytes.size.toLong(),
         )
     }
 
@@ -192,8 +169,7 @@ private class InMemoryReadOnlyFileSystem(
         file: Path,
         mustCreate: Boolean,
         mustExist: Boolean,
-    ): FileHandle =
-        unsupported("openReadWrite")
+    ): FileHandle = unsupported("openReadWrite")
     override fun sink(file: Path, mustCreate: Boolean): Sink = unsupported("sink")
     override fun appendingSink(file: Path, mustExist: Boolean): Sink = unsupported("appendingSink")
     override fun createDirectory(dir: Path, mustCreate: Boolean): Unit = unsupported("createDirectory")
@@ -201,8 +177,7 @@ private class InMemoryReadOnlyFileSystem(
     override fun delete(path: Path, mustExist: Boolean): Unit = unsupported("delete")
     override fun createSymlink(source: Path, target: Path): Unit = unsupported("createSymlink")
 
-    private fun unsupported(operation: String): Nothing =
-        error("the embedded guest bundle is read-only; $operation is not available")
+    private fun unsupported(operation: String): Nothing = error("the embedded guest bundle is read-only; $operation is not available")
 }
 
 /** Zipline guest のロード・呼び出し・終了を管理する。 */
@@ -289,10 +264,7 @@ internal class FanboxGuestHost(
                 stateMutex.withLock {
                     val active = state as? GuestState.Active
                     state = GuestState.Direct
-                    active
-                        ?.guest
-                        ?.zipline
-                        ?.close()
+                    active?.guest?.zipline?.close()
                 }
             }
         } catch (failure: Throwable) {
@@ -300,18 +272,14 @@ internal class FanboxGuestHost(
         }
         try {
             if (httpClient.isInitialized()) {
-                httpClient
-                    .value
-                    .close()
+                httpClient.value.close()
             }
         } catch (failure: Throwable) {
             val firstFailure = closeFailure
             if (firstFailure == null) closeFailure = failure else firstFailure.addSuppressed(failure)
         }
         try {
-            guestDispatcher
-                .value
-                .close()
+            guestDispatcher.value.close()
         } catch (failure: Throwable) {
             val firstFailure = closeFailure
             if (firstFailure == null) closeFailure = failure else firstFailure.addSuppressed(failure)
@@ -362,9 +330,7 @@ internal class FanboxGuestHost(
             if ((state as? GuestState.Active)?.guest === failedGuest) {
                 state = GuestState.Direct
                 withContext(guestDispatcher.value) {
-                    failedGuest
-                        .zipline
-                        ?.close()
+                    failedGuest.zipline?.close()
                 }
             }
         }
@@ -406,9 +372,7 @@ internal class ZiplineGuestLoader(
     private val manifestVerifier = ManifestVerifier.Builder()
         .addEd25519(
             name = config.trustedKeyName,
-            trustedKey = config
-                .trustedEd25519PublicKey
-                .toByteString(),
+            trustedKey = config.trustedEd25519PublicKey.toByteString(),
         )
         .build()
 
@@ -427,8 +391,7 @@ internal class ZiplineGuestLoader(
             } else {
                 LoadedEmbeddedBundle.read(embedded).mapCatching { loaded ->
                     load(
-                        loader = newLoader(EmbeddedOnlyZiplineHttpClient)
-                            .withEmbedded(loaded.fileSystem, LoadedEmbeddedBundle.DIRECTORY),
+                        loader = newLoader(EmbeddedOnlyZiplineHttpClient).withEmbedded(loaded.fileSystem, LoadedEmbeddedBundle.DIRECTORY),
                         manifestUrl = EMBEDDED_MANIFEST_SENTINEL_URL,
                         freshnessChecker = AlwaysFresh,
                     ).getOrThrow()
@@ -458,16 +421,12 @@ internal class ZiplineGuestLoader(
         )
         val mapped = result.mapSuccess { success ->
             LoadedGuest(
-                service = success
-                    .zipline
-                    .take<FanboxGuestService>(FANBOX_GUEST_SERVICE_NAME),
+                service = success.zipline.take<FanboxGuestService>(FANBOX_GUEST_SERVICE_NAME),
                 zipline = success.zipline,
             )
         }
         if (mapped.isFailure && result is LoadResult.Success) {
-            result
-                .zipline
-                .close()
+            result.zipline.close()
         }
         return mapped
     }
@@ -507,9 +466,7 @@ private suspend fun <T : Any> loadGuestAttempt(
 }
 
 /** Zipline loader の HTTP 通信を Ktor へ橋渡しする。 */
-private class KtorZiplineHttpClient(
-    private val client: HttpClient,
-) : ZiplineHttpClient() {
+private class KtorZiplineHttpClient(private val client: HttpClient) : ZiplineHttpClient() {
     override suspend fun download(url: String, requestHeaders: List<Pair<String, String>>): ByteString = client.get(url) {
         headers {
             requestHeaders.forEach { (name, value) -> append(name, value) }
@@ -532,14 +489,12 @@ private object EmbeddedOnlyZiplineHttpClient : ZiplineHttpClient() {
     override suspend fun download(url: String, requestHeaders: List<Pair<String, String>>): ByteString = error("embedded guest bundle is incomplete")
 }
 
-private fun Throwable.describe(): String =
-    this::class.simpleName + message
-        ?.takeIf(String::isNotBlank)
-        ?.let { ": $it" }
-        .orEmpty()
+private fun Throwable.describe(): String = this::class.simpleName + message
+    ?.takeIf(String::isNotBlank)
+    ?.let { ": $it" }
+    .orEmpty()
 
-private fun String.isLoopbackHost(): Boolean =
-    equals("localhost", ignoreCase = true) || this == "127.0.0.1" || this == "::1"
+private fun String.isLoopbackHost(): Boolean = equals("localhost", ignoreCase = true) || this == "127.0.0.1" || this == "::1"
 
 private const val APPLICATION_NAME = "fanbox-guest"
 private const val POST_DETAIL_ENDPOINT = "post.info"

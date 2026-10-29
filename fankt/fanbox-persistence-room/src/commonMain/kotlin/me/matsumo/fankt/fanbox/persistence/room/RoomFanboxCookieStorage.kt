@@ -40,10 +40,9 @@ import me.matsumo.fankt.fanbox.domain.model.db.FanktDatabase
  * reopen the unchanged platform `fankt.db` file. Schema version 3 stores every record as a domain
  * Cookie, so loaded and written records expose `hostOnly = false`.
  */
-public class RoomFanboxCookieStorage internal constructor(
-    private val database: FanktDatabase,
-    private val backend: FanboxCookieStorage,
-) : FanboxCookieStorage, AutoCloseable {
+public class RoomFanboxCookieStorage internal constructor(private val database: FanktDatabase, private val backend: FanboxCookieStorage) :
+    FanboxCookieStorage,
+    AutoCloseable {
     private val closeSignal = CompletableDeferred<Unit>()
     private val closeAwareCookies = closeAwareFlow(backend.cookies, closeSignal)
 
@@ -58,14 +57,11 @@ public class RoomFanboxCookieStorage internal constructor(
         domain: String,
         path: String,
         name: String,
-    ): Unit =
-        requireOpen { backend.delete(domain, path, name) }
+    ): Unit = requireOpen { backend.delete(domain, path, name) }
 
-    override suspend fun deleteExpired(nowEpochMilliseconds: Long): Unit =
-        requireOpen { backend.deleteExpired(nowEpochMilliseconds) }
+    override suspend fun deleteExpired(nowEpochMilliseconds: Long): Unit = requireOpen { backend.deleteExpired(nowEpochMilliseconds) }
 
-    override suspend fun replaceAll(cookies: List<FanboxCookieRecord>): Unit =
-        requireOpen { backend.replaceAll(cookies) }
+    override suspend fun replaceAll(cookies: List<FanboxCookieRecord>): Unit = requireOpen { backend.replaceAll(cookies) }
 
     override suspend fun clear(): Unit = requireOpen { backend.clear() }
 
@@ -122,8 +118,7 @@ internal fun <T> closeAwareFlow(upstream: Flow<T>, closeSignal: CompletableDefer
  * A failure that arrives after close is reported as a close failure so the observed cause does not
  * depend on whether the close termination branch or the cancelled upstream branch wins that race.
  */
-internal fun upstreamCause(failure: Throwable, closed: Boolean): Throwable =
-    if (closed) closedFailure() else failure
+internal fun upstreamCause(failure: Throwable, closed: Boolean): Throwable = if (closed) closedFailure() else failure
 
 private fun closeTerminationFlow(closeSignal: CompletableDeferred<Unit>): Flow<Nothing> = flow {
     closeSignal.await()

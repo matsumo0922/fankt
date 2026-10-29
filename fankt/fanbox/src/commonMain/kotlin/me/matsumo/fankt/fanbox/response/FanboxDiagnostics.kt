@@ -89,9 +89,7 @@ internal object FanboxDiagnostics {
     }
 
     /** 出力長と深さを制限して診断用 JSON を書き出す。 */
-    private class BoundedJsonWriter(
-        private val limit: Int,
-    ) {
+    private class BoundedJsonWriter(private val limit: Int) {
         private val buffer = StringBuilder(limit)
         private var truncated = false
 
@@ -111,19 +109,17 @@ internal object FanboxDiagnostics {
 
         private fun appendObject(value: JsonObject, depth: Int) {
             append('{')
-            value
-                .entries
-                .forEachIndexed { index, (key, element) ->
-                    if (truncated) return@forEachIndexed
-                    if (index > 0) append(',')
-                    appendJsonString(key)
-                    append(':')
-                    if (key.lowercase() in credentialKeys) {
-                        append(REDACTED_JSON_STRING)
-                    } else {
-                        appendElement(element, depth + 1)
-                    }
+            value.entries.forEachIndexed { index, (key, element) ->
+                if (truncated) return@forEachIndexed
+                if (index > 0) append(',')
+                appendJsonString(key)
+                append(':')
+                if (key.lowercase() in credentialKeys) {
+                    append(REDACTED_JSON_STRING)
+                } else {
+                    appendElement(element, depth + 1)
                 }
+            }
             append('}')
         }
 
@@ -168,10 +164,7 @@ internal object FanboxDiagnostics {
                     else -> if (char.code < 0x20) {
                         append("\\u")
                         append(
-                            char
-                                .code
-                                .toString(16)
-                                .padStart(4, '0'),
+                            char.code.toString(16).padStart(4, '0'),
                         )
                     } else {
                         append(char)

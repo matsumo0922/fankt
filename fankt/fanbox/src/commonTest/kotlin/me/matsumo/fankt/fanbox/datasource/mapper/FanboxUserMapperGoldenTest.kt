@@ -58,6 +58,8 @@ class FanboxUserMapperGoldenTest {
         assertEquals(expected, actual)
     }
 
+    // 通知ページの全項目とページングを、独立した完全な期待値で一括照合する。
+    @Suppress("LongMethod")
     @Test
     fun actualBellPostPublishedPageWithPagingMapsFullObjects() {
         val actual = mapper.map(

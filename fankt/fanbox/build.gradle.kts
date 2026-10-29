@@ -1,4 +1,5 @@
 import app.cash.zipline.loader.SignatureAlgorithmId
+import groovy.json.JsonOutput
 import groovy.json.JsonSlurper
 import org.gradle.api.DefaultTask
 import org.gradle.api.artifacts.result.ResolvedComponentResult
@@ -56,9 +57,7 @@ private fun ResolvedComponentResult.allComponentIdentities(): List<String> {
     while (pending.isNotEmpty()) {
         val component = pending.removeFirst()
         if (identities.add(component.id.displayName)) {
-            component.dependencies
-                .filterIsInstance<ResolvedDependencyResult>()
-                .forEach { pending.add(it.selected) }
+            component.dependencies.filterIsInstance<ResolvedDependencyResult>().forEach { pending.add(it.selected) }
         }
     }
     return identities.toList()
@@ -80,26 +79,24 @@ private object AndroidKotlinMetadataInspector {
                 is KotlinClassMetadata.MultiFileClassPart -> metadata.kmPackage.typeAliases
                 else -> emptyList()
             }
-            typeAliases
-                .filter { it.visibility == Visibility.PUBLIC || it.visibility == Visibility.PROTECTED }
-                .forEach { typeAlias ->
-                    visibleTypeAliases += 1
-                    val forbiddenUnderlyingTypes =
-                        typeAlias.underlyingType.findForbiddenTypes(forbiddenTypeMarkers)
-                    val forbiddenExpandedTypes =
-                        typeAlias.expandedType.findForbiddenTypes(forbiddenTypeMarkers)
-                    if (forbiddenUnderlyingTypes.isNotEmpty() || forbiddenExpandedTypes.isNotEmpty()) {
-                        violations += buildString {
-                            append(classFile.name)
-                            append(" typealias ")
-                            append(typeAlias.name)
-                            append(" -> underlying=")
-                            append(forbiddenUnderlyingTypes.sorted())
-                            append(", expanded=")
-                            append(forbiddenExpandedTypes.sorted())
-                        }
+            typeAliases.filter { it.visibility == Visibility.PUBLIC || it.visibility == Visibility.PROTECTED }.forEach { typeAlias ->
+                visibleTypeAliases += 1
+                val forbiddenUnderlyingTypes =
+                    typeAlias.underlyingType.findForbiddenTypes(forbiddenTypeMarkers)
+                val forbiddenExpandedTypes =
+                    typeAlias.expandedType.findForbiddenTypes(forbiddenTypeMarkers)
+                if (forbiddenUnderlyingTypes.isNotEmpty() || forbiddenExpandedTypes.isNotEmpty()) {
+                    violations += buildString {
+                        append(classFile.name)
+                        append(" typealias ")
+                        append(typeAlias.name)
+                        append(" -> underlying=")
+                        append(forbiddenUnderlyingTypes.sorted())
+                        append(", expanded=")
+                        append(forbiddenExpandedTypes.sorted())
                     }
                 }
+            }
         }
 
         return Result(
@@ -125,35 +122,33 @@ private object AndroidKotlinMetadataInspector {
         return header
     }
 
-    private fun MetadataHeader.asAnnotationVisitor(): AnnotationVisitor =
-        object : AnnotationVisitor(Opcodes.ASM9) {
-            override fun visit(name: String, value: Any) {
-                when (name) {
-                    "k" -> kind = value as Int
-                    "mv" -> metadataVersion = value as IntArray
-                    "xs" -> extraString = value as String
-                    "pn" -> packageName = value as String
-                    "xi" -> extraInt = value as Int
-                }
+    private fun MetadataHeader.asAnnotationVisitor(): AnnotationVisitor = object : AnnotationVisitor(Opcodes.ASM9) {
+        override fun visit(name: String, value: Any) {
+            when (name) {
+                "k" -> kind = value as Int
+                "mv" -> metadataVersion = value as IntArray
+                "xs" -> extraString = value as String
+                "pn" -> packageName = value as String
+                "xi" -> extraInt = value as Int
+            }
+        }
+
+        override fun visitArray(name: String): AnnotationVisitor = object : AnnotationVisitor(Opcodes.ASM9) {
+            private val values = mutableListOf<Any>()
+
+            override fun visit(elementName: String?, value: Any) {
+                values += value
             }
 
-            override fun visitArray(name: String): AnnotationVisitor =
-                object : AnnotationVisitor(Opcodes.ASM9) {
-                    private val values = mutableListOf<Any>()
-
-                    override fun visit(elementName: String?, value: Any) {
-                        values += value
-                    }
-
-                    override fun visitEnd() {
-                        when (name) {
-                            "mv" -> metadataVersion = values.map { it as Int }.toIntArray()
-                            "d1" -> data1 = values.map { it as String }.toTypedArray()
-                            "d2" -> data2 = values.map { it as String }.toTypedArray()
-                        }
-                    }
+            override fun visitEnd() {
+                when (name) {
+                    "mv" -> metadataVersion = values.map { it as Int }.toIntArray()
+                    "d1" -> data1 = values.map { it as String }.toTypedArray()
+                    "d2" -> data2 = values.map { it as String }.toTypedArray()
                 }
+            }
         }
+    }
 
     private fun KmType.findForbiddenTypes(forbiddenTypeMarkers: Set<String>): Set<String> {
         val result = linkedSetOf<String>()
@@ -163,14 +158,10 @@ private object AndroidKotlinMetadataInspector {
             if (!visited.add(type)) return
             when (val classifier = type.classifier) {
                 is KmClassifier.Class ->
-                    classifier.name
-                        .takeIf { name -> forbiddenTypeMarkers.any(name::contains) }
-                        ?.let(result::add)
+                    classifier.name.takeIf { name -> forbiddenTypeMarkers.any(name::contains) }?.let(result::add)
 
                 is KmClassifier.TypeAlias ->
-                    classifier.name
-                        .takeIf { name -> forbiddenTypeMarkers.any(name::contains) }
-                        ?.let(result::add)
+                    classifier.name.takeIf { name -> forbiddenTypeMarkers.any(name::contains) }?.let(result::add)
 
                 is KmClassifier.TypeParameter -> Unit
             }
@@ -230,12 +221,14 @@ abstract class StripUnpublishedVariantsTask : DefaultTask() {
     fun strip() {
         val file = moduleFile.get().asFile
 
+        // Gradle が生成する module metadata の JSON object を、更新可能な文字列 key の map として扱う。
         @Suppress("UNCHECKED_CAST")
         val module = JsonSlurper().parse(file) as MutableMap<String, Any?>
         val variants = module["variants"] as? MutableList<*> ?: return
         val targets = unpublishedTargetNames.get()
 
         val removed = variants.removeAll { variant ->
+            // variant は同じ module metadata の JSON object で、name の値は String として別途検証する。
             @Suppress("UNCHECKED_CAST")
             val name = (variant as? Map<String, Any?>)?.get("name") as? String ?: return@removeAll false
             targets.any(name::startsWith)
@@ -244,7 +237,9 @@ abstract class StripUnpublishedVariantsTask : DefaultTask() {
             "No unpublished target variant was found in $file; the target names may be stale"
         }
 
-        file.writeText(groovy.json.JsonOutput.prettyPrint(groovy.json.JsonOutput.toJson(module)))
+        file.writeText(
+            text = JsonOutput.prettyPrint(JsonOutput.toJson(module)),
+        )
     }
 }
 
@@ -403,8 +398,7 @@ abstract class VerifyKtorBoundaryTask : DefaultTask() {
         check(productionKotlinSourceFiles.isNotEmpty()) {
             "No production Kotlin sources were scanned"
         }
-        val deprecatedDatetimeSourceViolations = productionKotlinSourceFiles
-            .filter { source -> source.readText().containsDeprecatedDatetimeType() }
+        val deprecatedDatetimeSourceViolations = productionKotlinSourceFiles.filter { source -> source.readText().containsDeprecatedDatetimeType() }
         check(deprecatedDatetimeSourceViolations.isEmpty()) {
             "Deprecated kotlinx-datetime Instant or Clock remains in production source:\n" +
                 deprecatedDatetimeSourceViolations.joinToString("\n") {
@@ -698,11 +692,9 @@ abstract class VerifyKtorBoundaryTask : DefaultTask() {
         }
     }
 
-    private fun String.containsKtorType(): Boolean =
-        KTOR_DOTTED_PACKAGE in this || KTOR_INTERNAL_PACKAGE in this
+    private fun String.containsKtorType(): Boolean = KTOR_DOTTED_PACKAGE in this || KTOR_INTERNAL_PACKAGE in this
 
-    private fun String.containsDeprecatedDatetimeType(): Boolean =
-        DEPRECATED_DATETIME_TYPES.any(this::contains)
+    private fun String.containsDeprecatedDatetimeType(): Boolean = DEPRECATED_DATETIME_TYPES.any(this::contains)
 
     private fun String.containsOkioType(): Boolean = OKIO_TYPE_MARKERS.any(this::contains)
 
@@ -711,10 +703,7 @@ abstract class VerifyKtorBoundaryTask : DefaultTask() {
         val fields: MutableSet<VisibleAndroidMember> = linkedSetOf(),
     )
 
-    private data class VisibleAndroidMember(
-        val name: String,
-        val descriptor: String,
-    )
+    private data class VisibleAndroidMember(val name: String, val descriptor: String)
 
     private companion object {
         const val KTOR_DOTTED_PACKAGE = "io.ktor"
@@ -752,9 +741,7 @@ abstract class VerifyPortableImportBoundaryTask : DefaultTask() {
         val violations = sourceFiles.flatMap { source ->
             source.readLines().mapNotNull { line ->
                 val importedName = importPattern.find(line)?.groupValues?.get(1)
-                importedName
-                    ?.takeIf { name -> roots.any { root -> name == root || name.startsWith("$root.") } }
-                    ?.let { name -> "${source.relativeTo(baseDirectory).path}: import $name" }
+                importedName?.takeIf { name -> roots.any { root -> name == root || name.startsWith("$root.") } }?.let { name -> "${source.relativeTo(baseDirectory).path}: import $name" }
             }
         }.sorted()
         check(violations.isEmpty()) {

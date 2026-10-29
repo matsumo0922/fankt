@@ -6,6 +6,9 @@ import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.jsonObject
 
+/** 投稿レスポンスの匿名化済み JSON fixture。 */
+// 同じ endpoint の入力 JSON を一式として管理し、データ量だけでは分割しない。
+@Suppress("LargeClass")
 internal object FanboxPostJsonFixtures {
     val postInfoArticleA =
         """
@@ -965,9 +968,7 @@ internal object FanboxPostJsonFixtures {
         }
         """.trimIndent()
 
-    private fun syntheticUnsupportedPostInfo(type: String, bodyJson: String): String = postInfoText
-        .replaceFirst(oldValue = "\"body\": null", newValue = "\"body\": $bodyJson")
-        .replaceFirst(oldValue = "\"type\": \"text\"", newValue = "\"type\": \"$type\"")
+    private fun syntheticUnsupportedPostInfo(type: String, bodyJson: String): String = postInfoText.replaceFirst(oldValue = "\"body\": null", newValue = "\"body\": $bodyJson").replaceFirst(oldValue = "\"type\": \"text\"", newValue = "\"type\": \"$type\"")
 
     private fun hybridLegacyPostInfo(type: String, bodyJson: String): String {
         val root = Json.parseToJsonElement(postInfoImage).jsonObject
@@ -1023,12 +1024,11 @@ internal object FanboxPostJsonFixtures {
         ).toString()
     }
 
-    private fun responseDerivedEmbeddedFanboxPostInfo() =
-        Json.parseToJsonElement(postInfoArticleB).jsonObject
-            .getValue("body").jsonObject
-            .getValue("post").jsonObject
-            .getValue("body").jsonObject
-            .getValue("urlEmbedMap").jsonObject
-            .getValue("fixture-url-b-1").jsonObject
-            .getValue("postInfo")
+    private fun responseDerivedEmbeddedFanboxPostInfo() = Json.parseToJsonElement(postInfoArticleB).jsonObject
+        .getValue("body").jsonObject
+        .getValue("post").jsonObject
+        .getValue("body").jsonObject
+        .getValue("urlEmbedMap").jsonObject
+        .getValue("fixture-url-b-1").jsonObject
+        .getValue("postInfo")
 }

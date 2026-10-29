@@ -479,12 +479,15 @@ publishing; it remains on macOS because the Kotlin Multiplatform publication inc
 統合処理は別の解析タスクやコンパイルを起動しない。
 型情報ありの解析には `:composeApp:detektDebug`、KMP の Android target には `:fankt:fanbox:detektDebugAndroid` など、各 target のタスクを使う。
 生成コードは解析対象から除外する。
+CI では通常解析と各モジュールの Android debug 向け型解析を明示的に実行する。
 
 設定は detekt 2.0.0-alpha.6、ktlint wrapper、Compose rules 0.6.8 を使用する。
-`FunctionSignature` と `ClassSignature` はデフォルト引数を持つ短い宣言の複数行表記と両立しないため無効とし、宣言の改行は `AGENTS.md` に従ってレビューする。
-テストのシナリオ数・期待値・fixture には production の関数数・関数長・クラス長の上限を適用しない。
-endpoint の集約と外部 API の必須 override は、理由を記した宣言単位の抑制を使用する。
-認証操作を独立に差し替える `FanboxDependencies` の構築時の引数数にも、宣言単位の抑制を使用する。
+共通設定は Agents の `rules/lint/detekt.yml` と一致する。
+`FunctionSignature` と `ClassSignature` は引数3つ以上の宣言を改行し、行長による1行化は行わない。
+デフォルト引数を含む短い宣言、呼び出し側の名前付き引数、プロパティ参照を数えないメソッドチェーンの改行は `AGENTS.md` に従ってレビューする。
+関数長・クラス長の閾値やテスト全体の除外は変更せず、大きな期待値・JSON fixture などを一緒に扱う理由がある場合だけ宣言単位の抑制を使用する。
+endpoint の集約と、認証操作を独立に差し替える `FanboxDependencies` にも理由付きの宣言単位の抑制を使用する。
+外部 API が要求する override は共通設定で関数数から除外する。
 公開 API の例外伝播は `AGENTS.md` のプロジェクト規約に従う。
 
 ## Contributing golden fixtures

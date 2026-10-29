@@ -59,9 +59,7 @@ internal class FanboxCookiesStorageAdapter(
 
     suspend fun replaceAll(records: List<FanboxCookieRecord>) {
         val now = nowEpochMilliseconds()
-        val replacement = records
-            .filterNot { record -> record.isExpired(now) }
-            .canonicalSnapshot()
+        val replacement = records.filterNot { record -> record.isExpired(now) }.canonicalSnapshot()
         storage.replaceAll(replacement)
     }
 
@@ -96,9 +94,7 @@ internal fun Cookie.toRecord(requestUrl: Url, nowEpochMilliseconds: Long): Fanbo
         .orEmpty()
         .canonicalDomain()
         .ifBlank {
-            requestUrl
-                .host
-                .canonicalDomain()
+            requestUrl.host.canonicalDomain()
         }
 
     return FanboxCookieRecord(
@@ -110,18 +106,14 @@ internal fun Cookie.toRecord(requestUrl: Url, nowEpochMilliseconds: Long): Fanbo
             ?.toLong()
             ?.times(1_000L)
             ?.let { duration -> nowEpochMilliseconds.saturatedPlus(duration) }
-            ?: normalized
-                .expires
-                ?.timestamp,
+            ?: normalized.expires?.timestamp,
         secure = normalized.secure,
         hostOnly = hostOnly,
     )
 }
 
 private fun FanboxCookieRecord.matches(requestUrl: Url): Boolean {
-    val requestHost = requestUrl
-        .host
-        .canonicalDomain()
+    val requestHost = requestUrl.host.canonicalDomain()
     val cookieDomain = domain.canonicalDomain()
     val domainMatches = if (hostOnly) {
         requestHost == cookieDomain
@@ -129,16 +121,11 @@ private fun FanboxCookieRecord.matches(requestUrl: Url): Boolean {
         requestHost == cookieDomain || requestHost.endsWith(".$cookieDomain")
     }
     if (!domainMatches) return false
-    if (secure && requestUrl
-            .protocol
-            .name != "https"
-    ) {
+    if (secure && requestUrl.protocol.name != "https") {
         return false
     }
 
-    val requestPath = requestUrl
-        .encodedPath
-        .ifBlank { "/" }
+    val requestPath = requestUrl.encodedPath.ifBlank { "/" }
     val cookiePath = path.canonicalPath()
     val hasPathBoundary = cookiePath.endsWith('/') || requestPath.getOrNull(cookiePath.length) == '/'
     val matchesDescendant = requestPath.startsWith(cookiePath) && hasPathBoundary
@@ -146,8 +133,7 @@ private fun FanboxCookieRecord.matches(requestUrl: Url): Boolean {
     return requestPath == cookiePath || matchesDescendant
 }
 
-private fun FanboxCookieRecord.isExpired(nowEpochMilliseconds: Long): Boolean =
-    expiresAtEpochMilliseconds?.let { it <= nowEpochMilliseconds } == true
+private fun FanboxCookieRecord.isExpired(nowEpochMilliseconds: Long): Boolean = expiresAtEpochMilliseconds?.let { it <= nowEpochMilliseconds } == true
 
 private fun Long.saturatedPlus(other: Long): Long = when {
     other > 0 && this > Long.MAX_VALUE - other -> Long.MAX_VALUE

@@ -492,12 +492,9 @@ class FanboxAuthStorageTest {
             domain: String,
             path: String,
             name: String,
-        ) =
-            delegate.delete(domain, path, name)
-        override suspend fun deleteExpired(nowEpochMilliseconds: Long) =
-            delegate.deleteExpired(nowEpochMilliseconds)
-        override suspend fun replaceAll(cookies: List<FanboxCookieRecord>): Unit =
-            error("atomic commit failed")
+        ) = delegate.delete(domain, path, name)
+        override suspend fun deleteExpired(nowEpochMilliseconds: Long) = delegate.deleteExpired(nowEpochMilliseconds)
+        override suspend fun replaceAll(cookies: List<FanboxCookieRecord>): Unit = error("atomic commit failed")
         override suspend fun clear() = delegate.clear()
     }
 
@@ -511,8 +508,7 @@ class FanboxAuthStorageTest {
             domain: String,
             path: String,
             name: String,
-        ) =
-            delegate.delete(domain, path, name)
+        ) = delegate.delete(domain, path, name)
         override suspend fun deleteExpired(nowEpochMilliseconds: Long) {
             cleanupAttempts += 1
             error("cleanup unavailable")
@@ -531,8 +527,7 @@ class FanboxAuthStorageTest {
             domain: String,
             path: String,
             name: String,
-        ) =
-            delegate.delete(domain, path, name)
+        ) = delegate.delete(domain, path, name)
         override suspend fun deleteExpired(nowEpochMilliseconds: Long) {
             cleanupAttempts += 1
             if (cleanupAttempts == 1) error("first cleanup unavailable")
@@ -551,18 +546,13 @@ class FanboxAuthStorageTest {
             domain: String,
             path: String,
             name: String,
-        ) =
-            delegate.delete(domain, path, name)
-        override suspend fun deleteExpired(nowEpochMilliseconds: Long): Unit =
-            throw CancellationException("cleanup cancelled")
+        ) = delegate.delete(domain, path, name)
+        override suspend fun deleteExpired(nowEpochMilliseconds: Long): Unit = throw CancellationException("cleanup cancelled")
         override suspend fun replaceAll(cookies: List<FanboxCookieRecord>) = delegate.replaceAll(cookies)
         override suspend fun clear() = delegate.clear()
     }
 
-    private class RefreshAfterSnapshotStorage(
-        expired: FanboxCookieRecord,
-        private val refreshed: FanboxCookieRecord,
-    ) : FanboxCookieStorage {
+    private class RefreshAfterSnapshotStorage(expired: FanboxCookieRecord, private val refreshed: FanboxCookieRecord) : FanboxCookieStorage {
         private val delegate = InMemoryFanboxCookieStorage(listOf(expired))
         private var refreshPending = true
         override val cookies = delegate.cookies
@@ -579,10 +569,8 @@ class FanboxAuthStorageTest {
             domain: String,
             path: String,
             name: String,
-        ) =
-            delegate.delete(domain, path, name)
-        override suspend fun deleteExpired(nowEpochMilliseconds: Long) =
-            delegate.deleteExpired(nowEpochMilliseconds)
+        ) = delegate.delete(domain, path, name)
+        override suspend fun deleteExpired(nowEpochMilliseconds: Long) = delegate.deleteExpired(nowEpochMilliseconds)
         override suspend fun replaceAll(cookies: List<FanboxCookieRecord>) = delegate.replaceAll(cookies)
         override suspend fun clear() = delegate.clear()
     }
@@ -602,10 +590,8 @@ class FanboxAuthStorageTest {
             domain: String,
             path: String,
             name: String,
-        ) =
-            delegate.delete(domain, path, name)
-        override suspend fun deleteExpired(nowEpochMilliseconds: Long) =
-            delegate.deleteExpired(nowEpochMilliseconds)
+        ) = delegate.delete(domain, path, name)
+        override suspend fun deleteExpired(nowEpochMilliseconds: Long) = delegate.deleteExpired(nowEpochMilliseconds)
         override suspend fun replaceAll(cookies: List<FanboxCookieRecord>) {
             replaceAllCalls += 1
             delegate.replaceAll(cookies)
@@ -635,8 +621,7 @@ class FanboxAuthStorageTest {
         ) {
             deletedIdentity = CookieIdentity(domain, path, name)
         }
-        override suspend fun deleteExpired(nowEpochMilliseconds: Long) =
-            error("unexpected expiry cleanup")
+        override suspend fun deleteExpired(nowEpochMilliseconds: Long) = error("unexpected expiry cleanup")
         override suspend fun replaceAll(cookies: List<FanboxCookieRecord>) {
             replacement = cookies.toList()
         }

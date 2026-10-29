@@ -23,10 +23,9 @@ public data class FanboxCookieRecord(
     public val secure: Boolean,
     public val hostOnly: Boolean,
 ) {
-    override fun toString(): String =
-        "FanboxCookieRecord(domain=$domain, path=$path, name=$name, " +
-            "expiresAtEpochMilliseconds=$expiresAtEpochMilliseconds, secure=$secure, " +
-            "hostOnly=$hostOnly, value=<redacted>)"
+    override fun toString(): String = "FanboxCookieRecord(domain=$domain, path=$path, name=$name, " +
+        "expiresAtEpochMilliseconds=$expiresAtEpochMilliseconds, secure=$secure, " +
+        "hostOnly=$hostOnly, value=<redacted>)"
 }
 
 /**
@@ -90,24 +89,17 @@ public class InMemoryFanboxCookieStorage(
     private val mutex = Mutex()
     private val state = MutableStateFlow(initialCookies.canonicalSnapshot())
 
-    override val cookies: Flow<List<FanboxCookieRecord>> = state
-        .asStateFlow()
-        .map { it.toList() }
+    override val cookies: Flow<List<FanboxCookieRecord>> = state.asStateFlow().map { it.toList() }
 
     override suspend fun snapshot(): List<FanboxCookieRecord> = mutex.withLock {
-        state
-            .value
-            .toList()
+        state.value.toList()
     }
 
     override suspend fun upsert(cookie: FanboxCookieRecord) {
         mutex.withLock {
             state.value = (
-                state
-                    .value
-                    .filterNot { it.identity == cookie.identity } + cookie
-                )
-                .canonicalSnapshot()
+                state.value.filterNot { it.identity == cookie.identity } + cookie
+                ).canonicalSnapshot()
         }
     }
 
@@ -118,23 +110,17 @@ public class InMemoryFanboxCookieStorage(
     ) {
         val identity = CookieIdentity(domain.canonicalDomain(), path.canonicalPath(), name)
         mutex.withLock {
-            state.value = state
-                .value
-                .filterNot { it.identity == identity }
+            state.value = state.value.filterNot { it.identity == identity }
         }
     }
 
     override suspend fun deleteExpired(nowEpochMilliseconds: Long) {
         mutex.withLock {
-            state.value = state
-                .value
-                .filterNot { record ->
-                    record
-                        .expiresAtEpochMilliseconds
-                        ?.let { expiry ->
-                            expiry <= nowEpochMilliseconds
-                        } == true
-                }
+            state.value = state.value.filterNot { record ->
+                record.expiresAtEpochMilliseconds?.let { expiry ->
+                    expiry <= nowEpochMilliseconds
+                } == true
+            }
         }
     }
 
@@ -191,7 +177,4 @@ internal fun FanboxCookieRecord.canonicalized(): FanboxCookieRecord = copy(
     path = path.canonicalPath(),
 )
 
-internal fun List<FanboxCookieRecord>.canonicalSnapshot(): List<FanboxCookieRecord> =
-    associateBy { it.identity }
-        .values
-        .map(FanboxCookieRecord::canonicalized)
+internal fun List<FanboxCookieRecord>.canonicalSnapshot(): List<FanboxCookieRecord> = associateBy { it.identity }.values.map(FanboxCookieRecord::canonicalized)

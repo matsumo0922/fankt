@@ -39,10 +39,7 @@ private val FanboxCsrfTokenPlugin = createClientPlugin(
 ) {
     val provider = pluginConfig.provider
     onRequest { request, _ ->
-        if (!request
-                .headers
-                .contains(FANBOX_CSRF_HEADER)
-        ) {
+        if (!request.headers.contains(FANBOX_CSRF_HEADER)) {
             request.header(FANBOX_CSRF_HEADER, provider().orEmpty())
         }
     }
@@ -118,9 +115,7 @@ private fun HttpClientConfig<*>.configureFanboxAuthenticatedRequest(
 
 private fun fanboxDownloadFailure(response: HttpResponse): FanboxException = FanboxFailureInterpreter.httpFailure(
     endpoint = FanboxExceptionFactory.DOWNLOAD_ENDPOINT,
-    statusCode = response
-        .status
-        .value,
+    statusCode = response.status.value,
     rawBody = null,
     retryAfter = response.headers[HttpHeaders.RetryAfter],
     nowEpochMilliseconds = Clock.System.now().toEpochMilliseconds(),
@@ -129,18 +124,13 @@ private fun fanboxDownloadFailure(response: HttpResponse): FanboxException = Fan
 private fun HttpClientConfig<*>.configureDownloadFailures(logLevel: FanboxLogLevel) {
     HttpResponseValidator {
         validateResponse { response ->
-            if (response
-                    .status
-                    .isSuccess()
-            ) {
+            if (response.status.isSuccess()) {
                 return@validateResponse
             }
 
             val failure = fanboxDownloadFailure(response)
             if (logLevel != FanboxLogLevel.NONE) {
-                failure
-                    .rawBody
-                    ?.let { body -> Napier.d { "FANBOX response: $body" } }
+                failure.rawBody?.let { body -> Napier.d { "FANBOX response: $body" } }
             }
             throw failure
         }

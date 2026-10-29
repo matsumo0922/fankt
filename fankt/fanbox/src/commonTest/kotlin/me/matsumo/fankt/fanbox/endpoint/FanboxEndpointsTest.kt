@@ -27,9 +27,7 @@ class FanboxEndpointsTest {
                 "plan.listSupporting.strict",
                 "plan.listSupporting.tolerant",
             ),
-            fanboxRequestOperations
-                .filter { it.endpointId == FanboxEndpointIds.planListSupporting }
-                .map { it.name },
+            fanboxRequestOperations.filter { it.endpointId == FanboxEndpointIds.planListSupporting }.map { it.name },
         )
         assertEquals(
             setOf(FanboxEndpointIds.planListSupporting),
@@ -37,6 +35,8 @@ class FanboxEndpointsTest {
         )
     }
 
+    // 全 endpoint の path と method の対応表を、独立した期待値の一覧として保持する。
+    @Suppress("LongMethod")
     @Test
     fun everyUniqueRouteBuilderMatchesCurrentPathAndMethod() {
         val cursor = FanboxCursor("first", "max", "first-id", "max-id", 30)
@@ -202,8 +202,7 @@ class FanboxEndpointsTest {
 
     @Test
     fun bellListSkipsUnreadConversionUnlessRequested() {
-        fun skipValue(descriptor: RequestDescriptor) =
-            descriptor.query.single { it.name == "skipConvertUnreadNotification" }.value
+        fun skipValue(descriptor: RequestDescriptor) = descriptor.query.single { it.name == "skipConvertUnreadNotification" }.value
 
         assertEquals("1", skipValue(FanboxEndpoints.bells(page = 2)))
         assertEquals("1", skipValue(FanboxEndpoints.bells(page = 2, skipConvertUnreadNotification = 1)))

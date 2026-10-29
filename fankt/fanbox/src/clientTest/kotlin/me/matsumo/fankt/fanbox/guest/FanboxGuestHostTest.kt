@@ -112,8 +112,7 @@ class FanboxGuestHostTest {
     @Test
     fun aMissingEmbeddedModuleIsDistinguishedFromAMissingManifest() = runBlocking {
         val diagnostics = loadEmbeddedAndReportFailures { fileName ->
-            MANIFEST_WITH_ONE_MODULE.encodeToByteArray()
-                .takeIf { fileName == EMBEDDED_MANIFEST_FILE_NAME }
+            MANIFEST_WITH_ONE_MODULE.encodeToByteArray().takeIf { fileName == EMBEDDED_MANIFEST_FILE_NAME }
         }
 
         val reported = diagnostics.last()
@@ -411,14 +410,10 @@ class FanboxGuestHostTest {
         assertEquals(post, assertIs<GuestParseResult.Success>(decoded).postDetail)
     }
 
-    private class StubGuestService(
-        private val parse: (String, Int) -> GuestParseResult,
-    ) : FanboxGuestService {
-        override fun buildPostDetailRequest(postId: String): RequestDescriptor =
-            FanboxEndpoints.postDetail(FanboxPostId(postId))
+    private class StubGuestService(private val parse: (String, Int) -> GuestParseResult) : FanboxGuestService {
+        override fun buildPostDetailRequest(postId: String): RequestDescriptor = FanboxEndpoints.postDetail(FanboxPostId(postId))
 
-        override fun parsePostDetail(body: String, statusCode: Int): GuestParseResult =
-            parse(body, statusCode)
+        override fun parsePostDetail(body: String, statusCode: Int): GuestParseResult = parse(body, statusCode)
     }
 
     private fun hostWithService(
@@ -434,11 +429,9 @@ class FanboxGuestHostTest {
         loadGuestOverride = {
             LoadedGuest(
                 service = object : FanboxGuestService {
-                    override fun buildPostDetailRequest(postId: String): RequestDescriptor =
-                        buildRequest(postId)
+                    override fun buildPostDetailRequest(postId: String): RequestDescriptor = buildRequest(postId)
 
-                    override fun parsePostDetail(body: String, statusCode: Int): GuestParseResult =
-                        parse(body, statusCode)
+                    override fun parsePostDetail(body: String, statusCode: Int): GuestParseResult = parse(body, statusCode)
                 },
             )
         },
