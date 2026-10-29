@@ -128,16 +128,20 @@ loaded keeps running what it loaded.
 | Return to an earlier bundle | Restore the directory from the `gh-pages` history | Revert on `main` |
 | Deliver a fix | Merge to `main`, check the dev channel, then promote | Merge to `main` |
 
-Work on `gh-pages` in a separate worktree, and do not run **Deploy Guest Bundle** or **Promote
-Guest Bundle** meanwhile. If the push is rejected, another run moved the branch: remove the worktree
-and start again from the latest `origin/gh-pages`.
-
-**To stop**, delete the manifest. Consumers then fail to load the guest and use the built-in path:
+Both operations below start from a worktree of the latest `gh-pages`. Do not run **Deploy Guest
+Bundle** or **Promote Guest Bundle** meanwhile. If the push is rejected, another run moved the
+branch: remove the worktree and start again from here. Remove it with
+`git worktree remove ../fankt-gh-pages` from the source checkout once the push succeeds.
 
 ```sh
 git fetch origin gh-pages
 git worktree add --detach ../fankt-gh-pages origin/gh-pages
 cd ../fankt-gh-pages
+```
+
+**To stop**, delete the manifest. Consumers then fail to load the guest and use the built-in path:
+
+```sh
 git rm zipline/v1/manifest.zipline.json
 git commit -m "Stop the production guest bundle"
 git push origin HEAD:gh-pages
