@@ -77,6 +77,24 @@ Each HTTP request of a load gives up after 10 seconds. The cache keeps up to 10 
 per set of trusted keys, so a cache written under a previous set never blocks loading. Give each `Fanbox` its
 own cache directory.
 
+#### Observing the guest
+
+Pass `guestEventListener` to follow the guest path. Every fallback above is reported, so a consumer
+can tell a guest that never loads from one that works, which otherwise look the same: both serve
+`post.info` through the built-in path.
+
+| Event | When |
+|---|---|
+| `Loaded(version)` | The guest loaded. `version` is the commit the bundle was built from |
+| `LoadFailed(errorType)` | The guest could not load; this `Fanbox` uses only the built-in path |
+| `SchemaMismatch(endpoint)` | The guest's parser rejected a response, which goes to the built-in parser |
+| `CallFailed(endpoint, operation, errorType)` | A guest call failed and the built-in path handled it |
+
+No event carries a response body or a credential: `errorType` is the name of the exception's type.
+The listener runs on a background thread, possibly before the constructor returns and possibly from
+several threads at once. Return quickly, and do not close the `Fanbox` from it. An exception it
+throws is logged and does not reach the guest path.
+
 #### Bundle delivery
 
 The bundle is served from GitHub Pages on two channels. `deploy-guest-bundle.yml` builds, signs and

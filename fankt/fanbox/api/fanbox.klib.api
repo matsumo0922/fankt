@@ -2104,8 +2104,69 @@ sealed class me.matsumo.fankt.fanbox/FanboxException : kotlin/Exception { // me.
 }
 
 // Targets: [ios]
+sealed interface me.matsumo.fankt.fanbox/FanboxGuestEvent { // me.matsumo.fankt.fanbox/FanboxGuestEvent|null[0]
+    final class CallFailed : me.matsumo.fankt.fanbox/FanboxGuestEvent { // me.matsumo.fankt.fanbox/FanboxGuestEvent.CallFailed|null[0]
+        constructor <init>(kotlin/String, kotlin/String, kotlin/String) // me.matsumo.fankt.fanbox/FanboxGuestEvent.CallFailed.<init>|<init>(kotlin.String;kotlin.String;kotlin.String){}[0]
+
+        final val endpoint // me.matsumo.fankt.fanbox/FanboxGuestEvent.CallFailed.endpoint|{}endpoint[0]
+            final fun <get-endpoint>(): kotlin/String // me.matsumo.fankt.fanbox/FanboxGuestEvent.CallFailed.endpoint.<get-endpoint>|<get-endpoint>(){}[0]
+        final val errorType // me.matsumo.fankt.fanbox/FanboxGuestEvent.CallFailed.errorType|{}errorType[0]
+            final fun <get-errorType>(): kotlin/String // me.matsumo.fankt.fanbox/FanboxGuestEvent.CallFailed.errorType.<get-errorType>|<get-errorType>(){}[0]
+        final val operation // me.matsumo.fankt.fanbox/FanboxGuestEvent.CallFailed.operation|{}operation[0]
+            final fun <get-operation>(): kotlin/String // me.matsumo.fankt.fanbox/FanboxGuestEvent.CallFailed.operation.<get-operation>|<get-operation>(){}[0]
+
+        final fun component1(): kotlin/String // me.matsumo.fankt.fanbox/FanboxGuestEvent.CallFailed.component1|component1(){}[0]
+        final fun component2(): kotlin/String // me.matsumo.fankt.fanbox/FanboxGuestEvent.CallFailed.component2|component2(){}[0]
+        final fun component3(): kotlin/String // me.matsumo.fankt.fanbox/FanboxGuestEvent.CallFailed.component3|component3(){}[0]
+        final fun copy(kotlin/String = ..., kotlin/String = ..., kotlin/String = ...): me.matsumo.fankt.fanbox/FanboxGuestEvent.CallFailed // me.matsumo.fankt.fanbox/FanboxGuestEvent.CallFailed.copy|copy(kotlin.String;kotlin.String;kotlin.String){}[0]
+        final fun equals(kotlin/Any?): kotlin/Boolean // me.matsumo.fankt.fanbox/FanboxGuestEvent.CallFailed.equals|equals(kotlin.Any?){}[0]
+        final fun hashCode(): kotlin/Int // me.matsumo.fankt.fanbox/FanboxGuestEvent.CallFailed.hashCode|hashCode(){}[0]
+        final fun toString(): kotlin/String // me.matsumo.fankt.fanbox/FanboxGuestEvent.CallFailed.toString|toString(){}[0]
+    }
+
+    final class LoadFailed : me.matsumo.fankt.fanbox/FanboxGuestEvent { // me.matsumo.fankt.fanbox/FanboxGuestEvent.LoadFailed|null[0]
+        constructor <init>(kotlin/String) // me.matsumo.fankt.fanbox/FanboxGuestEvent.LoadFailed.<init>|<init>(kotlin.String){}[0]
+
+        final val errorType // me.matsumo.fankt.fanbox/FanboxGuestEvent.LoadFailed.errorType|{}errorType[0]
+            final fun <get-errorType>(): kotlin/String // me.matsumo.fankt.fanbox/FanboxGuestEvent.LoadFailed.errorType.<get-errorType>|<get-errorType>(){}[0]
+
+        final fun component1(): kotlin/String // me.matsumo.fankt.fanbox/FanboxGuestEvent.LoadFailed.component1|component1(){}[0]
+        final fun copy(kotlin/String = ...): me.matsumo.fankt.fanbox/FanboxGuestEvent.LoadFailed // me.matsumo.fankt.fanbox/FanboxGuestEvent.LoadFailed.copy|copy(kotlin.String){}[0]
+        final fun equals(kotlin/Any?): kotlin/Boolean // me.matsumo.fankt.fanbox/FanboxGuestEvent.LoadFailed.equals|equals(kotlin.Any?){}[0]
+        final fun hashCode(): kotlin/Int // me.matsumo.fankt.fanbox/FanboxGuestEvent.LoadFailed.hashCode|hashCode(){}[0]
+        final fun toString(): kotlin/String // me.matsumo.fankt.fanbox/FanboxGuestEvent.LoadFailed.toString|toString(){}[0]
+    }
+
+    final class Loaded : me.matsumo.fankt.fanbox/FanboxGuestEvent { // me.matsumo.fankt.fanbox/FanboxGuestEvent.Loaded|null[0]
+        constructor <init>(kotlin/String?) // me.matsumo.fankt.fanbox/FanboxGuestEvent.Loaded.<init>|<init>(kotlin.String?){}[0]
+
+        final val version // me.matsumo.fankt.fanbox/FanboxGuestEvent.Loaded.version|{}version[0]
+            final fun <get-version>(): kotlin/String? // me.matsumo.fankt.fanbox/FanboxGuestEvent.Loaded.version.<get-version>|<get-version>(){}[0]
+
+        final fun component1(): kotlin/String? // me.matsumo.fankt.fanbox/FanboxGuestEvent.Loaded.component1|component1(){}[0]
+        final fun copy(kotlin/String? = ...): me.matsumo.fankt.fanbox/FanboxGuestEvent.Loaded // me.matsumo.fankt.fanbox/FanboxGuestEvent.Loaded.copy|copy(kotlin.String?){}[0]
+        final fun equals(kotlin/Any?): kotlin/Boolean // me.matsumo.fankt.fanbox/FanboxGuestEvent.Loaded.equals|equals(kotlin.Any?){}[0]
+        final fun hashCode(): kotlin/Int // me.matsumo.fankt.fanbox/FanboxGuestEvent.Loaded.hashCode|hashCode(){}[0]
+        final fun toString(): kotlin/String // me.matsumo.fankt.fanbox/FanboxGuestEvent.Loaded.toString|toString(){}[0]
+    }
+
+    final class SchemaMismatch : me.matsumo.fankt.fanbox/FanboxGuestEvent { // me.matsumo.fankt.fanbox/FanboxGuestEvent.SchemaMismatch|null[0]
+        constructor <init>(kotlin/String) // me.matsumo.fankt.fanbox/FanboxGuestEvent.SchemaMismatch.<init>|<init>(kotlin.String){}[0]
+
+        final val endpoint // me.matsumo.fankt.fanbox/FanboxGuestEvent.SchemaMismatch.endpoint|{}endpoint[0]
+            final fun <get-endpoint>(): kotlin/String // me.matsumo.fankt.fanbox/FanboxGuestEvent.SchemaMismatch.endpoint.<get-endpoint>|<get-endpoint>(){}[0]
+
+        final fun component1(): kotlin/String // me.matsumo.fankt.fanbox/FanboxGuestEvent.SchemaMismatch.component1|component1(){}[0]
+        final fun copy(kotlin/String = ...): me.matsumo.fankt.fanbox/FanboxGuestEvent.SchemaMismatch // me.matsumo.fankt.fanbox/FanboxGuestEvent.SchemaMismatch.copy|copy(kotlin.String){}[0]
+        final fun equals(kotlin/Any?): kotlin/Boolean // me.matsumo.fankt.fanbox/FanboxGuestEvent.SchemaMismatch.equals|equals(kotlin.Any?){}[0]
+        final fun hashCode(): kotlin/Int // me.matsumo.fankt.fanbox/FanboxGuestEvent.SchemaMismatch.hashCode|hashCode(){}[0]
+        final fun toString(): kotlin/String // me.matsumo.fankt.fanbox/FanboxGuestEvent.SchemaMismatch.toString|toString(){}[0]
+    }
+}
+
+// Targets: [ios]
 final class me.matsumo.fankt.fanbox/Fanbox : kotlin/AutoCloseable { // me.matsumo.fankt.fanbox/Fanbox|null[0]
-    constructor <init>(kotlin/String, kotlin.collections/Map<kotlin/String, kotlin/ByteArray>, me.matsumo.fankt.fanbox/FanboxGuestCache, me.matsumo.fankt.fanbox/FanboxLogLevel = ..., kotlinx.coroutines/CoroutineDispatcher = ..., me.matsumo.fankt.fanbox/FanboxCookieStorage = ..., me.matsumo.fankt.fanbox/FanboxTokenStore = ...) // me.matsumo.fankt.fanbox/Fanbox.<init>|<init>(kotlin.String;kotlin.collections.Map<kotlin.String,kotlin.ByteArray>;me.matsumo.fankt.fanbox.FanboxGuestCache;me.matsumo.fankt.fanbox.FanboxLogLevel;kotlinx.coroutines.CoroutineDispatcher;me.matsumo.fankt.fanbox.FanboxCookieStorage;me.matsumo.fankt.fanbox.FanboxTokenStore){}[0]
+    constructor <init>(kotlin/String, kotlin.collections/Map<kotlin/String, kotlin/ByteArray>, me.matsumo.fankt.fanbox/FanboxGuestCache, kotlin/Function1<me.matsumo.fankt.fanbox/FanboxGuestEvent, kotlin/Unit> = ..., me.matsumo.fankt.fanbox/FanboxLogLevel = ..., kotlinx.coroutines/CoroutineDispatcher = ..., me.matsumo.fankt.fanbox/FanboxCookieStorage = ..., me.matsumo.fankt.fanbox/FanboxTokenStore = ...) // me.matsumo.fankt.fanbox/Fanbox.<init>|<init>(kotlin.String;kotlin.collections.Map<kotlin.String,kotlin.ByteArray>;me.matsumo.fankt.fanbox.FanboxGuestCache;kotlin.Function1<me.matsumo.fankt.fanbox.FanboxGuestEvent,kotlin.Unit>;me.matsumo.fankt.fanbox.FanboxLogLevel;kotlinx.coroutines.CoroutineDispatcher;me.matsumo.fankt.fanbox.FanboxCookieStorage;me.matsumo.fankt.fanbox.FanboxTokenStore){}[0]
     constructor <init>(me.matsumo.fankt.fanbox/FanboxLogLevel = ..., kotlinx.coroutines/CoroutineDispatcher = ..., me.matsumo.fankt.fanbox/FanboxCookieStorage = ..., me.matsumo.fankt.fanbox/FanboxTokenStore = ...) // me.matsumo.fankt.fanbox/Fanbox.<init>|<init>(me.matsumo.fankt.fanbox.FanboxLogLevel;kotlinx.coroutines.CoroutineDispatcher;me.matsumo.fankt.fanbox.FanboxCookieStorage;me.matsumo.fankt.fanbox.FanboxTokenStore){}[0]
 
     final val cookies // me.matsumo.fankt.fanbox/Fanbox.cookies|{}cookies[0]
