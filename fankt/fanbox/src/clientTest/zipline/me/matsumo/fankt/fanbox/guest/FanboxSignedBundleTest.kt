@@ -5,7 +5,7 @@
 package me.matsumo.fankt.fanbox.guest
 
 import app.cash.zipline.ZiplineManifest
-import app.cash.zipline.loader.ManifestSigner
+import app.cash.zipline.loader.ManifestSigner.Builder
 import app.cash.zipline.loader.ZiplineHttpClient
 import app.cash.zipline.loader.internal.tink.subtle.newKeyPairFromSeed
 import io.ktor.client.HttpClient
@@ -219,8 +219,7 @@ class FanboxSignedBundleTest {
             val unsignedManifest = ZiplineManifest.decodeJson(
                 fileSystem.read(sourceDirectory / "manifest.zipline.json") { readUtf8() },
             )
-            var manifest = ManifestSigner
-                .Builder()
+            var manifest = Builder()
                 .addEd25519(signingKeyName, keyPair.privateKey)
                 .build()
                 .sign(unsignedManifest.copy(freshAtEpochMs = 0L))

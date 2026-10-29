@@ -4,7 +4,7 @@ import app.cash.zipline.Zipline
 import app.cash.zipline.ZiplineManifest
 import app.cash.zipline.loader.FreshnessChecker
 import app.cash.zipline.loader.LoadResult
-import app.cash.zipline.loader.ManifestVerifier
+import app.cash.zipline.loader.ManifestVerifier.Builder
 import app.cash.zipline.loader.ZiplineHttpClient
 import app.cash.zipline.loader.ZiplineLoader
 import io.ktor.client.HttpClient
@@ -360,8 +360,7 @@ internal class ZiplineGuestLoader(
     private val httpClient: ZiplineHttpClient,
     private val diagnosticSink: FanboxDiagnosticSink,
 ) {
-    private val manifestVerifier = ManifestVerifier
-        .Builder()
+    private val manifestVerifier = Builder()
         .addEd25519(
             name = config.trustedKeyName,
             trustedKey = config.trustedEd25519PublicKey.toByteString(),
