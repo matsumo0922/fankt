@@ -172,7 +172,7 @@ internal class FanboxGuestHost(
         try {
             eventListener(event)
         } catch (failure: Exception) {
-            diagnosticSink.report("Guest event listener failed (${failure.describe()})")
+            diagnosticSink.report("Guest event listener failed (${failure.errorType()})")
         }
     }
 

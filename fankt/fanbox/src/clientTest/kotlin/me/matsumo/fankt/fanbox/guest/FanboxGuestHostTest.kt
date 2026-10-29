@@ -141,12 +141,14 @@ class FanboxGuestHostTest {
     fun aFailingListenerDoesNotAffectTheGuest() = runBlocking {
         val fixture = GuestFixture(
             parse = { _, _ -> GuestParseResult.SchemaMismatch("changed schema") },
-            eventListener = { error("listener failed") },
+            eventListener = { error("cookie=secret") },
         )
 
         fixture.use {
             assertEquals(BUILT_IN_POST, it.getPostDetail())
-            assertTrue(it.diagnostics.any { message -> message.startsWith("Guest event listener failed") })
+            assertTrue(it.diagnostics.any { message -> message == "Guest event listener failed (IllegalStateException)" })
+            // A listener's own message may carry anything, so only its type is reported.
+            assertTrue(it.diagnostics.none { message -> "secret" in message })
         }
     }
 
