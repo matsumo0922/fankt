@@ -15,6 +15,7 @@ internal fun interface FanboxDiagnosticSink {
     }
 }
 
+/** 認証情報を除去し、長さを制限した診断情報を生成する。 */
 internal object FanboxDiagnostics {
     const val MAX_FRAGMENT_LENGTH = 2_048
 
@@ -87,9 +88,8 @@ internal object FanboxDiagnostics {
         return writer.build()
     }
 
-    private class BoundedJsonWriter(
-        private val limit: Int,
-    ) {
+    /** 出力長と深さを制限して診断用 JSON を書き出す。 */
+    private class BoundedJsonWriter(private val limit: Int) {
         private val buffer = StringBuilder(limit)
         private var truncated = false
 
@@ -148,15 +148,24 @@ internal object FanboxDiagnostics {
                 if (truncated) return@forEach
                 when (char) {
                     '"' -> append("\\\"")
+
                     '\\' -> append("\\\\")
+
                     '\b' -> append("\\b")
+
                     '' -> append("\\f")
+
                     '\n' -> append("\\n")
+
                     '\r' -> append("\\r")
+
                     '\t' -> append("\\t")
+
                     else -> if (char.code < 0x20) {
                         append("\\u")
-                        append(char.code.toString(16).padStart(4, '0'))
+                        append(
+                            char.code.toString(16).padStart(4, '0'),
+                        )
                     } else {
                         append(char)
                     }

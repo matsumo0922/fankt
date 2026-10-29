@@ -10,10 +10,7 @@ internal fun interface FanboxMetadataExtractor {
     fun extract(html: String): String?
 }
 
-internal class FanboxMetadataParser(
-    private val formatter: Json,
-    private val extractor: FanboxMetadataExtractor,
-) {
+internal class FanboxMetadataParser(private val formatter: Json, private val extractor: FanboxMetadataExtractor) {
     fun parse(
         html: String,
         statusCode: Int? = null,

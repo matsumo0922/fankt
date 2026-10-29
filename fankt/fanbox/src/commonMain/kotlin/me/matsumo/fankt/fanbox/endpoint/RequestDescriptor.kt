@@ -14,10 +14,7 @@ internal enum class FanboxHttpMethod {
 }
 
 @Serializable
-internal data class FanboxQueryParameter(
-    internal val name: String,
-    internal val value: String,
-)
+internal data class FanboxQueryParameter(internal val name: String, internal val value: String)
 
 @Serializable
 internal data class RequestDescriptor(

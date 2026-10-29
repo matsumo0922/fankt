@@ -13,12 +13,7 @@ internal data class FanboxMetaDataEntity(
     val csrfToken: String,
 ) {
     @Serializable
-    data class Context(
-        @SerialName("privacyPolicy")
-        val privacyPolicy: PrivacyPolicy,
-        @SerialName("user")
-        val user: User,
-    ) {
+    data class Context(@SerialName("privacyPolicy") val privacyPolicy: PrivacyPolicy, @SerialName("user") val user: User) {
         @Serializable
         data class PrivacyPolicy(
             @SerialName("policyUrl")

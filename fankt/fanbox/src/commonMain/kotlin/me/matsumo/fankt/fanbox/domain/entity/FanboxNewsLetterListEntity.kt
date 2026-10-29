@@ -4,10 +4,7 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 @Serializable
-internal data class FanboxNewsLettersEntity(
-    @SerialName("body")
-    val body: List<Body>,
-) {
+internal data class FanboxNewsLettersEntity(@SerialName("body") val body: List<Body>) {
     @Serializable
     data class Body(
         @SerialName("body")

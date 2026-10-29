@@ -77,9 +77,7 @@ internal fun verifyRoomStorageCloseContract(
     cleanupFixture()
 }
 
-private suspend fun CoroutineScope.verifyLiveCollectionTerminatesAtClose(
-    createStorage: () -> RoomFanboxCookieStorage,
-) {
+private suspend fun CoroutineScope.verifyLiveCollectionTerminatesAtClose(createStorage: () -> RoomFanboxCookieStorage) {
     val storage = createStorage()
     val observed = Channel<List<FanboxCookieRecord>>(Channel.UNLIMITED)
     val collection = collectStorageOutcome(storage.cookies, observed)
@@ -95,9 +93,7 @@ private suspend fun CoroutineScope.verifyLiveCollectionTerminatesAtClose(
     storage.close()
 }
 
-private suspend fun CoroutineScope.verifyCapturedFlowFailsAfterClose(
-    createStorage: () -> RoomFanboxCookieStorage,
-) {
+private suspend fun CoroutineScope.verifyCapturedFlowFailsAfterClose(createStorage: () -> RoomFanboxCookieStorage) {
     val storage = createStorage()
     val captured = storage.cookies
     storage.close()
@@ -107,9 +103,7 @@ private suspend fun CoroutineScope.verifyCapturedFlowFailsAfterClose(
     }
 }
 
-private suspend fun CoroutineScope.verifyFanboxCollectionTerminatesAtStorageClose(
-    createStorage: () -> RoomFanboxCookieStorage,
-) {
+private suspend fun CoroutineScope.verifyFanboxCollectionTerminatesAtStorageClose(createStorage: () -> RoomFanboxCookieStorage) {
     val storage = createStorage()
     val fanbox = Fanbox(cookieStorage = storage)
     val observed = Channel<List<FanboxCookieRecord>>(Channel.UNLIMITED)
@@ -123,9 +117,7 @@ private suspend fun CoroutineScope.verifyFanboxCollectionTerminatesAtStorageClos
     fanbox.close()
 }
 
-private suspend fun CoroutineScope.verifyStorageOutlivesClientCycles(
-    createStorage: () -> RoomFanboxCookieStorage,
-) {
+private suspend fun CoroutineScope.verifyStorageOutlivesClientCycles(createStorage: () -> RoomFanboxCookieStorage) {
     val storage = createStorage()
     val observed = Channel<List<FanboxCookieRecord>>(Channel.UNLIMITED)
     val collection = collectStorageOutcome(storage.cookies, observed)
@@ -146,17 +138,11 @@ private suspend fun CoroutineScope.verifyStorageOutlivesClientCycles(
     assertIs<IllegalStateException>(collection.awaitFailure())
 }
 
-private fun CoroutineScope.collectStorageOutcome(
-    cookies: Flow<List<FanboxCookieRecord>>,
-    observed: Channel<List<FanboxCookieRecord>>,
-): Deferred<Throwable?> = async(start = CoroutineStart.UNDISPATCHED) {
+private fun CoroutineScope.collectStorageOutcome(cookies: Flow<List<FanboxCookieRecord>>, observed: Channel<List<FanboxCookieRecord>>): Deferred<Throwable?> = async(start = CoroutineStart.UNDISPATCHED) {
     runCatching { cookies.collect { records -> observed.send(records) } }.exceptionOrNull()
 }
 
-private suspend fun Deferred<Throwable?>.awaitFailure(): Throwable =
-    checkNotNull(withTimeout(CONTRACT_TIMEOUT_MILLISECONDS) { await() }) {
-        "The collection completed without failing"
-    }
+private suspend fun Deferred<Throwable?>.awaitFailure(): Throwable = checkNotNull(withTimeout(CONTRACT_TIMEOUT_MILLISECONDS) { await() }) { "The collection completed without failing" }
 
 private suspend fun Channel<List<FanboxCookieRecord>>.awaitRecordNamed(name: String) {
     withTimeout(CONTRACT_TIMEOUT_MILLISECONDS) {

@@ -4,15 +4,9 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 @Serializable
-internal data class FanboxCreatorTagListEntity(
-    @SerialName("body")
-    val body: Body,
-) {
+internal data class FanboxCreatorTagListEntity(@SerialName("body") val body: Body) {
     @Serializable
-    data class Body(
-        @SerialName("featuredTags")
-        val featuredTags: List<FeaturedTags>,
-    )
+    data class Body(@SerialName("featuredTags") val featuredTags: List<FeaturedTags>)
 
     @Serializable
     data class FeaturedTags(

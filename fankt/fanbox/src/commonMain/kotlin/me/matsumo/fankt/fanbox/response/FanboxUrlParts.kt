@@ -1,5 +1,6 @@
 package me.matsumo.fankt.fanbox.response
 
+/** FANBOX のページング URL を構成要素に分解した値。 */
 internal data class FanboxUrlParts(
     val host: String?,
     val encodedPath: String,
@@ -86,16 +87,18 @@ internal data class FanboxUrlParts(
                     bytes += ((high shl 4) or low).toByte()
                     index += 3
                 } else {
-                    val end = if (
-                        char.isHighSurrogate() &&
-                        index + 1 < value.length &&
-                        value[index + 1].isLowSurrogate()
-                    ) {
+                    val hasNextCharacter = index + 1 < value.length
+                    val startsSurrogatePair = char.isHighSurrogate() && hasNextCharacter
+                    val isSurrogatePair = startsSurrogatePair && value[index + 1].isLowSurrogate()
+                    val end = if (isSurrogatePair) {
                         index + 2
                     } else {
                         index + 1
                     }
-                    value.substring(index, end).encodeToByteArray().forEach(bytes::add)
+                    value
+                        .substring(index, end)
+                        .encodeToByteArray()
+                        .forEach(bytes::add)
                     index = end
                 }
             }
@@ -108,7 +111,5 @@ internal data class FanboxUrlParts(
     }
 }
 
-internal data class FanboxUrlQueryParameter(
-    val name: String,
-    val value: String,
-)
+/** URL のクエリ名と値の組。 */
+internal data class FanboxUrlQueryParameter(val name: String, val value: String)

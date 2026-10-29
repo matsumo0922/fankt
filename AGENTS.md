@@ -2,8 +2,7 @@
 <!-- この区間は Agents リポジトリが管理する。編集は Agents の rules/kotlin.md で行い、make link-project で更新する -->
 # Kotlin / Jetpack Compose 規約
 
-Kotlin プロジェクト共通のコーディング規約。整形など静的解析で判定できる規約（trailing comma、メソッドチェーンの改行、Composable の `modifier` 引数、ラムダ引数名の時制、Immutable なコレクション型の強制など）は
-`rules/lint/` のテンプレートを取り込んだ detekt / compose-rules 設定で強制する。このファイルには静的解析で判定できない、判断を伴う規約だけを置く。
+Kotlin プロジェクト共通のコーディング規約。整形など静的解析で判定できる規約（trailing comma、引数3つ以上の定義の改行、Composable の `modifier` 引数、ラムダ引数名の時制、Immutable なコレクション型の強制など）は `rules/lint/` のテンプレートを取り込んだ detekt / compose-rules 設定で強制する。このファイルには静的解析で判定できない、判断を伴う規約だけを置く。
 
 ## Kotlin
 
@@ -30,6 +29,7 @@ Kotlin プロジェクト共通のコーディング規約。整形など静的�
 
 - 同じ処理を2箇所目に書こうとした時点で、共通メソッドまたは共通クラスへ切り出す
 - ラムダ本体は3文以内に収める。4文以上、または分岐を2つ以上含む場合はメソッドへ切り出す
+- 宣言を並べるだけの DSL（Gradle の `dependencies { }`、テストデータの組み立てなど）は文の数に含めない。文の数が処理の複雑さを表さないため。`runTest { }` の中の実行処理や、イベント callback のように順に実行される処理は対象のままとする
 - 論理演算子（`&&` / `||`）を2つ以上含む条件式は、意味を表す名前の Boolean 変数に切り出してから比較に使う
 
 ### 定数
@@ -68,11 +68,30 @@ fun purchase(item: Item): Result<Receipt> {
 
 ### 引数
 
-- 関数定義は引数2つまでなら1行で書く。デフォルト引数を含む場合は引数ごとに改行する
-- 関数呼び出しは引数2つまでなら名前付き引数なしで1行で書く。次のいずれかに該当する場合は、引数ごとに改行して名前付き引数を使う: 引数が3つ以上 / 同じ型・形の引数が連続する /
-  引数内にメソッドチェーン・匿名オブジェクト・計算式・関数呼び出しが入る
+- 関数定義とコンストラクタは引数2つまでなら1行で書く。デフォルト引数を含む場合は引数ごとに改行する
+- 関数呼び出しは引数2つまでなら名前付き引数なしで1行で書く。次のいずれかに該当する場合は、引数ごとに改行して名前付き引数を使う: 引数が3つ以上 / 同じ型・形の引数が連続する / 引数内にメソッドチェーン・匿名オブジェクト・計算式・関数呼び出しが入る
 - 行の長さは基準にしない。`Text(stringResource(R.string.ok))` は短くても、引数内で関数を呼んでいるため改行する
 - Java メソッドは名前付き引数を使えないため、maxLength 制限に当たらない限り、改行せず1行で呼び出す
+- 単一式の `require` / `check` / `requireNotNull` / `checkNotNull` は、メッセージのラムダを含めて1行で書く。条件式自体が複数行にわたる場合はその構造を保つ。この規則は上の関数呼び出しの改行規則より優先する
+
+```kotlin
+require(count >= 0) { "count must be non-negative: $count" }
+```
+
+### メソッドチェーン
+
+- 1行に書く関数呼び出しは2つまでとする。3つ以上になる場合は、呼び出しごとに改行する
+- 数えるのは関数呼び出しだけで、プロパティ参照は数えない。`points.first().crs` は呼び出し1つ、`request.origin.position` は0とする
+- safe call（`?.`）や `!!` を挟んでも、同じチェーンの呼び出しとして数える
+
+```kotlin
+val crs = points.first().crs
+
+val names = items
+    .filter { it.isValid }
+    .map { it.name }
+    .first()
+```
 
 ### テスト
 
@@ -81,12 +100,23 @@ fun purchase(item: Item): Result<Receipt> {
 - 境界値は「等しい」で代用しない。「過ぎている」を検証するなら、同値ではなく実際に過ぎた入力を渡す
 - 修正に対するテストは、修正を戻すと落ちることを一度確認する
 
+### 規約の例外
+
+- 静的解析の指摘を避けるために、プロジェクト全体の閾値を上げたり除外を広げたりしない。まず分割や既存の型の再利用を検討する
+- それでも一緒に扱う理由がある場合だけ、宣言単位で `@Suppress` を付け、その理由を直前のコメントに書く
+- 公開 API の互換性などの理由で規約から外れたまま残す場合は、理由と移行を追跡する Issue をコメントに書く
+
+```kotlin
+// 関数数: endpoint を1か所に集め、API との対応を追いやすくするため
+@Suppress("TooManyFunctions")
+internal object ApiEndpoints
+```
+
 ## Jetpack Compose
 
 ### 状態と安定性
 
-- Composable から参照する `data class` には `@Immutable`（全プロパティが不変の場合）または `@Stable`（可変プロパティを含む場合）を付ける。Compose コンパイラの安定性推論に頼らず宣言することで、recomposition
-  のスキップを保証するため
+- Composable から参照する `data class` には `@Immutable`（全プロパティが不変の場合）または `@Stable`（可変プロパティを含む場合）を付ける。Compose コンパイラの安定性推論に頼らず宣言することで、recomposition のスキップを保証するため
 
 ```kotlin
 /** レシピ一覧画面の UI 状態 */
@@ -121,6 +151,7 @@ internal fun RecipeDetailTopAppBar(...)
 - Composable を定義する際は必ず引数に Modifier を定義し、デフォルト引数として `Modifier` を渡すこと。なお、デフォルト引数を持つ引数が複数ある場合はその中で一番最初に定義すること
 - `@Preview` を付けた Composable は対象外とする。呼び出し元が preview host だけであり、Modifier を渡す経路がない
 - Dialog も対象とする。material3 の Dialog は Modifier を受け取るため、渡す先がある
+- Theme や `CompositionLocalProvider` のラッパーのように、自身のレイアウトを持たず `content` をそのまま流す Composable は対象外とする。Modifier を受け取るためだけに `Box` などのレイアウトを足さない
 - 内部で Modifier のチェインを組み立てる場合は、受け取った Modifier を起点にする。`Modifier.size(x)` と書くと引数が無視され、外部からの指定が効かない
 - size やマージンとして使われる padding などは外部から Modifier を通じて指定するべきであり、特段の事情がない限り内部でサイズや padding を固定化しない
 - Composable 自体を if で描画しない時などは内部で `if (!isVisible) return` のように早期リターンするのではなく、その Composable の呼び出し下で分岐する
@@ -157,3 +188,7 @@ HomeTopAppBar(
 )
 ```
 <!-- agents-rules:kotlin:end -->
+
+# fankt 固有の規約
+
+- 公開 API と、それを支える transport / parser / storage の失敗経路は、既存の `FanboxException` による例外契約を維持する。`Result` 規約への移行は [Issue #117](https://github.com/matsumo0922/fankt/issues/117) で扱う。coroutine cancellation、collector / callback の失敗は元の例外を伝播する。

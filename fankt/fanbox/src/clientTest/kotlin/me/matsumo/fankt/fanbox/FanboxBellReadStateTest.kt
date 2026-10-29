@@ -135,10 +135,7 @@ class FanboxBellReadStateTest {
         return Fixture(fanbox, requestUrls)
     }
 
-    private class Fixture(
-        val fanbox: Fanbox,
-        val requestUrls: MutableList<Url>,
-    ) {
+    private class Fixture(val fanbox: Fanbox, val requestUrls: MutableList<Url>) {
         fun bellRequest(): Url = requestUrls.single { it.encodedPath.endsWith("bell.list") }
     }
 }

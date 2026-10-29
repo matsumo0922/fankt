@@ -19,6 +19,7 @@ import kotlinx.serialization.json.jsonPrimitive
 import me.matsumo.fankt.fanbox.datasource.mapper.FanboxCreatorMapper
 import me.matsumo.fankt.fanbox.domain.entity.FanboxCreatorDetailEntity
 import me.matsumo.fankt.fanbox.domain.model.FanboxCreatorDetail
+import me.matsumo.fankt.fanbox.domain.model.FanboxCreatorDetail.ProfileItem
 import me.matsumo.fankt.fanbox.domain.model.id.FanboxCreatorId
 import me.matsumo.fankt.fanbox.fixture.FanboxCreatorJsonFixtures
 import me.matsumo.fankt.fanbox.fixture.decodeFixture
@@ -48,7 +49,7 @@ class FanboxCreatorProfileItemTest {
                         imageUrl = "https://example.invalid/profile-image-2",
                         thumbnailUrl = "https://example.invalid/profile-thumbnail-2",
                     ),
-                    FanboxCreatorDetail.ProfileItem.Video(
+                    ProfileItem.Video(
                         id = "fixture-profile-video-1",
                         serviceProvider = "youtube",
                         videoId = "fixture-video-1",
@@ -81,12 +82,9 @@ class FanboxCreatorProfileItemTest {
         assertEquals("gallery", future.type)
         assertEquals(
             "1",
-            createFanboxJson().parseToJsonElement(future.rawJson)
-                .jsonObject["future"]
-                ?.jsonObject
-                ?.get("value")
-                ?.jsonPrimitive
-                ?.content,
+            createFanboxJson()
+                .parseToJsonElement(future.rawJson).jsonObject["future"]?.jsonObject
+                ?.get("value")?.jsonPrimitive?.content,
         )
 
         assertEquals("incomplete-1", assertIs<FanboxCreatorDetail.ProfileItem.Unknown>(actual.profileItems[1]).id)
@@ -167,10 +165,7 @@ class FanboxCreatorProfileItemTest {
         }
     }
 
-    private fun video(
-        serviceProvider: String,
-        videoId: String,
-    ) = FanboxCreatorDetail.ProfileItem.Video(
+    private fun video(serviceProvider: String, videoId: String) = ProfileItem.Video(
         id = "$serviceProvider-$videoId",
         serviceProvider = serviceProvider,
         videoId = videoId,

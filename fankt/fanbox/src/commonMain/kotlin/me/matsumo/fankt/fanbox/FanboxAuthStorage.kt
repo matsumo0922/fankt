@@ -23,10 +23,9 @@ public data class FanboxCookieRecord(
     public val secure: Boolean,
     public val hostOnly: Boolean,
 ) {
-    override fun toString(): String =
-        "FanboxCookieRecord(domain=$domain, path=$path, name=$name, " +
-            "expiresAtEpochMilliseconds=$expiresAtEpochMilliseconds, secure=$secure, " +
-            "hostOnly=$hostOnly, value=<redacted>)"
+    override fun toString(): String = "FanboxCookieRecord(domain=$domain, path=$path, name=$name, " +
+        "expiresAtEpochMilliseconds=$expiresAtEpochMilliseconds, secure=$secure, " +
+        "hostOnly=$hostOnly, value=<redacted>)"
 }
 
 /**
@@ -55,7 +54,11 @@ public interface FanboxCookieStorage {
 
     public suspend fun upsert(cookie: FanboxCookieRecord)
 
-    public suspend fun delete(domain: String, path: String, name: String)
+    public suspend fun delete(
+        domain: String,
+        path: String,
+        name: String,
+    )
 
     public suspend fun deleteExpired(nowEpochMilliseconds: Long)
 
@@ -88,16 +91,23 @@ public class InMemoryFanboxCookieStorage(
 
     override val cookies: Flow<List<FanboxCookieRecord>> = state.asStateFlow().map { it.toList() }
 
-    override suspend fun snapshot(): List<FanboxCookieRecord> = mutex.withLock { state.value.toList() }
+    override suspend fun snapshot(): List<FanboxCookieRecord> = mutex.withLock {
+        state.value.toList()
+    }
 
     override suspend fun upsert(cookie: FanboxCookieRecord) {
         mutex.withLock {
-            state.value = (state.value.filterNot { it.identity == cookie.identity } + cookie)
-                .canonicalSnapshot()
+            state.value = (
+                state.value.filterNot { it.identity == cookie.identity } + cookie
+                ).canonicalSnapshot()
         }
     }
 
-    override suspend fun delete(domain: String, path: String, name: String) {
+    override suspend fun delete(
+        domain: String,
+        path: String,
+        name: String,
+    ) {
         val identity = CookieIdentity(domain.canonicalDomain(), path.canonicalPath(), name)
         mutex.withLock {
             state.value = state.value.filterNot { it.identity == identity }
@@ -146,6 +156,7 @@ public class InMemoryFanboxTokenStore(
     }
 }
 
+/** domain・path・name からなる Cookie の保存上の識別子。 */
 internal data class CookieIdentity(
     val domain: String,
     val path: String,
@@ -155,7 +166,9 @@ internal data class CookieIdentity(
 internal val FanboxCookieRecord.identity: CookieIdentity
     get() = CookieIdentity(domain.canonicalDomain(), path.canonicalPath(), name)
 
-internal fun String.canonicalDomain(): String = trim().trimStart('.').lowercase()
+internal fun String.canonicalDomain(): String = trim()
+    .trimStart('.')
+    .lowercase()
 
 internal fun String.canonicalPath(): String = takeIf { startsWith('/') } ?: "/"
 
@@ -164,7 +177,4 @@ internal fun FanboxCookieRecord.canonicalized(): FanboxCookieRecord = copy(
     path = path.canonicalPath(),
 )
 
-internal fun List<FanboxCookieRecord>.canonicalSnapshot(): List<FanboxCookieRecord> =
-    associateBy { it.identity }
-        .values
-        .map(FanboxCookieRecord::canonicalized)
+internal fun List<FanboxCookieRecord>.canonicalSnapshot(): List<FanboxCookieRecord> = associateBy { it.identity }.values.map(FanboxCookieRecord::canonicalized)

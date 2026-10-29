@@ -44,6 +44,9 @@ import kotlin.test.assertNull
 import kotlin.test.assertTrue
 import kotlin.time.Duration.Companion.seconds
 
+/** Ktor executor の認証・リダイレクト境界を検証する。 */
+// 同じ executor の境界シナリオと共通 mock を一緒に保持し、ケース数によるファイル分割を避ける。
+@Suppress("LargeClass")
 class KtorFanboxRequestExecutorTest {
 
     @Test

@@ -12,6 +12,8 @@ internal abstract class FanktDatabase : RoomDatabase() {
     abstract fun cookieDao(): CookieDao
 }
 
+/** Room の KSP が生成する platform ごとの actual に接続する DB コンストラクタ。 */
+// actual は Room の KSP が生成するため、生成前の解析と expect/actual の beta 警告をこの宣言だけで抑制する。
 @Suppress("NO_ACTUAL_FOR_EXPECT", "EXPECT_ACTUAL_CLASSIFIERS_ARE_IN_BETA_WARNING")
 internal expect object CookieDatabaseConstructor : RoomDatabaseConstructor<FanktDatabase> {
     override fun initialize(): FanktDatabase

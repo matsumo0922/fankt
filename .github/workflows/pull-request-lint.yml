@@ -38,6 +38,10 @@ jobs:
         run: >-
           ./gradlew
           detekt
+          :composeApp:detektDebug
+          :fankt:fanbox:detektDebugAndroid
+          :fankt:fanbox-persistence-room:detektDebugAndroid
+          :fankt:fantia:detektDebugAndroid
           :fankt:fanbox:testDebugUnitTest
           :fankt:fanbox:jsTest
           :fankt:fanbox:guestTest

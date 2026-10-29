@@ -20,11 +20,9 @@ internal object FanboxExceptionFactory {
         cause = cause,
     )
 
-    fun downloadNetwork(cause: Throwable): FanboxException.Network =
-        FanboxFailureInterpreter.network(DOWNLOAD_ENDPOINT, cause)
+    fun downloadNetwork(cause: Throwable): FanboxException.Network = FanboxFailureInterpreter.network(DOWNLOAD_ENDPOINT, cause)
 
     fun sanitizeFragment(body: String): String = FanboxDiagnostics.sanitizeFragment(body)
 
-    fun parseRetryAfter(value: String?, nowEpochMilliseconds: Long): Duration? =
-        FanboxFailureInterpreter.parseRetryAfter(value, nowEpochMilliseconds)
+    fun parseRetryAfter(value: String?, nowEpochMilliseconds: Long): Duration? = FanboxFailureInterpreter.parseRetryAfter(value, nowEpochMilliseconds)
 }

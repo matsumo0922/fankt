@@ -43,10 +43,8 @@ class FanboxGuestServiceApiTest {
     }
 
     private class StubGuestService : FanboxGuestService {
-        override fun buildPostDetailRequest(postId: String): RequestDescriptor =
-            FanboxEndpoints.postDetail(FanboxPostId(postId))
+        override fun buildPostDetailRequest(postId: String): RequestDescriptor = FanboxEndpoints.postDetail(FanboxPostId(postId))
 
-        override fun parsePostDetail(body: String, statusCode: Int): GuestParseResult =
-            GuestParseResult.SchemaMismatch("stub")
+        override fun parsePostDetail(body: String, statusCode: Int): GuestParseResult = GuestParseResult.SchemaMismatch("stub")
     }
 }

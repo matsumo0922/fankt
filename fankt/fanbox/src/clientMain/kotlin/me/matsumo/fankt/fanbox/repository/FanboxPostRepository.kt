@@ -16,6 +16,7 @@ import me.matsumo.fankt.fanbox.response.FanboxDiagnosticSink
 import me.matsumo.fankt.fanbox.response.FanboxResponses
 import me.matsumo.fankt.fanbox.transport.FanboxRequestExecutor
 
+/** 投稿に関する endpoint の実行とレスポンス変換を提供する。 */
 internal class FanboxPostRepository(
     private val requestExecutor: FanboxRequestExecutor,
     private val diagnosticSink: FanboxDiagnosticSink = FanboxDiagnosticSink.none,
@@ -44,7 +45,11 @@ internal class FanboxPostRepository(
         )
     }
 
-    suspend fun getCreatorPosts(creatorId: FanboxCreatorId, cursor: FanboxCursor?, nextCursor: FanboxCursor?) = withContext(ioDispatcher) {
+    suspend fun getCreatorPosts(
+        creatorId: FanboxCreatorId,
+        cursor: FanboxCursor?,
+        nextCursor: FanboxCursor?,
+    ) = withContext(ioDispatcher) {
         val (currentCursor, resolvedNextCursor) = if (cursor == null) {
             val pagination = fetchCreatorPostsPagination(creatorId)
             val firstCursor = pagination.firstOrNull()
@@ -89,7 +94,11 @@ internal class FanboxPostRepository(
         )
     }
 
-    suspend fun getPostFromQuery(query: String, creatorId: FanboxCreatorId?, page: Int) = withContext(ioDispatcher) {
+    suspend fun getPostFromQuery(
+        query: String,
+        creatorId: FanboxCreatorId?,
+        page: Int,
+    ) = withContext(ioDispatcher) {
         val response = requestExecutor.execute(FanboxEndpoints.taggedPosts(query, creatorId, page))
         FanboxResponses.taggedPosts(response.bodyText, response.statusCode)
     }

@@ -21,7 +21,11 @@ internal interface CookieDao {
     suspend fun insertAll(cookies: List<CookieEntity>)
 
     @Query("DELETE FROM fankt_cookies WHERE domain = :domain AND path = :path AND name = :name")
-    suspend fun delete(domain: String, path: String, name: String)
+    suspend fun delete(
+        domain: String,
+        path: String,
+        name: String,
+    )
 
     @Query("DELETE FROM fankt_cookies WHERE expiresAt IS NOT NULL AND expiresAt <= :nowEpochMilliseconds")
     suspend fun deleteExpired(nowEpochMilliseconds: Long)

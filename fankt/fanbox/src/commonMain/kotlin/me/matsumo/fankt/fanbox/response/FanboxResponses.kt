@@ -47,10 +47,8 @@ import me.matsumo.fankt.fanbox.domain.model.FanboxTag
 import me.matsumo.fankt.fanbox.endpoint.FanboxEndpointId
 import me.matsumo.fankt.fanbox.endpoint.FanboxEndpointIds
 
-internal data class FanboxResponseOperation(
-    val name: String,
-    val endpointId: FanboxEndpointId,
-)
+/** レスポンスの解析対象を識別する操作。 */
+internal data class FanboxResponseOperation(val name: String, val endpointId: FanboxEndpointId)
 
 internal val fanboxResponseOperations: List<FanboxResponseOperation> = listOf(
     FanboxResponseOperation("post.listHome", FanboxEndpointIds.postListHome),
@@ -84,6 +82,9 @@ internal val fanboxResponseOperations: List<FanboxResponseOperation> = listOf(
     FanboxResponseOperation("homepage", FanboxEndpointIds.homepage),
 )
 
+/** endpoint に対応するレスポンス解析とモデル変換を提供する。 */
+// endpoint ごとのレスポンス変換を対応付ける。
+@Suppress("TooManyFunctions")
 internal object FanboxResponses {
     private val formatter = createFanboxJson()
 
@@ -92,26 +93,24 @@ internal object FanboxResponses {
         statusCode: Int = 200,
         diagnosticSink: FanboxDiagnosticSink = FanboxDiagnosticSink.none,
         includeRawFragment: Boolean = false,
-    ): FanboxTolerantResult<PageCursorInfo<FanboxPost>> =
-        withMappers(body, statusCode, FanboxEndpointIds.postListHome, diagnosticSink, includeRawFragment) { mappers ->
-            mappers.post.map(decode(body, FanboxPostListEntity.serializer()), "post.listHome")
-        }
+    ): FanboxTolerantResult<PageCursorInfo<FanboxPost>> = withMappers(body, statusCode, FanboxEndpointIds.postListHome, diagnosticSink, includeRawFragment) { mappers ->
+        mappers.post.map(decode(body, FanboxPostListEntity.serializer()), "post.listHome")
+    }
 
     fun supportingPosts(
         body: String,
         statusCode: Int = 200,
         diagnosticSink: FanboxDiagnosticSink = FanboxDiagnosticSink.none,
         includeRawFragment: Boolean = false,
-    ): FanboxTolerantResult<PageCursorInfo<FanboxPost>> =
-        withMappers(
-            body,
-            statusCode,
-            FanboxEndpointIds.postListSupporting,
-            diagnosticSink,
-            includeRawFragment,
-        ) { mappers ->
-            mappers.post.map(decode(body, FanboxPostListEntity.serializer()), "post.listSupporting")
-        }
+    ): FanboxTolerantResult<PageCursorInfo<FanboxPost>> = withMappers(
+        body,
+        statusCode,
+        FanboxEndpointIds.postListSupporting,
+        diagnosticSink,
+        includeRawFragment,
+    ) { mappers ->
+        mappers.post.map(decode(body, FanboxPostListEntity.serializer()), "post.listSupporting")
+    }
 
     fun creatorPosts(
         body: String,
@@ -119,64 +118,78 @@ internal object FanboxResponses {
         statusCode: Int = 200,
         diagnosticSink: FanboxDiagnosticSink = FanboxDiagnosticSink.none,
         includeRawFragment: Boolean = false,
-    ): FanboxTolerantResult<PageCursorInfo<FanboxPost>> =
-        withMappers(
-            body,
-            statusCode,
-            FanboxEndpointIds.postListCreator,
-            diagnosticSink,
-            includeRawFragment,
-        ) { mappers ->
-            mappers.post.map(
-                decode(body, FanboxCreatorPostItemsEntity.serializer()),
-                nextCursor,
-                "post.listCreator",
-            )
-        }
+    ): FanboxTolerantResult<PageCursorInfo<FanboxPost>> = withMappers(
+        body,
+        statusCode,
+        FanboxEndpointIds.postListCreator,
+        diagnosticSink,
+        includeRawFragment,
+    ) { mappers ->
+        mappers.post.map(
+            decode(body, FanboxCreatorPostItemsEntity.serializer()),
+            nextCursor,
+            "post.listCreator",
+        )
+    }
 
-    fun creatorPostsPagination(body: String, statusCode: Int = 200): List<FanboxCursor> =
-        withMappers(body, statusCode, FanboxEndpointIds.postPaginateCreator) { mappers ->
-            mappers.post.map(decode(body, FanboxCreatorPostsPaginateEntity.serializer()))
-        }
+    fun creatorPostsPagination(
+        body: String,
+        statusCode: Int = 200,
+    ): List<FanboxCursor> = withMappers(body, statusCode, FanboxEndpointIds.postPaginateCreator) { mappers ->
+        mappers.post.map(decode(body, FanboxCreatorPostsPaginateEntity.serializer()))
+    }
 
-    fun postDetail(body: String, statusCode: Int = 200): FanboxPostDetail =
-        withMappers(body, statusCode, FanboxEndpointIds.postInfo) { mappers ->
-            mappers.post.map(decode(body, FanboxPostDetailEntity.serializer()))
-        }
+    fun postDetail(
+        body: String,
+        statusCode: Int = 200,
+    ): FanboxPostDetail = withMappers(body, statusCode, FanboxEndpointIds.postInfo) { mappers ->
+        mappers.post.map(decode(body, FanboxPostDetailEntity.serializer()))
+    }
 
     fun postComments(
         body: String,
         statusCode: Int = 200,
         diagnosticSink: FanboxDiagnosticSink = FanboxDiagnosticSink.none,
         includeRawFragment: Boolean = false,
-    ): FanboxTolerantResult<PageOffsetInfo<FanboxComment>> =
-        withMappers(
-            body,
-            statusCode,
-            FanboxEndpointIds.postGetComments,
-            diagnosticSink,
-            includeRawFragment,
-        ) { mappers ->
-            mappers.post.map(decode(body, FanboxPostCommentListEntity.serializer()), "post.getComments")
-        }
+    ): FanboxTolerantResult<PageOffsetInfo<FanboxComment>> = withMappers(
+        body,
+        statusCode,
+        FanboxEndpointIds.postGetComments,
+        diagnosticSink,
+        includeRawFragment,
+    ) { mappers ->
+        mappers.post.map(decode(body, FanboxPostCommentListEntity.serializer()), "post.getComments")
+    }
 
-    fun taggedPosts(body: String, statusCode: Int = 200): PageNumberInfo<FanboxPost> =
-        withMappers(body, statusCode, FanboxEndpointIds.postListTagged) { mappers ->
-            mappers.post.map(decode(body, FanboxPostSearchEntity.serializer()))
-        }
+    fun taggedPosts(
+        body: String,
+        statusCode: Int = 200,
+    ): PageNumberInfo<FanboxPost> = withMappers(body, statusCode, FanboxEndpointIds.postListTagged) { mappers ->
+        mappers.post.map(decode(body, FanboxPostSearchEntity.serializer()))
+    }
 
-    fun likePost(@Suppress("UNUSED_PARAMETER") body: String): Unit = Unit
+    // 本文を使わない操作も decoder の (String) -> Unit のシグネチャを維持する。
+    @Suppress("UNUSED_PARAMETER")
+    fun likePost(body: String): Unit = Unit
 
-    fun likeComment(@Suppress("UNUSED_PARAMETER") body: String): Unit = Unit
+    // 本文を使わない操作も decoder の (String) -> Unit のシグネチャを維持する。
+    @Suppress("UNUSED_PARAMETER")
+    fun likeComment(body: String): Unit = Unit
 
-    fun addComment(@Suppress("UNUSED_PARAMETER") body: String): Unit = Unit
+    // 本文を使わない操作も decoder の (String) -> Unit のシグネチャを維持する。
+    @Suppress("UNUSED_PARAMETER")
+    fun addComment(body: String): Unit = Unit
 
-    fun deleteComment(@Suppress("UNUSED_PARAMETER") body: String): Unit = Unit
+    // 本文を使わない操作も decoder の (String) -> Unit のシグネチャを維持する。
+    @Suppress("UNUSED_PARAMETER")
+    fun deleteComment(body: String): Unit = Unit
 
-    fun creatorDetail(body: String, statusCode: Int = 200): FanboxCreatorDetail =
-        withMappers(body, statusCode, FanboxEndpointIds.creatorGet) { mappers ->
-            mappers.creator.map(decode(body, FanboxCreatorDetailEntity.serializer()))
-        }
+    fun creatorDetail(
+        body: String,
+        statusCode: Int = 200,
+    ): FanboxCreatorDetail = withMappers(body, statusCode, FanboxEndpointIds.creatorGet) { mappers ->
+        mappers.creator.map(decode(body, FanboxCreatorDetailEntity.serializer()))
+    }
 
     fun followingCreators(
         body: String,
@@ -187,7 +200,6 @@ internal object FanboxResponses {
         body,
         statusCode,
         FanboxEndpointIds.creatorListFollowing,
-        "creator.listFollowing",
         diagnosticSink,
         includeRawFragment,
     )
@@ -201,7 +213,6 @@ internal object FanboxResponses {
         body,
         statusCode,
         FanboxEndpointIds.creatorListPixiv,
-        "creator.listPixiv",
         diagnosticSink,
         includeRawFragment,
     )
@@ -215,7 +226,6 @@ internal object FanboxResponses {
         body,
         statusCode,
         FanboxEndpointIds.creatorListRecommended,
-        "creator.listRecommended",
         diagnosticSink,
         includeRawFragment,
     )
@@ -225,115 +235,132 @@ internal object FanboxResponses {
         statusCode: Int = 200,
         diagnosticSink: FanboxDiagnosticSink = FanboxDiagnosticSink.none,
         includeRawFragment: Boolean = false,
-    ): FanboxTolerantResult<List<FanboxCreatorPlan>> =
-        withMappers(
-            body,
-            statusCode,
-            FanboxEndpointIds.planListCreator,
-            diagnosticSink,
-            includeRawFragment,
-        ) { mappers ->
-            mappers.creator.map(decode(body, FanboxCreatorPlanListEntity.serializer()), "plan.listCreator")
-        }
+    ): FanboxTolerantResult<List<FanboxCreatorPlan>> = withMappers(
+        body,
+        statusCode,
+        FanboxEndpointIds.planListCreator,
+        diagnosticSink,
+        includeRawFragment,
+    ) { mappers ->
+        mappers.creator.map(decode(body, FanboxCreatorPlanListEntity.serializer()), "plan.listCreator")
+    }
 
-    fun creatorPlanDetail(body: String, statusCode: Int = 200): FanboxCreatorPlanDetail =
-        withMappers(body, statusCode, FanboxEndpointIds.legacySupportCreator) { mappers ->
-            mappers.creator.map(decode(body, FanboxCreatorPlanDetailEntity.serializer()))
-        }
+    fun creatorPlanDetail(
+        body: String,
+        statusCode: Int = 200,
+    ): FanboxCreatorPlanDetail = withMappers(body, statusCode, FanboxEndpointIds.legacySupportCreator) { mappers ->
+        mappers.creator.map(decode(body, FanboxCreatorPlanDetailEntity.serializer()))
+    }
 
-    fun creatorTags(body: String, statusCode: Int = 200): List<FanboxTag> =
-        withMappers(body, statusCode, FanboxEndpointIds.tagGetFeatured) { mappers ->
-            mappers.creator.map(decode(body, FanboxCreatorTagListEntity.serializer()))
-        }
+    fun creatorTags(
+        body: String,
+        statusCode: Int = 200,
+    ): List<FanboxTag> = withMappers(body, statusCode, FanboxEndpointIds.tagGetFeatured) { mappers ->
+        mappers.creator.map(decode(body, FanboxCreatorTagListEntity.serializer()))
+    }
 
-    fun followCreator(@Suppress("UNUSED_PARAMETER") body: String): Unit = Unit
+    // 本文を使わない操作も decoder の (String) -> Unit のシグネチャを維持する。
+    @Suppress("UNUSED_PARAMETER")
+    fun followCreator(body: String): Unit = Unit
 
-    fun unfollowCreator(@Suppress("UNUSED_PARAMETER") body: String): Unit = Unit
+    // 本文を使わない操作も decoder の (String) -> Unit のシグネチャを維持する。
+    @Suppress("UNUSED_PARAMETER")
+    fun unfollowCreator(body: String): Unit = Unit
 
-    fun searchCreators(body: String, statusCode: Int = 200): PageNumberInfo<FanboxCreatorDetail> =
-        withMappers(body, statusCode, FanboxEndpointIds.creatorSearch) { mappers ->
-            mappers.search.map(decode(body, FanboxCreatorSearchListEntity.serializer()))
-        }
+    fun searchCreators(
+        body: String,
+        statusCode: Int = 200,
+    ): PageNumberInfo<FanboxCreatorDetail> = withMappers(body, statusCode, FanboxEndpointIds.creatorSearch) { mappers ->
+        mappers.search.map(decode(body, FanboxCreatorSearchListEntity.serializer()))
+    }
 
-    fun searchTags(body: String, statusCode: Int = 200): List<FanboxTag> =
-        withMappers(body, statusCode, FanboxEndpointIds.tagSearch) { mappers ->
-            mappers.search.map(decode(body, FanboxTagListEntity.serializer()))
-        }
+    fun searchTags(
+        body: String,
+        statusCode: Int = 200,
+    ): List<FanboxTag> = withMappers(body, statusCode, FanboxEndpointIds.tagSearch) { mappers ->
+        mappers.search.map(decode(body, FanboxTagListEntity.serializer()))
+    }
 
-    fun supportingPlansStrict(body: String, statusCode: Int = 200): List<FanboxCreatorPlan> =
-        withMappers(body, statusCode, FanboxEndpointIds.planListSupporting) { mappers ->
-            mappers.user.map(decode(body, FanboxCreatorPlanListStrictEntity.serializer()))
-        }
+    fun supportingPlansStrict(
+        body: String,
+        statusCode: Int = 200,
+    ): List<FanboxCreatorPlan> = withMappers(body, statusCode, FanboxEndpointIds.planListSupporting) { mappers ->
+        mappers.user.map(decode(body, FanboxCreatorPlanListStrictEntity.serializer()))
+    }
 
     fun supportingPlansTolerant(
         body: String,
         statusCode: Int = 200,
         diagnosticSink: FanboxDiagnosticSink = FanboxDiagnosticSink.none,
         includeRawFragment: Boolean = false,
-    ): FanboxTolerantResult<List<FanboxCreatorPlan>> =
-        withMappers(
-            body = body,
-            statusCode = statusCode,
-            endpointId = FanboxEndpointIds.planListSupporting,
-            diagnosticSink = diagnosticSink,
-            includeRawFragment = includeRawFragment,
-        ) { mappers ->
-            mappers.user.map(
-                decode(body, FanboxCreatorPlanListEntity.serializer()),
-                "plan.listSupporting",
-            )
-        }
+    ): FanboxTolerantResult<List<FanboxCreatorPlan>> = withMappers(
+        body = body,
+        statusCode = statusCode,
+        endpointId = FanboxEndpointIds.planListSupporting,
+        diagnosticSink = diagnosticSink,
+        includeRawFragment = includeRawFragment,
+    ) { mappers ->
+        mappers.user.map(
+            decode(body, FanboxCreatorPlanListEntity.serializer()),
+            "plan.listSupporting",
+        )
+    }
 
-    fun paidRecords(body: String, statusCode: Int = 200): List<FanboxPaidRecord> =
-        withMappers(body, statusCode, FanboxEndpointIds.paymentListPaid) { mappers ->
-            mappers.user.map(decode(body, FanboxPaidRecordListEntity.serializer()))
-        }
+    fun paidRecords(
+        body: String,
+        statusCode: Int = 200,
+    ): List<FanboxPaidRecord> = withMappers(body, statusCode, FanboxEndpointIds.paymentListPaid) { mappers ->
+        mappers.user.map(decode(body, FanboxPaidRecordListEntity.serializer()))
+    }
 
-    fun unpaidRecords(body: String, statusCode: Int = 200): List<FanboxPaidRecord> =
-        withMappers(body, statusCode, FanboxEndpointIds.paymentListUnpaid) { mappers ->
-            mappers.user.map(decode(body, FanboxPaidRecordListEntity.serializer()))
-        }
+    fun unpaidRecords(
+        body: String,
+        statusCode: Int = 200,
+    ): List<FanboxPaidRecord> = withMappers(body, statusCode, FanboxEndpointIds.paymentListUnpaid) { mappers ->
+        mappers.user.map(decode(body, FanboxPaidRecordListEntity.serializer()))
+    }
 
-    fun newsletters(body: String, statusCode: Int = 200): List<FanboxNewsLetter> =
-        withMappers(body, statusCode, FanboxEndpointIds.newsletterList) { mappers ->
-            mappers.user.map(decode(body, FanboxNewsLettersEntity.serializer()))
-        }
+    fun newsletters(
+        body: String,
+        statusCode: Int = 200,
+    ): List<FanboxNewsLetter> = withMappers(body, statusCode, FanboxEndpointIds.newsletterList) { mappers ->
+        mappers.user.map(decode(body, FanboxNewsLettersEntity.serializer()))
+    }
 
     fun bells(
         body: String,
         statusCode: Int = 200,
         diagnosticSink: FanboxDiagnosticSink = FanboxDiagnosticSink.none,
         includeRawFragment: Boolean = false,
-    ): FanboxTolerantResult<PageNumberInfo<FanboxBell>> =
-        withMappers(
-            body,
-            statusCode,
-            FanboxEndpointIds.bellList,
-            diagnosticSink,
-            includeRawFragment,
-        ) { mappers ->
-            mappers.user.map(decode(body, FanboxBellListEntity.serializer()), "bell.list")
-        }
+    ): FanboxTolerantResult<PageNumberInfo<FanboxBell>> = withMappers(
+        body,
+        statusCode,
+        FanboxEndpointIds.bellList,
+        diagnosticSink,
+        includeRawFragment,
+    ) { mappers ->
+        mappers.user.map(decode(body, FanboxBellListEntity.serializer()), "bell.list")
+    }
 
-    fun homepage(body: String, extractor: FanboxMetadataExtractor, statusCode: Int = 200): FanboxMetaData =
-        withMappers(body, statusCode, FanboxEndpointIds.homepage) { mappers ->
-            mappers.user.map(FanboxMetadataParser(formatter, extractor).parse(body, statusCode, "homepage"))
-        }
+    fun homepage(
+        body: String,
+        extractor: FanboxMetadataExtractor,
+        statusCode: Int = 200,
+    ): FanboxMetaData = withMappers(body, statusCode, FanboxEndpointIds.homepage) { mappers ->
+        mappers.user.map(FanboxMetadataParser(formatter, extractor).parse(body, statusCode, "homepage"))
+    }
 
     private fun creatorList(
         body: String,
         statusCode: Int,
         endpointId: FanboxEndpointId,
-        endpoint: String,
         diagnosticSink: FanboxDiagnosticSink,
         includeRawFragment: Boolean,
-    ): FanboxTolerantResult<List<FanboxCreatorDetail>> =
-        withMappers(body, statusCode, endpointId, diagnosticSink, includeRawFragment) { mappers ->
-            mappers.creator.map(decode(body, FanboxCreatorListEntity.serializer()), endpoint)
-        }
+    ): FanboxTolerantResult<List<FanboxCreatorDetail>> = withMappers(body, statusCode, endpointId, diagnosticSink, includeRawFragment) { mappers ->
+        mappers.creator.map(decode(body, FanboxCreatorListEntity.serializer()), endpointId.value)
+    }
 
-    private fun <T> decode(body: String, deserializer: DeserializationStrategy<T>): T =
-        formatter.decodeFromString(deserializer, body)
+    private fun <T> decode(body: String, deserializer: DeserializationStrategy<T>): T = formatter.decodeFromString(deserializer, body)
 
     private inline fun <T> withMappers(
         body: String,
@@ -342,22 +369,17 @@ internal object FanboxResponses {
         diagnosticSink: FanboxDiagnosticSink = FanboxDiagnosticSink.none,
         includeRawFragment: Boolean = false,
         block: (Mappers) -> T,
-    ): T {
-        return try {
-            block(createMappers(diagnosticSink, includeRawFragment))
-        } catch (failure: FanboxException) {
-            throw failure
-        } catch (failure: SerializationException) {
-            throw FanboxFailureInterpreter.schemaMismatch(statusCode, body, endpointId.value, failure)
-        } catch (failure: IllegalArgumentException) {
-            throw FanboxFailureInterpreter.schemaMismatch(statusCode, body, endpointId.value, failure)
-        }
+    ): T = try {
+        block(createMappers(diagnosticSink, includeRawFragment))
+    } catch (failure: FanboxException) {
+        throw failure
+    } catch (failure: SerializationException) {
+        throw FanboxFailureInterpreter.schemaMismatch(statusCode, body, endpointId.value, failure)
+    } catch (failure: IllegalArgumentException) {
+        throw FanboxFailureInterpreter.schemaMismatch(statusCode, body, endpointId.value, failure)
     }
 
-    private fun createMappers(
-        diagnosticSink: FanboxDiagnosticSink,
-        includeRawFragment: Boolean,
-    ): Mappers {
+    private fun createMappers(diagnosticSink: FanboxDiagnosticSink, includeRawFragment: Boolean): Mappers {
         val decoder = FanboxListItemDecoder(formatter, includeRawFragment, diagnosticSink)
         val post = FanboxPostMapper(decoder, formatter)
         val creator = FanboxCreatorMapper(decoder, formatter)
@@ -370,6 +392,7 @@ internal object FanboxResponses {
         )
     }
 
+    /** レスポンス変換に使用する mapper の組。 */
     private data class Mappers(
         val post: FanboxPostMapper,
         val creator: FanboxCreatorMapper,

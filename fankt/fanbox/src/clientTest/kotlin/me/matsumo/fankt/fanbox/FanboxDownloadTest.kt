@@ -61,7 +61,12 @@ class FanboxDownloadTest {
         assertEquals(1, fixture.requests.size)
         assertEquals(url, fixture.requests.single().url.toString())
         assertEquals("fixture-token", fixture.requests.single().csrfToken)
-        assertTrue(fixture.requests.single().cookie.orEmpty().contains("FANBOXSESSID=fixture-session"))
+        assertTrue(
+            fixture.requests
+                .single().cookie
+                .orEmpty()
+                .contains("FANBOXSESSID=fixture-session"),
+        )
         assertEquals(listOf(0f, 1f), progress)
         assertEquals(2, fixture.clients.size)
         assertTrue(fixture.requests.single().executionJob.isCompleted)
@@ -498,10 +503,7 @@ class FanboxDownloadTest {
         )
     }
 
-    private fun <T> startWithContext(
-        context: CoroutineContext,
-        block: suspend () -> T,
-    ): CompletableDeferred<Result<T>> {
+    private fun <T> startWithContext(context: CoroutineContext, block: suspend () -> T): CompletableDeferred<Result<T>> {
         val completion = CompletableDeferred<Result<T>>()
         block.startCoroutine(
             object : Continuation<T> {

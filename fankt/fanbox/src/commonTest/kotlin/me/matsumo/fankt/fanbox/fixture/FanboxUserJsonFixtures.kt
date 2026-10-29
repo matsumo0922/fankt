@@ -1,5 +1,8 @@
 package me.matsumo.fankt.fanbox.fixture
 
+/** ユーザー関連レスポンスの匿名化済み JSON fixture。 */
+// 関連 endpoint の入力 JSON を一式として管理し、データ量だけでは分割しない。
+@Suppress("LargeClass")
 internal object FanboxUserJsonFixtures {
 
     /**

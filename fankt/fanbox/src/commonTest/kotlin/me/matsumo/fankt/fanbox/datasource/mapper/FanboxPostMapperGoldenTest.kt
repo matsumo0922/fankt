@@ -26,6 +26,9 @@ import kotlin.test.assertEquals
 import kotlin.test.assertIs
 import kotlin.time.Instant
 
+/** 投稿 mapper を独立した期待値と照合する golden test。 */
+// 投稿形式ごとの完全な期待値と共通の照合 helper を一緒に保持する。
+@Suppress("LargeClass")
 class FanboxPostMapperGoldenTest {
 
     @Test
@@ -92,8 +95,7 @@ class FanboxPostMapperGoldenTest {
         val body = FanboxPostMapper().map(
             decodeFixture<FanboxPostDetailEntity>(FanboxPostJsonFixtures.postInfoArticleUrlEmbeds),
         ).body
-        val links = assertIs<FanboxPostDetail.Body.Article>(body).blocks
-            .filterIsInstance<FanboxPostDetail.Body.Article.Block.Link>()
+        val links = assertIs<FanboxPostDetail.Body.Article>(body).blocks.filterIsInstance<FanboxPostDetail.Body.Article.Block.Link>()
 
         assertEquals(4, links.size)
         assertEquals(
@@ -185,6 +187,8 @@ class FanboxPostMapperGoldenTest {
         assertEquals(expected, actual)
     }
 
+    // 記事の完全な期待値をテスト内で構築し、fixture と独立した値で一括照合する。
+    @Suppress("LongMethod")
     @Test
     fun postInfoArticleAWithTextImageFileReferencesAndUnknownFieldsMapsFullObject() {
         val actual = FanboxPostMapper().map(
@@ -258,6 +262,8 @@ class FanboxPostMapperGoldenTest {
         assertEquals(expected, actual)
     }
 
+    // 埋め込みを含む記事の完全な期待値を、fixture と独立した値で一括照合する。
+    @Suppress("LongMethod")
     @Test
     fun postInfoArticleBWithHeaderImageAndUrlEmbedReferencesMapsFullObject() {
         val actual = FanboxPostMapper().map(
@@ -557,6 +563,8 @@ class FanboxPostMapperGoldenTest {
         assertEquals(expected, actual)
     }
 
+    // 添付ファイル本文の完全な期待値を、fixture と独立した値で一括照合する。
+    @Suppress("LongMethod")
     @Test
     fun postInfoFileMapsFullObject() {
         val actual = FanboxPostMapper().map(

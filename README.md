@@ -471,6 +471,25 @@ guest production bundle build, and bridge API verification in one Ubuntu job. Do
 changes skip the job. The library release workflow verifies the published FANBOX boundary before
 publishing; it remains on macOS because the Kotlin Multiplatform publication includes Apple targets.
 
+### 静的解析
+
+`./gradlew detekt` と `./gradlew :detekt` は全モジュールと、ルートのビルド定義・`build-logic`・独立 consumer を型情報なしで解析する。
+結果は各モジュールの `build/reports/detekt/` に出力し、ルートの通常解析に依存する各モジュールの XML を `build/reports/detekt/merge.xml` に統合する。
+モジュールを指定した通常解析は、そのモジュールのレポートだけを更新し、統合処理を起動しない。
+統合処理は別の解析タスクやコンパイルを起動しない。
+型情報ありの解析には `:composeApp:detektDebug`、KMP の Android target には `:fankt:fanbox:detektDebugAndroid` など、各 target のタスクを使う。
+生成コードは解析対象から除外する。
+CI では通常解析と各モジュールの Android debug 向け型解析を明示的に実行する。
+
+設定は detekt 2.0.0-alpha.6、ktlint wrapper、Compose rules 0.6.8 を使用する。
+共通設定は Agents の `rules/lint/detekt.yml` と一致する。
+`FunctionSignature` と `ClassSignature` は引数3つ以上の宣言を改行し、行長による1行化は行わない。
+デフォルト引数を含む短い宣言、呼び出し側の名前付き引数、プロパティ参照を数えないメソッドチェーンの改行は `AGENTS.md` に従ってレビューする。
+関数長・クラス長の閾値やテスト全体の除外は変更せず、大きな期待値・JSON fixture などを一緒に扱う理由がある場合だけ宣言単位の抑制を使用する。
+endpoint の集約と、認証操作を独立に差し替える `FanboxDependencies` にも理由付きの宣言単位の抑制を使用する。
+外部 API が要求する override は共通設定で関数数から除外する。
+公開 API の例外伝播は `AGENTS.md` のプロジェクト規約に従う。
+
 ## Contributing golden fixtures
 
 The `:fankt:fanbox` golden tests keep anonymized endpoint responses as Kotlin raw strings under

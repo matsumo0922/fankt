@@ -8,7 +8,8 @@ import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.kotlin.dsl.configure
 
-class AndroidLibraryPlugin: Plugin<Project> {
+/** Android ライブラリのビルド設定を適用する Gradle plugin。 */
+class AndroidLibraryPlugin : Plugin<Project> {
     override fun apply(target: Project) {
         with(target) {
             with(pluginManager) {

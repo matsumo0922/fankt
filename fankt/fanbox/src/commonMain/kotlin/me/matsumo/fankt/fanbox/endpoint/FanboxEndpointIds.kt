@@ -31,10 +31,7 @@ internal object FanboxEndpointIds {
     val tagSearch = FanboxEndpointId("tag.search")
 }
 
-internal data class FanboxRequestOperation(
-    val name: String,
-    val endpointId: FanboxEndpointId,
-)
+internal data class FanboxRequestOperation(val name: String, val endpointId: FanboxEndpointId)
 
 internal val fanboxRequestOperations: List<FanboxRequestOperation> = listOf(
     FanboxRequestOperation("post.listHome", FanboxEndpointIds.postListHome),

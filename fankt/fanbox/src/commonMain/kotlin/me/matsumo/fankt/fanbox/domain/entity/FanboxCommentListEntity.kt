@@ -5,12 +5,7 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonElement
 
 @Serializable
-internal data class FanboxCommentListEntity(
-    @SerialName("items")
-    val items: List<JsonElement>,
-    @SerialName("nextUrl")
-    val nextUrl: String?,
-) {
+internal data class FanboxCommentListEntity(@SerialName("items") val items: List<JsonElement>, @SerialName("nextUrl") val nextUrl: String?) {
     @Serializable
     data class Item(
         @SerialName("body")
@@ -37,9 +32,4 @@ internal data class FanboxCommentListEntity(
 }
 
 @Serializable
-internal data class FanboxCommentBodyEntity(
-    @SerialName("viewMode")
-    val viewMode: String,
-    @SerialName("commentList")
-    val commentList: FanboxCommentListEntity,
-)
+internal data class FanboxCommentBodyEntity(@SerialName("viewMode") val viewMode: String, @SerialName("commentList") val commentList: FanboxCommentListEntity)

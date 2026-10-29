@@ -6,6 +6,7 @@ import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.Instant
 
+/** HTTP 応答と解析失敗を FANBOX の例外契約へ変換する。 */
 internal object FanboxFailureInterpreter {
     private val HTTP_DATE = Regex(
         "^[A-Za-z]{3}, (\\d{2}) ([A-Za-z]{3}) (\\d{4}) (\\d{2}):(\\d{2}):(\\d{2}) GMT$",
@@ -35,14 +36,19 @@ internal object FanboxFailureInterpreter {
         val fragment = rawBody?.let(FanboxDiagnostics::sanitizeFragment)
         return when (statusCode) {
             401 -> FanboxException.Unauthorized(fragment, endpoint)
+
             403 -> FanboxException.Forbidden(fragment, endpoint)
+
             404 -> FanboxException.NotFound(fragment, endpoint)
+
             429 -> FanboxException.RateLimited(
                 rawBody = fragment,
                 endpoint = endpoint,
                 retryAfter = parseRetryAfter(retryAfter, nowEpochMilliseconds),
             )
+
             in 500..599 -> FanboxException.ServerError(statusCode, fragment, endpoint)
+
             else -> FanboxException.UnexpectedHttpError(statusCode, fragment, endpoint)
         }
     }
@@ -59,22 +65,24 @@ internal object FanboxFailureInterpreter {
         cause = cause,
     )
 
-    fun network(endpoint: String, cause: Throwable): FanboxException.Network =
-        FanboxException.Network(endpoint, cause)
+    fun network(endpoint: String, cause: Throwable): FanboxException.Network = FanboxException.Network(endpoint, cause)
 
     fun parseRetryAfter(value: String?, nowEpochMilliseconds: Long): Duration? {
         if (value == null) return null
 
-        value.trim().toLongOrNull()?.let { seconds ->
-            if (seconds < 0) return null
-            return seconds.seconds.takeIf { it.isFinite() }
-        }
+        value
+            .trim()
+            .toLongOrNull()
+            ?.let { seconds ->
+                if (seconds < 0) return null
+                return seconds.seconds.takeIf { it.isFinite() }
+            }
 
         val targetEpochMilliseconds = parseHttpDate(value) ?: return null
         val deltaMilliseconds = targetEpochMilliseconds - nowEpochMilliseconds
-        if ((targetEpochMilliseconds > nowEpochMilliseconds && deltaMilliseconds < 0) ||
-            (targetEpochMilliseconds < nowEpochMilliseconds && deltaMilliseconds > 0)
-        ) {
+        val positiveOverflow = targetEpochMilliseconds > nowEpochMilliseconds && deltaMilliseconds < 0
+        val negativeOverflow = targetEpochMilliseconds < nowEpochMilliseconds && deltaMilliseconds > 0
+        if (positiveOverflow || negativeOverflow) {
             return null
         }
         if (targetEpochMilliseconds <= nowEpochMilliseconds) return Duration.ZERO
@@ -90,17 +98,29 @@ internal object FanboxFailureInterpreter {
         val minute = match.groupValues[5].toIntOrNull() ?: return null
         val second = match.groupValues[6].toIntOrNull() ?: return null
         val iso = buildString {
-            append(year.toString().padStart(4, '0'))
+            append(
+                year.toString().padStart(4, '0'),
+            )
             append('-')
-            append(month.toString().padStart(2, '0'))
+            append(
+                month.toString().padStart(2, '0'),
+            )
             append('-')
-            append(day.toString().padStart(2, '0'))
+            append(
+                day.toString().padStart(2, '0'),
+            )
             append('T')
-            append(hour.toString().padStart(2, '0'))
+            append(
+                hour.toString().padStart(2, '0'),
+            )
             append(':')
-            append(minute.toString().padStart(2, '0'))
+            append(
+                minute.toString().padStart(2, '0'),
+            )
             append(':')
-            append(second.toString().padStart(2, '0'))
+            append(
+                second.toString().padStart(2, '0'),
+            )
             append('Z')
         }
         return runCatching { Instant.parse(iso).toEpochMilliseconds() }.getOrNull()

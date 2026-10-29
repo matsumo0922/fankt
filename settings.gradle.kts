@@ -12,6 +12,7 @@ pluginManagement {
     }
 }
 
+// Gradle の依存解決 DSL に対する IDE の UnstableApiUsage 検査を、この設定ブロックだけで抑制する。
 @Suppress("UnstableApiUsage")
 dependencyResolutionManagement {
     repositoriesMode.set(RepositoriesMode.PREFER_PROJECT)

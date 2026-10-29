@@ -1,10 +1,11 @@
 package primitive.kmp
+
 import me.matsumo.fankt.androidExt
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
-@Suppress("unused")
+/** KMP ライブラリの Android target とソース配置を構成する Gradle plugin。 */
 class KmpAndroidPlugin : Plugin<Project> {
     override fun apply(target: Project) {
         with(target) {

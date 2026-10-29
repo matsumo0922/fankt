@@ -124,7 +124,9 @@ private fun fanboxDownloadFailure(response: HttpResponse): FanboxException = Fan
 private fun HttpClientConfig<*>.configureDownloadFailures(logLevel: FanboxLogLevel) {
     HttpResponseValidator {
         validateResponse { response ->
-            if (response.status.isSuccess()) return@validateResponse
+            if (response.status.isSuccess()) {
+                return@validateResponse
+            }
 
             val failure = fanboxDownloadFailure(response)
             if (logLevel != FanboxLogLevel.NONE) {

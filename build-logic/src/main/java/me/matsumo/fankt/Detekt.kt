@@ -1,55 +1,56 @@
 package me.matsumo.fankt
 
-import io.gitlab.arturbosch.detekt.extensions.DetektExtension
-import io.gitlab.arturbosch.detekt.report.ReportMergeTask
+import dev.detekt.gradle.Detekt
+import dev.detekt.gradle.extensions.DetektExtension
+import dev.detekt.gradle.report.ReportMergeTask
 import org.gradle.api.Project
-import org.gradle.api.tasks.TaskProvider
 import org.gradle.kotlin.dsl.getByType
+import org.gradle.kotlin.dsl.named
 import org.gradle.kotlin.dsl.register
 import org.gradle.kotlin.dsl.withType
 
-@Suppress("UNCHECKED_CAST")
 internal fun Project.configureDetekt() {
     extensions.getByType<DetektExtension>().apply {
-        toolVersion = libs.version("detekt")
-        // 並列処理
-        parallel = true
-        // Detektの設定ファイル
-        config.setFrom(files("${project.rootDir}/config/detekt/detekt.yml"))
-        // baseline 設定ファイル
-        baseline = file("${project.rootDir}/config/detekt/baseline.xml")
-        // デフォルト設定の上に自分の設定ファイルを適用する
-        buildUponDefaultConfig = true
-        // ルール違反があった場合にfailさせない
-        ignoreFailures = false
-        // ルール違反の自動修正を試みる
-        autoCorrect = false
+        toolVersion.set(libs.version("detekt"))
+        parallel.set(true)
+        config.setFrom(rootProject.file("config/detekt/detekt.yml"))
+        buildUponDefaultConfig.set(true)
+        ignoreFailures.set(false)
+        autoCorrect.set(false)
     }
 
-    // 各モジュールでの Detekt 実行結果を一つにまとめるタスク（CIでコメントする際に使用）
-    // FYI: https://detekt.dev/docs/introduction/reporting/#kotlin-dsl
-    val reportMerge = if (!rootProject.tasks.names.contains("reportMerge")) {
-        rootProject.tasks.register("reportMerge", ReportMergeTask::class) {
+    val reportMerge = if ("reportMerge" in rootProject.tasks.names) {
+        rootProject.tasks.named<ReportMergeTask>("reportMerge")
+    } else {
+        rootProject.tasks.register<ReportMergeTask>("reportMerge") {
             output.set(rootProject.layout.buildDirectory.file("reports/detekt/merge.xml"))
         }
-    } else {
-        rootProject.tasks.named("reportMerge") as TaskProvider<ReportMergeTask>
+    }
+    val generatedRoot = layout.buildDirectory.get().asFile
+
+    tasks.withType<Detekt>().configureEach {
+        // 型解析ではプラグインが選んだ source set を維持し、生成コードを除外する。
+        exclude { it.file.toPath().startsWith(generatedRoot.toPath()) }
     }
 
-    plugins.withType<io.gitlab.arturbosch.detekt.DetektPlugin> {
-        tasks.withType<io.gitlab.arturbosch.detekt.Detekt> detekt@{
-            finalizedBy(reportMerge)
+    val reportFile = layout.buildDirectory.file("reports/detekt/detekt.xml")
+    val analysis = tasks.named<Detekt>("detekt") {
+        setSource(project.fileTree(projectDir))
+        include("**/*.kt", "**/*.kts")
+        exclude("**/resources/**", "**/build/**", "**/.gradle/**")
 
-            source = project.files("./").asFileTree
+        reports.checkstyle.outputLocation.set(reportFile)
+    }
 
-            include("**/*.kt")
-            include("**/*.kts")
-            exclude("**/resources/**")
-            exclude("**/build/**")
+    if (this == rootProject) {
+        analysis.configure { finalizedBy(reportMerge) }
+    } else {
+        rootProject.tasks.named<Detekt>("detekt").configure { dependsOn(analysis) }
+    }
 
-            reportMerge.configure {
-                input.from(this@detekt.xmlReportFile) // or .sarifReportFile
-            }
-        }
+    reportMerge.configure {
+        mustRunAfter(analysis)
+        // タスク出力の Provider ではなく出力先を登録し、別の解析を実行対象へ加えない。
+        input.from(reportFile)
     }
 }

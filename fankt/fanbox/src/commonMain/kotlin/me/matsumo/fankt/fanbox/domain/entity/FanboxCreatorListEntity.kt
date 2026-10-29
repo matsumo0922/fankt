@@ -10,16 +10,10 @@ import kotlinx.serialization.json.JsonElement
  * `creator.listFollowing` / `creator.listPixiv` / `creator.listRecommended` で使用される。
  */
 @Serializable
-internal data class FanboxCreatorListEntity(
-    @SerialName("body")
-    val body: Body,
-) {
+internal data class FanboxCreatorListEntity(@SerialName("body") val body: Body) {
     /**
      * レスポンスボディ
      */
     @Serializable
-    data class Body(
-        @SerialName("creators")
-        val creators: List<JsonElement>,
-    )
+    data class Body(@SerialName("creators") val creators: List<JsonElement>)
 }

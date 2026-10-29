@@ -112,10 +112,7 @@ class FanboxCommentSubmissionTest {
         )
     }
 
-    private data class Fixture(
-        val fanbox: Fanbox,
-        val requests: List<CapturedRequest>,
-    )
+    private data class Fixture(val fanbox: Fanbox, val requests: List<CapturedRequest>)
 
     private data class CapturedRequest(
         val clientIndex: Int,

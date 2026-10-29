@@ -4,7 +4,7 @@ import app.cash.zipline.Zipline
 import app.cash.zipline.ZiplineManifest
 import app.cash.zipline.loader.FreshnessChecker
 import app.cash.zipline.loader.LoadResult
-import app.cash.zipline.loader.ManifestVerifier
+import app.cash.zipline.loader.ManifestVerifier.Builder
 import app.cash.zipline.loader.ZiplineHttpClient
 import app.cash.zipline.loader.ZiplineLoader
 import io.ktor.client.HttpClient
@@ -41,6 +41,7 @@ import okio.Path.Companion.toPath
 import okio.Sink
 import okio.Source
 
+/** guest manifest の配信先・検証鍵・組み込み bundle の設定。 */
 internal data class FanboxGuestDeliveryConfig(
     val manifestUrl: String,
     val trustedKeyName: String,
@@ -50,20 +51,13 @@ internal data class FanboxGuestDeliveryConfig(
     init {
         require(manifestUrl.isNotBlank()) { "Guest manifest URL must not be blank" }
         val parsedManifestUrl = Url(manifestUrl)
-        require(
-            parsedManifestUrl.protocol == URLProtocol.HTTPS ||
-                parsedManifestUrl.protocol == URLProtocol.HTTP && parsedManifestUrl.host.isLoopbackHost(),
-        ) {
-            "Guest manifest URL must use HTTPS, except for a loopback development server"
-        }
-        require(parsedManifestUrl.user.isNullOrEmpty() && parsedManifestUrl.password.isNullOrEmpty()) {
-            "Guest manifest URL must not contain credentials"
-        }
+        val isLocalDevelopment =
+            parsedManifestUrl.protocol == URLProtocol.HTTP && parsedManifestUrl.host.isLoopbackHost()
+        require(parsedManifestUrl.protocol == URLProtocol.HTTPS || isLocalDevelopment) { "Guest manifest URL must use HTTPS, except for a loopback development server" }
+        require(parsedManifestUrl.user.isNullOrEmpty() && parsedManifestUrl.password.isNullOrEmpty()) { "Guest manifest URL must not contain credentials" }
         require(parsedManifestUrl.fragment.isEmpty()) { "Guest manifest URL must not contain a fragment" }
         require(trustedKeyName.isNotBlank()) { "Guest trusted key name must not be blank" }
-        require(trustedEd25519PublicKey.size == ED25519_PUBLIC_KEY_SIZE) {
-            "Guest Ed25519 public key must contain $ED25519_PUBLIC_KEY_SIZE bytes"
-        }
+        require(trustedEd25519PublicKey.size == ED25519_PUBLIC_KEY_SIZE) { "Guest Ed25519 public key must contain $ED25519_PUBLIC_KEY_SIZE bytes" }
     }
 
     private companion object {
@@ -79,12 +73,16 @@ internal data class FanboxGuestDeliveryConfig(
  * 「ファイルが無い」で同じ症状になり、静かに既存経路へ退避するため、ここで区別して報告する。
  */
 internal sealed interface EmbeddedBundleFailure {
+    /** 組み込み bundle に manifest が存在しない状態。 */
     data object ManifestMissing : EmbeddedBundleFailure
+
+    /** 組み込み bundle に必要な module が存在しない状態。 */
     data class ModulesMissing(val fileNames: List<String>) : EmbeddedBundleFailure
 
     fun describe(): String = when (this) {
         ManifestMissing ->
             "embedded guest bundle has no $EMBEDDED_MANIFEST_FILE_NAME"
+
         is ModulesMissing ->
             "embedded guest bundle is missing ${fileNames.size} module(s) referenced by its " +
                 "manifest: ${fileNames.joinToString()}"
@@ -98,18 +96,14 @@ internal sealed interface EmbeddedBundleFailure {
  * で実行されるため橋渡しに `runBlocking` を使えない。そこで loader を呼ぶ前に必要なファイルを
  * すべて読み出しておく。読み出す対象は manifest を先に読めば決まる。
  */
-internal class LoadedEmbeddedBundle private constructor(
-    private val filesByName: Map<String, ByteString>,
-) {
+internal class LoadedEmbeddedBundle private constructor(private val filesByName: Map<String, ByteString>) {
     val fileSystem: FileSystem get() = InMemoryReadOnlyFileSystem(filesByName)
 
     companion object {
         val DIRECTORY: Path = "/fanbox-guest-embedded".toPath()
 
         /** 同梱 bundle を読み出す。読み出せない場合は理由を [EmbeddedBundleFailure] で返す。 */
-        suspend fun read(
-            bundle: FanboxEmbeddedGuestBundle,
-        ): Result<LoadedEmbeddedBundle> {
+        suspend fun read(bundle: FanboxEmbeddedGuestBundle): Result<LoadedEmbeddedBundle> {
             val manifestBytes = bundle.read(EMBEDDED_MANIFEST_FILE_NAME)
                 ?: return failure(EmbeddedBundleFailure.ManifestMissing)
             val manifest = ZiplineManifest.decodeJson(manifestBytes.decodeToString())
@@ -127,14 +121,12 @@ internal class LoadedEmbeddedBundle private constructor(
             return Result.success(LoadedEmbeddedBundle(files))
         }
 
-        private fun failure(reason: EmbeddedBundleFailure): Result<LoadedEmbeddedBundle> =
-            Result.failure(EmbeddedBundleReadException(reason))
+        private fun failure(reason: EmbeddedBundleFailure): Result<LoadedEmbeddedBundle> = Result.failure(EmbeddedBundleReadException(reason))
     }
 }
 
-internal class EmbeddedBundleReadException(
-    val failure: EmbeddedBundleFailure,
-) : Exception(failure.describe())
+/** 組み込み bundle の読み取り失敗。 */
+internal class EmbeddedBundleReadException(val failure: EmbeddedBundleFailure) : Exception(failure.describe())
 
 /**
  * 読み出し済みの内容だけを返す [FileSystem]。
@@ -143,14 +135,15 @@ internal class EmbeddedBundleReadException(
  * （`FsEmbeddedFetcher`）。他の操作は呼ばれた時点でこの前提が崩れているため、黙って空を返さずに
  * 失敗させる。
  */
-private class InMemoryReadOnlyFileSystem(
-    private val filesByName: Map<String, ByteString>,
-) : FileSystem() {
+private class InMemoryReadOnlyFileSystem(private val filesByName: Map<String, ByteString>) : FileSystem() {
     private fun bytesOrNull(path: Path): ByteString? = filesByName[path.name]
 
     override fun metadataOrNull(path: Path): FileMetadata? {
         val bytes = bytesOrNull(path) ?: return null
-        return FileMetadata(isRegularFile = true, size = bytes.size.toLong())
+        return FileMetadata(
+            isRegularFile = true,
+            size = bytes.size.toLong(),
+        )
     }
 
     override fun source(file: Path): Source {
@@ -162,8 +155,11 @@ private class InMemoryReadOnlyFileSystem(
     override fun list(dir: Path): List<Path> = unsupported("list")
     override fun listOrNull(dir: Path): List<Path>? = unsupported("listOrNull")
     override fun openReadOnly(file: Path): FileHandle = unsupported("openReadOnly")
-    override fun openReadWrite(file: Path, mustCreate: Boolean, mustExist: Boolean): FileHandle =
-        unsupported("openReadWrite")
+    override fun openReadWrite(
+        file: Path,
+        mustCreate: Boolean,
+        mustExist: Boolean,
+    ): FileHandle = unsupported("openReadWrite")
     override fun sink(file: Path, mustCreate: Boolean): Sink = unsupported("sink")
     override fun appendingSink(file: Path, mustExist: Boolean): Sink = unsupported("appendingSink")
     override fun createDirectory(dir: Path, mustCreate: Boolean): Unit = unsupported("createDirectory")
@@ -171,14 +167,14 @@ private class InMemoryReadOnlyFileSystem(
     override fun delete(path: Path, mustExist: Boolean): Unit = unsupported("delete")
     override fun createSymlink(source: Path, target: Path): Unit = unsupported("createSymlink")
 
-    private fun unsupported(operation: String): Nothing =
-        error("the embedded guest bundle is read-only; $operation is not available")
+    private fun unsupported(operation: String): Nothing = error("the embedded guest bundle is read-only; $operation is not available")
 }
 
+/** Zipline guest のロード・呼び出し・終了を管理する。 */
 @OptIn(DelicateCoroutinesApi::class, ExperimentalCoroutinesApi::class)
 internal class FanboxGuestHost(
     private val config: FanboxGuestDeliveryConfig,
-    private val httpClientFactory: () -> HttpClient,
+    httpClientFactory: () -> HttpClient,
     private val diagnosticSink: FanboxDiagnosticSink,
     private val loadGuestOverride: (suspend (CoroutineDispatcher) -> LoadedGuest?)? = null,
 ) : AutoCloseable {
@@ -212,12 +208,14 @@ internal class FanboxGuestHost(
 
         return when (parsed) {
             is GuestParseResult.Success -> parsed.postDetail
+
             is GuestParseResult.SchemaMismatch -> throw FanboxExceptionFactory.schemaMismatch(
                 statusCode = response.statusCode,
                 html = response.bodyText,
                 endpoint = POST_DETAIL_ENDPOINT,
                 cause = IllegalStateException(FanboxDiagnostics.sanitizeFragment(parsed.diagnostic)),
             )
+
             is GuestParseResult.GuestFailure -> disableAndFallback(guest, parsed.diagnostic, direct)
         }
     }
@@ -239,10 +237,7 @@ internal class FanboxGuestHost(
      * `Throwable` instead, because narrowing it there would turn a failure it currently retreats
      * from into one that reaches the caller.
      */
-    private suspend fun <T> callGuest(
-        guest: LoadedGuest,
-        call: (FanboxGuestService) -> T,
-    ): Result<T> = try {
+    private suspend fun <T> callGuest(guest: LoadedGuest, call: (FanboxGuestService) -> T): Result<T> = try {
         Result.success(withContext(guestDispatcher.value) { call(guest.service) })
     } catch (failure: CancellationException) {
         throw failure
@@ -266,7 +261,9 @@ internal class FanboxGuestHost(
             closeFailure = failure
         }
         try {
-            if (httpClient.isInitialized()) httpClient.value.close()
+            if (httpClient.isInitialized()) {
+                httpClient.value.close()
+            }
         } catch (failure: Throwable) {
             val firstFailure = closeFailure
             if (firstFailure == null) closeFailure = failure else firstFailure.addSuppressed(failure)
@@ -283,7 +280,9 @@ internal class FanboxGuestHost(
     private suspend fun guestOrNull(): LoadedGuest? = stateMutex.withLock {
         when (val current = state) {
             is GuestState.Active -> current.guest
+
             GuestState.Direct -> null
+
             GuestState.Uninitialized -> {
                 val loaded = try {
                     withContext(guestDispatcher.value) {
@@ -327,7 +326,8 @@ internal class FanboxGuestHost(
         }
         diagnosticSink.report(
             "Zipline guest execution failed; using direct path" +
-                diagnostic.takeIf(String::isNotBlank)
+                diagnostic
+                    .takeIf(String::isNotBlank)
                     ?.let(FanboxDiagnostics::sanitizeFragment)
                     ?.let { " ($it)" }
                     .orEmpty(),
@@ -336,25 +336,35 @@ internal class FanboxGuestHost(
     }
 
     private sealed interface GuestState {
+        /** guest のロードを開始していない状態。 */
         data object Uninitialized : GuestState
+
+        /** ロード済みの guest を利用する状態。 */
         data class Active(val guest: LoadedGuest) : GuestState
+
+        /** 組み込みの parser を直接利用する状態。 */
         data object Direct : GuestState
     }
 }
 
+/** ロード済みの Zipline と guest service の組。 */
 internal data class LoadedGuest(
     val service: FanboxGuestService,
     val zipline: Zipline? = null,
 )
 
+/** 検証済みの配信 bundle または組み込み bundle から guest をロードする。 */
 internal class ZiplineGuestLoader(
     private val config: FanboxGuestDeliveryConfig,
     private val dispatcher: CoroutineDispatcher,
     private val httpClient: ZiplineHttpClient,
     private val diagnosticSink: FanboxDiagnosticSink,
 ) {
-    private val manifestVerifier = ManifestVerifier.Builder()
-        .addEd25519(config.trustedKeyName, config.trustedEd25519PublicKey.toByteString())
+    private val manifestVerifier = Builder()
+        .addEd25519(
+            name = config.trustedKeyName,
+            trustedKey = config.trustedEd25519PublicKey.toByteString(),
+        )
         .build()
 
     suspend fun load(): LoadedGuest? = loadGuestWithFallback(
@@ -372,8 +382,7 @@ internal class ZiplineGuestLoader(
             } else {
                 LoadedEmbeddedBundle.read(embedded).mapCatching { loaded ->
                     load(
-                        loader = newLoader(EmbeddedOnlyZiplineHttpClient)
-                            .withEmbedded(loaded.fileSystem, LoadedEmbeddedBundle.DIRECTORY),
+                        loader = newLoader(EmbeddedOnlyZiplineHttpClient).withEmbedded(loaded.fileSystem, LoadedEmbeddedBundle.DIRECTORY),
                         manifestUrl = EMBEDDED_MANIFEST_SENTINEL_URL,
                         freshnessChecker = AlwaysFresh,
                     ).getOrThrow()
@@ -383,7 +392,9 @@ internal class ZiplineGuestLoader(
         diagnosticSink = diagnosticSink,
     )
 
-    private fun newLoader(client: ZiplineHttpClient = httpClient): ZiplineLoader = ZiplineLoader(
+    private fun newLoader(
+        client: ZiplineHttpClient = httpClient,
+    ): ZiplineLoader = ZiplineLoader(
         dispatcher = dispatcher,
         manifestVerifier = manifestVerifier,
         httpClient = client,
@@ -405,14 +416,14 @@ internal class ZiplineGuestLoader(
                 zipline = success.zipline,
             )
         }
-        if (mapped.isFailure && result is LoadResult.Success) result.zipline.close()
+        if (mapped.isFailure && result is LoadResult.Success) {
+            result.zipline.close()
+        }
         return mapped
     }
 }
 
-internal inline fun <T : Any> LoadResult.mapSuccess(
-    transform: (LoadResult.Success) -> T,
-): Result<T> = when (this) {
+internal inline fun <T : Any> LoadResult.mapSuccess(transform: (LoadResult.Success) -> T): Result<T> = when (this) {
     is LoadResult.Success -> runCatching { transform(this) }
     is LoadResult.Failure -> Result.failure(exception)
 }
@@ -445,39 +456,39 @@ private suspend fun <T : Any> loadGuestAttempt(
     null
 }
 
-private class KtorZiplineHttpClient(
-    private val client: HttpClient,
-) : ZiplineHttpClient() {
-    override suspend fun download(
-        url: String,
-        requestHeaders: List<Pair<String, String>>,
-    ): ByteString = client.get(url) {
-        headers {
-            requestHeaders.forEach { (name, value) -> append(name, value) }
+/** Zipline loader の HTTP 通信を Ktor へ橋渡しする。 */
+private class KtorZiplineHttpClient(private val client: HttpClient) : ZiplineHttpClient() {
+    override suspend fun download(url: String, requestHeaders: List<Pair<String, String>>): ByteString = client
+        .get(url) {
+            headers {
+                requestHeaders.forEach { (name, value) -> append(name, value) }
+            }
         }
-    }.body<ByteArray>().toByteString()
+        .body<ByteArray>()
+        .toByteString()
 }
 
+/** キャッシュを常に再検証する鮮度ポリシー。 */
 private object AlwaysStale : FreshnessChecker {
     override fun isFresh(manifest: ZiplineManifest, freshAtEpochMs: Long): Boolean = false
 }
 
+/** キャッシュを常に利用できる鮮度ポリシー。 */
 private object AlwaysFresh : FreshnessChecker {
     override fun isFresh(manifest: ZiplineManifest, freshAtEpochMs: Long): Boolean = true
 }
 
+/** 組み込み bundle 専用の、ネットワーク通信を許可しない HTTP client。 */
 private object EmbeddedOnlyZiplineHttpClient : ZiplineHttpClient() {
-    override suspend fun download(
-        url: String,
-        requestHeaders: List<Pair<String, String>>,
-    ): ByteString = error("embedded guest bundle is incomplete")
+    override suspend fun download(url: String, requestHeaders: List<Pair<String, String>>): ByteString = error("embedded guest bundle is incomplete")
 }
 
-private fun Throwable.describe(): String =
-    this::class.simpleName + message?.takeIf(String::isNotBlank)?.let { ": $it" }.orEmpty()
+private fun Throwable.describe(): String = this::class.simpleName + message
+    ?.takeIf(String::isNotBlank)
+    ?.let { ": $it" }
+    .orEmpty()
 
-private fun String.isLoopbackHost(): Boolean =
-    equals("localhost", ignoreCase = true) || this == "127.0.0.1" || this == "::1"
+private fun String.isLoopbackHost(): Boolean = equals("localhost", ignoreCase = true) || this == "127.0.0.1" || this == "::1"
 
 private const val APPLICATION_NAME = "fanbox-guest"
 private const val POST_DETAIL_ENDPOINT = "post.info"

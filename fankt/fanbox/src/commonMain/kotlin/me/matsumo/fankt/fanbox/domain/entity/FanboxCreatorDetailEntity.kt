@@ -5,10 +5,7 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonObject
 
 @Serializable
-internal data class FanboxCreatorDetailEntity(
-    @SerialName("body")
-    val body: Body,
-) {
+internal data class FanboxCreatorDetailEntity(@SerialName("body") val body: Body) {
     @Serializable
     data class Body(
         @SerialName("coverImageUrl")

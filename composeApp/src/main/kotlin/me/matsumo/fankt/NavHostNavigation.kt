@@ -5,13 +5,11 @@ import androidx.compose.ui.Modifier
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable
 
-const val NavHostRoute = "navHost"
+/** 画面一覧の navigation route。 */
+const val NAV_HOST_ROUTE = "navHost"
 
-fun NavGraphBuilder.navHostScreen(
-    navigateToFanbox: () -> Unit,
-    navigateToFantia: () -> Unit,
-) {
-    composable(NavHostRoute) {
+fun NavGraphBuilder.navHostScreen(navigateToFanbox: () -> Unit, navigateToFantia: () -> Unit) {
+    composable(NAV_HOST_ROUTE) {
         NavHostScreen(
             modifier = Modifier.fillMaxSize(),
             navigateToFanbox = navigateToFanbox,

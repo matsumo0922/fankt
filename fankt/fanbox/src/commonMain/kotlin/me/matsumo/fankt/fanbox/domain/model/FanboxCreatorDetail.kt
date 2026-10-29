@@ -75,10 +75,7 @@ data class FanboxCreatorDetail(
     }
 
     @Serializable
-    data class ProfileLink(
-        val url: String,
-        val link: Platform,
-    )
+    data class ProfileLink(val url: String, val link: Platform)
 
     @Serializable
     enum class Platform {
@@ -96,7 +93,10 @@ data class FanboxCreatorDetail(
 
         companion object {
             fun fromUrl(url: String): Platform {
-                val hostname = FanboxUrlParts.parse(url).host.orEmpty().lowercase()
+                val hostname = FanboxUrlParts
+                    .parse(url).host
+                    .orEmpty()
+                    .lowercase()
 
                 return when {
                     "booth.pm" in hostname -> BOOTH

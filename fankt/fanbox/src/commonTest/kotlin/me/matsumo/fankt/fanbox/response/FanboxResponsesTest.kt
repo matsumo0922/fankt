@@ -47,8 +47,8 @@ class FanboxResponsesTest {
     @Test
     fun homepageHtmlUsesProductionMetadataParserAndMapper() {
         val extractor = FanboxMetadataExtractor { html ->
-            Regex("meta name=\"metadata\" content=\"(.*?)\">").find(html)
-                ?.groupValues
+            Regex("meta name=\"metadata\" content=\"(.*?)\">")
+                .find(html)?.groupValues
                 ?.get(1)
                 ?.replace("&quot;", "\"")
         }
