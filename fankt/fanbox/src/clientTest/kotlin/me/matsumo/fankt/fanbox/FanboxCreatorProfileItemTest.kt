@@ -200,6 +200,7 @@ class FanboxCreatorProfileItemTest {
         return Fanbox(
             dependencies = dependencies,
             clientFactory = clientFactory,
+            loadGuest = nativeGuest,
             ioDispatcher = Dispatchers.Default,
         )
     }

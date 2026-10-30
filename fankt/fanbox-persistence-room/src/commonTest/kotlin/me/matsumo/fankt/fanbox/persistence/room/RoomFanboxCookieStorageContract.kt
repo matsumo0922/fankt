@@ -11,6 +11,7 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
 import me.matsumo.fankt.fanbox.Fanbox
 import me.matsumo.fankt.fanbox.FanboxCookieRecord
+import me.matsumo.fankt.fanbox.FanboxGuestCache
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
@@ -21,6 +22,7 @@ internal fun verifyRoomStorageVersions(
     cleanupFixture: () -> Unit,
     createFixture: (Int) -> Unit,
     createStorage: () -> RoomFanboxCookieStorage,
+    guestCache: FanboxGuestCache,
 ) = runBlocking {
     for (version in 1..3) {
         cleanupFixture()
@@ -42,7 +44,7 @@ internal fun verifyRoomStorageVersions(
 
         val reacquired = createStorage()
         assertEquals(2, reacquired.snapshot().size)
-        val fanbox = Fanbox(cookieStorage = reacquired)
+        val fanbox = reacquired.openFanbox(guestCache)
         val restoredSession = fanbox.cookies.first().single { it.name == "FANBOXSESSID" }
         assertEquals("legacy-session-v$version", restoredSession.value)
         assertEquals("fanbox.cc", restoredSession.domain)
@@ -65,14 +67,15 @@ internal fun verifyRoomStorageCloseContract(
     cleanupFixture: () -> Unit,
     createFixture: (Int) -> Unit,
     createStorage: () -> RoomFanboxCookieStorage,
+    guestCache: FanboxGuestCache,
 ) = runBlocking {
     cleanupFixture()
     createFixture(3)
 
     verifyLiveCollectionTerminatesAtClose(createStorage)
     verifyCapturedFlowFailsAfterClose(createStorage)
-    verifyFanboxCollectionTerminatesAtStorageClose(createStorage)
-    verifyStorageOutlivesClientCycles(createStorage)
+    verifyFanboxCollectionTerminatesAtStorageClose(createStorage, guestCache)
+    verifyStorageOutlivesClientCycles(createStorage, guestCache)
 
     cleanupFixture()
 }
@@ -103,9 +106,12 @@ private suspend fun CoroutineScope.verifyCapturedFlowFailsAfterClose(createStora
     }
 }
 
-private suspend fun CoroutineScope.verifyFanboxCollectionTerminatesAtStorageClose(createStorage: () -> RoomFanboxCookieStorage) {
+private suspend fun CoroutineScope.verifyFanboxCollectionTerminatesAtStorageClose(
+    createStorage: () -> RoomFanboxCookieStorage,
+    guestCache: FanboxGuestCache,
+) {
     val storage = createStorage()
-    val fanbox = Fanbox(cookieStorage = storage)
+    val fanbox = storage.openFanbox(guestCache)
     val observed = Channel<List<FanboxCookieRecord>>(Channel.UNLIMITED)
     val collection = collectStorageOutcome(fanbox.cookies, observed)
 
@@ -117,14 +123,17 @@ private suspend fun CoroutineScope.verifyFanboxCollectionTerminatesAtStorageClos
     fanbox.close()
 }
 
-private suspend fun CoroutineScope.verifyStorageOutlivesClientCycles(createStorage: () -> RoomFanboxCookieStorage) {
+private suspend fun CoroutineScope.verifyStorageOutlivesClientCycles(
+    createStorage: () -> RoomFanboxCookieStorage,
+    guestCache: FanboxGuestCache,
+) {
     val storage = createStorage()
     val observed = Channel<List<FanboxCookieRecord>>(Channel.UNLIMITED)
     val collection = collectStorageOutcome(storage.cookies, observed)
 
     observed.awaitRecordNamed("FANBOXSESSID")
 
-    repeat(CLIENT_CYCLES) { Fanbox(cookieStorage = storage).close() }
+    repeat(CLIENT_CYCLES) { storage.openFanbox(guestCache).close() }
 
     // A delivered value, rather than an active Job, is what shows the collection is not suspended
     // forever after the cycles.
@@ -151,6 +160,14 @@ private suspend fun Channel<List<FanboxCookieRecord>>.awaitRecordNamed(name: Str
         }
     }
 }
+
+// These contracts exercise only the cookie storage, so the guest is never loaded from this URL.
+private fun RoomFanboxCookieStorage.openFanbox(guestCache: FanboxGuestCache): Fanbox = Fanbox(
+    guestManifestUrl = "https://guest.invalid/manifest.zipline.json",
+    guestTrustedKeys = mapOf("unused" to ByteArray(32)),
+    guestCache = guestCache,
+    cookieStorage = this,
+)
 
 private fun cookieRecord(name: String): FanboxCookieRecord = FanboxCookieRecord(
     domain = "fanbox.cc",

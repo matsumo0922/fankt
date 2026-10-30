@@ -106,6 +106,7 @@ class FanboxCommentSubmissionTest {
             fanbox = Fanbox(
                 dependencies = dependencies,
                 clientFactory = clientFactory,
+                loadGuest = nativeGuest,
                 ioDispatcher = Dispatchers.Default,
             ),
             requests = requests,

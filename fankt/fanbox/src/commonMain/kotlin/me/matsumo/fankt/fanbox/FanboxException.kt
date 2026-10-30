@@ -77,6 +77,24 @@ public sealed class FanboxException(
             cause = cause,
         )
 
+    /**
+     * The Zipline guest that builds requests and interprets responses could not handle the request.
+     *
+     * Either the guest failed to load, in which case every request of the [Fanbox] instance fails
+     * this way, or it failed while building the request or interpreting the response.
+     */
+    public class GuestFailure internal constructor(
+        statusCode: Int?,
+        endpoint: String,
+        cause: Throwable,
+    ) : FanboxException(
+        statusCode = statusCode,
+        rawBody = null,
+        endpoint = endpoint,
+        message = diagnosticMessage("Zipline guest failed", statusCode, endpoint),
+        cause = cause,
+    )
+
     private companion object {
         fun httpMessage(statusCode: Int, endpoint: String): String = "FANBOX request failed (HTTP $statusCode, endpoint: $endpoint)"
 

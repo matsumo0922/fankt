@@ -2,6 +2,7 @@ package me.matsumo.fankt.fanbox.persistence.room
 
 import android.content.Context
 import androidx.test.core.app.ApplicationProvider
+import me.matsumo.fankt.fanbox.FanboxGuestCache
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import java.io.File
@@ -12,6 +13,8 @@ import kotlin.test.Test
 class RoomFanboxCookieStorageTest {
     private val context: Context
         get() = ApplicationProvider.getApplicationContext()
+    private val guestCache: FanboxGuestCache
+        get() = FanboxGuestCache(context, File(context.cacheDir, "fanbox-guest"))
 
     @Test
     fun opensAllLegacyVersionsAndRestoresSessionThroughFanbox() {
@@ -19,6 +22,7 @@ class RoomFanboxCookieStorageTest {
             cleanupFixture = ::cleanupFixture,
             createFixture = ::createFixture,
             createStorage = { createRoomFanboxCookieStorage(context) },
+            guestCache = guestCache,
         )
     }
 
@@ -28,6 +32,7 @@ class RoomFanboxCookieStorageTest {
             cleanupFixture = ::cleanupFixture,
             createFixture = ::createFixture,
             createStorage = { createRoomFanboxCookieStorage(context) },
+            guestCache = guestCache,
         )
     }
 

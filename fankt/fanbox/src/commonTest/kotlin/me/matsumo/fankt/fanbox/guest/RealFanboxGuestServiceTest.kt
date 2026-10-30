@@ -6,9 +6,8 @@ import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 /**
- * The host branches on these three outcomes to decide whether to keep using the guest, so a body
- * landing in the wrong one is not visible as a failure — it changes what the caller sees and
- * whether the delivery path stays alive.
+ * The host turns these three outcomes into what the caller sees, so a body landing in the wrong one
+ * is not visible as a failure — it changes the exception a caller handles.
  */
 class RealFanboxGuestServiceTest {
 
@@ -25,8 +24,8 @@ class RealFanboxGuestServiceTest {
     fun changedSchemaIsAMismatchRatherThanAGuestFailure() {
         val result = service.parsePostDetail("""{"body":{"unexpected":true}}""", statusCode = 200)
 
-        // GuestFailure here would pin the host to its own path on every FANBOX change, which is
-        // exactly the situation this bundle exists to fix.
+        // GuestFailure here would report every FANBOX change as a broken guest rather than as the
+        // schema change it is.
         assertTrue(result is GuestParseResult.SchemaMismatch)
     }
 

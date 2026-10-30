@@ -38,9 +38,8 @@ import me.matsumo.fankt.fanbox.domain.model.id.FanboxPostId
 import me.matsumo.fankt.fanbox.domain.model.id.FanboxUserId
 import me.matsumo.fankt.fanbox.guest.FanboxGuestDeliveryConfig
 import me.matsumo.fankt.fanbox.guest.FanboxGuestHost
-import me.matsumo.fankt.fanbox.guest.KtorZiplineHttpClient
-import me.matsumo.fankt.fanbox.guest.createGuestHttpClient
-import me.matsumo.fankt.fanbox.guest.loadZiplineGuest
+import me.matsumo.fankt.fanbox.guest.LoadedGuest
+import me.matsumo.fankt.fanbox.guest.ziplineGuestLoader
 import me.matsumo.fankt.fanbox.repository.FanboxCreatorRepository
 import me.matsumo.fankt.fanbox.repository.FanboxPostRepository
 import me.matsumo.fankt.fanbox.repository.FanboxSearchRepository
@@ -71,9 +70,10 @@ import okio.ByteString.Companion.toByteString
 class Fanbox internal constructor(
     private val dependencies: FanboxDependencies,
     private val clientFactory: FanboxHttpClientFactory,
+    private val loadGuest: suspend (CoroutineDispatcher) -> LoadedGuest,
+    private val guestEventListener: (FanboxGuestEvent) -> Unit = {},
     private val logLevel: FanboxLogLevel = FanboxLogLevel.NONE,
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
-    private val guestDeliveryConfig: FanboxGuestDeliveryConfig? = null,
 ) : AutoCloseable {
     private val lifecycle = Job()
     private val resources = buildResources()
@@ -89,23 +89,14 @@ class Fanbox internal constructor(
     /** Observes the current CSRF token in this instance's injected [FanboxTokenStore]. */
     val csrfToken get() = requireOpen(dependencies.csrfToken)
 
-    constructor(
-        logLevel: FanboxLogLevel = FanboxLogLevel.NONE,
-        ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
-        cookieStorage: FanboxCookieStorage = InMemoryFanboxCookieStorage(),
-        tokenStore: FanboxTokenStore = InMemoryFanboxTokenStore(),
-    ) : this(
-        dependencies = createFanboxDependencies(cookieStorage, tokenStore),
-        clientFactory = DefaultFanboxHttpClientFactory,
-        logLevel = logLevel,
-        ioDispatcher = ioDispatcher,
-    )
-
     /**
-     * Enables the signed Zipline guest for `post.info`. The guest loads in the background from
-     * [guestManifestUrl] once this instance is created, and modules already in [guestCache] are not
-     * downloaded again. Until the guest has loaded, or when it fails, `post.info` uses the built-in
-     * request builder and parser.
+     * Builds FANBOX requests and interprets their responses with the signed Zipline guest.
+     *
+     * The guest loads in the background from [guestManifestUrl] once this instance is created, and
+     * modules already in [guestCache] are not downloaded again. When the manifest cannot be loaded
+     * from [guestManifestUrl], the guest last verified into [guestCache] is loaded instead. Requests
+     * wait for the load. When neither loads, every request of this instance fails with
+     * [FanboxException.GuestFailure].
      *
      * [guestTrustedKeys] maps each trusted signing key name to its Ed25519 public key. A manifest
      * signed by any of them is accepted.
@@ -127,29 +118,34 @@ class Fanbox internal constructor(
     ) : this(
         dependencies = createFanboxDependencies(cookieStorage, tokenStore),
         clientFactory = DefaultFanboxHttpClientFactory,
+        loadGuest = ziplineGuestLoader(
+            config = FanboxGuestDeliveryConfig(
+                manifestUrl = guestManifestUrl,
+                trustedKeys = guestTrustedKeys.mapValues { (_, key) -> key.toByteString() },
+                cache = guestCache,
+            ),
+            clientFactory = DefaultFanboxHttpClientFactory,
+        ),
+        guestEventListener = guestEventListener,
         logLevel = logLevel,
         ioDispatcher = ioDispatcher,
-        guestDeliveryConfig = FanboxGuestDeliveryConfig(
-            manifestUrl = guestManifestUrl,
-            trustedKeys = guestTrustedKeys.mapValues { (_, key) -> key.toByteString() },
-            cache = guestCache,
-            eventListener = guestEventListener,
-        ),
     )
 
     internal constructor(
         clientFactory: FanboxHttpClientFactory,
+        loadGuest: suspend (CoroutineDispatcher) -> LoadedGuest,
         logLevel: FanboxLogLevel = FanboxLogLevel.NONE,
         ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
         cookieStorage: FanboxCookieStorage = InMemoryFanboxCookieStorage(),
         tokenStore: FanboxTokenStore = InMemoryFanboxTokenStore(),
-        guestDeliveryConfig: FanboxGuestDeliveryConfig? = null,
+        guestEventListener: (FanboxGuestEvent) -> Unit = {},
     ) : this(
         dependencies = createFanboxDependencies(cookieStorage, tokenStore),
         clientFactory = clientFactory,
+        loadGuest = loadGuest,
+        guestEventListener = guestEventListener,
         logLevel = logLevel,
         ioDispatcher = ioDispatcher,
-        guestDeliveryConfig = guestDeliveryConfig,
     )
 
     private fun buildResources(): FanboxResources {
@@ -176,13 +172,12 @@ class Fanbox internal constructor(
             )
             val downloadClient = buildOwnedDownloadClient()
             val diagnosticSink = FanboxDiagnosticSink { message -> Napier.w { message } }
-            val guestHost = guestDeliveryConfig?.let { config ->
-                FanboxGuestHost(diagnosticSink, config.eventListener) { dispatcher ->
-                    createGuestHttpClient(clientFactory).use { client ->
-                        loadZiplineGuest(config, dispatcher, KtorZiplineHttpClient(client))
-                    }
-                }
-            }
+            val guestHost = FanboxGuestHost(
+                requestExecutor = requestExecutor,
+                diagnosticSink = diagnosticSink,
+                eventListener = guestEventListener,
+                load = loadGuest,
+            )
 
             return FanboxResources(
                 post = FanboxPostRepository(
@@ -529,7 +524,7 @@ class Fanbox internal constructor(
 
         var failure: Throwable? = null
         try {
-            resources.guestHost?.close()
+            resources.guestHost.close()
         } catch (closeFailure: Throwable) {
             failure = closeFailure
         }
@@ -559,7 +554,7 @@ private data class FanboxResources(
     val requestExecutor: FanboxRequestExecutor,
     val downloadClient: HttpClient,
     val clients: List<HttpClient>,
-    val guestHost: FanboxGuestHost?,
+    val guestHost: FanboxGuestHost,
 )
 
 /** ダウンロードの callback が投げた例外を保持し、transport の失敗と区別する。 */

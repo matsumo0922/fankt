@@ -496,6 +496,7 @@ class FanboxDownloadTest {
             fanbox = Fanbox(
                 dependencies = dependencies,
                 clientFactory = clientFactory,
+                loadGuest = nativeGuest,
                 ioDispatcher = Dispatchers.Default,
             ),
             requests = requests,

@@ -26,6 +26,7 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import me.matsumo.fankt.fanbox.FanboxGuestCache
 import me.matsumo.fankt.fanbox.FanboxHttpClientFactory
+import me.matsumo.fankt.fanbox.domain.model.FanboxPostDetail
 import okio.ByteString
 import okio.ByteString.Companion.toByteString
 import okio.FileSystem
@@ -48,7 +49,7 @@ class FanboxSignedBundleTest {
         withBundleFixture {
             val result = loadGuest(signedBundle(FIXED_BUNDLE_DIRECTORY)).parseAndClose()
 
-            assertIs<GuestParseResult.Success>(result)
+            assertIs<GuestParseResult.Success<*>>(result)
         }
     }
 
@@ -88,8 +89,8 @@ class FanboxSignedBundleTest {
             val signedByPrimary = signedBundle(FIXED_BUNDLE_DIRECTORY)
             val signedByRecovery = signedBundle(FIXED_BUNDLE_DIRECTORY, signingKeyName = RECOVERY_KEY_NAME, keyPair = recoveryKey)
 
-            assertIs<GuestParseResult.Success>(loadGuest(signedByPrimary, config = config).parseAndClose())
-            assertIs<GuestParseResult.Success>(loadGuest(signedByRecovery, config = config).parseAndClose())
+            assertIs<GuestParseResult.Success<*>>(loadGuest(signedByPrimary, config = config).parseAndClose())
+            assertIs<GuestParseResult.Success<*>>(loadGuest(signedByRecovery, config = config).parseAndClose())
         }
     }
 
@@ -100,7 +101,7 @@ class FanboxSignedBundleTest {
             val fixedResult = loadGuest(signedBundle(FIXED_BUNDLE_DIRECTORY)).parseAndClose()
 
             assertIs<GuestParseResult.SchemaMismatch>(legacyResult)
-            assertIs<GuestParseResult.Success>(fixedResult)
+            assertIs<GuestParseResult.Success<*>>(fixedResult)
         }
     }
 
@@ -118,11 +119,55 @@ class FanboxSignedBundleTest {
     }
 
     @Test
-    fun cachedBundleDoesNotRunWhenTheManifestIsUnreachable(): Unit = runBlocking {
+    fun theCachedBundleLoadsWhenTheManifestIsUnreachable(): Unit = runBlocking {
         withBundleFixture {
-            loadGuest(signedBundle(FIXED_BUNDLE_DIRECTORY)).parseAndClose()
+            loadGuest(signedBundle(FIXED_BUNDLE_DIRECTORY, version = "cached")).parseAndClose()
 
+            val loaded = loadGuest(httpClient = UnreachableZiplineHttpClient)
+
+            assertIs<GuestParseResult.Success<*>>(loaded.parseAndClose())
+            assertEquals("cached", loaded.version)
+        }
+    }
+
+    @Test
+    fun theCachedBundleLoadsWhenTheDeliveredManifestIsRefused(): Unit = runBlocking {
+        withBundleFixture {
+            loadGuest(signedBundle(FIXED_BUNDLE_DIRECTORY, version = "cached")).parseAndClose()
+
+            val loaded = loadGuest(signedBundle(FIXED_BUNDLE_DIRECTORY, tamperSignature = true))
+
+            assertIs<GuestParseResult.Success<*>>(loaded.parseAndClose())
+            assertEquals("cached", loaded.version)
+        }
+    }
+
+    @Test
+    fun nothingLoadsWithoutTheManifestAndACachedBundle(): Unit = runBlocking {
+        withBundleFixture {
             assertFailsWith<IllegalStateException> { loadGuest(httpClient = UnreachableZiplineHttpClient) }
+        }
+    }
+
+    @Test
+    fun aCachedBundleMissingAModuleDoesNotLoad(): Unit = runBlocking {
+        withBundleFixture {
+            val remote = signedBundle(FIXED_BUNDLE_DIRECTORY)
+            loadGuest(remote).parseAndClose()
+            cachedModuleFiles(remote).forEach(fileSystem::delete)
+
+            assertCachedBundleDoesNotLoad(remote)
+        }
+    }
+
+    @Test
+    fun aTamperedCachedModuleDoesNotLoad(): Unit = runBlocking {
+        withBundleFixture {
+            val remote = signedBundle(FIXED_BUNDLE_DIRECTORY)
+            loadGuest(remote).parseAndClose()
+            cachedModuleFiles(remote).forEach { file -> fileSystem.write(file) { writeUtf8("tampered") } }
+
+            assertCachedBundleDoesNotLoad(remote)
         }
     }
 
@@ -137,7 +182,7 @@ class FanboxSignedBundleTest {
                 keyPair = rotatedKey,
             ).parseAndClose()
 
-            assertIs<GuestParseResult.Success>(result)
+            assertIs<GuestParseResult.Success<*>>(result)
         }
     }
 
@@ -193,7 +238,7 @@ class FanboxSignedBundleTest {
 
     private class BundleFixture : AutoCloseable {
         val dispatcher = newSingleThreadContext("FanboxSignedBundleTest")
-        private val fileSystem = FileSystem.SYSTEM
+        val fileSystem = FileSystem.SYSTEM
         private val root = FileSystem.SYSTEM_TEMPORARY_DIRECTORY / "fankt-signed-bundle-${Random.nextLong()}"
         val keyPair = newKeyPairFromSeed(Random.nextBytes(32).toByteString())
         private val cache = FanboxGuestCache { directoryName, maxSizeInBytes ->
@@ -217,8 +262,9 @@ class FanboxSignedBundleTest {
                 .sign(unsignedManifest.copy(freshAtEpochMs = 0L, version = version))
             if (tamperSignature) {
                 manifest = manifest.copy(
+                    // Hex decoding ignores case, so the replacement digit must differ in value.
                     signatures = manifest.signatures.mapValues { (_, signature) ->
-                        (if (signature.first() == 'A') 'B' else 'A') + signature.drop(1)
+                        (if (signature.first() == '0') '1' else '0') + signature.drop(1)
                     },
                 )
             }
@@ -246,12 +292,34 @@ class FanboxSignedBundleTest {
             cache = cache,
         )
 
-        suspend fun LoadedGuest.parseAndClose(): GuestParseResult = withContext(dispatcher) {
+        suspend fun LoadedGuest.parseAndClose(): GuestParseResult<FanboxPostDetail> = withContext(dispatcher) {
             try {
                 service.parsePostDetail(RESPONSE_BODY, 200)
             } finally {
                 zipline?.close()
             }
+        }
+
+        // Cached files are named by an internal id, so a module is told from the manifest by its content.
+        fun cachedModuleFiles(remote: SignedBundle): List<Path> {
+            val moduleHashes = remote.httpClient.moduleHashes
+            val files = fileSystem
+                .listRecursively(root)
+                .filter { path -> fileSystem.metadata(path).isRegularFile }
+                .filter { path -> fileSystem.read(path) { readByteString() }.sha256() in moduleHashes }
+                .toList()
+            check(files.size == moduleHashes.size) { "Expected ${moduleHashes.size} cached modules under $root, found $files" }
+
+            return files
+        }
+
+        // Only the manifest is out of reach, so a module the cache lacks could still be downloaded.
+        suspend fun assertCachedBundleDoesNotLoad(remote: SignedBundle) {
+            remote.httpClient.downloadedUrls.clear()
+            remote.httpClient.manifestReachable = false
+
+            assertFailsWith<IllegalStateException> { loadGuest(remote) }
+            assertEquals(listOf(MANIFEST_URL), remote.httpClient.downloadedUrls)
         }
 
         override fun close() {
@@ -273,11 +341,16 @@ class FanboxSignedBundleTest {
 
     private class BundleZiplineHttpClient(private val manifestJson: String, private val modulesByFileName: Map<String, ByteString>) : ZiplineHttpClient() {
         val downloadedUrls = mutableListOf<String>()
+        val moduleHashes = modulesByFileName.values.map(ByteString::sha256).toSet()
+        var manifestReachable = true
 
         override suspend fun download(url: String, requestHeaders: List<Pair<String, String>>): ByteString {
             downloadedUrls += url
 
-            if (url == MANIFEST_URL) return manifestJson.encodeToByteArray().toByteString()
+            if (url == MANIFEST_URL) {
+                check(manifestReachable) { "manifest unavailable" }
+                return manifestJson.encodeToByteArray().toByteString()
+            }
 
             return modulesByFileName[url.substringAfterLast('/')] ?: error("Unexpected bundle URL: $url")
         }

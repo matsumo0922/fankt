@@ -2,7 +2,10 @@ package me.matsumo.fankt.fanbox.guest
 
 import app.cash.zipline.ZiplineApiMismatchException
 import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.awaitCancellation
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.decodeFromString
@@ -24,7 +27,6 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertIs
-import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 class FanboxGuestHostTest {
@@ -41,41 +43,57 @@ class FanboxGuestHostTest {
     }
 
     @Test
-    fun guestParseFailuresUseTheBuiltInParserOnTheSameResponse() = runBlocking {
-        val failures = listOf<Pair<(String, Int) -> GuestParseResult, FanboxGuestEvent>>(
-            { _: String, _: Int -> GuestParseResult.SchemaMismatch("changed schema") } to
-                FanboxGuestEvent.SchemaMismatch("post.info"),
-            { _: String, _: Int -> GuestParseResult.GuestFailure("broken guest") } to
-                FanboxGuestEvent.CallFailed("post.info", "parseResponse", "GuestFailure"),
-            { _: String, _: Int -> throw SerializationException("unexpected discriminator") } to
-                FanboxGuestEvent.CallFailed("post.info", "parseResponse", "SerializationException"),
-            { _: String, _: Int -> throw ZiplineApiMismatchException("no such method") } to
-                FanboxGuestEvent.CallFailed("post.info", "parseResponse", "ZiplineApiMismatchException"),
-        )
-
-        for ((parse, expectedEvent) in failures) {
-            GuestFixture(parse = parse).use { fixture ->
-                assertEquals(BUILT_IN_POST, fixture.getPostDetail())
-                // The built-in parser reads the response already received instead of requesting it again.
-                assertEquals(1, fixture.requests.size)
-                assertTrue(fixture.diagnostics.single().startsWith("Zipline guest parseResponse failed"))
-                assertEquals(expectedEvent, fixture.events.last())
-            }
-        }
-    }
-
-    @Test
-    fun responseRejectedByBothParsersThrowsTheBuiltInSchemaMismatch() = runBlocking {
-        val fixture = GuestFixture(
-            parse = { _, _ -> GuestParseResult.SchemaMismatch("changed schema") },
-            responseBody = """{"body":{}}""",
-        )
+    fun aRejectedResponseFailsAsASchemaMismatch() = runBlocking {
+        val fixture = GuestFixture(parse = { _, _ -> GuestParseResult.SchemaMismatch("changed schema") })
 
         fixture.use {
             val failure = assertFailsWith<FanboxException.SchemaMismatch> { it.getPostDetail() }
 
             assertEquals("post.info", failure.endpoint)
+            assertEquals(200, failure.statusCode)
+            assertEquals("changed schema", failure.cause?.message)
             assertEquals(1, it.requests.size)
+            assertTrue(it.diagnostics.single().startsWith("Zipline guest parseResponse failed"))
+            assertEquals(FanboxGuestEvent.SchemaMismatch("post.info"), it.events.last())
+        }
+    }
+
+    @Test
+    fun guestParseFailuresFailTheCall() = runBlocking {
+        val failures = listOf<Pair<(String, Int) -> GuestParseResult<FanboxPostDetail>, String>>(
+            { _: String, _: Int -> GuestParseResult.GuestFailure("broken guest") } to "GuestFailure",
+            { _: String, _: Int -> throw SerializationException("unexpected discriminator") } to "SerializationException",
+            { _: String, _: Int -> throw ZiplineApiMismatchException("no such method") } to "ZiplineApiMismatchException",
+        )
+
+        for ((parse, errorType) in failures) {
+            GuestFixture(parse = parse).use { fixture ->
+                val failure = assertFailsWith<FanboxException.GuestFailure> { fixture.getPostDetail() }
+
+                assertEquals("post.info", failure.endpoint)
+                assertEquals(200, failure.statusCode)
+                // The request is sent once; nothing retries it with another parser.
+                assertEquals(1, fixture.requests.size)
+                assertTrue(fixture.diagnostics.single().startsWith("Zipline guest parseResponse failed"))
+                assertEquals(FanboxGuestEvent.CallFailed("post.info", "parseResponse", errorType), fixture.events.last())
+            }
+        }
+    }
+
+    @Test
+    fun aRequestBuildFailureFailsBeforeAnyRequest() = runBlocking {
+        val fixture = GuestFixture(
+            parse = { _, _ -> error("parse must not run without a request") },
+            buildRequest = { throw ZiplineApiMismatchException("no such method") },
+        )
+
+        fixture.use {
+            val failure = assertFailsWith<FanboxException.GuestFailure> { it.getPostDetail() }
+
+            assertEquals(null, failure.statusCode)
+            assertTrue(it.requests.isEmpty())
+            assertTrue(it.diagnostics.single().startsWith("Zipline guest buildRequest failed"))
+            assertEquals(FanboxGuestEvent.CallFailed("post.info", "buildRequest", "ZiplineApiMismatchException"), it.events.last())
         }
     }
 
@@ -90,62 +108,82 @@ class FanboxGuestHostTest {
         )
 
         fixture.use {
-            assertEquals(BUILT_IN_POST, it.getPostDetail())
+            assertFailsWith<FanboxException.GuestFailure> { it.getPostDetail() }
             assertEquals(GUEST_POST, it.getPostDetail())
         }
     }
 
     @Test
-    fun aRequestBuildFailureUsesTheBuiltInPathForTheWholeCall() = runBlocking {
+    fun callsWaitForTheGuestToLoad() = runBlocking {
+        val loadGate = CompletableDeferred<Unit>()
         val fixture = GuestFixture(
-            parse = { _, _ -> error("parse must not run once the request was built by the built-in path") },
-            buildRequest = { throw ZiplineApiMismatchException("no such method") },
+            parse = { _, _ -> GuestParseResult.Success(GUEST_POST) },
+            beforeLoad = { loadGate.await() },
         )
 
         fixture.use {
-            assertEquals(BUILT_IN_POST, it.getPostDetail())
-            assertEquals(listOf(FanboxEndpoints.postDetail(POST_ID)), it.requests)
-            assertTrue(it.diagnostics.single().startsWith("Zipline guest buildRequest failed"))
-            assertEquals(FanboxGuestEvent.CallFailed("post.info", "buildRequest", "ZiplineApiMismatchException"), it.events.last())
+            // Undispatched, the call runs until it suspends waiting for the load.
+            val call = async(start = CoroutineStart.UNDISPATCHED) { it.getPostDetail() }
+
+            assertTrue(it.requests.isEmpty())
+
+            loadGate.complete(Unit)
+
+            assertEquals(GUEST_POST, call.await())
         }
     }
 
     @Test
-    fun callsDoNotWaitForTheGuestToLoad() = runBlocking {
-        val fixture = GuestFixture(
-            parse = { _, _ -> error("the guest has not loaded") },
-            load = { awaitCancellation() },
-            awaitLoad = false,
-        )
-
-        fixture.use {
-            assertEquals(BUILT_IN_POST, it.getPostDetail())
-        }
-    }
-
-    @Test
-    fun aLoadFailureUsesTheBuiltInPath() = runBlocking {
+    fun aLoadFailureFailsEveryCallWithoutLoadingAgain() = runBlocking {
+        var loads = 0
         val fixture = GuestFixture(
             parse = { _, _ -> error("the guest failed to load") },
-            load = { error("manifest unreachable") },
+            beforeLoad = {
+                loads += 1
+                error("manifest unreachable")
+            },
         )
 
         fixture.use {
-            assertEquals(BUILT_IN_POST, it.getPostDetail())
+            repeat(2) { _ ->
+                val failure = assertFailsWith<FanboxException.GuestFailure> { it.getPostDetail() }
+
+                assertEquals("manifest unreachable", failure.cause?.message)
+            }
+
+            assertEquals(1, loads)
+            assertTrue(it.requests.isEmpty())
             assertTrue(it.diagnostics.single().startsWith("Zipline guest load failed"))
             assertEquals(listOf<FanboxGuestEvent>(FanboxGuestEvent.LoadFailed("IllegalStateException")), it.events)
         }
     }
 
     @Test
+    fun aCallerCancelledWhileWaitingDoesNotCancelTheLoad() = runBlocking {
+        val loadGate = CompletableDeferred<Unit>()
+        val fixture = GuestFixture(
+            parse = { _, _ -> GuestParseResult.Success(GUEST_POST) },
+            beforeLoad = { loadGate.await() },
+        )
+
+        fixture.use {
+            val abandoned = async(start = CoroutineStart.UNDISPATCHED) { it.getPostDetail() }
+            abandoned.cancel()
+            loadGate.complete(Unit)
+
+            assertEquals(GUEST_POST, it.getPostDetail())
+        }
+    }
+
+    @Test
     fun aFailingListenerDoesNotAffectTheGuest() = runBlocking {
         val fixture = GuestFixture(
-            parse = { _, _ -> GuestParseResult.SchemaMismatch("changed schema") },
+            parse = { _, _ -> GuestParseResult.Success(GUEST_POST) },
             eventListener = { error("cookie=secret") },
         )
 
         fixture.use {
-            assertEquals(BUILT_IN_POST, it.getPostDetail())
+            assertEquals(GUEST_POST, it.getPostDetail())
             assertTrue(it.diagnostics.any { message -> message == "Guest event listener failed (IllegalStateException)" })
             // A listener's own message may carry anything, so only its type is reported.
             assertTrue(it.diagnostics.none { message -> "secret" in message })
@@ -163,72 +201,63 @@ class FanboxGuestHostTest {
     }
 
     @Test
-    fun aClosedHostDoesNotUseTheGuest() = runBlocking {
-        val fixture = GuestFixture(parse = { _, _ -> GuestParseResult.Success(GUEST_POST) })
-        fixture.host.awaitLoad()
-
-        fixture.close()
-
-        assertNull(fixture.host.buildPostDetailRequest(POST_ID))
-    }
-
-    @Test
     fun sealedPostBodyRoundTripsInGuestPayload() {
         val post = FanboxResponses.postDetail(FanboxPostJsonFixtures.postInfoArticleEmbeds, 200)
-        val encoded = Json.encodeToString<GuestParseResult>(GuestParseResult.Success(post))
-        val decoded = Json.decodeFromString<GuestParseResult>(encoded)
+        val encoded = Json.encodeToString<GuestParseResult<FanboxPostDetail>>(GuestParseResult.Success(post))
+        val decoded = Json.decodeFromString<GuestParseResult<FanboxPostDetail>>(encoded)
 
-        assertEquals(post, assertIs<GuestParseResult.Success>(decoded).postDetail)
+        assertEquals(post, assertIs<GuestParseResult.Success<FanboxPostDetail>>(decoded).value)
     }
 
     /** 偽の guest を持つ host と、それを使う repository の組。 */
     private class GuestFixture(
-        parse: (String, Int) -> GuestParseResult,
+        parse: (String, Int) -> GuestParseResult<FanboxPostDetail>,
         buildRequest: (String) -> RequestDescriptor = { postId -> FanboxEndpoints.postDetail(FanboxPostId(postId)) },
-        responseBody: String = FanboxPostJsonFixtures.postInfoTextHybrid,
-        load: suspend () -> LoadedGuest = { LoadedGuest(StubGuestService(buildRequest, parse), version = BUNDLE_VERSION) },
-        private val awaitLoad: Boolean = true,
+        beforeLoad: suspend () -> Unit = {},
         eventListener: ((FanboxGuestEvent) -> Unit)? = null,
     ) : AutoCloseable {
         val requests = mutableListOf<RequestDescriptor>()
         val diagnostics = mutableListOf<String>()
         val events = mutableListOf<FanboxGuestEvent>()
-        val host = FanboxGuestHost(
+        private val requestExecutor = FanboxRequestExecutor { descriptor ->
+            requests += descriptor
+            FanboxRawResponse(statusCode = 200, headers = emptyMap(), bodyText = FanboxPostJsonFixtures.postInfoTextHybrid)
+        }
+        private val host = FanboxGuestHost(
+            requestExecutor = requestExecutor,
             diagnosticSink = FanboxDiagnosticSink(diagnostics::add),
             eventListener = eventListener ?: { event -> events += event },
-        ) { load() }
+        ) {
+            beforeLoad()
+            LoadedGuest(StubGuestService(buildRequest, parse), version = BUNDLE_VERSION)
+        }
+
+        // Unconfined, so that a call reaches the host without first waiting for another thread.
         private val repository = FanboxPostRepository(
-            requestExecutor = FanboxRequestExecutor { descriptor ->
-                requests += descriptor
-                FanboxRawResponse(statusCode = 200, headers = emptyMap(), bodyText = responseBody)
-            },
+            requestExecutor = requestExecutor,
+            ioDispatcher = Dispatchers.Unconfined,
             guestHost = host,
         )
 
-        suspend fun getPostDetail(): FanboxPostDetail {
-            if (awaitLoad) host.awaitLoad()
-
-            return repository.getPostDetail(POST_ID)
-        }
+        suspend fun getPostDetail(): FanboxPostDetail = repository.getPostDetail(POST_ID)
 
         override fun close() = host.close()
     }
 
     private class StubGuestService(
         private val buildRequest: (String) -> RequestDescriptor,
-        private val parse: (String, Int) -> GuestParseResult,
+        private val parse: (String, Int) -> GuestParseResult<FanboxPostDetail>,
     ) : FanboxGuestService {
         override fun buildPostDetailRequest(postId: String): RequestDescriptor = buildRequest(postId)
 
-        override fun parsePostDetail(body: String, statusCode: Int): GuestParseResult = parse(body, statusCode)
+        override fun parsePostDetail(body: String, statusCode: Int): GuestParseResult<FanboxPostDetail> = parse(body, statusCode)
     }
 
     private companion object {
         const val BUNDLE_VERSION = "0123abc"
         val POST_ID = FanboxPostId("10000001")
-        val BUILT_IN_POST = FanboxResponses.postDetail(FanboxPostJsonFixtures.postInfoTextHybrid, 200)
 
-        // A different post than BUILT_IN_POST, so a test can tell which path produced its result.
+        // A different post than the response the executor returns, so a test can tell the guest produced it.
         val GUEST_POST = FanboxResponses.postDetail(FanboxPostJsonFixtures.postInfoArticleA, 200)
     }
 }

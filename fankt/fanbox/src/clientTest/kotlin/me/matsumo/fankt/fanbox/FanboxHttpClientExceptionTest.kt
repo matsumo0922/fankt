@@ -248,6 +248,7 @@ class FanboxHttpClientExceptionTest {
         val clientFactory = FanboxHttpClientFactory { block -> HttpClient(MockEngine(handler), block) }
         return Fanbox(
             clientFactory = clientFactory,
+            loadGuest = nativeGuest,
             logLevel = logLevel,
             ioDispatcher = Dispatchers.Default,
         )

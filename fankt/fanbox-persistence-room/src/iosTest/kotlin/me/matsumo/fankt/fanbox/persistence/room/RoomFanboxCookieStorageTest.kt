@@ -3,16 +3,21 @@ package me.matsumo.fankt.fanbox.persistence.room
 import androidx.sqlite.driver.bundled.BundledSQLiteDriver
 import androidx.sqlite.execSQL
 import kotlinx.cinterop.ExperimentalForeignApi
+import me.matsumo.fankt.fanbox.FanboxGuestCache
 import platform.Foundation.NSFileManager
+import platform.Foundation.NSTemporaryDirectory
 import kotlin.test.Test
 
 class RoomFanboxCookieStorageTest {
+    private val guestCache = FanboxGuestCache(NSTemporaryDirectory() + "fanbox-guest")
+
     @Test
     fun opensAllLegacyVersionsAndRestoresSessionThroughFanbox() {
         verifyRoomStorageVersions(
             cleanupFixture = ::cleanupFixture,
             createFixture = ::createFixture,
             createStorage = ::createRoomFanboxCookieStorage,
+            guestCache = guestCache,
         )
     }
 
@@ -22,6 +27,7 @@ class RoomFanboxCookieStorageTest {
             cleanupFixture = ::cleanupFixture,
             createFixture = ::createFixture,
             createStorage = ::createRoomFanboxCookieStorage,
+            guestCache = guestCache,
         )
     }
 
