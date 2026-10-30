@@ -4,21 +4,27 @@ import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.withContext
-import me.matsumo.fankt.fanbox.endpoint.FanboxEndpoints
-import me.matsumo.fankt.fanbox.response.FanboxResponses
-import me.matsumo.fankt.fanbox.transport.FanboxRequestExecutor
+import me.matsumo.fankt.fanbox.endpoint.FanboxEndpointIds
+import me.matsumo.fankt.fanbox.guest.FanboxGuestHost
 
+/** 検索に関する endpoint を guest で実行する。 */
 internal class FanboxSearchRepository(
-    private val requestExecutor: FanboxRequestExecutor,
+    private val guestHost: FanboxGuestHost,
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
 ) {
     suspend fun searchCreators(query: String, page: Int) = withContext(ioDispatcher) {
-        val response = requestExecutor.execute(FanboxEndpoints.searchCreators(query, page))
-        FanboxResponses.searchCreators(response.bodyText, response.statusCode)
+        guestHost.request(
+            endpointId = FanboxEndpointIds.creatorSearch,
+            build = { buildSearchCreatorsRequest(query, page) },
+            parse = { response -> parseSearchCreators(response.bodyText, response.statusCode) },
+        )
     }
 
     suspend fun searchTags(query: String) = withContext(ioDispatcher) {
-        val response = requestExecutor.execute(FanboxEndpoints.searchTags(query))
-        FanboxResponses.searchTags(response.bodyText, response.statusCode)
+        guestHost.request(
+            endpointId = FanboxEndpointIds.tagSearch,
+            build = { buildSearchTagsRequest(query) },
+            parse = { response -> parseSearchTags(response.bodyText, response.statusCode) },
+        )
     }
 }

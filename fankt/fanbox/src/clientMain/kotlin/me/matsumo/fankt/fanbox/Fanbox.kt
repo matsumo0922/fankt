@@ -186,12 +186,12 @@ class Fanbox internal constructor(
                     ioDispatcher = ioDispatcher,
                 ),
                 creator = FanboxCreatorRepository(
-                    requestExecutor = requestExecutor,
+                    guestHost = guestHost,
                     diagnosticSink = diagnosticSink,
                     ioDispatcher = ioDispatcher,
                 ),
                 search = FanboxSearchRepository(
-                    requestExecutor = requestExecutor,
+                    guestHost = guestHost,
                     ioDispatcher = ioDispatcher,
                 ),
                 user = FanboxUserRepository(
