@@ -374,6 +374,7 @@ public abstract interface class me/matsumo/fankt/fanbox/domain/model/FanboxBell 
 }
 
 public final class me/matsumo/fankt/fanbox/domain/model/FanboxBell$Comment : me/matsumo/fankt/fanbox/domain/model/FanboxBell {
+	public static final field Companion Lme/matsumo/fankt/fanbox/domain/model/FanboxBell$Comment$Companion;
 	public synthetic fun <init> (Ljava/lang/String;Lkotlin/time/Instant;Ljava/lang/String;ZLjava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun component1-8BRTMeg ()Ljava/lang/String;
 	public final fun component2 ()Lkotlin/time/Instant;
@@ -400,11 +401,27 @@ public final class me/matsumo/fankt/fanbox/domain/model/FanboxBell$Comment : me/
 	public fun toString ()Ljava/lang/String;
 }
 
+public final synthetic class me/matsumo/fankt/fanbox/domain/model/FanboxBell$Comment$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lme/matsumo/fankt/fanbox/domain/model/FanboxBell$Comment$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lme/matsumo/fankt/fanbox/domain/model/FanboxBell$Comment;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lme/matsumo/fankt/fanbox/domain/model/FanboxBell$Comment;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class me/matsumo/fankt/fanbox/domain/model/FanboxBell$Comment$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
 public final class me/matsumo/fankt/fanbox/domain/model/FanboxBell$Companion {
 	public final fun serializer ()Lkotlinx/serialization/KSerializer;
 }
 
 public final class me/matsumo/fankt/fanbox/domain/model/FanboxBell$Like : me/matsumo/fankt/fanbox/domain/model/FanboxBell {
+	public static final field Companion Lme/matsumo/fankt/fanbox/domain/model/FanboxBell$Like$Companion;
 	public synthetic fun <init> (Ljava/lang/String;Lkotlin/time/Instant;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun component1 ()Ljava/lang/String;
 	public final fun component2 ()Lkotlin/time/Instant;
@@ -425,7 +442,23 @@ public final class me/matsumo/fankt/fanbox/domain/model/FanboxBell$Like : me/mat
 	public fun toString ()Ljava/lang/String;
 }
 
+public final synthetic class me/matsumo/fankt/fanbox/domain/model/FanboxBell$Like$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lme/matsumo/fankt/fanbox/domain/model/FanboxBell$Like$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lme/matsumo/fankt/fanbox/domain/model/FanboxBell$Like;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lme/matsumo/fankt/fanbox/domain/model/FanboxBell$Like;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class me/matsumo/fankt/fanbox/domain/model/FanboxBell$Like$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
 public final class me/matsumo/fankt/fanbox/domain/model/FanboxBell$PostPublished : me/matsumo/fankt/fanbox/domain/model/FanboxBell {
+	public static final field Companion Lme/matsumo/fankt/fanbox/domain/model/FanboxBell$PostPublished$Companion;
 	public synthetic fun <init> (Ljava/lang/String;Lkotlin/time/Instant;Lme/matsumo/fankt/fanbox/domain/model/FanboxPost;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun component1-uVhntMw ()Ljava/lang/String;
 	public final fun component2 ()Lkotlin/time/Instant;
@@ -438,6 +471,21 @@ public final class me/matsumo/fankt/fanbox/domain/model/FanboxBell$PostPublished
 	public final fun getPost ()Lme/matsumo/fankt/fanbox/domain/model/FanboxPost;
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class me/matsumo/fankt/fanbox/domain/model/FanboxBell$PostPublished$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lme/matsumo/fankt/fanbox/domain/model/FanboxBell$PostPublished$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lme/matsumo/fankt/fanbox/domain/model/FanboxBell$PostPublished;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lme/matsumo/fankt/fanbox/domain/model/FanboxBell$PostPublished;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class me/matsumo/fankt/fanbox/domain/model/FanboxBell$PostPublished$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
 }
 
 public final class me/matsumo/fankt/fanbox/domain/model/FanboxComment {

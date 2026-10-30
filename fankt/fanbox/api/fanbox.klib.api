@@ -96,6 +96,19 @@ sealed interface me.matsumo.fankt.fanbox.domain.model/FanboxBell { // me.matsumo
         final fun equals(kotlin/Any?): kotlin/Boolean // me.matsumo.fankt.fanbox.domain.model/FanboxBell.Comment.equals|equals(kotlin.Any?){}[0]
         final fun hashCode(): kotlin/Int // me.matsumo.fankt.fanbox.domain.model/FanboxBell.Comment.hashCode|hashCode(){}[0]
         final fun toString(): kotlin/String // me.matsumo.fankt.fanbox.domain.model/FanboxBell.Comment.toString|toString(){}[0]
+
+        final object $serializer : kotlinx.serialization.internal/GeneratedSerializer<me.matsumo.fankt.fanbox.domain.model/FanboxBell.Comment> { // me.matsumo.fankt.fanbox.domain.model/FanboxBell.Comment.$serializer|null[0]
+            final val descriptor // me.matsumo.fankt.fanbox.domain.model/FanboxBell.Comment.$serializer.descriptor|{}descriptor[0]
+                final fun <get-descriptor>(): kotlinx.serialization.descriptors/SerialDescriptor // me.matsumo.fankt.fanbox.domain.model/FanboxBell.Comment.$serializer.descriptor.<get-descriptor>|<get-descriptor>(){}[0]
+
+            final fun childSerializers(): kotlin/Array<kotlinx.serialization/KSerializer<*>> // me.matsumo.fankt.fanbox.domain.model/FanboxBell.Comment.$serializer.childSerializers|childSerializers(){}[0]
+            final fun deserialize(kotlinx.serialization.encoding/Decoder): me.matsumo.fankt.fanbox.domain.model/FanboxBell.Comment // me.matsumo.fankt.fanbox.domain.model/FanboxBell.Comment.$serializer.deserialize|deserialize(kotlinx.serialization.encoding.Decoder){}[0]
+            final fun serialize(kotlinx.serialization.encoding/Encoder, me.matsumo.fankt.fanbox.domain.model/FanboxBell.Comment) // me.matsumo.fankt.fanbox.domain.model/FanboxBell.Comment.$serializer.serialize|serialize(kotlinx.serialization.encoding.Encoder;me.matsumo.fankt.fanbox.domain.model.FanboxBell.Comment){}[0]
+        }
+
+        final object Companion { // me.matsumo.fankt.fanbox.domain.model/FanboxBell.Comment.Companion|null[0]
+            final fun serializer(): kotlinx.serialization/KSerializer<me.matsumo.fankt.fanbox.domain.model/FanboxBell.Comment> // me.matsumo.fankt.fanbox.domain.model/FanboxBell.Comment.Companion.serializer|serializer(){}[0]
+        }
     }
 
     final class Like : me.matsumo.fankt.fanbox.domain.model/FanboxBell { // me.matsumo.fankt.fanbox.domain.model/FanboxBell.Like|null[0]
@@ -124,6 +137,19 @@ sealed interface me.matsumo.fankt.fanbox.domain.model/FanboxBell { // me.matsumo
         final fun equals(kotlin/Any?): kotlin/Boolean // me.matsumo.fankt.fanbox.domain.model/FanboxBell.Like.equals|equals(kotlin.Any?){}[0]
         final fun hashCode(): kotlin/Int // me.matsumo.fankt.fanbox.domain.model/FanboxBell.Like.hashCode|hashCode(){}[0]
         final fun toString(): kotlin/String // me.matsumo.fankt.fanbox.domain.model/FanboxBell.Like.toString|toString(){}[0]
+
+        final object $serializer : kotlinx.serialization.internal/GeneratedSerializer<me.matsumo.fankt.fanbox.domain.model/FanboxBell.Like> { // me.matsumo.fankt.fanbox.domain.model/FanboxBell.Like.$serializer|null[0]
+            final val descriptor // me.matsumo.fankt.fanbox.domain.model/FanboxBell.Like.$serializer.descriptor|{}descriptor[0]
+                final fun <get-descriptor>(): kotlinx.serialization.descriptors/SerialDescriptor // me.matsumo.fankt.fanbox.domain.model/FanboxBell.Like.$serializer.descriptor.<get-descriptor>|<get-descriptor>(){}[0]
+
+            final fun childSerializers(): kotlin/Array<kotlinx.serialization/KSerializer<*>> // me.matsumo.fankt.fanbox.domain.model/FanboxBell.Like.$serializer.childSerializers|childSerializers(){}[0]
+            final fun deserialize(kotlinx.serialization.encoding/Decoder): me.matsumo.fankt.fanbox.domain.model/FanboxBell.Like // me.matsumo.fankt.fanbox.domain.model/FanboxBell.Like.$serializer.deserialize|deserialize(kotlinx.serialization.encoding.Decoder){}[0]
+            final fun serialize(kotlinx.serialization.encoding/Encoder, me.matsumo.fankt.fanbox.domain.model/FanboxBell.Like) // me.matsumo.fankt.fanbox.domain.model/FanboxBell.Like.$serializer.serialize|serialize(kotlinx.serialization.encoding.Encoder;me.matsumo.fankt.fanbox.domain.model.FanboxBell.Like){}[0]
+        }
+
+        final object Companion { // me.matsumo.fankt.fanbox.domain.model/FanboxBell.Like.Companion|null[0]
+            final fun serializer(): kotlinx.serialization/KSerializer<me.matsumo.fankt.fanbox.domain.model/FanboxBell.Like> // me.matsumo.fankt.fanbox.domain.model/FanboxBell.Like.Companion.serializer|serializer(){}[0]
+        }
     }
 
     final class PostPublished : me.matsumo.fankt.fanbox.domain.model/FanboxBell { // me.matsumo.fankt.fanbox.domain.model/FanboxBell.PostPublished|null[0]
@@ -143,6 +169,19 @@ sealed interface me.matsumo.fankt.fanbox.domain.model/FanboxBell { // me.matsumo
         final fun equals(kotlin/Any?): kotlin/Boolean // me.matsumo.fankt.fanbox.domain.model/FanboxBell.PostPublished.equals|equals(kotlin.Any?){}[0]
         final fun hashCode(): kotlin/Int // me.matsumo.fankt.fanbox.domain.model/FanboxBell.PostPublished.hashCode|hashCode(){}[0]
         final fun toString(): kotlin/String // me.matsumo.fankt.fanbox.domain.model/FanboxBell.PostPublished.toString|toString(){}[0]
+
+        final object $serializer : kotlinx.serialization.internal/GeneratedSerializer<me.matsumo.fankt.fanbox.domain.model/FanboxBell.PostPublished> { // me.matsumo.fankt.fanbox.domain.model/FanboxBell.PostPublished.$serializer|null[0]
+            final val descriptor // me.matsumo.fankt.fanbox.domain.model/FanboxBell.PostPublished.$serializer.descriptor|{}descriptor[0]
+                final fun <get-descriptor>(): kotlinx.serialization.descriptors/SerialDescriptor // me.matsumo.fankt.fanbox.domain.model/FanboxBell.PostPublished.$serializer.descriptor.<get-descriptor>|<get-descriptor>(){}[0]
+
+            final fun childSerializers(): kotlin/Array<kotlinx.serialization/KSerializer<*>> // me.matsumo.fankt.fanbox.domain.model/FanboxBell.PostPublished.$serializer.childSerializers|childSerializers(){}[0]
+            final fun deserialize(kotlinx.serialization.encoding/Decoder): me.matsumo.fankt.fanbox.domain.model/FanboxBell.PostPublished // me.matsumo.fankt.fanbox.domain.model/FanboxBell.PostPublished.$serializer.deserialize|deserialize(kotlinx.serialization.encoding.Decoder){}[0]
+            final fun serialize(kotlinx.serialization.encoding/Encoder, me.matsumo.fankt.fanbox.domain.model/FanboxBell.PostPublished) // me.matsumo.fankt.fanbox.domain.model/FanboxBell.PostPublished.$serializer.serialize|serialize(kotlinx.serialization.encoding.Encoder;me.matsumo.fankt.fanbox.domain.model.FanboxBell.PostPublished){}[0]
+        }
+
+        final object Companion { // me.matsumo.fankt.fanbox.domain.model/FanboxBell.PostPublished.Companion|null[0]
+            final fun serializer(): kotlinx.serialization/KSerializer<me.matsumo.fankt.fanbox.domain.model/FanboxBell.PostPublished> // me.matsumo.fankt.fanbox.domain.model/FanboxBell.PostPublished.Companion.serializer|serializer(){}[0]
+        }
     }
 
     final object Companion : kotlinx.serialization.internal/SerializerFactory { // me.matsumo.fankt.fanbox.domain.model/FanboxBell.Companion|null[0]
