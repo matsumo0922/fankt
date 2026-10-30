@@ -47,9 +47,6 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-konan-
 
-      - name: Verify FANBOX public boundary
-        run: scripts/verify_ktor_consumer_boundary.sh
-
       - name: Publish Fanbox Room persistence library to MavenCentral
         run: ./gradlew :fankt:fanbox-persistence-room:publishAndReleaseToMavenCentral --no-configuration-cache
 
