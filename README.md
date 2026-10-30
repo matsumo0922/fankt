@@ -3,9 +3,9 @@
 <img src="https://img.shields.io/maven-central/v/me.matsumo.fankt/fanbox">
 
 An unofficial API wrapper for pixivFANBOX and Fantia.  
-Compatible with Kotlin Multiplatform (KMP) and usable on Android and iOS. The library also builds
-for Kotlin/JS, but that target exists to keep the request and response logic portable rather than to
-offer a JavaScript client; see the platform table below.
+Compatible with Kotlin Multiplatform (KMP) and usable on Android and iOS. The `fanbox-core` artifact
+also builds for Kotlin/JS, but that target exists to run the request and response logic as a Zipline
+guest rather than to offer a JavaScript client; see the platform table below.
 
 ## Status
 
@@ -31,14 +31,11 @@ offer a JavaScript client; see the platform table below.
 | Desktop         | :x: Not Supported                        |
 | Web (Kotlin/JS) | :warning: No request or response API[^1] |
 
-[^1]: The Kotlin/JS target compiles the portable core — endpoint builders, response
-parsers, and domain models — and a `fanbox-js` artifact is published. Its public API covers the
-domain models, the identifier and cursor types, the exception hierarchy, and the authentication
-storage contracts, but **no operation for building a request or parsing a response**: the endpoint
-builders and response parsers are `internal`, so a separate Gradle module cannot call them. The
-target exists to keep that logic compiling on Kotlin/JS, which is the prerequisite for
-running it as a [Zipline](https://github.com/cashapp/zipline) guest inside this library. The
-`Fanbox` client class and all HTTP execution remain Android and iOS only.
+[^1]: `fanbox-core` publishes a Kotlin/JS variant, `fanbox-core-js`, because the Zipline guest that
+builds requests and parses responses is compiled from it. Its public API covers the domain models,
+the identifier and cursor types, and the exception hierarchy, but **no operation for building a
+request or parsing a response**: the endpoint builders and response parsers are `internal`. The
+`Fanbox` client class and all HTTP execution are Android and iOS only.
 
 ### Zipline guest
 
@@ -223,6 +220,8 @@ dependencies {
 }
 ```
 
+`fanbox` depends on `fanbox-core`, which carries the domain models, so it is resolved transitively.
+
 ### API Reference
 [API Reference 🔎](https://matsumo0922.github.io/fankt/)
 
@@ -400,11 +399,17 @@ formatting extension, and both relative-time extensions. Consumers that still ne
 time-zone APIs should select a normal non-compat `kotlinx-datetime` artifact independently; fankt
 does not publish that dependency. fankt remains on Kotlin 2.3.x until Zipline supports Kotlin 2.4.
 
-`Fanbox` keeps request builders, serializable descriptors, response parsers, cursor/host extraction,
-and failure interpretation in an internal portable core without Ktor, Room, or Napier imports. Every
-non-download operation passes one descriptor through one raw-response Ktor executor and then through
-its endpoint-specific parser. The `:fankt:fanbox` module contains no Ktorfit endpoint or KSP-generated
-API; Ktor remains only inside the internal transport implementation.
+The FANBOX library consists of two modules. `:fankt:fanbox-core` holds the domain models, request
+builders, serializable descriptors, response parsers, cursor/host extraction, failure interpretation,
+and the Zipline guest service; it has no Ktor, Room, or Napier dependency, and the guest bundle is
+compiled from it. `:fankt:fanbox` holds the `Fanbox` client, the guest host, and the Ktor transport.
+Every non-download operation passes one descriptor through one raw-response Ktor executor and then
+through the guest's endpoint-specific parser. Neither module contains a Ktorfit endpoint or
+KSP-generated API, and Ktor remains only inside the internal transport implementation.
+
+The declarations that `:fankt:fanbox` and the guest share, such as the guest service and the request
+descriptor, are public in `fanbox-core` but annotated with `@InternalFanboxApi`, an opt-in marker at
+error level. They are not part of the public API and carry no compatibility guarantee.
 
 Before reading the injected Cookie storage or request-time CSRF token, the executor resolves the
 host-owned endpoint policy and validates the method, relative path, exact HTTPS origin, and redirect
