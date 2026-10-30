@@ -84,7 +84,7 @@ zipline {
     }
 }
 
-// The guest and ziplineTest targets build a bundle and run tests and run tests; they are not meant
+// The guest and ziplineTest targets build a bundle and run tests; they are not meant
 // to be resolved as dependencies. Disabling their publication tasks keeps the artifacts out of the
 // repository, but the root Kotlin Multiplatform module still lists them, and a consumer following
 // one of those references fails to resolve this library at all. So the variants are stripped from
