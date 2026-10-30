@@ -3,7 +3,9 @@ package me.matsumo.fankt.fanbox.guest
 import me.matsumo.fankt.fanbox.domain.model.id.FanboxCommentId
 import me.matsumo.fankt.fanbox.domain.model.id.FanboxCreatorId
 import me.matsumo.fankt.fanbox.domain.model.id.FanboxPostId
+import me.matsumo.fankt.fanbox.domain.model.id.FanboxUserId
 import me.matsumo.fankt.fanbox.endpoint.FanboxEndpoints
+import me.matsumo.fankt.fanbox.fixture.FanboxCreatorJsonFixtures
 import me.matsumo.fankt.fanbox.fixture.FanboxPostJsonFixtures
 import me.matsumo.fankt.fanbox.fixture.FanboxTolerantListJsonFixtures
 import me.matsumo.fankt.fanbox.response.FanboxResponses
@@ -73,6 +75,17 @@ class RealFanboxGuestServiceTest {
                     body = "fixture comment",
                 ),
                 FanboxEndpoints.deleteComment(FanboxCommentId("comment")),
+                FanboxEndpoints.creatorDetail(FanboxCreatorId("creator")),
+                FanboxEndpoints.followingCreators(),
+                FanboxEndpoints.followingPixivCreators(),
+                FanboxEndpoints.recommendedCreators(),
+                FanboxEndpoints.creatorPlans(FanboxCreatorId("creator")),
+                FanboxEndpoints.creatorPlanDetail(FanboxCreatorId("creator")),
+                FanboxEndpoints.creatorTags(FanboxCreatorId("creator")),
+                FanboxEndpoints.followCreator(FanboxUserId(91000001)),
+                FanboxEndpoints.unfollowCreator(FanboxUserId(91000001)),
+                FanboxEndpoints.searchCreators("fixture", 2),
+                FanboxEndpoints.searchTags("fixture"),
             ),
             GuestOperationCases.buildRequests(service),
         )
@@ -89,6 +102,15 @@ class RealFanboxGuestServiceTest {
                 FanboxResponses.postDetail(FanboxPostJsonFixtures.postInfoArticleEmbeds),
                 FanboxResponses.postComments(FanboxTolerantListJsonFixtures.commentsWithBrokenReply),
                 FanboxResponses.taggedPosts(GuestOperationCases.taggedPosts),
+                FanboxResponses.creatorDetail(FanboxCreatorJsonFixtures.actualCreatorGet),
+                FanboxResponses.followingCreators(FanboxTolerantListJsonFixtures.creatorsMixed),
+                FanboxResponses.followingPixivCreators(FanboxTolerantListJsonFixtures.creatorsMixed),
+                FanboxResponses.recommendedCreators(FanboxTolerantListJsonFixtures.creatorsMixed),
+                FanboxResponses.creatorPlans(FanboxCreatorJsonFixtures.actualCreatorPlanList),
+                FanboxResponses.creatorPlanDetail(GuestOperationCases.supportedPlanDetail),
+                FanboxResponses.creatorTags(GuestOperationCases.FEATURED_TAGS),
+                FanboxResponses.searchCreators(GuestOperationCases.searchedCreators),
+                FanboxResponses.searchTags(GuestOperationCases.SEARCHED_TAGS),
             ).map { value -> GuestParseResult.Success(value) },
             GuestOperationCases.parseResponses(service),
         )
