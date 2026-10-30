@@ -2083,6 +2083,8 @@ sealed class me.matsumo.fankt.fanbox/FanboxException : kotlin/Exception { // me.
     final val statusCode // me.matsumo.fankt.fanbox/FanboxException.statusCode|{}statusCode[0]
         final fun <get-statusCode>(): kotlin/Int? // me.matsumo.fankt.fanbox/FanboxException.statusCode.<get-statusCode>|<get-statusCode>(){}[0]
 
+    final class GuestFailure : me.matsumo.fankt.fanbox/FanboxException // me.matsumo.fankt.fanbox/FanboxException.GuestFailure|null[0]
+
     final class Network : me.matsumo.fankt.fanbox/FanboxException // me.matsumo.fankt.fanbox/FanboxException.Network|null[0]
 
     final class NotFound : me.matsumo.fankt.fanbox/FanboxException // me.matsumo.fankt.fanbox/FanboxException.NotFound|null[0]
@@ -2167,7 +2169,6 @@ sealed interface me.matsumo.fankt.fanbox/FanboxGuestEvent { // me.matsumo.fankt.
 // Targets: [ios]
 final class me.matsumo.fankt.fanbox/Fanbox : kotlin/AutoCloseable { // me.matsumo.fankt.fanbox/Fanbox|null[0]
     constructor <init>(kotlin/String, kotlin.collections/Map<kotlin/String, kotlin/ByteArray>, me.matsumo.fankt.fanbox/FanboxGuestCache, kotlin/Function1<me.matsumo.fankt.fanbox/FanboxGuestEvent, kotlin/Unit> = ..., me.matsumo.fankt.fanbox/FanboxLogLevel = ..., kotlinx.coroutines/CoroutineDispatcher = ..., me.matsumo.fankt.fanbox/FanboxCookieStorage = ..., me.matsumo.fankt.fanbox/FanboxTokenStore = ...) // me.matsumo.fankt.fanbox/Fanbox.<init>|<init>(kotlin.String;kotlin.collections.Map<kotlin.String,kotlin.ByteArray>;me.matsumo.fankt.fanbox.FanboxGuestCache;kotlin.Function1<me.matsumo.fankt.fanbox.FanboxGuestEvent,kotlin.Unit>;me.matsumo.fankt.fanbox.FanboxLogLevel;kotlinx.coroutines.CoroutineDispatcher;me.matsumo.fankt.fanbox.FanboxCookieStorage;me.matsumo.fankt.fanbox.FanboxTokenStore){}[0]
-    constructor <init>(me.matsumo.fankt.fanbox/FanboxLogLevel = ..., kotlinx.coroutines/CoroutineDispatcher = ..., me.matsumo.fankt.fanbox/FanboxCookieStorage = ..., me.matsumo.fankt.fanbox/FanboxTokenStore = ...) // me.matsumo.fankt.fanbox/Fanbox.<init>|<init>(me.matsumo.fankt.fanbox.FanboxLogLevel;kotlinx.coroutines.CoroutineDispatcher;me.matsumo.fankt.fanbox.FanboxCookieStorage;me.matsumo.fankt.fanbox.FanboxTokenStore){}[0]
 
     final val cookies // me.matsumo.fankt.fanbox/Fanbox.cookies|{}cookies[0]
         final fun <get-cookies>(): kotlinx.coroutines.flow/Flow<kotlin.collections/List<me.matsumo.fankt.fanbox/FanboxCookieRecord>> // me.matsumo.fankt.fanbox/Fanbox.cookies.<get-cookies>|<get-cookies>(){}[0]

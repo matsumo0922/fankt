@@ -1,8 +1,6 @@
 public final class me/matsumo/fankt/fanbox/Fanbox : java/lang/AutoCloseable {
 	public fun <init> (Ljava/lang/String;Ljava/util/Map;Lme/matsumo/fankt/fanbox/FanboxGuestCache;Lkotlin/jvm/functions/Function1;Lme/matsumo/fankt/fanbox/FanboxLogLevel;Lkotlinx/coroutines/CoroutineDispatcher;Lme/matsumo/fankt/fanbox/FanboxCookieStorage;Lme/matsumo/fankt/fanbox/FanboxTokenStore;)V
 	public synthetic fun <init> (Ljava/lang/String;Ljava/util/Map;Lme/matsumo/fankt/fanbox/FanboxGuestCache;Lkotlin/jvm/functions/Function1;Lme/matsumo/fankt/fanbox/FanboxLogLevel;Lkotlinx/coroutines/CoroutineDispatcher;Lme/matsumo/fankt/fanbox/FanboxCookieStorage;Lme/matsumo/fankt/fanbox/FanboxTokenStore;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
-	public fun <init> (Lme/matsumo/fankt/fanbox/FanboxLogLevel;Lkotlinx/coroutines/CoroutineDispatcher;Lme/matsumo/fankt/fanbox/FanboxCookieStorage;Lme/matsumo/fankt/fanbox/FanboxTokenStore;)V
-	public synthetic fun <init> (Lme/matsumo/fankt/fanbox/FanboxLogLevel;Lkotlinx/coroutines/CoroutineDispatcher;Lme/matsumo/fankt/fanbox/FanboxCookieStorage;Lme/matsumo/fankt/fanbox/FanboxTokenStore;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun addComment-GMbJC_w (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public fun close ()V
 	public final fun deleteComment-hqsYe98 (Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
@@ -96,6 +94,9 @@ public abstract class me/matsumo/fankt/fanbox/FanboxException : java/lang/Except
 }
 
 public class me/matsumo/fankt/fanbox/FanboxException$Forbidden : me/matsumo/fankt/fanbox/FanboxException {
+}
+
+public final class me/matsumo/fankt/fanbox/FanboxException$GuestFailure : me/matsumo/fankt/fanbox/FanboxException {
 }
 
 public final class me/matsumo/fankt/fanbox/FanboxException$Network : me/matsumo/fankt/fanbox/FanboxException {
