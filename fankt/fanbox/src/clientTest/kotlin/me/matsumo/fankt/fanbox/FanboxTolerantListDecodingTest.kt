@@ -179,12 +179,9 @@ class FanboxTolerantListDecodingTest {
             FanboxTolerantListJsonFixtures.timelineMixed,
         )
 
-        FanboxPostMapper(
-            FanboxListItemDecoder(
-                formatter = formatter,
-                diagnosticSink = FanboxDiagnosticSink(logs::add),
-            ),
-        ).map(entity, "post.listHome")
+        FanboxPostMapper(FanboxListItemDecoder(formatter))
+            .map(entity, "post.listHome")
+            .reportedTo(FanboxDiagnosticSink(logs::add))
 
         assertEquals("FANBOX list item schema mismatch (endpoint: post.listHome, indexPath: [1])", logs.last())
     }

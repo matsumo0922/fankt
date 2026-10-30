@@ -2,6 +2,7 @@ package me.matsumo.fankt.fanbox.response
 
 import me.matsumo.fankt.fanbox.FanboxException
 import me.matsumo.fankt.fanbox.FanboxListItemDecoder
+import me.matsumo.fankt.fanbox.FanboxListItemSchemaMismatch
 import me.matsumo.fankt.fanbox.datasource.mapper.FanboxCreatorMapper
 import me.matsumo.fankt.fanbox.datasource.mapper.FanboxPostMapper
 import me.matsumo.fankt.fanbox.datasource.mapper.FanboxUserMapper
@@ -61,8 +62,6 @@ class FanboxResponsesTest {
 
     @Test
     fun supportingPlansKeepSeparateStrictAndTolerantOperations() {
-        val logs = mutableListOf<String>()
-
         val strict = assertFailsWith<FanboxException.SchemaMismatch> {
             FanboxResponses.supportingPlansStrict(
                 body = FanboxTolerantListJsonFixtures.supportingPlansMixed,
@@ -72,16 +71,12 @@ class FanboxResponsesTest {
         val tolerant = FanboxResponses.supportingPlansTolerant(
             body = FanboxTolerantListJsonFixtures.supportingPlansMixed,
             statusCode = 206,
-            diagnosticSink = FanboxDiagnosticSink(logs::add),
         )
 
         assertEquals("plan.listSupporting", strict.endpoint)
         assertEquals(206, strict.statusCode)
         assertEquals(listOf("tolerant-plan-1", "tolerant-plan-2"), tolerant.value.map { it.id.value })
-        assertEquals(listOf(listOf(1)), tolerant.mismatches.map { it.indexPath })
-        assertEquals(1, logs.size)
-        assertTrue("endpoint: plan.listSupporting" in logs.single())
-        assertTrue("indexPath: [1]" in logs.single())
+        assertEquals(listOf(FanboxListItemSchemaMismatch("plan.listSupporting", listOf(1))), tolerant.mismatches)
     }
 
     @Test
