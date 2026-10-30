@@ -110,8 +110,8 @@ class MavenPublishPlugin : Plugin<Project> {
 
                 licenses {
                     license {
-                        name = "GNU General Public License v3.0"
-                        url = "https://www.gnu.org/licenses/gpl-3.0.html"
+                        name = "Creative Commons Attribution-NonCommercial 4.0 International"
+                        url = "https://creativecommons.org/licenses/by-nc/4.0/"
                     }
                 }
 
