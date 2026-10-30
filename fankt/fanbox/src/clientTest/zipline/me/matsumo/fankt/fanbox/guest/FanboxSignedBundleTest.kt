@@ -71,6 +71,19 @@ class FanboxSignedBundleTest {
     }
 
     @Test
+    fun aManifestSignedByAnyTrustedKeyIsAccepted(): Unit = runBlocking {
+        withBundleFixture {
+            val recoveryKey = newKeyPairFromSeed(Random.nextBytes(32).toByteString())
+            val config = config(mapOf(TRUSTED_KEY_NAME to keyPair.publicKey, RECOVERY_KEY_NAME to recoveryKey.publicKey))
+            val signedByPrimary = signedBundle(FIXED_BUNDLE_DIRECTORY)
+            val signedByRecovery = signedBundle(FIXED_BUNDLE_DIRECTORY, signingKeyName = RECOVERY_KEY_NAME, keyPair = recoveryKey)
+
+            assertIs<GuestParseResult.Success>(loadGuest(signedByPrimary, config = config).parseAndClose())
+            assertIs<GuestParseResult.Success>(loadGuest(signedByRecovery, config = config).parseAndClose())
+        }
+    }
+
+    @Test
     fun manifestReplacementChangesResponseInterpretation(): Unit = runBlocking {
         withBundleFixture {
             val legacyResult = loadGuest(signedBundle(LEGACY_BUNDLE_DIRECTORY)).parseAndClose()
@@ -172,7 +185,7 @@ class FanboxSignedBundleTest {
         val dispatcher = newSingleThreadContext("FanboxSignedBundleTest")
         private val fileSystem = FileSystem.SYSTEM
         private val root = FileSystem.SYSTEM_TEMPORARY_DIRECTORY / "fankt-signed-bundle-${Random.nextLong()}"
-        private val keyPair = newKeyPairFromSeed(Random.nextBytes(32).toByteString())
+        val keyPair = newKeyPairFromSeed(Random.nextBytes(32).toByteString())
         private val cache = FanboxGuestCache { directoryName, maxSizeInBytes ->
             ZiplineCache(fileSystem, root / directoryName, maxSizeInBytes)
         }
@@ -209,14 +222,16 @@ class FanboxSignedBundleTest {
             remote: SignedBundle? = null,
             keyPair: KeyPair = this.keyPair,
             httpClient: ZiplineHttpClient = checkNotNull(remote).httpClient,
+            config: FanboxGuestDeliveryConfig = config(keyPair),
         ): LoadedGuest = withContext(dispatcher) {
-            loadZiplineGuest(config(keyPair), dispatcher, httpClient)
+            loadZiplineGuest(config, dispatcher, httpClient)
         }
 
-        fun config(keyPair: KeyPair = this.keyPair) = FanboxGuestDeliveryConfig(
+        fun config(keyPair: KeyPair = this.keyPair) = config(mapOf(TRUSTED_KEY_NAME to keyPair.publicKey))
+
+        fun config(trustedKeys: Map<String, ByteString>) = FanboxGuestDeliveryConfig(
             manifestUrl = MANIFEST_URL,
-            trustedKeyName = TRUSTED_KEY_NAME,
-            trustedEd25519PublicKey = keyPair.publicKey,
+            trustedKeys = trustedKeys,
             cache = cache,
         )
 
@@ -265,6 +280,7 @@ class FanboxSignedBundleTest {
         const val FIXED_BUNDLE_DIRECTORY = "GuestProduction"
         const val LEGACY_BUNDLE_DIRECTORY = "LegacyguestProduction"
         const val TRUSTED_KEY_NAME = "test-key"
+        const val RECOVERY_KEY_NAME = "test-recovery-key"
         const val MANIFEST_URL = "https://example.invalid/manifest.zipline.json"
         const val RESPONSE_BODY =
             """{"body":{"post":{"body":{"text":"OTA fixture"},"commentCount":0,"creatorId":"fixture-creator","excerpt":"Fixture excerpt","feeRequired":0,"hasAdultContent":false,"id":"10000001","imageForShare":"https://example.invalid/share.png","isLiked":false,"isRestricted":false,"likeCount":0,"nextPost":null,"prevPost":null,"publishedDatetime":"2026-01-01T00:00:00Z","tags":[],"title":"Fixture title","type":"text","updatedDatetime":"2026-01-01T00:00:00Z","coverImageUrl":null,"user":null}}}"""

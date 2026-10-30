@@ -106,11 +106,13 @@ class Fanbox internal constructor(
      * [guestManifestUrl] once this instance is created, and modules already in [guestCache] are not
      * downloaded again. Until the guest has loaded, or when it fails, `post.info` uses the built-in
      * request builder and parser.
+     *
+     * [guestTrustedKeys] maps each trusted signing key name to its Ed25519 public key. A manifest
+     * signed by any of them is accepted.
      */
     constructor(
         guestManifestUrl: String,
-        guestTrustedKeyName: String,
-        guestTrustedEd25519PublicKey: ByteArray,
+        guestTrustedKeys: Map<String, ByteArray>,
         guestCache: FanboxGuestCache,
         logLevel: FanboxLogLevel = FanboxLogLevel.NONE,
         ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
@@ -123,8 +125,7 @@ class Fanbox internal constructor(
         ioDispatcher = ioDispatcher,
         guestDeliveryConfig = FanboxGuestDeliveryConfig(
             manifestUrl = guestManifestUrl,
-            trustedKeyName = guestTrustedKeyName,
-            trustedEd25519PublicKey = guestTrustedEd25519PublicKey.toByteString(),
+            trustedKeys = guestTrustedKeys.mapValues { (_, key) -> key.toByteString() },
             cache = guestCache,
         ),
     )

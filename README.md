@@ -43,16 +43,18 @@ running it as a [Zipline](https://github.com/cashapp/zipline) guest inside this 
 ### Zipline OTA prototype
 
 The FANBOX client includes an opt-in OTA prototype for the `post.info` request builder and response
-parser. It starts the guest engine only when the caller supplies a manifest URL, a trusted Ed25519
-public key and a cache through the corresponding `Fanbox` constructor. The library embeds neither a
+parser. It starts the guest engine only when the caller supplies a manifest URL, trusted Ed25519
+public keys and a cache through the corresponding `Fanbox` constructor. The library embeds neither a
 production delivery URL nor a default trusted key. Without that explicit configuration, `Fanbox`
 uses the same built-in request and parsing path as before the prototype.
 
 ```kotlin
 Fanbox(
     guestManifestUrl = "https://matsumo0922.github.io/fankt/zipline/v1/manifest.zipline.json",
-    guestTrustedKeyName = "fanboxGuest",
-    guestTrustedEd25519PublicKey = publicKey,
+    guestTrustedKeys = mapOf(
+        "fanboxGuest" to primaryPublicKey,
+        "fanboxGuestRecovery" to recoveryPublicKey,
+    ),
     // On iOS: FanboxGuestCache(directoryPath)
     guestCache = FanboxGuestCache(context, File(context.cacheDir, "fanbox-guest")),
 )
@@ -72,7 +74,7 @@ the manifest cannot be reached, the guest does not load and `post.info` stays on
 the life of the `Fanbox`: a cached bundle never runs on its own.
 
 Each HTTP request of a load gives up after 10 seconds. The cache keeps up to 10 MiB in a subdirectory
-per trusted key, so a cache written under a previous key never blocks loading. Give each `Fanbox` its
+per set of trusted keys, so a cache written under a previous set never blocks loading. Give each `Fanbox` its
 own cache directory.
 
 #### Bundle delivery
@@ -106,15 +108,36 @@ and pull request CI pass. Neither workflow publishes such a manifest.
 
 #### Signing keys
 
-`./gradlew :fankt:fanbox:generateZiplineManifestKeyPairEd25519` prints a key pair. The private key
-belongs in the `ZIPLINE_SIGNING_PRIVATE_KEY_HEX` repository secret and nowhere else; the public key
-is what a consumer passes to `Fanbox`.
+Two key pairs are in use. `./gradlew :fankt:fanbox:generateZiplineManifestKeyPairEd25519` prints a
+new one.
 
-Rotating the key needs no API change. `ManifestVerifier` verifies against the first signature whose
-key name it recognises and skips the rest, so registering both keys in `signingKeys` during the
-transition produces a manifest that an application trusting either key accepts. Retire the old key
-only once the applications that embed it are no longer in use — a public key compiled into a release
-cannot be changed without shipping a new one.
+| Key name | Private key kept in | Signs |
+|---|---|---|
+| `fanboxGuest` | the `ZIPLINE_SIGNING_PRIVATE_KEY_HEX` repository secret, and offline | every delivery |
+| `fanboxGuestRecovery` | offline only | deliveries after the primary key is lost |
+
+A consumer passes both public keys in `guestTrustedKeys`, and accepts a manifest signed by either.
+Keep the offline copies somewhere other than GitHub, such as a password manager: a repository secret
+cannot be read back, and losing both copies of a key means it can never sign again.
+
+Sign with one key at a time. `ManifestVerifier` checks only the first signature whose key name it
+recognises, so an invalid signature ahead of a valid one fails the manifest.
+
+**When the primary key is lost**, sign with the recovery key. Set the
+`ZIPLINE_SIGNING_PRIVATE_KEY_HEX` secret to the recovery private key and the
+`ZIPLINE_SIGNING_KEY_NAME` repository variable to `fanboxGuestRecovery` before the next delivery
+runs, then run **Deploy Guest Bundle**, check the dev channel, and promote. Consumers already trust
+the recovery key, so delivery continues without an application update. Ship a new primary key under
+a new name in the next update of each consumer.
+
+**When a private key leaks**, switching keys does not revoke it: a consumer trusts the leaked key
+until an update removes it. A leaked key alone cannot place a bundle at the delivery URL, but stop
+the guest with the consumer's own switch if the delivery itself may be compromised, and ship new keys
+in an update.
+
+**To rotate a key on purpose**, ship consumers that trust the new key as well, switch signing to it,
+and drop the old key from consumers once the versions that trust only the old key are no longer in
+use.
 
 #### Stopping and rolling back a delivery
 

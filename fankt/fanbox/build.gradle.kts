@@ -763,9 +763,11 @@ zipline {
     // CI have no secret, and they build an unsigned manifest rather than failing: the loader
     // requires a signature, so an unsigned bundle cannot be executed by a consumer even if it
     // escapes. The workflow separately refuses to publish a manifest that carries no signature.
+    // The key name switches to the recovery key when the primary key is lost. See the README.
     val signingPrivateKeyHex = providers.gradleProperty("fanboxZiplineSigningPrivateKeyHex")
+    val signingKeyName = providers.gradleProperty("fanboxZiplineSigningKeyName").orElse("fanboxGuest")
     if (signingPrivateKeyHex.isPresent) {
-        signingKeys.create("fanboxGuest") {
+        signingKeys.create(signingKeyName.get()) {
             algorithmId.set(SignatureAlgorithmId.Ed25519)
             privateKeyHex.set(signingPrivateKeyHex)
         }
