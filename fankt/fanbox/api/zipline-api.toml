@@ -4,14 +4,35 @@ functions = [
   # fun buildAddCommentRequest(kotlin.String, kotlin.String, kotlin.String, kotlin.String): me.matsumo.fankt.fanbox.endpoint.RequestDescriptor
   "6Jzgt4Yg",
 
+  # fun buildCreatorDetailRequest(kotlin.String): me.matsumo.fankt.fanbox.endpoint.RequestDescriptor
+  "tIPLJIZs",
+
+  # fun buildCreatorPlanDetailRequest(kotlin.String): me.matsumo.fankt.fanbox.endpoint.RequestDescriptor
+  "Ic0d5qzh",
+
+  # fun buildCreatorPlansRequest(kotlin.String): me.matsumo.fankt.fanbox.endpoint.RequestDescriptor
+  "5h5S3AjA",
+
   # fun buildCreatorPostsPaginationRequest(kotlin.String): me.matsumo.fankt.fanbox.endpoint.RequestDescriptor
   "DbsHMyNM",
 
   # fun buildCreatorPostsRequest(kotlin.String, me.matsumo.fankt.fanbox.domain.FanboxCursor): me.matsumo.fankt.fanbox.endpoint.RequestDescriptor
   "V9635c24",
 
+  # fun buildCreatorTagsRequest(kotlin.String): me.matsumo.fankt.fanbox.endpoint.RequestDescriptor
+  "3pYxQiGy",
+
   # fun buildDeleteCommentRequest(kotlin.String): me.matsumo.fankt.fanbox.endpoint.RequestDescriptor
   "C/+czKCG",
+
+  # fun buildFollowCreatorRequest(kotlin.Long): me.matsumo.fankt.fanbox.endpoint.RequestDescriptor
+  "OlesDxw4",
+
+  # fun buildFollowingCreatorsRequest(): me.matsumo.fankt.fanbox.endpoint.RequestDescriptor
+  "W+MepIA2",
+
+  # fun buildFollowingPixivCreatorsRequest(): me.matsumo.fankt.fanbox.endpoint.RequestDescriptor
+  "BN46qWSd",
 
   # fun buildHomePostsRequest(me.matsumo.fankt.fanbox.domain.FanboxCursor): me.matsumo.fankt.fanbox.endpoint.RequestDescriptor
   "8gQ6YHJe",
@@ -28,20 +49,50 @@ functions = [
   # fun buildPostDetailRequest(kotlin.String): me.matsumo.fankt.fanbox.endpoint.RequestDescriptor
   "iFo+/phf",
 
+  # fun buildRecommendedCreatorsRequest(): me.matsumo.fankt.fanbox.endpoint.RequestDescriptor
+  "n83D/TND",
+
+  # fun buildSearchCreatorsRequest(kotlin.String, kotlin.Int): me.matsumo.fankt.fanbox.endpoint.RequestDescriptor
+  "Mkg6jqRc",
+
+  # fun buildSearchTagsRequest(kotlin.String): me.matsumo.fankt.fanbox.endpoint.RequestDescriptor
+  "Pik+bQq8",
+
   # fun buildSupportingPostsRequest(me.matsumo.fankt.fanbox.domain.FanboxCursor): me.matsumo.fankt.fanbox.endpoint.RequestDescriptor
   "zYHbgrmn",
 
   # fun buildTaggedPostsRequest(kotlin.String, kotlin.String, kotlin.Int): me.matsumo.fankt.fanbox.endpoint.RequestDescriptor
   "Kn4z0aqe",
 
+  # fun buildUnfollowCreatorRequest(kotlin.Long): me.matsumo.fankt.fanbox.endpoint.RequestDescriptor
+  "CXyNhdFb",
+
   # fun close(): kotlin.Unit
   "moYx+T3e",
+
+  # fun parseCreatorDetail(kotlin.String, kotlin.Int): me.matsumo.fankt.fanbox.guest.GuestParseResult<me.matsumo.fankt.fanbox.domain.model.FanboxCreatorDetail>
+  "fdYvbjlu",
+
+  # fun parseCreatorPlanDetail(kotlin.String, kotlin.Int): me.matsumo.fankt.fanbox.guest.GuestParseResult<me.matsumo.fankt.fanbox.domain.model.FanboxCreatorPlanDetail>
+  "3O9cEkmo",
+
+  # fun parseCreatorPlans(kotlin.String, kotlin.Int): me.matsumo.fankt.fanbox.guest.GuestParseResult<me.matsumo.fankt.fanbox.FanboxTolerantResult<kotlin.collections.List<me.matsumo.fankt.fanbox.domain.model.FanboxCreatorPlan>>>
+  "EZrbL70e",
 
   # fun parseCreatorPosts(kotlin.String, kotlin.Int, me.matsumo.fankt.fanbox.domain.FanboxCursor): me.matsumo.fankt.fanbox.guest.GuestParseResult<me.matsumo.fankt.fanbox.FanboxTolerantResult<me.matsumo.fankt.fanbox.domain.PageCursorInfo<me.matsumo.fankt.fanbox.domain.model.FanboxPost>>>
   "Q5VNhJtL",
 
   # fun parseCreatorPostsPagination(kotlin.String, kotlin.Int): me.matsumo.fankt.fanbox.guest.GuestParseResult<kotlin.collections.List<me.matsumo.fankt.fanbox.domain.FanboxCursor>>
   "YxzCcffk",
+
+  # fun parseCreatorTags(kotlin.String, kotlin.Int): me.matsumo.fankt.fanbox.guest.GuestParseResult<kotlin.collections.List<me.matsumo.fankt.fanbox.domain.model.FanboxTag>>
+  "jbvH7WjG",
+
+  # fun parseFollowingCreators(kotlin.String, kotlin.Int): me.matsumo.fankt.fanbox.guest.GuestParseResult<me.matsumo.fankt.fanbox.FanboxTolerantResult<kotlin.collections.List<me.matsumo.fankt.fanbox.domain.model.FanboxCreatorDetail>>>
+  "6r72OIfV",
+
+  # fun parseFollowingPixivCreators(kotlin.String, kotlin.Int): me.matsumo.fankt.fanbox.guest.GuestParseResult<me.matsumo.fankt.fanbox.FanboxTolerantResult<kotlin.collections.List<me.matsumo.fankt.fanbox.domain.model.FanboxCreatorDetail>>>
+  "17XbZ9km",
 
   # fun parseHomePosts(kotlin.String, kotlin.Int): me.matsumo.fankt.fanbox.guest.GuestParseResult<me.matsumo.fankt.fanbox.FanboxTolerantResult<me.matsumo.fankt.fanbox.domain.PageCursorInfo<me.matsumo.fankt.fanbox.domain.model.FanboxPost>>>
   "Q9bPzFiy",
@@ -51,6 +102,15 @@ functions = [
 
   # fun parsePostDetail(kotlin.String, kotlin.Int): me.matsumo.fankt.fanbox.guest.GuestParseResult<me.matsumo.fankt.fanbox.domain.model.FanboxPostDetail>
   "vxC5nPH7",
+
+  # fun parseRecommendedCreators(kotlin.String, kotlin.Int): me.matsumo.fankt.fanbox.guest.GuestParseResult<me.matsumo.fankt.fanbox.FanboxTolerantResult<kotlin.collections.List<me.matsumo.fankt.fanbox.domain.model.FanboxCreatorDetail>>>
+  "gw+0KeLV",
+
+  # fun parseSearchCreators(kotlin.String, kotlin.Int): me.matsumo.fankt.fanbox.guest.GuestParseResult<me.matsumo.fankt.fanbox.domain.PageNumberInfo<me.matsumo.fankt.fanbox.domain.model.FanboxCreatorDetail>>
+  "I6NhgHsn",
+
+  # fun parseSearchTags(kotlin.String, kotlin.Int): me.matsumo.fankt.fanbox.guest.GuestParseResult<kotlin.collections.List<me.matsumo.fankt.fanbox.domain.model.FanboxTag>>
+  "ypf7AfDe",
 
   # fun parseSupportingPosts(kotlin.String, kotlin.Int): me.matsumo.fankt.fanbox.guest.GuestParseResult<me.matsumo.fankt.fanbox.FanboxTolerantResult<me.matsumo.fankt.fanbox.domain.PageCursorInfo<me.matsumo.fankt.fanbox.domain.model.FanboxPost>>>
   "Qu+tJfBV",

@@ -1,11 +1,17 @@
 package me.matsumo.fankt.fanbox.guest
 
+import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.add
+import kotlinx.serialization.json.buildJsonArray
 import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.put
 import me.matsumo.fankt.fanbox.createFanboxJson
 import me.matsumo.fankt.fanbox.domain.FanboxCursor
 import me.matsumo.fankt.fanbox.endpoint.RequestDescriptor
+import me.matsumo.fankt.fanbox.fixture.FanboxCreatorJsonFixtures
 import me.matsumo.fankt.fanbox.fixture.FanboxPostJsonFixtures
 import me.matsumo.fankt.fanbox.fixture.FanboxTolerantListJsonFixtures
 
@@ -25,7 +31,7 @@ internal object GuestOperationCases {
 
     // post.listTagged has no captured fixture, so the home timeline's items are reused in its envelope.
     val taggedPosts = buildJsonObject {
-        val home = createFanboxJson().parseToJsonElement(FanboxPostJsonFixtures.postListHomeNormal).jsonObject.getValue("body").jsonObject
+        val home = fixtureBody(FanboxPostJsonFixtures.postListHomeNormal).jsonObject
 
         put(
             "body",
@@ -36,6 +42,55 @@ internal object GuestOperationCases {
             },
         )
     }.toString()
+
+    // The creator.get fixture's creator reused in the search envelope, which has no captured fixture.
+    val searchedCreators = buildJsonObject {
+        put(
+            "body",
+            buildJsonObject {
+                put("count", 1)
+                put("creators", JsonArray(listOf(fixtureBody(FanboxCreatorJsonFixtures.actualCreatorGet))))
+                put("nextPage", 2)
+            },
+        )
+    }.toString()
+
+    // The first plan of the plan.listCreator fixture, as legacy/support/creator returns it for a supporter.
+    val supportedPlanDetail = buildJsonObject {
+        put(
+            "body",
+            buildJsonObject {
+                put("plan", fixtureBody(FanboxCreatorJsonFixtures.actualCreatorPlanList).jsonObject.getValue("plans").jsonArray.first())
+                put("supportStartDatetime", "2026-01-01T00:00:00+09:00")
+                put(
+                    "supportTransactions",
+                    buildJsonArray {
+                        add(
+                            buildJsonObject {
+                                put("id", "95000001")
+                                put("paidAmount", 1234)
+                                put(
+                                    "supporter",
+                                    buildJsonObject {
+                                        put("iconUrl", null as String?)
+                                        put("name", "Fixture Supporter")
+                                        put("userId", "91000009")
+                                    },
+                                )
+                                put("targetMonth", "2026-01")
+                                put("transactionDatetime", "2026-01-01T00:00:00+09:00")
+                            },
+                        )
+                    },
+                )
+                put("supporterCardImageUrl", "https://example.invalid/supporter-card")
+            },
+        )
+    }.toString()
+
+    const val FEATURED_TAGS = """{"body":{"featuredTags":[{"count":3,"coverImageUrl":null,"tag":"fixture"}]}}"""
+
+    const val SEARCHED_TAGS = """{"body":[{"count":3,"value":"fixture"}]}"""
 
     fun buildRequests(service: FanboxGuestService): List<RequestDescriptor> = listOf(
         service.buildHomePostsRequest(null),
@@ -70,6 +125,17 @@ internal object GuestOperationCases {
             comment = "fixture comment",
         ),
         service.buildDeleteCommentRequest("comment"),
+        service.buildCreatorDetailRequest("creator"),
+        service.buildFollowingCreatorsRequest(),
+        service.buildFollowingPixivCreatorsRequest(),
+        service.buildRecommendedCreatorsRequest(),
+        service.buildCreatorPlansRequest("creator"),
+        service.buildCreatorPlanDetailRequest("creator"),
+        service.buildCreatorTagsRequest("creator"),
+        service.buildFollowCreatorRequest(91000001),
+        service.buildUnfollowCreatorRequest(91000001),
+        service.buildSearchCreatorsRequest("fixture", 2),
+        service.buildSearchTagsRequest("fixture"),
     )
 
     // The mixed timeline makes each list operation report a skipped item under its own endpoint.
@@ -85,6 +151,15 @@ internal object GuestOperationCases {
         service.parsePostDetail(FanboxPostJsonFixtures.postInfoArticleEmbeds, 200),
         service.parsePostComments(FanboxTolerantListJsonFixtures.commentsWithBrokenReply, 200),
         service.parseTaggedPosts(taggedPosts, 200),
+        service.parseCreatorDetail(FanboxCreatorJsonFixtures.actualCreatorGet, 200),
+        service.parseFollowingCreators(FanboxTolerantListJsonFixtures.creatorsMixed, 200),
+        service.parseFollowingPixivCreators(FanboxTolerantListJsonFixtures.creatorsMixed, 200),
+        service.parseRecommendedCreators(FanboxTolerantListJsonFixtures.creatorsMixed, 200),
+        service.parseCreatorPlans(FanboxCreatorJsonFixtures.actualCreatorPlanList, 200),
+        service.parseCreatorPlanDetail(supportedPlanDetail, 200),
+        service.parseCreatorTags(FEATURED_TAGS, 200),
+        service.parseSearchCreators(searchedCreators, 200),
+        service.parseSearchTags(SEARCHED_TAGS, 200),
     )
 
     fun parseRejectedResponses(service: FanboxGuestService): List<GuestParseResult<*>> {
@@ -102,6 +177,17 @@ internal object GuestOperationCases {
             service.parsePostDetail(body, 200),
             service.parsePostComments(body, 200),
             service.parseTaggedPosts(body, 200),
+            service.parseCreatorDetail(body, 200),
+            service.parseFollowingCreators(body, 200),
+            service.parseFollowingPixivCreators(body, 200),
+            service.parseRecommendedCreators(body, 200),
+            service.parseCreatorPlans(body, 200),
+            service.parseCreatorPlanDetail(body, 200),
+            service.parseCreatorTags(body, 200),
+            service.parseSearchCreators(body, 200),
+            service.parseSearchTags(body, 200),
         )
     }
+
+    private fun fixtureBody(fixture: String): JsonElement = createFanboxJson().parseToJsonElement(fixture).jsonObject.getValue("body")
 }

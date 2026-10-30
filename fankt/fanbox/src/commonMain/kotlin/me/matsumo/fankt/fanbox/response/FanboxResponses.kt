@@ -156,48 +156,28 @@ internal object FanboxResponses {
         mappers.creator.map(decode(body, FanboxCreatorDetailEntity.serializer()))
     }
 
-    fun followingCreators(
-        body: String,
-        statusCode: Int = 200,
-        diagnosticSink: FanboxDiagnosticSink = FanboxDiagnosticSink.none,
-    ): FanboxTolerantResult<List<FanboxCreatorDetail>> = creatorList(
+    fun followingCreators(body: String, statusCode: Int = 200): FanboxTolerantResult<List<FanboxCreatorDetail>> = creatorList(
         body,
         statusCode,
         FanboxEndpointIds.creatorListFollowing,
-        diagnosticSink,
     )
 
-    fun followingPixivCreators(
-        body: String,
-        statusCode: Int = 200,
-        diagnosticSink: FanboxDiagnosticSink = FanboxDiagnosticSink.none,
-    ): FanboxTolerantResult<List<FanboxCreatorDetail>> = creatorList(
+    fun followingPixivCreators(body: String, statusCode: Int = 200): FanboxTolerantResult<List<FanboxCreatorDetail>> = creatorList(
         body,
         statusCode,
         FanboxEndpointIds.creatorListPixiv,
-        diagnosticSink,
     )
 
-    fun recommendedCreators(
-        body: String,
-        statusCode: Int = 200,
-        diagnosticSink: FanboxDiagnosticSink = FanboxDiagnosticSink.none,
-    ): FanboxTolerantResult<List<FanboxCreatorDetail>> = creatorList(
+    fun recommendedCreators(body: String, statusCode: Int = 200): FanboxTolerantResult<List<FanboxCreatorDetail>> = creatorList(
         body,
         statusCode,
         FanboxEndpointIds.creatorListRecommended,
-        diagnosticSink,
     )
 
-    fun creatorPlans(
-        body: String,
-        statusCode: Int = 200,
-        diagnosticSink: FanboxDiagnosticSink = FanboxDiagnosticSink.none,
-    ): FanboxTolerantResult<List<FanboxCreatorPlan>> = withMappers(
+    fun creatorPlans(body: String, statusCode: Int = 200): FanboxTolerantResult<List<FanboxCreatorPlan>> = withMappers(
         body,
         statusCode,
         FanboxEndpointIds.planListCreator,
-        diagnosticSink,
     ) { mappers ->
         mappers.creator.map(decode(body, FanboxCreatorPlanListEntity.serializer()), "plan.listCreator")
     }
@@ -215,14 +195,6 @@ internal object FanboxResponses {
     ): List<FanboxTag> = withMappers(body, statusCode, FanboxEndpointIds.tagGetFeatured) { mappers ->
         mappers.creator.map(decode(body, FanboxCreatorTagListEntity.serializer()))
     }
-
-    // 本文を使わない操作も decoder の (String) -> Unit のシグネチャを維持する。
-    @Suppress("UNUSED_PARAMETER")
-    fun followCreator(body: String): Unit = Unit
-
-    // 本文を使わない操作も decoder の (String) -> Unit のシグネチャを維持する。
-    @Suppress("UNUSED_PARAMETER")
-    fun unfollowCreator(body: String): Unit = Unit
 
     fun searchCreators(
         body: String,
@@ -307,8 +279,7 @@ internal object FanboxResponses {
         body: String,
         statusCode: Int,
         endpointId: FanboxEndpointId,
-        diagnosticSink: FanboxDiagnosticSink,
-    ): FanboxTolerantResult<List<FanboxCreatorDetail>> = withMappers(body, statusCode, endpointId, diagnosticSink) { mappers ->
+    ): FanboxTolerantResult<List<FanboxCreatorDetail>> = withMappers(body, statusCode, endpointId) { mappers ->
         mappers.creator.map(decode(body, FanboxCreatorListEntity.serializer()), endpointId.value)
     }
 

@@ -12,8 +12,13 @@ import me.matsumo.fankt.fanbox.domain.PageNumberInfo
 import me.matsumo.fankt.fanbox.domain.PageOffsetInfo
 import me.matsumo.fankt.fanbox.domain.model.FanboxComment
 import me.matsumo.fankt.fanbox.domain.model.FanboxCover
+import me.matsumo.fankt.fanbox.domain.model.FanboxCreatorDetail
+import me.matsumo.fankt.fanbox.domain.model.FanboxCreatorPlan
+import me.matsumo.fankt.fanbox.domain.model.FanboxCreatorPlanDetail
+import me.matsumo.fankt.fanbox.domain.model.FanboxPaymentMethod
 import me.matsumo.fankt.fanbox.domain.model.FanboxPost
 import me.matsumo.fankt.fanbox.domain.model.FanboxPostDetail
+import me.matsumo.fankt.fanbox.domain.model.FanboxTag
 import me.matsumo.fankt.fanbox.domain.model.FanboxUser
 import me.matsumo.fankt.fanbox.endpoint.RequestDescriptor
 import kotlin.test.Test
@@ -211,6 +216,120 @@ class FanboxGuestWireSchemaTest {
                 serializer<FanboxComment>().descriptor,
                 serializer<FanboxCover>().descriptor,
                 serializer<FanboxUser>().descriptor,
+            ).joinToString("\n", transform = ::describeElements),
+        )
+    }
+
+    @Test
+    fun creatorTypesAreUnchanged() {
+        assertEquals(
+            """
+            |me.matsumo.fankt.fanbox.domain.model.FanboxCreatorDetail
+            |  creatorId: me.matsumo.fankt.fanbox.domain.model.id.FanboxCreatorId
+            |  coverImageUrl: kotlin.String?
+            |  description: kotlin.String
+            |  hasAdultContent: kotlin.Boolean
+            |  hasBoothShop: kotlin.Boolean
+            |  isAcceptingRequest: kotlin.Boolean
+            |  isFollowed: kotlin.Boolean
+            |  isStopped: kotlin.Boolean
+            |  isSupported: kotlin.Boolean
+            |  profileItems: kotlin.collections.ArrayList
+            |  profileLinks: kotlin.collections.ArrayList
+            |  user: me.matsumo.fankt.fanbox.domain.model.FanboxUser?
+            |me.matsumo.fankt.fanbox.domain.model.FanboxCreatorDetail.ProfileLink
+            |  url: kotlin.String
+            |  link: me.matsumo.fankt.fanbox.domain.model.FanboxCreatorDetail.Platform
+            |me.matsumo.fankt.fanbox.domain.model.FanboxCreatorDetail.Platform
+            |  BOOTH: me.matsumo.fankt.fanbox.domain.model.FanboxCreatorDetail.Platform.BOOTH
+            |  FACEBOOK: me.matsumo.fankt.fanbox.domain.model.FanboxCreatorDetail.Platform.FACEBOOK
+            |  FANZA: me.matsumo.fankt.fanbox.domain.model.FanboxCreatorDetail.Platform.FANZA
+            |  INSTAGRAM: me.matsumo.fankt.fanbox.domain.model.FanboxCreatorDetail.Platform.INSTAGRAM
+            |  LINE: me.matsumo.fankt.fanbox.domain.model.FanboxCreatorDetail.Platform.LINE
+            |  PIXIV: me.matsumo.fankt.fanbox.domain.model.FanboxCreatorDetail.Platform.PIXIV
+            |  TUMBLR: me.matsumo.fankt.fanbox.domain.model.FanboxCreatorDetail.Platform.TUMBLR
+            |  TWITTER: me.matsumo.fankt.fanbox.domain.model.FanboxCreatorDetail.Platform.TWITTER
+            |  YOUTUBE: me.matsumo.fankt.fanbox.domain.model.FanboxCreatorDetail.Platform.YOUTUBE
+            |  UNKNOWN: me.matsumo.fankt.fanbox.domain.model.FanboxCreatorDetail.Platform.UNKNOWN
+            """.trimMargin(),
+            listOf(
+                serializer<FanboxCreatorDetail>().descriptor,
+                serializer<FanboxCreatorDetail.ProfileLink>().descriptor,
+                serializer<FanboxCreatorDetail.Platform>().descriptor,
+            ).joinToString("\n", transform = ::describeElements),
+        )
+    }
+
+    @Test
+    fun profileItemTypesAreUnchanged() {
+        assertEquals(
+            """
+            |image
+            |  id: kotlin.String
+            |  imageUrl: kotlin.String?
+            |  thumbnailUrl: kotlin.String?
+            |video
+            |  id: kotlin.String
+            |  serviceProvider: kotlin.String
+            |  videoId: kotlin.String
+            |  thumbnailUrl: kotlin.String?
+            |unknown
+            |  id: kotlin.String?
+            |  itemType: kotlin.String
+            |  rawJson: kotlin.String
+            """.trimMargin(),
+            listOf(
+                serializer<FanboxCreatorDetail.ProfileItem.Image>().descriptor,
+                serializer<FanboxCreatorDetail.ProfileItem.Video>().descriptor,
+                serializer<FanboxCreatorDetail.ProfileItem.Unknown>().descriptor,
+            ).joinToString("\n", transform = ::describeElements),
+        )
+        assertEquals(
+            listOf("image", "unknown", "video"),
+            subtypeNames(serializer<FanboxCreatorDetail.ProfileItem>().descriptor),
+        )
+    }
+
+    @Test
+    fun planAndTagTypesAreUnchanged() {
+        assertEquals(
+            """
+            |me.matsumo.fankt.fanbox.domain.model.FanboxCreatorPlan
+            |  id: me.matsumo.fankt.fanbox.domain.model.id.FanboxPlanId
+            |  title: kotlin.String
+            |  description: kotlin.String
+            |  fee: kotlin.Int
+            |  coverImageUrl: kotlin.String?
+            |  hasAdultContent: kotlin.Boolean
+            |  paymentMethod: me.matsumo.fankt.fanbox.domain.model.FanboxPaymentMethod
+            |  user: me.matsumo.fankt.fanbox.domain.model.FanboxUser?
+            |me.matsumo.fankt.fanbox.domain.model.FanboxPaymentMethod
+            |  CARD: me.matsumo.fankt.fanbox.domain.model.FanboxPaymentMethod.CARD
+            |  PAYPAL: me.matsumo.fankt.fanbox.domain.model.FanboxPaymentMethod.PAYPAL
+            |  CVS: me.matsumo.fankt.fanbox.domain.model.FanboxPaymentMethod.CVS
+            |  UNKNOWN: me.matsumo.fankt.fanbox.domain.model.FanboxPaymentMethod.UNKNOWN
+            |me.matsumo.fankt.fanbox.domain.model.FanboxCreatorPlanDetail
+            |  plan: me.matsumo.fankt.fanbox.domain.model.FanboxCreatorPlan
+            |  supportStartDatetime: kotlin.String
+            |  supportTransactions: kotlin.collections.ArrayList
+            |  supporterCardImageUrl: kotlin.String
+            |me.matsumo.fankt.fanbox.domain.model.FanboxCreatorPlanDetail.SupportTransaction
+            |  id: kotlin.String
+            |  paidAmount: kotlin.Int
+            |  transactionDatetime: kotlin.time.Instant
+            |  targetMonth: kotlin.String
+            |  user: me.matsumo.fankt.fanbox.domain.model.FanboxUser
+            |me.matsumo.fankt.fanbox.domain.model.FanboxTag
+            |  count: kotlin.Int
+            |  coverImageUrl: kotlin.String?
+            |  name: kotlin.String
+            """.trimMargin(),
+            listOf(
+                serializer<FanboxCreatorPlan>().descriptor,
+                serializer<FanboxPaymentMethod>().descriptor,
+                serializer<FanboxCreatorPlanDetail>().descriptor,
+                serializer<FanboxCreatorPlanDetail.SupportTransaction>().descriptor,
+                serializer<FanboxTag>().descriptor,
             ).joinToString("\n", transform = ::describeElements),
         )
     }

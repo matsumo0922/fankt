@@ -8,8 +8,12 @@ import me.matsumo.fankt.fanbox.domain.PageCursorInfo
 import me.matsumo.fankt.fanbox.domain.PageNumberInfo
 import me.matsumo.fankt.fanbox.domain.PageOffsetInfo
 import me.matsumo.fankt.fanbox.domain.model.FanboxComment
+import me.matsumo.fankt.fanbox.domain.model.FanboxCreatorDetail
+import me.matsumo.fankt.fanbox.domain.model.FanboxCreatorPlan
+import me.matsumo.fankt.fanbox.domain.model.FanboxCreatorPlanDetail
 import me.matsumo.fankt.fanbox.domain.model.FanboxPost
 import me.matsumo.fankt.fanbox.domain.model.FanboxPostDetail
+import me.matsumo.fankt.fanbox.domain.model.FanboxTag
 import me.matsumo.fankt.fanbox.endpoint.RequestDescriptor
 
 /** The name the guest binds this service under and the host takes it by. */
@@ -74,6 +78,46 @@ internal interface FanboxGuestService : ZiplineService {
     ): RequestDescriptor
 
     fun buildDeleteCommentRequest(commentId: String): RequestDescriptor
+
+    fun buildCreatorDetailRequest(creatorId: String): RequestDescriptor
+
+    fun parseCreatorDetail(body: String, statusCode: Int): GuestParseResult<FanboxCreatorDetail>
+
+    fun buildFollowingCreatorsRequest(): RequestDescriptor
+
+    fun parseFollowingCreators(body: String, statusCode: Int): GuestParseResult<FanboxTolerantResult<List<FanboxCreatorDetail>>>
+
+    fun buildFollowingPixivCreatorsRequest(): RequestDescriptor
+
+    fun parseFollowingPixivCreators(body: String, statusCode: Int): GuestParseResult<FanboxTolerantResult<List<FanboxCreatorDetail>>>
+
+    fun buildRecommendedCreatorsRequest(): RequestDescriptor
+
+    fun parseRecommendedCreators(body: String, statusCode: Int): GuestParseResult<FanboxTolerantResult<List<FanboxCreatorDetail>>>
+
+    fun buildCreatorPlansRequest(creatorId: String): RequestDescriptor
+
+    fun parseCreatorPlans(body: String, statusCode: Int): GuestParseResult<FanboxTolerantResult<List<FanboxCreatorPlan>>>
+
+    fun buildCreatorPlanDetailRequest(creatorId: String): RequestDescriptor
+
+    fun parseCreatorPlanDetail(body: String, statusCode: Int): GuestParseResult<FanboxCreatorPlanDetail>
+
+    fun buildCreatorTagsRequest(creatorId: String): RequestDescriptor
+
+    fun parseCreatorTags(body: String, statusCode: Int): GuestParseResult<List<FanboxTag>>
+
+    fun buildFollowCreatorRequest(userId: Long): RequestDescriptor
+
+    fun buildUnfollowCreatorRequest(userId: Long): RequestDescriptor
+
+    fun buildSearchCreatorsRequest(query: String, page: Int): RequestDescriptor
+
+    fun parseSearchCreators(body: String, statusCode: Int): GuestParseResult<PageNumberInfo<FanboxCreatorDetail>>
+
+    fun buildSearchTagsRequest(query: String): RequestDescriptor
+
+    fun parseSearchTags(body: String, statusCode: Int): GuestParseResult<List<FanboxTag>>
 }
 
 /**
