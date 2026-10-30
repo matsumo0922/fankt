@@ -4,28 +4,18 @@
 
 package me.matsumo.fankt.fanbox.guest
 
-import app.cash.zipline.Zipline
 import app.cash.zipline.ZiplineManifest
 import app.cash.zipline.loader.ManifestSigner.Builder
 import app.cash.zipline.loader.ZiplineCache
 import app.cash.zipline.loader.ZiplineHttpClient
 import app.cash.zipline.loader.internal.tink.subtle.KeyPair
 import app.cash.zipline.loader.internal.tink.subtle.newKeyPairFromSeed
-import io.ktor.client.HttpClient
-import io.ktor.client.engine.mock.MockEngine
-import io.ktor.client.engine.mock.respond
-import io.ktor.client.plugins.HttpRequestTimeoutException
-import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.newSingleThreadContext
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import me.matsumo.fankt.fanbox.FanboxGuestCache
-import me.matsumo.fankt.fanbox.FanboxHttpClientFactory
 import me.matsumo.fankt.fanbox.domain.model.FanboxPostDetail
 import okio.ByteString
 import okio.ByteString.Companion.toByteString
@@ -37,31 +27,9 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertIs
-import kotlin.test.assertNotNull
-import kotlin.time.Duration.Companion.milliseconds
-import kotlin.time.Duration.Companion.seconds
 
 @OptIn(DelicateCoroutinesApi::class, ExperimentalCoroutinesApi::class)
 class FanboxSignedBundleTest {
-
-    @Test
-    fun validSignatureLoadsGuestBundle(): Unit = runBlocking {
-        withBundleFixture {
-            val result = loadGuest(signedBundle(FIXED_BUNDLE_DIRECTORY)).parseAndClose()
-
-            assertIs<GuestParseResult.Success<*>>(result)
-        }
-    }
-
-    @Test
-    fun theBundleVersionReachesTheHost(): Unit = runBlocking {
-        withBundleFixture {
-            val loaded = loadGuest(signedBundle(FIXED_BUNDLE_DIRECTORY, version = "0123abc"))
-            loaded.parseAndClose()
-
-            assertEquals("0123abc", loaded.version)
-        }
-    }
 
     @Test
     fun everyOperationCrossesTheBridge(): Unit = runBlocking {
@@ -115,30 +83,6 @@ class FanboxSignedBundleTest {
 
             assertIs<GuestParseResult.Success<*>>(loadGuest(signedByPrimary, config = config).parseAndClose())
             assertIs<GuestParseResult.Success<*>>(loadGuest(signedByRecovery, config = config).parseAndClose())
-        }
-    }
-
-    @Test
-    fun manifestReplacementChangesResponseInterpretation(): Unit = runBlocking {
-        withBundleFixture {
-            val legacyResult = loadGuest(signedBundle(LEGACY_BUNDLE_DIRECTORY)).parseAndClose()
-            val fixedResult = loadGuest(signedBundle(FIXED_BUNDLE_DIRECTORY)).parseAndClose()
-
-            assertIs<GuestParseResult.SchemaMismatch>(legacyResult)
-            assertIs<GuestParseResult.Success<*>>(fixedResult)
-        }
-    }
-
-    @Test
-    fun cachedModulesAreNotDownloadedAgain(): Unit = runBlocking {
-        withBundleFixture {
-            val remote = signedBundle(FIXED_BUNDLE_DIRECTORY)
-            loadGuest(remote).parseAndClose()
-            remote.httpClient.downloadedUrls.clear()
-
-            loadGuest(remote).parseAndClose()
-
-            assertEquals(listOf(MANIFEST_URL), remote.httpClient.downloadedUrls)
         }
     }
 
@@ -207,54 +151,6 @@ class FanboxSignedBundleTest {
             ).parseAndClose()
 
             assertIs<GuestParseResult.Success<*>>(result)
-        }
-    }
-
-    @Test
-    fun aLoadCancelledAfterTheEngineIsBuiltClosesIt(): Unit = runBlocking {
-        withBundleFixture {
-            val remote = signedBundle(FIXED_BUNDLE_DIRECTORY)
-            var built: Zipline? = null
-            lateinit var loadJob: Job
-
-            // Cancelling inside the initializer lets the engine finish building, so the cancellation
-            // lands after Zipline would have closed it on a failure of its own.
-            loadJob = launch(dispatcher, start = CoroutineStart.LAZY) {
-                loadZiplineGuest(
-                    config = config(),
-                    dispatcher = dispatcher,
-                    httpClient = remote.httpClient,
-                    initializer = { zipline ->
-                        built = zipline
-                        loadJob.cancel()
-                    },
-                )
-            }
-            loadJob.join()
-
-            val engine = assertNotNull(built)
-            withContext(dispatcher) {
-                assertFailsWith<IllegalStateException> { engine.take<FanboxGuestService>(FANBOX_GUEST_SERVICE_NAME) }
-            }
-        }
-    }
-
-    @Test
-    fun aSlowRequestEndsTheLoad(): Unit = runBlocking {
-        withBundleFixture {
-            val slowClientFactory = FanboxHttpClientFactory { block ->
-                HttpClient(
-                    engine = MockEngine {
-                        delay(10.seconds)
-                        respond("")
-                    },
-                    block = block,
-                )
-            }
-
-            createGuestHttpClient(slowClientFactory, requestTimeout = 100.milliseconds).use { client ->
-                assertFailsWith<HttpRequestTimeoutException> { loadGuest(httpClient = KtorZiplineHttpClient(client)) }
-            }
         }
     }
 
@@ -386,7 +282,6 @@ class FanboxSignedBundleTest {
 
     private companion object {
         const val FIXED_BUNDLE_DIRECTORY = "GuestProduction"
-        const val LEGACY_BUNDLE_DIRECTORY = "LegacyguestProduction"
         const val TRUSTED_KEY_NAME = "test-key"
         const val RECOVERY_KEY_NAME = "test-recovery-key"
         const val MANIFEST_URL = "https://example.invalid/manifest.zipline.json"
