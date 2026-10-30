@@ -119,12 +119,24 @@ whichever channel it was fetched from.
 
 Not promoting leaves consumers on the last bundle that was promoted.
 
-Both paths name the bridge API version. A consumer keeps reading the version it was built against, so
-a bundle built for a newer bridge API never reaches a host that cannot decode it. Raise the version —
-and publish under a new path without removing the old one — when the signature of a
-`FanboxGuestService` function changes, or when the wire schema of a type passed to or returned from
-one changes. Consumers built against the previous version keep reading the previous path until they
-are updated.
+Both paths name the bridge API version, and a consumer keeps reading the version it was built
+against. A change that every host built against the current version can still decode stays on it:
+
+- adding a `FanboxGuestService` function, which an older host never calls
+- adding a field with a default value to a type that crosses the bridge, which an older host ignores
+
+Raise the version only to make a change that such a host cannot decode: removing or renaming a
+function, changing a parameter or return type, removing, renaming or retyping a field, or adding a
+subtype to a sealed hierarchy. The guest has no fallback, so shipping such a change on the current
+version makes that call fail with `FanboxException.GuestFailure` on every host built against it.
+`ziplineApiCheck` catches a changed function signature; a changed field is caught only in review.
+
+Prefer absorbing a FANBOX API change inside the guest, so that the version rarely moves: keep the
+model, fill a field FANBOX dropped with a default, and map a new kind of item to the existing
+`Unknown` subtype where the model has one (the post body, an article block, a creator profile item).
+To raise the version, publish under a new path and leave the old one in place.
+The old path keeps its last bundle, and consumers built against it receive no further fixes until
+they are updated.
 
 Builds without the signing key produce an unsigned manifest instead of failing, so that local builds
 and pull request CI pass. Neither workflow publishes such a manifest.
