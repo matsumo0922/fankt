@@ -252,8 +252,8 @@ class FanboxSignedBundleTest {
 
         private fun findBundleDirectory(name: String): Path {
             val candidates = listOf(
-                "build/zipline/$name".toPath(),
-                "fankt/fanbox/build/zipline/$name".toPath(),
+                "../fanbox-guest/build/zipline/$name".toPath(),
+                "fankt/fanbox-guest/build/zipline/$name".toPath(),
             )
             return candidates.firstOrNull { fileSystem.metadataOrNull(it / "manifest.zipline.json") != null }
                 ?: error("Zipline test bundle not found: $name")
@@ -284,7 +284,7 @@ class FanboxSignedBundleTest {
     }
 
     private companion object {
-        const val FIXED_BUNDLE_DIRECTORY = "GuestProduction"
+        const val FIXED_BUNDLE_DIRECTORY = "Production"
         const val TRUSTED_KEY_NAME = "test-key"
         const val RECOVERY_KEY_NAME = "test-recovery-key"
         const val MANIFEST_URL = "https://example.invalid/manifest.zipline.json"

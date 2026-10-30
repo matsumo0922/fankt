@@ -28,5 +28,6 @@ dependencyResolutionManagement {
 include(":composeApp")
 include(":fankt:fanbox")
 include(":fankt:fanbox-core")
+include(":fankt:fanbox-guest")
 include(":fankt:fanbox-persistence-room")
 include(":fankt:fantia")

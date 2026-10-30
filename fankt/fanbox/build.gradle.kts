@@ -1,4 +1,3 @@
-import app.cash.zipline.loader.SignatureAlgorithmId
 import groovy.json.JsonOutput
 import groovy.json.JsonSlurper
 import org.gradle.api.DefaultTask
@@ -63,34 +62,12 @@ android {
     namespace = "me.matsumo.fankt.fanbox"
 }
 
-zipline {
-    mainFunction.set("me.matsumo.fankt.fanbox.guest.launchZipline")
-    // The delivery workflow passes the commit it builds, which consumers receive when the guest loads.
-    version.set(providers.gradleProperty("fanboxZiplineVersion"))
-
-    // The delivery workflow passes the key from a repository secret. Local builds and pull request
-    // CI have no secret, and they build an unsigned manifest rather than failing: the loader
-    // requires a signature, so an unsigned bundle cannot be executed by a consumer even if it
-    // escapes. The workflow separately refuses to publish a manifest that carries no signature.
-    // The key name switches to the recovery key when the primary key is lost. See the README.
-    val signingPrivateKeyHex = providers.gradleProperty("fanboxZiplineSigningPrivateKeyHex")
-    val signingKeyName = providers.gradleProperty("fanboxZiplineSigningKeyName").orElse("fanboxGuest")
-    if (signingPrivateKeyHex.isPresent) {
-        signingKeys.create(signingKeyName.get()) {
-            algorithmId.set(SignatureAlgorithmId.Ed25519)
-            privateKeyHex.set(signingPrivateKeyHex)
-        }
-    }
-}
-
-// The guest and ziplineTest targets build a bundle and run tests; they are not meant
-// to be resolved as dependencies. Disabling their publication tasks keeps the artifacts out of the
+// The ziplineTest target runs the host's tests on the JVM; it is not meant to be resolved as a
+// dependency. Disabling their publication tasks keeps the artifacts out of the
 // repository, but the root Kotlin Multiplatform module still lists them, and a consumer following
 // one of those references fails to resolve this library at all. So the variants are stripped from
 // the generated root module as well.
-tasks.matching { task ->
-    task.name.contains("GuestPublication") || task.name.contains("ZiplineTestPublication")
-}.configureEach {
+tasks.matching { task -> task.name.contains("ZiplineTestPublication") }.configureEach {
     enabled = false
 }
 
@@ -100,7 +77,7 @@ tasks.register<StripUnpublishedVariantsTask>("stripUnpublishedRootVariants") {
     )
     dependsOn(metadataTask)
     moduleFile.set(metadataTask.flatMap { it.outputFile })
-    unpublishedTargetNames.set(listOf("guest", "ziplineTest"))
+    unpublishedTargetNames.set(listOf("ziplineTest"))
 }
 
 tasks.named("generateMetadataFileForKotlinMultiplatformPublication") {
@@ -108,12 +85,7 @@ tasks.named("generateMetadataFileForKotlinMultiplatformPublication") {
 }
 
 kotlin {
-    // The guest bundle needs an executable binary with an entry point.
-    js("guest", org.jetbrains.kotlin.gradle.plugin.KotlinJsCompilerType.IR) {
-        nodejs()
-        binaries.executable()
-    }
-
+    // The host's tests run on the JVM, where QuickJS loads the guest bundle.
     jvm("ziplineTest")
 
     sourceSets {
@@ -167,7 +139,7 @@ kotlin {
     }
 }
 
-// The QuickJS tests load the guest bundle that this build produces.
+// The QuickJS tests load the guest bundle that :fankt:fanbox-guest builds.
 tasks.named("ziplineTestTest") {
-    dependsOn("compileProductionExecutableKotlinGuestZipline")
+    dependsOn(":fankt:fanbox-guest:compileProductionExecutableKotlinJsZipline")
 }
