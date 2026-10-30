@@ -47,8 +47,12 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-konan-
 
-      - name: Publish Fanbox Room persistence library to MavenCentral
-        run: ./gradlew :fankt:fanbox-persistence-room:publishAndReleaseToMavenCentral --no-configuration-cache
+      # Each artifact depends on the one published before it.
+      - name: Publish Fanbox core library to MavenCentral
+        run: ./gradlew :fankt:fanbox-core:publishAndReleaseToMavenCentral --no-configuration-cache
 
       - name: Publish Fanbox library to MavenCentral
         run: ./gradlew :fankt:fanbox:publishAndReleaseToMavenCentral --no-configuration-cache
+
+      - name: Publish Fanbox Room persistence library to MavenCentral
+        run: ./gradlew :fankt:fanbox-persistence-room:publishAndReleaseToMavenCentral --no-configuration-cache
