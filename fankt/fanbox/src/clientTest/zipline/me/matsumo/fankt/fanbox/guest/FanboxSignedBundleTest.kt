@@ -27,6 +27,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertIs
+import kotlin.test.assertTrue
 
 @OptIn(DelicateCoroutinesApi::class, ExperimentalCoroutinesApi::class)
 class FanboxSignedBundleTest {
@@ -40,14 +41,16 @@ class FanboxSignedBundleTest {
             withContext(dispatcher) {
                 try {
                     val bridged = loaded.service
+                    val nativeResults = GuestOperationCases.parseResponses(native)
+                    val rejected = GuestOperationCases.parseRejectedResponse(native)
 
+                    // Two failures of the same kind would compare equal, so the fixtures must parse first.
+                    assertTrue(nativeResults.all { result -> result is GuestParseResult.Success<*> }, nativeResults.toString())
                     assertEquals(GuestOperationCases.buildRequests(native), GuestOperationCases.buildRequests(bridged))
-                    assertEquals(GuestOperationCases.parseResponses(native), GuestOperationCases.parseResponses(bridged))
+                    assertEquals(nativeResults, GuestOperationCases.parseResponses(bridged))
                     // A rejection's diagnostic carries the engine's own message, so only its kind is compared.
-                    assertEquals(
-                        GuestOperationCases.parseRejectedResponses(native).map { result -> result::class },
-                        GuestOperationCases.parseRejectedResponses(bridged).map { result -> result::class },
-                    )
+                    assertIs<GuestParseResult.SchemaMismatch>(rejected)
+                    assertIs<GuestParseResult.SchemaMismatch>(GuestOperationCases.parseRejectedResponse(bridged))
                 } finally {
                     loaded.zipline?.close()
                 }
