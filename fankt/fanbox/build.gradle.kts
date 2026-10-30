@@ -93,38 +93,14 @@ kotlin {
             languageSettings.optIn("me.matsumo.fankt.fanbox.InternalFanboxApi")
         }
 
-        val commonMain by getting
-        val commonTest by getting
-        val clientMain by creating { dependsOn(commonMain) }
-        val clientTest by creating { dependsOn(commonTest) }
-        getByName("ziplineTestMain") { dependsOn(clientMain) }
-        val ziplineTestTest by getting {
-            kotlin.srcDir("src/clientTest/zipline")
-        }
-        val androidMain by getting { dependsOn(clientMain) }
-        val androidUnitTest by getting { dependsOn(clientTest) }
-        val iosMain by getting { dependsOn(clientMain) }
-        getByName("iosTest") { dependsOn(clientTest) }
-
         commonMain.dependencies {
             api(project(":fankt:fanbox-core"))
-        }
-
-        commonTest.dependencies {
-            implementation(kotlin("test"))
-        }
-
-        clientMain.dependencies {
             implementation(libs.napier)
             implementation(libs.bundles.ktor)
             implementation(libs.zipline.loader)
         }
 
-        clientTest.dependencies {
-            implementation(libs.ktor.mock)
-        }
-
-        ziplineTestTest.dependencies {
+        commonTest.dependencies {
             implementation(kotlin("test"))
             implementation(libs.ktor.mock)
         }
