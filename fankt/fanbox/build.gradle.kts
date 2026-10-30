@@ -758,6 +758,8 @@ android {
 
 zipline {
     mainFunction.set("me.matsumo.fankt.fanbox.guest.launchZipline")
+    // The delivery workflow passes the commit it builds, which consumers receive when the guest loads.
+    version.set(providers.gradleProperty("fanboxZiplineVersion"))
 
     // The delivery workflow passes the key from a repository secret. Local builds and pull request
     // CI have no secret, and they build an unsigned manifest rather than failing: the loader

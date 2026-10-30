@@ -25,6 +25,7 @@ import kotlinx.coroutines.newSingleThreadContext
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import me.matsumo.fankt.fanbox.FanboxGuestCache
+import me.matsumo.fankt.fanbox.FanboxGuestEvent
 import me.matsumo.fankt.fanbox.FanboxHttpClientFactory
 import me.matsumo.fankt.fanbox.domain.model.FanboxPostDetail
 import me.matsumo.fankt.fanbox.domain.model.id.FanboxPostId
@@ -40,11 +41,14 @@ import kotlin.concurrent.Volatile
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
-/** guest manifest の配信先・検証鍵・キャッシュの設定。[trustedKeys] は鍵名から Ed25519 公開鍵への対応。 */
+/**
+ * guest manifest の配信先・検証鍵・キャッシュ・出来事の通知先の設定。[trustedKeys] は鍵名から Ed25519 公開鍵への対応。
+ */
 internal class FanboxGuestDeliveryConfig(
     val manifestUrl: String,
     val trustedKeys: Map<String, ByteString>,
     val cache: FanboxGuestCache,
+    val eventListener: (FanboxGuestEvent) -> Unit = {},
 ) {
     init {
         require(Url(manifestUrl).protocol == URLProtocol.HTTPS) { "Guest manifest URL must use HTTPS: $manifestUrl" }
@@ -80,6 +84,7 @@ internal class FanboxGuestDeliveryConfig(
 @OptIn(DelicateCoroutinesApi::class, ExperimentalCoroutinesApi::class)
 internal class FanboxGuestHost(
     private val diagnosticSink: FanboxDiagnosticSink,
+    private val eventListener: (FanboxGuestEvent) -> Unit = {},
     load: suspend (CoroutineDispatcher) -> LoadedGuest,
 ) : AutoCloseable {
     // Zipline instances are thread-confined; limited parallelism does not guarantee one thread.
@@ -89,38 +94,57 @@ internal class FanboxGuestHost(
     private var guest: LoadedGuest? = null
 
     private val loading = CoroutineScope(dispatcher).launch {
-        guest = try {
+        val loaded = try {
             load(dispatcher)
         } catch (failure: CancellationException) {
             throw failure
         } catch (failure: Throwable) {
-            fallBack("load", failure.describe())
+            fallBack("load", failure.describe(), FanboxGuestEvent.LoadFailed(failure.errorType()))
+            return@launch
         }
+
+        guest = loaded
+        emit(FanboxGuestEvent.Loaded(loaded.version))
     }
 
     /** 背景のロードが終わるまで待つ。 */
     suspend fun awaitLoad() = loading.join()
 
     /** guest で `post.info` の request を組み立てる。 */
-    suspend fun buildPostDetailRequest(postId: FanboxPostId): RequestDescriptor? = call("buildPostDetailRequest") {
+    suspend fun buildPostDetailRequest(postId: FanboxPostId): RequestDescriptor? = call(POST_INFO, "buildRequest") {
         buildPostDetailRequest(postId.value)
     }
 
     /** guest で `post.info` の response を解析する。 */
     suspend fun parsePostDetail(response: FanboxRawResponse): FanboxPostDetail? {
-        val result = call("parsePostDetail") { parsePostDetail(response.bodyText, response.statusCode) }
+        val result = call(POST_INFO, PARSE_RESPONSE) { parsePostDetail(response.bodyText, response.statusCode) }
 
         return when (result) {
             is GuestParseResult.Success -> result.postDetail
-            is GuestParseResult.SchemaMismatch -> fallBack("parsePostDetail", "schema mismatch: ${result.diagnostic}")
-            is GuestParseResult.GuestFailure -> fallBack("parsePostDetail", result.diagnostic)
+
+            is GuestParseResult.SchemaMismatch -> fallBack(
+                operation = PARSE_RESPONSE,
+                reason = "schema mismatch: ${result.diagnostic}",
+                event = FanboxGuestEvent.SchemaMismatch(POST_INFO),
+            )
+
+            is GuestParseResult.GuestFailure -> fallBack(
+                operation = PARSE_RESPONSE,
+                reason = result.diagnostic,
+                event = FanboxGuestEvent.CallFailed(POST_INFO, PARSE_RESPONSE, "GuestFailure"),
+            )
+
             null -> null
         }
     }
 
     // Exception rather than a list of Zipline types: a bridge call can also fail with
     // SerializationException or ZiplineApiMismatchException, which share no supertype with the rest.
-    private suspend fun <T> call(operation: String, block: FanboxGuestService.() -> T): T? {
+    private suspend fun <T> call(
+        endpoint: String,
+        operation: String,
+        block: FanboxGuestService.() -> T,
+    ): T? {
         if (guest == null) return null
 
         return try {
@@ -128,13 +152,28 @@ internal class FanboxGuestHost(
         } catch (failure: CancellationException) {
             throw failure
         } catch (failure: Exception) {
-            fallBack(operation, failure.describe())
+            fallBack(operation, failure.describe(), FanboxGuestEvent.CallFailed(endpoint, operation, failure.errorType()))
         }
     }
 
-    private fun fallBack(operation: String, reason: String): Nothing? {
+    private fun fallBack(
+        operation: String,
+        reason: String,
+        event: FanboxGuestEvent,
+    ): Nothing? {
         diagnosticSink.report("Zipline guest $operation failed; using built-in path (${FanboxDiagnostics.sanitizeFragment(reason)})")
+        emit(event)
         return null
+    }
+
+    // A listener failure is reported instead of propagated: thrown from the load coroutine, it would
+    // crash the process, and thrown from a call, it would fail a request the built-in path handled.
+    private fun emit(event: FanboxGuestEvent) {
+        try {
+            eventListener(event)
+        } catch (failure: Exception) {
+            diagnosticSink.report("Guest event listener failed (${failure.errorType()})")
+        }
     }
 
     override fun close() {
@@ -151,10 +190,11 @@ internal class FanboxGuestHost(
     }
 }
 
-/** ロード済みの Zipline と guest service の組。 */
+/** ロード済みの guest service と、その Zipline・bundle のバージョン。 */
 internal data class LoadedGuest(
     val service: FanboxGuestService,
     val zipline: Zipline? = null,
+    val version: String? = null,
 )
 
 /**
@@ -189,7 +229,12 @@ internal suspend fun loadZiplineGuest(
                 )
 
             when (result) {
-                is LoadResult.Success -> LoadedGuest(result.zipline.take(FANBOX_GUEST_SERVICE_NAME), result.zipline)
+                is LoadResult.Success -> LoadedGuest(
+                    service = result.zipline.take(FANBOX_GUEST_SERVICE_NAME),
+                    zipline = result.zipline,
+                    version = result.manifest.version,
+                )
+
                 is LoadResult.Failure -> throw result.exception
             }
         } catch (failure: Throwable) {
@@ -233,7 +278,12 @@ private object AlwaysStale : FreshnessChecker {
     override fun isFresh(manifest: ZiplineManifest, freshAtEpochMs: Long): Boolean = false
 }
 
+private fun Throwable.errorType(): String = this::class.simpleName ?: "Throwable"
+
 private fun Throwable.describe(): String = this::class.simpleName + message
     ?.takeIf(String::isNotBlank)
     ?.let { ": $it" }
     .orEmpty()
+
+private const val POST_INFO = "post.info"
+private const val PARSE_RESPONSE = "parseResponse"

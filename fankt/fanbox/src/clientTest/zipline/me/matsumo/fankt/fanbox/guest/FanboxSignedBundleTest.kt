@@ -53,6 +53,16 @@ class FanboxSignedBundleTest {
     }
 
     @Test
+    fun theBundleVersionReachesTheHost(): Unit = runBlocking {
+        withBundleFixture {
+            val loaded = loadGuest(signedBundle(FIXED_BUNDLE_DIRECTORY, version = "0123abc"))
+            loaded.parseAndClose()
+
+            assertEquals("0123abc", loaded.version)
+        }
+    }
+
+    @Test
     fun tamperedSignatureIsRefused(): Unit = runBlocking {
         withBundleFixture {
             val remote = signedBundle(FIXED_BUNDLE_DIRECTORY, tamperSignature = true)
@@ -195,6 +205,7 @@ class FanboxSignedBundleTest {
             signingKeyName: String = TRUSTED_KEY_NAME,
             tamperSignature: Boolean = false,
             keyPair: KeyPair = this.keyPair,
+            version: String? = null,
         ): SignedBundle {
             val sourceDirectory = findBundleDirectory(sourceDirectoryName)
             val unsignedManifest = ZiplineManifest.decodeJson(
@@ -203,7 +214,7 @@ class FanboxSignedBundleTest {
             var manifest = Builder()
                 .addEd25519(signingKeyName, keyPair.privateKey)
                 .build()
-                .sign(unsignedManifest.copy(freshAtEpochMs = 0L))
+                .sign(unsignedManifest.copy(freshAtEpochMs = 0L, version = version))
             if (tamperSignature) {
                 manifest = manifest.copy(
                     signatures = manifest.signatures.mapValues { (_, signature) ->

@@ -109,11 +109,17 @@ class Fanbox internal constructor(
      *
      * [guestTrustedKeys] maps each trusted signing key name to its Ed25519 public key. A manifest
      * signed by any of them is accepted.
+     *
+     * [guestEventListener] receives what happens on the guest path. It is called on a background
+     * thread, possibly before this constructor returns and possibly from several threads at once, so
+     * it must return quickly and must not call [close]. An exception it throws is logged rather than
+     * propagated.
      */
     constructor(
         guestManifestUrl: String,
         guestTrustedKeys: Map<String, ByteArray>,
         guestCache: FanboxGuestCache,
+        guestEventListener: (FanboxGuestEvent) -> Unit = {},
         logLevel: FanboxLogLevel = FanboxLogLevel.NONE,
         ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
         cookieStorage: FanboxCookieStorage = InMemoryFanboxCookieStorage(),
@@ -127,6 +133,7 @@ class Fanbox internal constructor(
             manifestUrl = guestManifestUrl,
             trustedKeys = guestTrustedKeys.mapValues { (_, key) -> key.toByteString() },
             cache = guestCache,
+            eventListener = guestEventListener,
         ),
     )
 
@@ -170,7 +177,7 @@ class Fanbox internal constructor(
             val downloadClient = buildOwnedDownloadClient()
             val diagnosticSink = FanboxDiagnosticSink { message -> Napier.w { message } }
             val guestHost = guestDeliveryConfig?.let { config ->
-                FanboxGuestHost(diagnosticSink) { dispatcher ->
+                FanboxGuestHost(diagnosticSink, config.eventListener) { dispatcher ->
                     createGuestHttpClient(clientFactory).use { client ->
                         loadZiplineGuest(config, dispatcher, KtorZiplineHttpClient(client))
                     }

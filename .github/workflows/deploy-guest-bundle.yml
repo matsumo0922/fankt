@@ -50,6 +50,7 @@ jobs:
           :fankt:fanbox:compileProductionExecutableKotlinGuestZipline
           -PfanboxZiplineSigningPrivateKeyHex="$SIGNING_PRIVATE_KEY_HEX"
           -PfanboxZiplineSigningKeyName="$SIGNING_KEY_NAME"
+          -PfanboxZiplineVersion="$GITHUB_SHA"
 
       # The build succeeds without the key so that local builds and pull request CI pass, which
       # means an unsigned manifest can reach this point when the secret is missing. A consumer
