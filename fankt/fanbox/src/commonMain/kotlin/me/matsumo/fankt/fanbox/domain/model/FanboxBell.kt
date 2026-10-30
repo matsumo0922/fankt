@@ -8,6 +8,7 @@ import kotlin.time.Instant
 
 @Serializable
 sealed interface FanboxBell {
+    @Serializable
     data class Comment(
         val id: FanboxCommentId,
         val notifiedDatetime: Instant,
@@ -20,6 +21,7 @@ sealed interface FanboxBell {
         val userProfileIconUrl: String,
     ) : FanboxBell
 
+    @Serializable
     data class Like(
         val id: String,
         val notifiedDatetime: Instant,
@@ -29,6 +31,7 @@ sealed interface FanboxBell {
         val count: Int,
     ) : FanboxBell
 
+    @Serializable
     data class PostPublished(
         val id: FanboxPostId,
         val notifiedDatetime: Instant,

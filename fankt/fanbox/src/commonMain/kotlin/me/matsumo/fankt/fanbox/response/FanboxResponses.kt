@@ -217,15 +217,10 @@ internal object FanboxResponses {
         mappers.user.map(decode(body, FanboxCreatorPlanListStrictEntity.serializer()))
     }
 
-    fun supportingPlansTolerant(
-        body: String,
-        statusCode: Int = 200,
-        diagnosticSink: FanboxDiagnosticSink = FanboxDiagnosticSink.none,
-    ): FanboxTolerantResult<List<FanboxCreatorPlan>> = withMappers(
+    fun supportingPlansTolerant(body: String, statusCode: Int = 200): FanboxTolerantResult<List<FanboxCreatorPlan>> = withMappers(
         body = body,
         statusCode = statusCode,
         endpointId = FanboxEndpointIds.planListSupporting,
-        diagnosticSink = diagnosticSink,
     ) { mappers ->
         mappers.user.map(
             decode(body, FanboxCreatorPlanListEntity.serializer()),
@@ -254,15 +249,10 @@ internal object FanboxResponses {
         mappers.user.map(decode(body, FanboxNewsLettersEntity.serializer()))
     }
 
-    fun bells(
-        body: String,
-        statusCode: Int = 200,
-        diagnosticSink: FanboxDiagnosticSink = FanboxDiagnosticSink.none,
-    ): FanboxTolerantResult<PageNumberInfo<FanboxBell>> = withMappers(
+    fun bells(body: String, statusCode: Int = 200): FanboxTolerantResult<PageNumberInfo<FanboxBell>> = withMappers(
         body,
         statusCode,
         FanboxEndpointIds.bellList,
-        diagnosticSink,
     ) { mappers ->
         mappers.user.map(decode(body, FanboxBellListEntity.serializer()), "bell.list")
     }
@@ -289,10 +279,9 @@ internal object FanboxResponses {
         body: String,
         statusCode: Int,
         endpointId: FanboxEndpointId,
-        diagnosticSink: FanboxDiagnosticSink = FanboxDiagnosticSink.none,
         block: (Mappers) -> T,
     ): T = try {
-        block(createMappers(diagnosticSink))
+        block(createMappers())
     } catch (failure: FanboxException) {
         throw failure
     } catch (failure: SerializationException) {
@@ -301,8 +290,8 @@ internal object FanboxResponses {
         throw FanboxFailureInterpreter.schemaMismatch(statusCode, body, endpointId.value, failure)
     }
 
-    private fun createMappers(diagnosticSink: FanboxDiagnosticSink): Mappers {
-        val decoder = FanboxListItemDecoder(formatter, diagnosticSink)
+    private fun createMappers(): Mappers {
+        val decoder = FanboxListItemDecoder(formatter)
         val post = FanboxPostMapper(decoder, formatter)
         val creator = FanboxCreatorMapper(decoder, formatter)
         val user = FanboxUserMapper(post, creator, decoder)

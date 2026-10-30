@@ -31,10 +31,7 @@ internal fun <T> FanboxTolerantResult<T>.reportedTo(sink: FanboxDiagnosticSink):
     mismatches.forEach(sink::report)
 }
 
-internal class FanboxListItemDecoder(
-    private val formatter: Json = createFanboxJson(),
-    private val diagnosticSink: FanboxDiagnosticSink = FanboxDiagnosticSink.none,
-) {
+internal class FanboxListItemDecoder(private val formatter: Json = createFanboxJson()) {
     fun <T, R> decodeAndMap(
         endpoint: String,
         items: List<JsonElement>,
@@ -52,17 +49,12 @@ internal class FanboxListItemDecoder(
                 values += transformed.value
                 mismatches += transformed.mismatches
             } catch (_: SerializationException) {
-                mismatches += reportMismatch(endpoint, indexPath)
+                mismatches += FanboxListItemSchemaMismatch(endpoint, indexPath)
             } catch (_: IllegalArgumentException) {
-                mismatches += reportMismatch(endpoint, indexPath)
+                mismatches += FanboxListItemSchemaMismatch(endpoint, indexPath)
             }
         }
 
         return FanboxTolerantResult(values, mismatches)
     }
-
-    private fun reportMismatch(endpoint: String, indexPath: List<Int>): FanboxListItemSchemaMismatch = FanboxListItemSchemaMismatch(
-        endpoint = endpoint,
-        indexPath = indexPath,
-    ).also(diagnosticSink::report)
 }

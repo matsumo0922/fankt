@@ -1,13 +1,17 @@
 package me.matsumo.fankt.fanbox.guest
 
+import me.matsumo.fankt.fanbox.datasource.parser.FanboxKsoupMetadataExtractor
 import me.matsumo.fankt.fanbox.domain.model.id.FanboxCommentId
 import me.matsumo.fankt.fanbox.domain.model.id.FanboxCreatorId
 import me.matsumo.fankt.fanbox.domain.model.id.FanboxPostId
 import me.matsumo.fankt.fanbox.domain.model.id.FanboxUserId
 import me.matsumo.fankt.fanbox.endpoint.FanboxEndpoints
 import me.matsumo.fankt.fanbox.fixture.FanboxCreatorJsonFixtures
+import me.matsumo.fankt.fanbox.fixture.FanboxMetadataHtmlFixtures
+import me.matsumo.fankt.fanbox.fixture.FanboxPaymentJsonFixtures
 import me.matsumo.fankt.fanbox.fixture.FanboxPostJsonFixtures
 import me.matsumo.fankt.fanbox.fixture.FanboxTolerantListJsonFixtures
+import me.matsumo.fankt.fanbox.fixture.FanboxUserJsonFixtures
 import me.matsumo.fankt.fanbox.response.FanboxResponses
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -86,6 +90,13 @@ class RealFanboxGuestServiceTest {
                 FanboxEndpoints.unfollowCreator(FanboxUserId(91000001)),
                 FanboxEndpoints.searchCreators("fixture", 2),
                 FanboxEndpoints.searchTags("fixture"),
+                FanboxEndpoints.supportingPlans(),
+                FanboxEndpoints.paidRecords(),
+                FanboxEndpoints.unpaidRecords(),
+                FanboxEndpoints.newsletters(),
+                FanboxEndpoints.bells(page = 2, skipConvertUnreadNotification = 0),
+                FanboxEndpoints.bells(page = 0, skipConvertUnreadNotification = 1),
+                FanboxEndpoints.homepage(),
             ),
             GuestOperationCases.buildRequests(service),
         )
@@ -111,6 +122,13 @@ class RealFanboxGuestServiceTest {
                 FanboxResponses.creatorTags(GuestOperationCases.FEATURED_TAGS),
                 FanboxResponses.searchCreators(GuestOperationCases.searchedCreators),
                 FanboxResponses.searchTags(GuestOperationCases.SEARCHED_TAGS),
+                FanboxResponses.supportingPlansStrict(FanboxCreatorJsonFixtures.actualCreatorPlanList),
+                FanboxResponses.supportingPlansTolerant(FanboxTolerantListJsonFixtures.supportingPlansMixed),
+                FanboxResponses.paidRecords(FanboxPaymentJsonFixtures.paidRecords),
+                FanboxResponses.unpaidRecords(FanboxPaymentJsonFixtures.paidRecords),
+                FanboxResponses.newsletters(FanboxUserJsonFixtures.handcraftedNewsletterList),
+                FanboxResponses.bells(FanboxTolerantListJsonFixtures.bellMixed),
+                FanboxResponses.homepage(FanboxMetadataHtmlFixtures.home, FanboxKsoupMetadataExtractor),
             ).map { value -> GuestParseResult.Success(value) },
             GuestOperationCases.parseResponses(service),
         )

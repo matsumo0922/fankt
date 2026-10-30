@@ -7,10 +7,14 @@ import me.matsumo.fankt.fanbox.domain.FanboxCursor
 import me.matsumo.fankt.fanbox.domain.PageCursorInfo
 import me.matsumo.fankt.fanbox.domain.PageNumberInfo
 import me.matsumo.fankt.fanbox.domain.PageOffsetInfo
+import me.matsumo.fankt.fanbox.domain.model.FanboxBell
 import me.matsumo.fankt.fanbox.domain.model.FanboxComment
 import me.matsumo.fankt.fanbox.domain.model.FanboxCreatorDetail
 import me.matsumo.fankt.fanbox.domain.model.FanboxCreatorPlan
 import me.matsumo.fankt.fanbox.domain.model.FanboxCreatorPlanDetail
+import me.matsumo.fankt.fanbox.domain.model.FanboxMetaData
+import me.matsumo.fankt.fanbox.domain.model.FanboxNewsLetter
+import me.matsumo.fankt.fanbox.domain.model.FanboxPaidRecord
 import me.matsumo.fankt.fanbox.domain.model.FanboxPost
 import me.matsumo.fankt.fanbox.domain.model.FanboxPostDetail
 import me.matsumo.fankt.fanbox.domain.model.FanboxTag
@@ -24,8 +28,9 @@ internal const val FANBOX_GUEST_SERVICE_NAME: String = "fanboxGuest"
  * parsing fix reaches users by replacing the guest bundle rather than by shipping a new app.
  *
  * No parameter carries a credential. The host attaches cookies and the CSRF token after it
- * validates the descriptor this service returns. Functions that interpret no response body, such as
- * those for liking or commenting, only build the request.
+ * validates the descriptor this service returns. The guest sees the CSRF token only in the homepage
+ * it parses, which [parseHomepage] returns for the host to store; it never sees a cookie. Functions
+ * that interpret no response body, such as those for liking or commenting, only build the request.
  */
 // One function per operation keeps every value that crosses the bridge typed.
 @Suppress("TooManyFunctions")
@@ -118,6 +123,32 @@ internal interface FanboxGuestService : ZiplineService {
     fun buildSearchTagsRequest(query: String): RequestDescriptor
 
     fun parseSearchTags(body: String, statusCode: Int): GuestParseResult<List<FanboxTag>>
+
+    fun buildSupportingPlansRequest(): RequestDescriptor
+
+    fun parseSupportingPlansStrict(body: String, statusCode: Int): GuestParseResult<List<FanboxCreatorPlan>>
+
+    fun parseSupportingPlansTolerant(body: String, statusCode: Int): GuestParseResult<FanboxTolerantResult<List<FanboxCreatorPlan>>>
+
+    fun buildPaidRecordsRequest(): RequestDescriptor
+
+    fun parsePaidRecords(body: String, statusCode: Int): GuestParseResult<List<FanboxPaidRecord>>
+
+    fun buildUnpaidRecordsRequest(): RequestDescriptor
+
+    fun parseUnpaidRecords(body: String, statusCode: Int): GuestParseResult<List<FanboxPaidRecord>>
+
+    fun buildNewslettersRequest(): RequestDescriptor
+
+    fun parseNewsletters(body: String, statusCode: Int): GuestParseResult<List<FanboxNewsLetter>>
+
+    fun buildBellsRequest(page: Int, markNotificationsRead: Boolean): RequestDescriptor
+
+    fun parseBells(body: String, statusCode: Int): GuestParseResult<FanboxTolerantResult<PageNumberInfo<FanboxBell>>>
+
+    fun buildHomepageRequest(): RequestDescriptor
+
+    fun parseHomepage(body: String, statusCode: Int): GuestParseResult<FanboxMetaData>
 }
 
 /**

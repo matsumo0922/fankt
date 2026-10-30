@@ -857,6 +857,8 @@ kotlin {
             implementation(libs.zipline)
             implementation(libs.kotlinx.serialization.json)
             implementation(libs.kotlinx.collections.immutable)
+            // The guest extracts the homepage metadata, so the HTML parser ships in the bundle.
+            implementation(libs.ksoup)
         }
 
         commonTest.dependencies {
@@ -870,7 +872,6 @@ kotlin {
         clientMain.dependencies {
             implementation(libs.napier)
             implementation(libs.bundles.ktor)
-            implementation(libs.ksoup)
             implementation(libs.zipline.loader)
         }
 
@@ -1004,7 +1005,7 @@ val verifyPortableImportBoundary = tasks.register<VerifyPortableImportBoundaryTa
     "verifyPortableImportBoundary",
 ) {
     group = "verification"
-    description = "Rejects Ktor, Room, Napier, Ksoup, and JVM-only imports from the portable FANBOX core"
+    description = "Rejects Ktor, Room, Napier, and JVM-only imports from the portable FANBOX core"
     projectDirectory.set(layout.projectDirectory)
     portableSourceFiles.from(
         layout.projectDirectory.dir("src").asFileTree.matching {
@@ -1016,7 +1017,6 @@ val verifyPortableImportBoundary = tasks.register<VerifyPortableImportBoundaryTa
             "io.ktor",
             "androidx.room",
             "io.github.aakira.napier",
-            "com.fleeksoft.ksoup",
             "java",
             "javax",
         ),

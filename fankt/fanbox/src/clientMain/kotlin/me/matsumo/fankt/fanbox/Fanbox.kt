@@ -45,7 +45,6 @@ import me.matsumo.fankt.fanbox.repository.FanboxPostRepository
 import me.matsumo.fankt.fanbox.repository.FanboxSearchRepository
 import me.matsumo.fankt.fanbox.repository.FanboxUserRepository
 import me.matsumo.fankt.fanbox.response.FanboxDiagnosticSink
-import me.matsumo.fankt.fanbox.transport.FanboxRequestExecutor
 import me.matsumo.fankt.fanbox.transport.ktor.KtorFanboxRequestExecutor
 import okio.ByteString.Companion.toByteString
 
@@ -195,11 +194,10 @@ class Fanbox internal constructor(
                     ioDispatcher = ioDispatcher,
                 ),
                 user = FanboxUserRepository(
-                    requestExecutor = requestExecutor,
+                    guestHost = guestHost,
                     diagnosticSink = diagnosticSink,
                     ioDispatcher = ioDispatcher,
                 ),
-                requestExecutor = requestExecutor,
                 downloadClient = downloadClient,
                 clients = clients,
                 guestHost = guestHost,
@@ -550,7 +548,6 @@ private data class FanboxResources(
     val creator: FanboxCreatorRepository,
     val search: FanboxSearchRepository,
     val user: FanboxUserRepository,
-    val requestExecutor: FanboxRequestExecutor,
     val downloadClient: HttpClient,
     val clients: List<HttpClient>,
     val guestHost: FanboxGuestHost,

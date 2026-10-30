@@ -2,14 +2,19 @@ package me.matsumo.fankt.fanbox.guest
 
 import me.matsumo.fankt.fanbox.FanboxException
 import me.matsumo.fankt.fanbox.FanboxTolerantResult
+import me.matsumo.fankt.fanbox.datasource.parser.FanboxKsoupMetadataExtractor
 import me.matsumo.fankt.fanbox.domain.FanboxCursor
 import me.matsumo.fankt.fanbox.domain.PageCursorInfo
 import me.matsumo.fankt.fanbox.domain.PageNumberInfo
 import me.matsumo.fankt.fanbox.domain.PageOffsetInfo
+import me.matsumo.fankt.fanbox.domain.model.FanboxBell
 import me.matsumo.fankt.fanbox.domain.model.FanboxComment
 import me.matsumo.fankt.fanbox.domain.model.FanboxCreatorDetail
 import me.matsumo.fankt.fanbox.domain.model.FanboxCreatorPlan
 import me.matsumo.fankt.fanbox.domain.model.FanboxCreatorPlanDetail
+import me.matsumo.fankt.fanbox.domain.model.FanboxMetaData
+import me.matsumo.fankt.fanbox.domain.model.FanboxNewsLetter
+import me.matsumo.fankt.fanbox.domain.model.FanboxPaidRecord
 import me.matsumo.fankt.fanbox.domain.model.FanboxPost
 import me.matsumo.fankt.fanbox.domain.model.FanboxPostDetail
 import me.matsumo.fankt.fanbox.domain.model.FanboxTag
@@ -146,6 +151,49 @@ internal class RealFanboxGuestService : FanboxGuestService {
 
     override fun parseSearchTags(body: String, statusCode: Int): GuestParseResult<List<FanboxTag>> = parse {
         FanboxResponses.searchTags(body, statusCode)
+    }
+
+    override fun buildSupportingPlansRequest(): RequestDescriptor = FanboxEndpoints.supportingPlans()
+
+    override fun parseSupportingPlansStrict(body: String, statusCode: Int): GuestParseResult<List<FanboxCreatorPlan>> = parse {
+        FanboxResponses.supportingPlansStrict(body, statusCode)
+    }
+
+    override fun parseSupportingPlansTolerant(body: String, statusCode: Int): GuestParseResult<FanboxTolerantResult<List<FanboxCreatorPlan>>> = parse {
+        FanboxResponses.supportingPlansTolerant(body, statusCode)
+    }
+
+    override fun buildPaidRecordsRequest(): RequestDescriptor = FanboxEndpoints.paidRecords()
+
+    override fun parsePaidRecords(body: String, statusCode: Int): GuestParseResult<List<FanboxPaidRecord>> = parse {
+        FanboxResponses.paidRecords(body, statusCode)
+    }
+
+    override fun buildUnpaidRecordsRequest(): RequestDescriptor = FanboxEndpoints.unpaidRecords()
+
+    override fun parseUnpaidRecords(body: String, statusCode: Int): GuestParseResult<List<FanboxPaidRecord>> = parse {
+        FanboxResponses.unpaidRecords(body, statusCode)
+    }
+
+    override fun buildNewslettersRequest(): RequestDescriptor = FanboxEndpoints.newsletters()
+
+    override fun parseNewsletters(body: String, statusCode: Int): GuestParseResult<List<FanboxNewsLetter>> = parse {
+        FanboxResponses.newsletters(body, statusCode)
+    }
+
+    override fun buildBellsRequest(page: Int, markNotificationsRead: Boolean): RequestDescriptor = FanboxEndpoints.bells(
+        page = page,
+        skipConvertUnreadNotification = if (markNotificationsRead) 0 else 1,
+    )
+
+    override fun parseBells(body: String, statusCode: Int): GuestParseResult<FanboxTolerantResult<PageNumberInfo<FanboxBell>>> = parse {
+        FanboxResponses.bells(body, statusCode)
+    }
+
+    override fun buildHomepageRequest(): RequestDescriptor = FanboxEndpoints.homepage()
+
+    override fun parseHomepage(body: String, statusCode: Int): GuestParseResult<FanboxMetaData> = parse {
+        FanboxResponses.homepage(body, FanboxKsoupMetadataExtractor, statusCode)
     }
 
     // Throwable rather than RuntimeException: a Kotlin/JS engine failure need not be one.

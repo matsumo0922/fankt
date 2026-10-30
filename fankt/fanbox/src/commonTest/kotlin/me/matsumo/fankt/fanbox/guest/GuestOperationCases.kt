@@ -12,8 +12,11 @@ import me.matsumo.fankt.fanbox.createFanboxJson
 import me.matsumo.fankt.fanbox.domain.FanboxCursor
 import me.matsumo.fankt.fanbox.endpoint.RequestDescriptor
 import me.matsumo.fankt.fanbox.fixture.FanboxCreatorJsonFixtures
+import me.matsumo.fankt.fanbox.fixture.FanboxMetadataHtmlFixtures
+import me.matsumo.fankt.fanbox.fixture.FanboxPaymentJsonFixtures
 import me.matsumo.fankt.fanbox.fixture.FanboxPostJsonFixtures
 import me.matsumo.fankt.fanbox.fixture.FanboxTolerantListJsonFixtures
+import me.matsumo.fankt.fanbox.fixture.FanboxUserJsonFixtures
 
 /**
  * guest の全 operation を fixture で呼び出す。
@@ -136,6 +139,13 @@ internal object GuestOperationCases {
         service.buildUnfollowCreatorRequest(91000001),
         service.buildSearchCreatorsRequest("fixture", 2),
         service.buildSearchTagsRequest("fixture"),
+        service.buildSupportingPlansRequest(),
+        service.buildPaidRecordsRequest(),
+        service.buildUnpaidRecordsRequest(),
+        service.buildNewslettersRequest(),
+        service.buildBellsRequest(page = 2, markNotificationsRead = true),
+        service.buildBellsRequest(page = 0, markNotificationsRead = false),
+        service.buildHomepageRequest(),
     )
 
     // The mixed timeline makes each list operation report a skipped item under its own endpoint.
@@ -160,6 +170,13 @@ internal object GuestOperationCases {
         service.parseCreatorTags(FEATURED_TAGS, 200),
         service.parseSearchCreators(searchedCreators, 200),
         service.parseSearchTags(SEARCHED_TAGS, 200),
+        service.parseSupportingPlansStrict(FanboxCreatorJsonFixtures.actualCreatorPlanList, 200),
+        service.parseSupportingPlansTolerant(FanboxTolerantListJsonFixtures.supportingPlansMixed, 200),
+        service.parsePaidRecords(FanboxPaymentJsonFixtures.paidRecords, 200),
+        service.parseUnpaidRecords(FanboxPaymentJsonFixtures.paidRecords, 200),
+        service.parseNewsletters(FanboxUserJsonFixtures.handcraftedNewsletterList, 200),
+        service.parseBells(FanboxTolerantListJsonFixtures.bellMixed, 200),
+        service.parseHomepage(FanboxMetadataHtmlFixtures.home, 200),
     )
 
     fun parseRejectedResponses(service: FanboxGuestService): List<GuestParseResult<*>> {
@@ -186,6 +203,13 @@ internal object GuestOperationCases {
             service.parseCreatorTags(body, 200),
             service.parseSearchCreators(body, 200),
             service.parseSearchTags(body, 200),
+            service.parseSupportingPlansStrict(body, 200),
+            service.parseSupportingPlansTolerant(body, 200),
+            service.parsePaidRecords(body, 200),
+            service.parseUnpaidRecords(body, 200),
+            service.parseNewsletters(body, 200),
+            service.parseBells(body, 200),
+            service.parseHomepage(body, 200),
         )
     }
 

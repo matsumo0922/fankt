@@ -10,11 +10,16 @@ import me.matsumo.fankt.fanbox.domain.FanboxCursor
 import me.matsumo.fankt.fanbox.domain.PageCursorInfo
 import me.matsumo.fankt.fanbox.domain.PageNumberInfo
 import me.matsumo.fankt.fanbox.domain.PageOffsetInfo
+import me.matsumo.fankt.fanbox.domain.model.FanboxBell
 import me.matsumo.fankt.fanbox.domain.model.FanboxComment
 import me.matsumo.fankt.fanbox.domain.model.FanboxCover
+import me.matsumo.fankt.fanbox.domain.model.FanboxCreator
 import me.matsumo.fankt.fanbox.domain.model.FanboxCreatorDetail
 import me.matsumo.fankt.fanbox.domain.model.FanboxCreatorPlan
 import me.matsumo.fankt.fanbox.domain.model.FanboxCreatorPlanDetail
+import me.matsumo.fankt.fanbox.domain.model.FanboxMetaData
+import me.matsumo.fankt.fanbox.domain.model.FanboxNewsLetter
+import me.matsumo.fankt.fanbox.domain.model.FanboxPaidRecord
 import me.matsumo.fankt.fanbox.domain.model.FanboxPaymentMethod
 import me.matsumo.fankt.fanbox.domain.model.FanboxPost
 import me.matsumo.fankt.fanbox.domain.model.FanboxPostDetail
@@ -331,6 +336,116 @@ class FanboxGuestWireSchemaTest {
                 serializer<FanboxCreatorPlanDetail.SupportTransaction>().descriptor,
                 serializer<FanboxTag>().descriptor,
             ).joinToString("\n", transform = ::describeElements),
+        )
+    }
+
+    @Test
+    fun paymentAndNewsletterTypesAreUnchanged() {
+        assertEquals(
+            """
+            |me.matsumo.fankt.fanbox.domain.model.FanboxPaidRecord
+            |  id: kotlin.String
+            |  paidAmount: kotlin.Int
+            |  paymentDateTime: kotlin.time.Instant
+            |  paymentMethod: me.matsumo.fankt.fanbox.domain.model.FanboxPaymentMethod
+            |  creator: me.matsumo.fankt.fanbox.domain.model.FanboxCreator
+            |me.matsumo.fankt.fanbox.domain.model.FanboxNewsLetter
+            |  id: me.matsumo.fankt.fanbox.domain.model.id.FanboxNewsLetterId
+            |  body: kotlin.String
+            |  createdAt: kotlin.time.Instant
+            |  creator: me.matsumo.fankt.fanbox.domain.model.FanboxCreator
+            |  isRead: kotlin.Boolean
+            |me.matsumo.fankt.fanbox.domain.model.FanboxCreator
+            |  creatorId: me.matsumo.fankt.fanbox.domain.model.id.FanboxCreatorId?
+            |  user: me.matsumo.fankt.fanbox.domain.model.FanboxUser?
+            """.trimMargin(),
+            listOf(
+                serializer<FanboxPaidRecord>().descriptor,
+                serializer<FanboxNewsLetter>().descriptor,
+                serializer<FanboxCreator>().descriptor,
+            ).joinToString("\n", transform = ::describeElements),
+        )
+    }
+
+    @Test
+    fun metadataTypesAreUnchanged() {
+        assertEquals(
+            """
+            |me.matsumo.fankt.fanbox.domain.model.FanboxMetaData
+            |  apiUrl: kotlin.String?
+            |  context: me.matsumo.fankt.fanbox.domain.model.FanboxMetaData.Context?
+            |  csrfToken: kotlin.String
+            |me.matsumo.fankt.fanbox.domain.model.FanboxMetaData.Context
+            |  privacyPolicy: me.matsumo.fankt.fanbox.domain.model.FanboxMetaData.Context.PrivacyPolicy
+            |  user: me.matsumo.fankt.fanbox.domain.model.FanboxMetaData.Context.User
+            |me.matsumo.fankt.fanbox.domain.model.FanboxMetaData.Context.PrivacyPolicy
+            |  policyUrl: kotlin.String
+            |  revisionHistoryUrl: kotlin.String
+            |  shouldShowNotice: kotlin.Boolean
+            |  updateDate: kotlin.String
+            |me.matsumo.fankt.fanbox.domain.model.FanboxMetaData.Context.User
+            |  creatorId: me.matsumo.fankt.fanbox.domain.model.id.FanboxCreatorId?
+            |  fanboxUserStatus: kotlin.Int
+            |  hasAdultContent: kotlin.Boolean
+            |  hasUnpaidPayments: kotlin.Boolean
+            |  iconUrl: kotlin.String?
+            |  isCreator: kotlin.Boolean
+            |  isMailAddressOutdated: kotlin.Boolean
+            |  isSupporter: kotlin.Boolean
+            |  lang: kotlin.String
+            |  name: kotlin.String
+            |  planCount: kotlin.Int
+            |  showAdultContent: kotlin.Boolean
+            |  userId: me.matsumo.fankt.fanbox.domain.model.id.FanboxUserId?
+            """.trimMargin(),
+            listOf(
+                serializer<FanboxMetaData>().descriptor,
+                serializer<FanboxMetaData.Context>().descriptor,
+                serializer<FanboxMetaData.Context.PrivacyPolicy>().descriptor,
+                serializer<FanboxMetaData.Context.User>().descriptor,
+            ).joinToString("\n", transform = ::describeElements),
+        )
+    }
+
+    @Test
+    fun bellTypesAreUnchanged() {
+        assertEquals(
+            """
+            |me.matsumo.fankt.fanbox.domain.model.FanboxBell.Comment
+            |  id: me.matsumo.fankt.fanbox.domain.model.id.FanboxCommentId
+            |  notifiedDatetime: kotlin.time.Instant
+            |  comment: kotlin.String
+            |  isRootComment: kotlin.Boolean
+            |  creatorId: me.matsumo.fankt.fanbox.domain.model.id.FanboxCreatorId
+            |  postId: me.matsumo.fankt.fanbox.domain.model.id.FanboxPostId
+            |  postTitle: kotlin.String
+            |  userName: kotlin.String
+            |  userProfileIconUrl: kotlin.String
+            |me.matsumo.fankt.fanbox.domain.model.FanboxBell.Like
+            |  id: kotlin.String
+            |  notifiedDatetime: kotlin.time.Instant
+            |  comment: kotlin.String
+            |  creatorId: me.matsumo.fankt.fanbox.domain.model.id.FanboxCreatorId
+            |  postId: me.matsumo.fankt.fanbox.domain.model.id.FanboxPostId
+            |  count: kotlin.Int
+            |me.matsumo.fankt.fanbox.domain.model.FanboxBell.PostPublished
+            |  id: me.matsumo.fankt.fanbox.domain.model.id.FanboxPostId
+            |  notifiedDatetime: kotlin.time.Instant
+            |  post: me.matsumo.fankt.fanbox.domain.model.FanboxPost
+            """.trimMargin(),
+            listOf(
+                serializer<FanboxBell.Comment>().descriptor,
+                serializer<FanboxBell.Like>().descriptor,
+                serializer<FanboxBell.PostPublished>().descriptor,
+            ).joinToString("\n", transform = ::describeElements),
+        )
+        assertEquals(
+            listOf(
+                "me.matsumo.fankt.fanbox.domain.model.FanboxBell.Comment",
+                "me.matsumo.fankt.fanbox.domain.model.FanboxBell.Like",
+                "me.matsumo.fankt.fanbox.domain.model.FanboxBell.PostPublished",
+            ),
+            subtypeNames(serializer<FanboxBell>().descriptor),
         )
     }
 
