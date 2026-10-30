@@ -152,20 +152,22 @@ class FanboxSignedBundleTest {
     @Test
     fun aCachedBundleMissingAModuleDoesNotLoad(): Unit = runBlocking {
         withBundleFixture {
-            loadGuest(signedBundle(FIXED_BUNDLE_DIRECTORY)).parseAndClose()
-            cachedModuleFiles().forEach(fileSystem::delete)
+            val remote = signedBundle(FIXED_BUNDLE_DIRECTORY)
+            loadGuest(remote).parseAndClose()
+            cachedModuleFiles(remote).forEach(fileSystem::delete)
 
-            assertFailsWith<IllegalStateException> { loadGuest(httpClient = UnreachableZiplineHttpClient) }
+            assertCachedBundleDoesNotLoad(remote)
         }
     }
 
     @Test
     fun aTamperedCachedModuleDoesNotLoad(): Unit = runBlocking {
         withBundleFixture {
-            loadGuest(signedBundle(FIXED_BUNDLE_DIRECTORY)).parseAndClose()
-            cachedModuleFiles().forEach { file -> fileSystem.write(file) { writeUtf8("tampered") } }
+            val remote = signedBundle(FIXED_BUNDLE_DIRECTORY)
+            loadGuest(remote).parseAndClose()
+            cachedModuleFiles(remote).forEach { file -> fileSystem.write(file) { writeUtf8("tampered") } }
 
-            assertFailsWith<IllegalStateException> { loadGuest(httpClient = UnreachableZiplineHttpClient) }
+            assertCachedBundleDoesNotLoad(remote)
         }
     }
 
@@ -298,12 +300,27 @@ class FanboxSignedBundleTest {
             }
         }
 
-        // Zipline names each cached module after its SHA-256, next to the database that indexes them.
-        fun cachedModuleFiles(): List<Path> = fileSystem
-            .listRecursively(root)
-            .filter { path -> fileSystem.metadata(path).isRegularFile && ".db" !in path.name }
-            .toList()
-            .also { files -> check(files.isNotEmpty()) { "No cached module under $root" } }
+        // Cached files are named by an internal id, so a module is told from the manifest by its content.
+        fun cachedModuleFiles(remote: SignedBundle): List<Path> {
+            val moduleHashes = remote.httpClient.moduleHashes
+            val files = fileSystem
+                .listRecursively(root)
+                .filter { path -> fileSystem.metadata(path).isRegularFile }
+                .filter { path -> fileSystem.read(path) { readByteString() }.sha256() in moduleHashes }
+                .toList()
+            check(files.size == moduleHashes.size) { "Expected ${moduleHashes.size} cached modules under $root, found $files" }
+
+            return files
+        }
+
+        // Only the manifest is out of reach, so a module the cache lacks could still be downloaded.
+        suspend fun assertCachedBundleDoesNotLoad(remote: SignedBundle) {
+            remote.httpClient.downloadedUrls.clear()
+            remote.httpClient.manifestReachable = false
+
+            assertFailsWith<IllegalStateException> { loadGuest(remote) }
+            assertEquals(listOf(MANIFEST_URL), remote.httpClient.downloadedUrls)
+        }
 
         override fun close() {
             fileSystem.deleteRecursively(root)
@@ -324,11 +341,16 @@ class FanboxSignedBundleTest {
 
     private class BundleZiplineHttpClient(private val manifestJson: String, private val modulesByFileName: Map<String, ByteString>) : ZiplineHttpClient() {
         val downloadedUrls = mutableListOf<String>()
+        val moduleHashes = modulesByFileName.values.map(ByteString::sha256).toSet()
+        var manifestReachable = true
 
         override suspend fun download(url: String, requestHeaders: List<Pair<String, String>>): ByteString {
             downloadedUrls += url
 
-            if (url == MANIFEST_URL) return manifestJson.encodeToByteArray().toByteString()
+            if (url == MANIFEST_URL) {
+                check(manifestReachable) { "manifest unavailable" }
+                return manifestJson.encodeToByteArray().toByteString()
+            }
 
             return modulesByFileName[url.substringAfterLast('/')] ?: error("Unexpected bundle URL: $url")
         }
