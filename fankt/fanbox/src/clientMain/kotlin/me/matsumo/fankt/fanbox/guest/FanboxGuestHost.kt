@@ -38,6 +38,7 @@ import me.matsumo.fankt.fanbox.transport.FanboxRequestExecutor
 import okio.Buffer
 import okio.ByteString
 import okio.ByteString.Companion.toByteString
+import okio.IOException
 import okio.use
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
@@ -236,6 +237,7 @@ internal fun ziplineGuestLoader(
 /**
  * 署名を検証した配信 bundle から guest をロードする。[dispatcher] の上で呼び出す。
  *
+ * 配信先からロードできなかったときは、前回までに検証してキャッシュした bundle をロードする。
  * [initializer] は Zipline の生成後、guest の main function の前に呼ばれる。
  */
 internal suspend fun loadZiplineGuest(
@@ -248,37 +250,65 @@ internal suspend fun loadZiplineGuest(
         .apply { config.trustedKeys.forEach { (name, key) -> addEd25519(name = name, trustedKey = key) } }
         .build()
 
+    return config.cache.open(config.cacheDirectoryName, 10L * 1024 * 1024).use { cache ->
+        suspend fun loadOnce(
+            client: ZiplineHttpClient,
+            freshnessChecker: FreshnessChecker,
+        ): LoadedGuest = ZiplineLoader(dispatcher, manifestVerifier, client)
+            .withCache(cache)
+            .loadGuestOnce(config.manifestUrl, freshnessChecker, initializer)
+
+        try {
+            loadOnce(httpClient, AlwaysStale)
+        } catch (failure: CancellationException) {
+            throw failure
+        } catch (deliveryFailure: Exception) {
+            try {
+                // A fresh cached manifest loads before the network is tried, and a client that cannot
+                // download keeps a missing module from being fetched.
+                loadOnce(OfflineZiplineHttpClient, AlwaysFresh)
+            } catch (failure: CancellationException) {
+                throw failure
+            } catch (cacheFailure: Exception) {
+                deliveryFailure.addSuppressed(cacheFailure)
+                throw deliveryFailure
+            }
+        }
+    }
+}
+
+private suspend fun ZiplineLoader.loadGuestOnce(
+    manifestUrl: String,
+    freshnessChecker: FreshnessChecker,
+    initializer: suspend (Zipline) -> Unit,
+): LoadedGuest {
     var created: Zipline? = null
 
-    return config.cache.open(config.cacheDirectoryName, 10L * 1024 * 1024).use { cache ->
-        try {
-            val result = ZiplineLoader(dispatcher, manifestVerifier, httpClient)
-                .withCache(cache)
-                .loadOnce(
-                    applicationName = "fanbox-guest",
-                    freshnessChecker = AlwaysStale,
-                    manifestUrl = config.manifestUrl,
-                    initializer = { zipline ->
-                        created = zipline
-                        initializer(zipline)
-                    },
-                )
+    return try {
+        val result = loadOnce(
+            applicationName = "fanbox-guest",
+            freshnessChecker = freshnessChecker,
+            manifestUrl = manifestUrl,
+            initializer = { zipline ->
+                created = zipline
+                initializer(zipline)
+            },
+        )
 
-            when (result) {
-                is LoadResult.Success -> LoadedGuest(
-                    service = result.zipline.take(FANBOX_GUEST_SERVICE_NAME),
-                    zipline = result.zipline,
-                    version = result.manifest.version,
-                )
+        when (result) {
+            is LoadResult.Success -> LoadedGuest(
+                service = result.zipline.take(FANBOX_GUEST_SERVICE_NAME),
+                zipline = result.zipline,
+                version = result.manifest.version,
+            )
 
-                is LoadResult.Failure -> throw result.exception
-            }
-        } catch (failure: Throwable) {
-            // Zipline closes an instance that fails while it is built, but not one that a
-            // cancellation catches between being built and being returned.
-            created?.close()
-            throw failure
+            is LoadResult.Failure -> throw result.exception
         }
+    } catch (failure: Throwable) {
+        // Zipline closes an instance that fails while it is built, but not one that a
+        // cancellation catches between being built and being returned.
+        created?.close()
+        throw failure
     }
 }
 
@@ -304,14 +334,21 @@ internal class KtorZiplineHttpClient(private val client: HttpClient) : ZiplineHt
         .toByteString()
 }
 
-/**
- * キャッシュ済みの bundle を使わず、毎回配信先の manifest を取得する鮮度ポリシー。
- *
- * モジュールは SHA-256 でキャッシュと照合して再利用される。配信先へ届かない場合はロードが失敗し、キャッシュ済みの
- * bundle は実行されない。
- */
+/** 毎回配信先の manifest を取得する鮮度ポリシー。モジュールは SHA-256 でキャッシュと照合して再利用される。 */
 private object AlwaysStale : FreshnessChecker {
     override fun isFresh(manifest: ZiplineManifest, freshAtEpochMs: Long): Boolean = false
+}
+
+/** キャッシュ済みの manifest を、取得した時期を問わずに使う鮮度ポリシー。 */
+private object AlwaysFresh : FreshnessChecker {
+    override fun isFresh(manifest: ZiplineManifest, freshAtEpochMs: Long): Boolean = true
+}
+
+/** 何も取得できない HTTP client。キャッシュだけでロードするときに使う。 */
+private object OfflineZiplineHttpClient : ZiplineHttpClient() {
+    override suspend fun download(url: String, requestHeaders: List<Pair<String, String>>): ByteString = throw IOException(
+        "The guest is loading from the cache only: $url",
+    )
 }
 
 private fun Throwable.errorType(): String = this::class.simpleName ?: "Throwable"

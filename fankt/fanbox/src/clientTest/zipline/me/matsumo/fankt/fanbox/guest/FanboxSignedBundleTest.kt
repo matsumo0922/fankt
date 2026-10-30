@@ -119,9 +119,51 @@ class FanboxSignedBundleTest {
     }
 
     @Test
-    fun cachedBundleDoesNotRunWhenTheManifestIsUnreachable(): Unit = runBlocking {
+    fun theCachedBundleLoadsWhenTheManifestIsUnreachable(): Unit = runBlocking {
+        withBundleFixture {
+            loadGuest(signedBundle(FIXED_BUNDLE_DIRECTORY, version = "cached")).parseAndClose()
+
+            val loaded = loadGuest(httpClient = UnreachableZiplineHttpClient)
+
+            assertIs<GuestParseResult.Success<*>>(loaded.parseAndClose())
+            assertEquals("cached", loaded.version)
+        }
+    }
+
+    @Test
+    fun theCachedBundleLoadsWhenTheDeliveredManifestIsRefused(): Unit = runBlocking {
+        withBundleFixture {
+            loadGuest(signedBundle(FIXED_BUNDLE_DIRECTORY, version = "cached")).parseAndClose()
+
+            val loaded = loadGuest(signedBundle(FIXED_BUNDLE_DIRECTORY, tamperSignature = true))
+
+            assertIs<GuestParseResult.Success<*>>(loaded.parseAndClose())
+            assertEquals("cached", loaded.version)
+        }
+    }
+
+    @Test
+    fun nothingLoadsWithoutTheManifestAndACachedBundle(): Unit = runBlocking {
+        withBundleFixture {
+            assertFailsWith<IllegalStateException> { loadGuest(httpClient = UnreachableZiplineHttpClient) }
+        }
+    }
+
+    @Test
+    fun aCachedBundleMissingAModuleDoesNotLoad(): Unit = runBlocking {
         withBundleFixture {
             loadGuest(signedBundle(FIXED_BUNDLE_DIRECTORY)).parseAndClose()
+            cachedModuleFiles().forEach(fileSystem::delete)
+
+            assertFailsWith<IllegalStateException> { loadGuest(httpClient = UnreachableZiplineHttpClient) }
+        }
+    }
+
+    @Test
+    fun aTamperedCachedModuleDoesNotLoad(): Unit = runBlocking {
+        withBundleFixture {
+            loadGuest(signedBundle(FIXED_BUNDLE_DIRECTORY)).parseAndClose()
+            cachedModuleFiles().forEach { file -> fileSystem.write(file) { writeUtf8("tampered") } }
 
             assertFailsWith<IllegalStateException> { loadGuest(httpClient = UnreachableZiplineHttpClient) }
         }
@@ -194,7 +236,7 @@ class FanboxSignedBundleTest {
 
     private class BundleFixture : AutoCloseable {
         val dispatcher = newSingleThreadContext("FanboxSignedBundleTest")
-        private val fileSystem = FileSystem.SYSTEM
+        val fileSystem = FileSystem.SYSTEM
         private val root = FileSystem.SYSTEM_TEMPORARY_DIRECTORY / "fankt-signed-bundle-${Random.nextLong()}"
         val keyPair = newKeyPairFromSeed(Random.nextBytes(32).toByteString())
         private val cache = FanboxGuestCache { directoryName, maxSizeInBytes ->
@@ -218,8 +260,9 @@ class FanboxSignedBundleTest {
                 .sign(unsignedManifest.copy(freshAtEpochMs = 0L, version = version))
             if (tamperSignature) {
                 manifest = manifest.copy(
+                    // Hex decoding ignores case, so the replacement digit must differ in value.
                     signatures = manifest.signatures.mapValues { (_, signature) ->
-                        (if (signature.first() == 'A') 'B' else 'A') + signature.drop(1)
+                        (if (signature.first() == '0') '1' else '0') + signature.drop(1)
                     },
                 )
             }
@@ -254,6 +297,13 @@ class FanboxSignedBundleTest {
                 zipline?.close()
             }
         }
+
+        // Zipline names each cached module after its SHA-256, next to the database that indexes them.
+        fun cachedModuleFiles(): List<Path> = fileSystem
+            .listRecursively(root)
+            .filter { path -> fileSystem.metadata(path).isRegularFile && ".db" !in path.name }
+            .toList()
+            .also { files -> check(files.isNotEmpty()) { "No cached module under $root" } }
 
         override fun close() {
             fileSystem.deleteRecursively(root)
