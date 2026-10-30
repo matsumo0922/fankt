@@ -64,6 +64,30 @@ class FanboxSignedBundleTest {
     }
 
     @Test
+    fun everyOperationCrossesTheBridge(): Unit = runBlocking {
+        withBundleFixture {
+            val loaded = loadGuest(signedBundle(FIXED_BUNDLE_DIRECTORY))
+            val native = RealFanboxGuestService()
+
+            withContext(dispatcher) {
+                try {
+                    val bridged = loaded.service
+
+                    assertEquals(GuestOperationCases.buildRequests(native), GuestOperationCases.buildRequests(bridged))
+                    assertEquals(GuestOperationCases.parseResponses(native), GuestOperationCases.parseResponses(bridged))
+                    // A rejection's diagnostic carries the engine's own message, so only its kind is compared.
+                    assertEquals(
+                        GuestOperationCases.parseRejectedResponses(native).map { result -> result::class },
+                        GuestOperationCases.parseRejectedResponses(bridged).map { result -> result::class },
+                    )
+                } finally {
+                    loaded.zipline?.close()
+                }
+            }
+        }
+    }
+
+    @Test
     fun tamperedSignatureIsRefused(): Unit = runBlocking {
         withBundleFixture {
             val remote = signedBundle(FIXED_BUNDLE_DIRECTORY, tamperSignature = true)

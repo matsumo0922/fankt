@@ -1,8 +1,6 @@
 package me.matsumo.fankt.fanbox.guest
 
 import me.matsumo.fankt.fanbox.domain.model.FanboxPostDetail
-import me.matsumo.fankt.fanbox.domain.model.id.FanboxPostId
-import me.matsumo.fankt.fanbox.endpoint.FanboxEndpoints
 import me.matsumo.fankt.fanbox.endpoint.RequestDescriptor
 import kotlin.test.Test
 import kotlin.test.assertTrue
@@ -43,9 +41,7 @@ class FanboxGuestServiceApiTest {
         assertTrue(failure !is GuestParseResult.SchemaMismatch)
     }
 
-    private class StubGuestService : FanboxGuestService {
-        override fun buildPostDetailRequest(postId: String): RequestDescriptor = FanboxEndpoints.postDetail(FanboxPostId(postId))
-
+    private class StubGuestService : FanboxGuestService by RealFanboxGuestService() {
         override fun parsePostDetail(body: String, statusCode: Int): GuestParseResult<FanboxPostDetail> = GuestParseResult.SchemaMismatch("stub")
     }
 }

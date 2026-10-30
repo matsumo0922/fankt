@@ -247,7 +247,7 @@ class FanboxGuestHostTest {
     private class StubGuestService(
         private val buildRequest: (String) -> RequestDescriptor,
         private val parse: (String, Int) -> GuestParseResult<FanboxPostDetail>,
-    ) : FanboxGuestService {
+    ) : FanboxGuestService by RealFanboxGuestService() {
         override fun buildPostDetailRequest(postId: String): RequestDescriptor = buildRequest(postId)
 
         override fun parsePostDetail(body: String, statusCode: Int): GuestParseResult<FanboxPostDetail> = parse(body, statusCode)
