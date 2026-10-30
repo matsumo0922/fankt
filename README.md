@@ -123,13 +123,15 @@ Both paths name the bridge API version, and a consumer keeps reading the version
 against. A change that every host built against the current version can still decode stays on it:
 
 - adding a `FanboxGuestService` function, which an older host never calls
-- adding a field with a default value to a type that crosses the bridge, which an older host ignores
+- adding a field with a default value to a type that crosses the bridge: an older host ignores the
+  field in what the guest returns, and the default fills it in what an older host sends
 
 Raise the version only to make a change that such a host cannot decode: removing or renaming a
 function, changing a parameter or return type, removing, renaming or retyping a field, or adding a
-subtype to a sealed hierarchy. The guest has no fallback, so shipping such a change on the current
-version makes that call fail with `FanboxException.GuestFailure` on every host built against it.
-`ziplineApiCheck` catches a changed function signature; a changed field is caught only in review.
+subtype to a sealed hierarchy. The guest has no fallback, so on the current version such a change
+makes every call that an older host cannot decode fail with `FanboxException.GuestFailure`; a new
+subtype, for example, fails only the calls that return it. `ziplineApiCheck` catches a changed
+function signature; a changed field is caught only in review.
 
 Prefer absorbing a FANBOX API change inside the guest, so that the version rarely moves: keep the
 model, fill a field FANBOX dropped with a default, and map a new kind of item to the existing
