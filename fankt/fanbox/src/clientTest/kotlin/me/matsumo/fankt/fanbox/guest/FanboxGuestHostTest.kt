@@ -9,7 +9,6 @@ import me.matsumo.fankt.fanbox.FanboxException
 import me.matsumo.fankt.fanbox.FanboxGuestEvent
 import me.matsumo.fankt.fanbox.domain.model.FanboxPostDetail
 import me.matsumo.fankt.fanbox.domain.model.id.FanboxPostId
-import me.matsumo.fankt.fanbox.endpoint.FanboxEndpoints
 import me.matsumo.fankt.fanbox.endpoint.RequestDescriptor
 import me.matsumo.fankt.fanbox.repository.FanboxPostRepository
 import me.matsumo.fankt.fanbox.response.FanboxDiagnosticSink
@@ -109,7 +108,7 @@ class FanboxGuestHostTest {
     /** 偽の guest を持つ host と、それを使う repository の組。 */
     private class GuestFixture(
         parse: (String, Int) -> GuestParseResult<FanboxPostDetail>,
-        buildRequest: (String) -> RequestDescriptor = { postId -> FanboxEndpoints.postDetail(FanboxPostId(postId)) },
+        buildRequest: (String) -> RequestDescriptor = RealFanboxGuestService()::buildPostDetailRequest,
         beforeLoad: suspend () -> Unit = {},
     ) : AutoCloseable {
         val requests = mutableListOf<RequestDescriptor>()

@@ -1,6 +1,9 @@
 package me.matsumo.fankt.fanbox.response
 
-internal fun interface FanboxDiagnosticSink {
+import me.matsumo.fankt.fanbox.InternalFanboxApi
+
+@InternalFanboxApi
+public fun interface FanboxDiagnosticSink {
     fun report(message: String)
 
     companion object {
@@ -9,7 +12,8 @@ internal fun interface FanboxDiagnosticSink {
 }
 
 /** 認証情報を除去し、長さを制限した診断情報を生成する。 */
-internal object FanboxDiagnostics {
+@InternalFanboxApi
+public object FanboxDiagnostics {
     const val MAX_FRAGMENT_LENGTH = 2_048
 
     private const val REDACTED = "[REDACTED]"

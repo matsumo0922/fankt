@@ -19,7 +19,8 @@ public data class FanboxListItemSchemaMismatch(public val endpoint: String, publ
 
 /** 一覧の解析結果と、読み飛ばした要素。guest から host へ bridge を越えて渡る。 */
 @Serializable
-internal data class FanboxTolerantResult<T>(val value: T, val mismatches: List<FanboxListItemSchemaMismatch>)
+@InternalFanboxApi
+public data class FanboxTolerantResult<T>(val value: T, val mismatches: List<FanboxListItemSchemaMismatch>)
 
 /** 読み飛ばした要素を、要素の中身を含めずに報告する。 */
 internal fun FanboxDiagnosticSink.report(mismatch: FanboxListItemSchemaMismatch) = report(
@@ -27,7 +28,8 @@ internal fun FanboxDiagnosticSink.report(mismatch: FanboxListItemSchemaMismatch)
 )
 
 /** 読み飛ばした要素を [sink] へ報告し、この結果を返す。 */
-internal fun <T> FanboxTolerantResult<T>.reportedTo(sink: FanboxDiagnosticSink): FanboxTolerantResult<T> = also {
+@InternalFanboxApi
+public fun <T> FanboxTolerantResult<T>.reportedTo(sink: FanboxDiagnosticSink): FanboxTolerantResult<T> = also {
     mismatches.forEach(sink::report)
 }
 

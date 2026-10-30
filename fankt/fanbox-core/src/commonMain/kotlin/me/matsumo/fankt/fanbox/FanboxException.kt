@@ -83,7 +83,7 @@ public sealed class FanboxException(
      * Either the guest failed to load, in which case every request of the [Fanbox] instance fails
      * this way, or it failed while building the request or interpreting the response.
      */
-    public class GuestFailure internal constructor(
+    public class GuestFailure @InternalFanboxApi constructor(
         statusCode: Int?,
         endpoint: String,
         cause: Throwable,

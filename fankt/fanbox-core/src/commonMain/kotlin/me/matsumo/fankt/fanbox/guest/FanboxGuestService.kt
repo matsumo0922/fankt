@@ -3,6 +3,7 @@ package me.matsumo.fankt.fanbox.guest
 import app.cash.zipline.ZiplineService
 import kotlinx.serialization.Serializable
 import me.matsumo.fankt.fanbox.FanboxTolerantResult
+import me.matsumo.fankt.fanbox.InternalFanboxApi
 import me.matsumo.fankt.fanbox.domain.FanboxCursor
 import me.matsumo.fankt.fanbox.domain.PageCursorInfo
 import me.matsumo.fankt.fanbox.domain.PageNumberInfo
@@ -21,7 +22,8 @@ import me.matsumo.fankt.fanbox.domain.model.FanboxTag
 import me.matsumo.fankt.fanbox.endpoint.RequestDescriptor
 
 /** The name the guest binds this service under and the host takes it by. */
-internal const val FANBOX_GUEST_SERVICE_NAME: String = "fanboxGuest"
+@InternalFanboxApi
+public const val FANBOX_GUEST_SERVICE_NAME: String = "fanboxGuest"
 
 /**
  * Builds FANBOX requests and interprets FANBOX responses inside the Zipline guest, so that a
@@ -34,7 +36,8 @@ internal const val FANBOX_GUEST_SERVICE_NAME: String = "fanboxGuest"
  */
 // One function per operation keeps every value that crosses the bridge typed.
 @Suppress("TooManyFunctions")
-internal interface FanboxGuestService : ZiplineService {
+@InternalFanboxApi
+public interface FanboxGuestService : ZiplineService {
     fun buildHomePostsRequest(cursor: FanboxCursor?): RequestDescriptor
 
     fun parseHomePosts(body: String, statusCode: Int): GuestParseResult<FanboxTolerantResult<PageCursorInfo<FanboxPost>>>
@@ -158,7 +161,8 @@ internal interface FanboxGuestService : ZiplineService {
  * type.
  */
 @Serializable
-internal sealed interface GuestParseResult<out T> {
+@InternalFanboxApi
+public sealed interface GuestParseResult<out T> {
     /** The response matched the schema the guest expects. */
     @Serializable
     data class Success<out T>(val value: T) : GuestParseResult<T>

@@ -2,6 +2,7 @@ package me.matsumo.fankt.fanbox.guest
 
 import me.matsumo.fankt.fanbox.FanboxException
 import me.matsumo.fankt.fanbox.FanboxTolerantResult
+import me.matsumo.fankt.fanbox.InternalFanboxApi
 import me.matsumo.fankt.fanbox.datasource.parser.FanboxKsoupMetadataExtractor
 import me.matsumo.fankt.fanbox.domain.FanboxCursor
 import me.matsumo.fankt.fanbox.domain.PageCursorInfo
@@ -29,7 +30,8 @@ import me.matsumo.fankt.fanbox.response.FanboxResponses
 /** guest bundle が bind する [FanboxGuestService] の実装。FanboxEndpoints と FanboxResponses を bridge へ載せる。 */
 // Mirrors FanboxGuestService, which declares one function per operation.
 @Suppress("TooManyFunctions")
-internal class RealFanboxGuestService : FanboxGuestService {
+@InternalFanboxApi
+public class RealFanboxGuestService : FanboxGuestService {
 
     override fun buildHomePostsRequest(cursor: FanboxCursor?): RequestDescriptor = FanboxEndpoints.homePosts(cursor)
 

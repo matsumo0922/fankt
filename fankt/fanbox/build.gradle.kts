@@ -54,7 +54,6 @@ plugins {
     id("matsumo.primitive.android.common")
     id("matsumo.primitive.kmp.android")
     id("matsumo.primitive.kmp.ios")
-    id("matsumo.primitive.kmp.js")
     id("matsumo.primitive.detekt")
     id("matsumo.primitive.maven.publish")
     alias(libs.plugins.zipline)
@@ -108,27 +107,20 @@ tasks.named("generateMetadataFileForKotlinMultiplatformPublication") {
     finalizedBy("stripUnpublishedRootVariants")
 }
 
-// Two Kotlin/JS targets share a platform type, so consumers need an attribute to tell their
-// variants apart.
-val fanboxJsTargetAttribute: Attribute<String> = Attribute.of("me.matsumo.fankt.jsTarget", String::class.java)
-
 kotlin {
-    // The guest bundle needs an executable binary with an entry point, and the existing `js` target
-    // publishes a library. Zipline's serve task name omits the binary kind, so declaring both on one
-    // target registers it twice and fails configuration. A second target keeps them apart.
+    // The guest bundle needs an executable binary with an entry point.
     js("guest", org.jetbrains.kotlin.gradle.plugin.KotlinJsCompilerType.IR) {
         nodejs()
         binaries.executable()
-        attributes.attribute(fanboxJsTargetAttribute, "guest")
     }
 
     jvm("ziplineTest")
 
-    targets.named("js") {
-        attributes.attribute(fanboxJsTargetAttribute, "library")
-    }
-
     sourceSets {
+        all {
+            languageSettings.optIn("me.matsumo.fankt.fanbox.InternalFanboxApi")
+        }
+
         val commonMain by getting
         val commonTest by getting
         val clientMain by creating { dependsOn(commonMain) }
@@ -143,16 +135,7 @@ kotlin {
         getByName("iosTest") { dependsOn(clientTest) }
 
         commonMain.dependencies {
-            api(libs.kotlinx.coroutines.core)
-            api(libs.kotlinx.serialization.core)
-
-            // The bridge service interface is shared by the host and the guest, so its Zipline
-            // dependency reaches every published target.
-            implementation(libs.zipline)
-            implementation(libs.kotlinx.serialization.json)
-            implementation(libs.kotlinx.collections.immutable)
-            // The guest extracts the homepage metadata, so the HTML parser ships in the bundle.
-            implementation(libs.ksoup)
+            api(project(":fankt:fanbox-core"))
         }
 
         commonTest.dependencies {

@@ -39,11 +39,12 @@ jobs:
           ./gradlew
           detekt
           :composeApp:detektDebug
+          :fankt:fanbox-core:detektDebugAndroid
           :fankt:fanbox:detektDebugAndroid
           :fankt:fanbox-persistence-room:detektDebugAndroid
           :fankt:fantia:detektDebugAndroid
           :fankt:fanbox:testDebugUnitTest
-          :fankt:fanbox:ziplineApiCheck
+          :fankt:fanbox-core:ziplineApiCheck
           :fankt:fanbox:ziplineTestTest
           :fankt:fanbox-persistence-room:testDebugUnitTest
           --continue
