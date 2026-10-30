@@ -31,12 +31,12 @@ offer a JavaScript client; see the platform table below.
 | Desktop         | :x: Not Supported                        |
 | Web (Kotlin/JS) | :warning: No request or response API[^1] |
 
-[^1]: The Kotlin/JS target compiles and tests the portable core — endpoint builders, response
+[^1]: The Kotlin/JS target compiles the portable core — endpoint builders, response
 parsers, and domain models — and a `fanbox-js` artifact is published. Its public API covers the
 domain models, the identifier and cursor types, the exception hierarchy, and the authentication
 storage contracts, but **no operation for building a request or parsing a response**: the endpoint
 builders and response parsers are `internal`, so a separate Gradle module cannot call them. The
-target exists to keep that logic compiling and tested on Kotlin/JS, which is the prerequisite for
+target exists to keep that logic compiling on Kotlin/JS, which is the prerequisite for
 running it as a [Zipline](https://github.com/cashapp/zipline) guest inside this library. The
 `Fanbox` client class and all HTTP execution remain Android and iOS only.
 
@@ -511,9 +511,8 @@ creator.profileItems.forEach { item ->
 }
 ```
 
-`Video.url` reconstructs a URL for YouTube and Vimeo and returns `null` for other providers. Only a
-YouTube item is represented in the actual-derived test fragment; Vimeo is covered as a synthetic
-helper contract. Provider names, video IDs, reconstructed URLs, and `Unknown.rawJson` remain
+`Video.url` reconstructs a URL for YouTube and Vimeo and returns `null` for other providers.
+Provider names, video IDs, reconstructed URLs, and `Unknown.rawJson` remain
 untrusted network data, so applications must validate them before navigation, parsing, display, or
 logging.
 
@@ -532,14 +531,17 @@ You can test API results by inputting the required parameters.
 
 ## Continuous integration
 
-Pull requests run Detekt, Android unit tests, Kotlin/JS tests, the signed Zipline bundle tests, the
-guest production bundle build, and bridge API verification in one Ubuntu job. Documentation-only
-changes skip the job. The library release workflow verifies the published FANBOX boundary before
-publishing; it remains on macOS because the Kotlin Multiplatform publication includes Apple targets.
+Pull requests run Detekt, the bridge API check, and the tests that guard guest delivery in one
+Ubuntu job: signature verification, loading from the cache, every operation crossing the bridge in
+QuickJS, the host's handling of guest failures, request validation before credentials are attached,
+and the Cookie database migration. Response parsing and host behavior are checked by loading the
+dev channel bundle in an application rather than by tests in this repository. Documentation-only
+changes skip the job. The library release workflow runs on macOS because the Kotlin Multiplatform
+publication includes Apple targets.
 
 ### 静的解析
 
-`./gradlew detekt` と `./gradlew :detekt` は全モジュールと、ルートのビルド定義・`build-logic`・独立 consumer を型情報なしで解析する。
+`./gradlew detekt` と `./gradlew :detekt` は全モジュールと、ルートのビルド定義・`build-logic` を型情報なしで解析する。
 結果は各モジュールの `build/reports/detekt/` に出力し、ルートの通常解析に依存する各モジュールの XML を `build/reports/detekt/merge.xml` に統合する。
 モジュールを指定した通常解析は、そのモジュールのレポートだけを更新し、統合処理を起動しない。
 統合処理は別の解析タスクやコンパイルを起動しない。
@@ -555,65 +557,6 @@ CI では通常解析と各モジュールの Android debug 向け型解析を�
 endpoint の集約と、認証操作を独立に差し替える `FanboxDependencies` にも理由付きの宣言単位の抑制を使用する。
 外部 API が要求する override は共通設定で関数数から除外する。
 公開 API の例外伝播は `AGENTS.md` のプロジェクト規約に従う。
-
-## Contributing golden fixtures
-
-The `:fankt:fanbox` golden tests keep anonymized endpoint responses as Kotlin raw strings under
-`fankt/fanbox/src/commonTest/kotlin/me/matsumo/fankt/fanbox/fixture`. Tests decode them with the same
-`createFanboxJson()` configuration used in production and compare the complete mapped domain object
-with an independently written expected value.
-
-Add a fixture with this fail-closed, one-shot procedure:
-
-1. Identify an actual response that contains the required variation and record only its endpoint and
-   non-sensitive request parameters. Do not replace an unavailable variation with synthetic response
-   data.
-
-   A task-specific exception may use synthetic data only when the issue explicitly approves it and
-   the test verifies an internal branch or fallback without claiming compatibility with the remote
-   response schema. Mark the fixture as synthetic in source, and state its provenance, limited
-   guarantee, and unverified production schema in the pull request description.
-
-   An issue-approved hybrid fixture may combine a response-derived envelope and field representation
-   with a composed type-specific fragment when the target variation cannot be captured. Mark the
-   response-derived, composed, and unverified parts separately in source and in the pull request.
-   Never describe the complete hybrid fixture as response-derived.
-2. In the current implementation session, disable shell tracing and HTTP header/body logging, set
-   `umask 077`, and create a private temporary directory outside the repository. Inject
-   `FANBOXSESSID` through a temporary process environment without echoing it or placing it in a
-   command argument, shell history, screenshot, or artifact. The HTTP process reads the cookie only
-   from that environment and writes the response body directly to the private directory with mode
-   `0600`.
-3. Keep the raw body outside the working tree. In the private directory, create a candidate by
-   replacing each known identity and free-form value wholesale. This includes user and creator IDs,
-   names, post text, titles, excerpts, descriptions, comments, URL hosts and query tokens, file names,
-   and CSRF tokens. Use obvious fixture values such as `fixture-creator-*`, sequential numeric user
-   IDs, `example.invalid`, and `fixture-token`. Remove unconsumed unknown response fields.
-4. Only after anonymization, add any synthetic unknown field required to exercise API drift handling.
-   Never label synthetic content as response-derived.
-5. Collect source identifiers and tokens only in sanitizer process memory and run a fixed-string
-   quiet scan against the candidate and staged fixture. Record only the pass/fail result, then discard
-   the in-memory values without creating another exact-value file. A match, an unavailable scan, or
-   uncertain anonymization fails the gate: unstage the candidate and return to step 3 without
-   committing it.
-6. Obtain an independent privacy review of the sanitized staged diff. The reviewer receives neither
-   the credential, raw response, nor exact-value list, and checks placeholder consistency, identity
-   fields, URL queries, high-entropy strings, and wholesale replacement of free-form fields. A
-   rejection or missing review fails the gate.
-7. Delete the raw response and private temporary directory, then unset the temporary environment
-   variable whether the capture succeeds or fails. If a credential or raw value reaches output,
-   logs, the repository, a screenshot, or an artifact, stop, clean up, report the exposure, and decide
-   whether credential rotation is required before continuing.
-8. Add the sanitized Kotlin raw string and a full expected domain object that does not derive values
-   from the fixture at runtime. Run:
-
-   ```shell
-   ./gradlew :fankt:fanbox:allTests :fankt:fanbox:detekt
-   ```
-
-The repository contains no reusable capture component, script, or module. Artifact review reduces
-privacy risk but cannot prove detection of arbitrary personal information in unknown response fields;
-known identity and free-form fields therefore always use whole-value replacement.
 
 ## License
 
