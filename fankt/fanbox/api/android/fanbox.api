@@ -180,6 +180,7 @@ public final class me/matsumo/fankt/fanbox/FanboxGuestEvent$SchemaMismatch : me/
 }
 
 public final class me/matsumo/fankt/fanbox/FanboxListItemSchemaMismatch {
+	public static final field Companion Lme/matsumo/fankt/fanbox/FanboxListItemSchemaMismatch$Companion;
 	public fun <init> (Ljava/lang/String;Ljava/util/List;)V
 	public final fun component1 ()Ljava/lang/String;
 	public final fun component2 ()Ljava/util/List;
@@ -190,6 +191,21 @@ public final class me/matsumo/fankt/fanbox/FanboxListItemSchemaMismatch {
 	public final fun getIndexPath ()Ljava/util/List;
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class me/matsumo/fankt/fanbox/FanboxListItemSchemaMismatch$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lme/matsumo/fankt/fanbox/FanboxListItemSchemaMismatch$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lme/matsumo/fankt/fanbox/FanboxListItemSchemaMismatch;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lme/matsumo/fankt/fanbox/FanboxListItemSchemaMismatch;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class me/matsumo/fankt/fanbox/FanboxListItemSchemaMismatch$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
 }
 
 public final class me/matsumo/fankt/fanbox/FanboxLogLevel : java/lang/Enum {
