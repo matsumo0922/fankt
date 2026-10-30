@@ -888,11 +888,6 @@ kotlin {
             implementation(libs.ktor.okhttp)
         }
 
-        androidUnitTest.dependencies {
-            implementation(libs.androidx.test.core)
-            implementation(libs.robolectric)
-        }
-
         iosMain.dependencies {
             implementation(libs.ktor.darwin)
         }
