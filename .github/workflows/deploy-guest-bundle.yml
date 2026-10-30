@@ -47,7 +47,7 @@ jobs:
           SIGNING_KEY_NAME: ${{ vars.ZIPLINE_SIGNING_KEY_NAME || 'fanboxGuest' }}
         run: >-
           ./gradlew
-          :fankt:fanbox:compileProductionExecutableKotlinGuestZipline
+          :fankt:fanbox-guest:compileProductionExecutableKotlinJsZipline
           -PfanboxZiplineSigningPrivateKeyHex="$SIGNING_PRIVATE_KEY_HEX"
           -PfanboxZiplineSigningKeyName="$SIGNING_KEY_NAME"
           -PfanboxZiplineVersion="$GITHUB_SHA"
@@ -58,7 +58,7 @@ jobs:
       # accepts, so it is stopped here instead.
       - name: Refuse an unsigned manifest
         run: |
-          manifest="fankt/fanbox/build/zipline/GuestProduction/manifest.zipline.json"
+          manifest="fankt/fanbox-guest/build/zipline/Production/manifest.zipline.json"
           test -f "$manifest" || { echo "::error::$manifest was not produced"; exit 1; }
           python3 - "$manifest" <<'PY'
           import json, sys
@@ -75,5 +75,5 @@ jobs:
         uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./fankt/fanbox/build/zipline/GuestProduction
+          publish_dir: ./fankt/fanbox-guest/build/zipline/Production
           destination_dir: zipline/v1-dev
