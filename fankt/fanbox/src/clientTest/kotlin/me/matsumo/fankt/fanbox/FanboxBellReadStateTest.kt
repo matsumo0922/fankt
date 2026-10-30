@@ -130,6 +130,7 @@ class FanboxBellReadStateTest {
                 replaceCookies = {},
             ),
             clientFactory = clientFactory,
+            loadGuest = nativeGuest,
             ioDispatcher = Dispatchers.Default,
         )
         return Fixture(fanbox, requestUrls)

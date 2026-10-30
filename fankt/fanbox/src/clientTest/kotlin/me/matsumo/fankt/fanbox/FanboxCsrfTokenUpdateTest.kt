@@ -267,6 +267,7 @@ class FanboxCsrfTokenUpdateTest {
         val fanbox = Fanbox(
             dependencies = createDependencies(MutableStateFlow("token")),
             clientFactory = clientFactory,
+            loadGuest = nativeGuest,
             ioDispatcher = Dispatchers.Default,
         )
 
@@ -333,6 +334,7 @@ class FanboxCsrfTokenUpdateTest {
             Fanbox(
                 dependencies = createDependencies(MutableStateFlow(null)),
                 clientFactory = factory,
+                loadGuest = nativeGuest,
                 ioDispatcher = Dispatchers.Default,
             )
         }
@@ -407,6 +409,7 @@ class FanboxCsrfTokenUpdateTest {
             fanbox = Fanbox(
                 dependencies = dependencies,
                 clientFactory = clientFactory,
+                loadGuest = nativeGuest,
                 ioDispatcher = Dispatchers.Default,
             ),
             clients = clients,

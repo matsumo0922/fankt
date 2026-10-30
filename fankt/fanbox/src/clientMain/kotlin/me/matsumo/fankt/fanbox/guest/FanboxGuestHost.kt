@@ -19,36 +19,34 @@ import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.async
 import kotlinx.coroutines.cancelAndJoin
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.newSingleThreadContext
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
+import me.matsumo.fankt.fanbox.FanboxException
 import me.matsumo.fankt.fanbox.FanboxGuestCache
 import me.matsumo.fankt.fanbox.FanboxGuestEvent
 import me.matsumo.fankt.fanbox.FanboxHttpClientFactory
-import me.matsumo.fankt.fanbox.domain.model.FanboxPostDetail
-import me.matsumo.fankt.fanbox.domain.model.id.FanboxPostId
+import me.matsumo.fankt.fanbox.endpoint.FanboxEndpointId
 import me.matsumo.fankt.fanbox.endpoint.RequestDescriptor
 import me.matsumo.fankt.fanbox.response.FanboxDiagnosticSink
 import me.matsumo.fankt.fanbox.response.FanboxDiagnostics
+import me.matsumo.fankt.fanbox.response.FanboxFailureInterpreter
 import me.matsumo.fankt.fanbox.transport.FanboxRawResponse
+import me.matsumo.fankt.fanbox.transport.FanboxRequestExecutor
 import okio.Buffer
 import okio.ByteString
 import okio.ByteString.Companion.toByteString
 import okio.use
-import kotlin.concurrent.Volatile
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
-/**
- * guest manifest の配信先・検証鍵・キャッシュ・出来事の通知先の設定。[trustedKeys] は鍵名から Ed25519 公開鍵への対応。
- */
+/** guest manifest の配信先・検証鍵・キャッシュの設定。[trustedKeys] は鍵名から Ed25519 公開鍵への対応。 */
 internal class FanboxGuestDeliveryConfig(
     val manifestUrl: String,
     val trustedKeys: Map<String, ByteString>,
     val cache: FanboxGuestCache,
-    val eventListener: (FanboxGuestEvent) -> Unit = {},
 ) {
     init {
         require(Url(manifestUrl).protocol == URLProtocol.HTTPS) { "Guest manifest URL must use HTTPS: $manifestUrl" }
@@ -76,13 +74,13 @@ internal class FanboxGuestDeliveryConfig(
 }
 
 /**
- * Zipline guest を背景でロードし、ロード済みの guest を呼び出す。
+ * Zipline guest を背景でロードし、FANBOX の request の組み立てと response の解析を guest で行う。
  *
- * 呼び出しはロードの完了を待たない。guest が無い間や guest が失敗した呼び出しでは `null` を返し、呼び出し側が
- * 組み込みの request 組み立てと parser で処理する。
+ * 呼び出しはロードの完了を待つ。ロードに失敗した host の呼び出しは、すべて [FanboxException.GuestFailure] で失敗する。
  */
 @OptIn(DelicateCoroutinesApi::class, ExperimentalCoroutinesApi::class)
 internal class FanboxGuestHost(
+    private val requestExecutor: FanboxRequestExecutor,
     private val diagnosticSink: FanboxDiagnosticSink,
     private val eventListener: (FanboxGuestEvent) -> Unit = {},
     load: suspend (CoroutineDispatcher) -> LoadedGuest,
@@ -90,51 +88,65 @@ internal class FanboxGuestHost(
     // Zipline instances are thread-confined; limited parallelism does not guarantee one thread.
     private val dispatcher = newSingleThreadContext("FanboxZipline")
 
-    @Volatile
-    private var guest: LoadedGuest? = null
+    // Read and written only on the dispatcher, so that close() releases the instance the load built.
+    private var loaded: LoadedGuest? = null
 
-    private val loading = CoroutineScope(dispatcher).launch {
-        val loaded = try {
+    private val loading = CoroutineScope(dispatcher).async {
+        val guest = try {
             load(dispatcher)
         } catch (failure: CancellationException) {
             throw failure
         } catch (failure: Throwable) {
-            fallBack("load", failure.describe(), FanboxGuestEvent.LoadFailed(failure.errorType()))
-            return@launch
+            report("load", failure.describe(), FanboxGuestEvent.LoadFailed(failure.errorType()))
+            throw failure
         }
 
-        guest = loaded
-        emit(FanboxGuestEvent.Loaded(loaded.version))
+        loaded = guest
+        emit(FanboxGuestEvent.Loaded(guest.version))
+        guest.service
     }
 
-    /** 背景のロードが終わるまで待つ。 */
-    suspend fun awaitLoad() = loading.join()
-
-    /** guest で `post.info` の request を組み立てる。 */
-    suspend fun buildPostDetailRequest(postId: FanboxPostId): RequestDescriptor? = call(POST_INFO, "buildRequest") {
-        buildPostDetailRequest(postId.value)
-    }
-
-    /** guest で `post.info` の response を解析する。 */
-    suspend fun parsePostDetail(response: FanboxRawResponse): FanboxPostDetail? {
-        val result = call(POST_INFO, PARSE_RESPONSE) { parsePostDetail(response.bodyText, response.statusCode) }
+    /** guest で request を組み立てて実行し、その response を guest で解析する。 */
+    suspend fun <T> request(
+        endpointId: FanboxEndpointId,
+        build: FanboxGuestService.() -> RequestDescriptor,
+        parse: FanboxGuestService.(FanboxRawResponse) -> GuestParseResult<T>,
+    ): T {
+        val endpoint = endpointId.value
+        val descriptor = call(
+            endpoint = endpoint,
+            operation = "buildRequest",
+            statusCode = null,
+            block = build,
+        )
+        val response = requestExecutor.execute(descriptor)
+        val result = call(
+            endpoint = endpoint,
+            operation = PARSE_RESPONSE,
+            statusCode = response.statusCode,
+        ) { parse(response) }
 
         return when (result) {
             is GuestParseResult.Success -> result.value
 
-            is GuestParseResult.SchemaMismatch -> fallBack(
-                operation = PARSE_RESPONSE,
-                reason = "schema mismatch: ${result.diagnostic}",
-                event = FanboxGuestEvent.SchemaMismatch(POST_INFO),
-            )
+            is GuestParseResult.SchemaMismatch -> {
+                report(PARSE_RESPONSE, "schema mismatch: ${result.diagnostic}", FanboxGuestEvent.SchemaMismatch(endpoint))
+                throw FanboxFailureInterpreter.schemaMismatch(
+                    statusCode = response.statusCode,
+                    body = response.bodyText,
+                    endpoint = endpoint,
+                    cause = IllegalStateException(FanboxDiagnostics.sanitizeFragment(result.diagnostic)),
+                )
+            }
 
-            is GuestParseResult.GuestFailure -> fallBack(
-                operation = PARSE_RESPONSE,
-                reason = result.diagnostic,
-                event = FanboxGuestEvent.CallFailed(POST_INFO, PARSE_RESPONSE, "GuestFailure"),
-            )
-
-            null -> null
+            is GuestParseResult.GuestFailure -> {
+                report(PARSE_RESPONSE, result.diagnostic, FanboxGuestEvent.CallFailed(endpoint, PARSE_RESPONSE, "GuestFailure"))
+                throw FanboxException.GuestFailure(
+                    statusCode = response.statusCode,
+                    endpoint = endpoint,
+                    cause = IllegalStateException(FanboxDiagnostics.sanitizeFragment(result.diagnostic)),
+                )
+            }
         }
     }
 
@@ -143,31 +155,46 @@ internal class FanboxGuestHost(
     private suspend fun <T> call(
         endpoint: String,
         operation: String,
+        statusCode: Int?,
         block: FanboxGuestService.() -> T,
-    ): T? {
-        if (guest == null) return null
+    ): T {
+        val service = try {
+            loading.await()
+        } catch (failure: CancellationException) {
+            throw failure
+        } catch (failure: Throwable) {
+            throw FanboxException.GuestFailure(
+                statusCode = statusCode,
+                endpoint = endpoint,
+                cause = failure,
+            )
+        }
 
         return try {
-            withContext(dispatcher) { guest?.service?.block() }
+            withContext(dispatcher) { service.block() }
         } catch (failure: CancellationException) {
             throw failure
         } catch (failure: Exception) {
-            fallBack(operation, failure.describe(), FanboxGuestEvent.CallFailed(endpoint, operation, failure.errorType()))
+            report(operation, failure.describe(), FanboxGuestEvent.CallFailed(endpoint, operation, failure.errorType()))
+            throw FanboxException.GuestFailure(
+                statusCode = statusCode,
+                endpoint = endpoint,
+                cause = failure,
+            )
         }
     }
 
-    private fun fallBack(
+    private fun report(
         operation: String,
         reason: String,
         event: FanboxGuestEvent,
-    ): Nothing? {
-        diagnosticSink.report("Zipline guest $operation failed; using built-in path (${FanboxDiagnostics.sanitizeFragment(reason)})")
+    ) {
+        diagnosticSink.report("Zipline guest $operation failed (${FanboxDiagnostics.sanitizeFragment(reason)})")
         emit(event)
-        return null
     }
 
     // A listener failure is reported instead of propagated: thrown from the load coroutine, it would
-    // crash the process, and thrown from a call, it would fail a request the built-in path handled.
+    // replace the load result, and thrown from a call, it would hide the failure the call reports.
     private fun emit(event: FanboxGuestEvent) {
         try {
             eventListener(event)
@@ -180,9 +207,8 @@ internal class FanboxGuestHost(
         try {
             runBlocking(dispatcher) {
                 loading.cancelAndJoin()
-                val closing = guest
-                guest = null
-                closing?.zipline?.close()
+                loaded?.zipline?.close()
+                loaded = null
             }
         } finally {
             dispatcher.close()
@@ -196,6 +222,16 @@ internal data class LoadedGuest(
     val zipline: Zipline? = null,
     val version: String? = null,
 )
+
+/** [config] の配信先から、[clientFactory] の HTTP client で guest をロードする関数を返す。 */
+internal fun ziplineGuestLoader(
+    config: FanboxGuestDeliveryConfig,
+    clientFactory: FanboxHttpClientFactory,
+): suspend (CoroutineDispatcher) -> LoadedGuest = { dispatcher ->
+    createGuestHttpClient(clientFactory).use { client ->
+        loadZiplineGuest(config, dispatcher, KtorZiplineHttpClient(client))
+    }
+}
 
 /**
  * 署名を検証した配信 bundle から guest をロードする。[dispatcher] の上で呼び出す。
@@ -285,5 +321,4 @@ private fun Throwable.describe(): String = this::class.simpleName + message
     ?.let { ": $it" }
     .orEmpty()
 
-private const val POST_INFO = "post.info"
 private const val PARSE_RESPONSE = "parseResponse"

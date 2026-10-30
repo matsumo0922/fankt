@@ -237,6 +237,7 @@ class FanboxAuthStorageTest {
         val storage = RecordingMutationStorage()
         val fanbox = Fanbox(
             clientFactory = metadataClientFactory("unused-token"),
+            loadGuest = nativeGuest,
             cookieStorage = storage,
         )
         try {
@@ -263,7 +264,11 @@ class FanboxAuthStorageTest {
     @Test
     fun publicAdditiveExpiredRecordDeletesMatchingIdentity() = runBlocking {
         val storage = InMemoryFanboxCookieStorage(listOf(record("session", "old")))
-        val fanbox = Fanbox(cookieStorage = storage)
+        val fanbox = Fanbox(
+            clientFactory = DefaultFanboxHttpClientFactory,
+            loadGuest = nativeGuest,
+            cookieStorage = storage,
+        )
         try {
             fanbox.setCookies(listOf(record("session", "expired", expiresAt = 0)))
 
@@ -277,7 +282,11 @@ class FanboxAuthStorageTest {
     @Test
     fun publicReplacementAtomicallyOmitsExpiredRecords() = runBlocking {
         val storage = RecordingMutationStorage()
-        val fanbox = Fanbox(cookieStorage = storage)
+        val fanbox = Fanbox(
+            clientFactory = DefaultFanboxHttpClientFactory,
+            loadGuest = nativeGuest,
+            cookieStorage = storage,
+        )
         try {
             fanbox.setCookies(
                 listOf(
@@ -297,7 +306,11 @@ class FanboxAuthStorageTest {
     @Test
     fun publicReplacementCanonicalizesAndDeduplicatesBeforeThirdPartyStorage() = runBlocking {
         val storage = RecordingBoundaryStorage()
-        val fanbox = Fanbox(cookieStorage = storage)
+        val fanbox = Fanbox(
+            clientFactory = DefaultFanboxHttpClientFactory,
+            loadGuest = nativeGuest,
+            cookieStorage = storage,
+        )
         try {
             fanbox.setCookies(
                 listOf(
@@ -327,7 +340,11 @@ class FanboxAuthStorageTest {
     @Test
     fun publicAdditiveMutationCanonicalizesBeforeThirdPartyStorage() = runBlocking {
         val storage = RecordingBoundaryStorage()
-        val fanbox = Fanbox(cookieStorage = storage)
+        val fanbox = Fanbox(
+            clientFactory = DefaultFanboxHttpClientFactory,
+            loadGuest = nativeGuest,
+            cookieStorage = storage,
+        )
         try {
             fanbox.setCookies(
                 listOf(record("custom", "credential", domain = " .FANBOX.CC ", path = "index")),
@@ -345,7 +362,11 @@ class FanboxAuthStorageTest {
     @Test
     fun publicExpiredAdditiveMutationDeletesCanonicalIdentityFromThirdPartyStorage() = runBlocking {
         val storage = RecordingBoundaryStorage()
-        val fanbox = Fanbox(cookieStorage = storage)
+        val fanbox = Fanbox(
+            clientFactory = DefaultFanboxHttpClientFactory,
+            loadGuest = nativeGuest,
+            cookieStorage = storage,
+        )
         try {
             fanbox.setCookies(
                 listOf(
@@ -402,8 +423,8 @@ class FanboxAuthStorageTest {
 
     @Test
     fun defaultFanboxInstancesHaveIndependentCookieAndTokenStores() = runBlocking {
-        val first = Fanbox(clientFactory = metadataClientFactory("first-token"))
-        val second = Fanbox(clientFactory = metadataClientFactory("second-token"))
+        val first = Fanbox(clientFactory = metadataClientFactory("first-token"), loadGuest = nativeGuest)
+        val second = Fanbox(clientFactory = metadataClientFactory("second-token"), loadGuest = nativeGuest)
         try {
             first.setCookies(listOf(record("first", "value")))
             first.updateCsrfToken()
@@ -422,8 +443,18 @@ class FanboxAuthStorageTest {
     fun explicitlySharedStoresShareStateAndCloseDoesNotClearThem() = runBlocking {
         val cookies = InMemoryFanboxCookieStorage()
         val tokens = InMemoryFanboxTokenStore()
-        val first = Fanbox(cookieStorage = cookies, tokenStore = tokens)
-        val second = Fanbox(cookieStorage = cookies, tokenStore = tokens)
+        val first = Fanbox(
+            clientFactory = DefaultFanboxHttpClientFactory,
+            loadGuest = nativeGuest,
+            cookieStorage = cookies,
+            tokenStore = tokens,
+        )
+        val second = Fanbox(
+            clientFactory = DefaultFanboxHttpClientFactory,
+            loadGuest = nativeGuest,
+            cookieStorage = cookies,
+            tokenStore = tokens,
+        )
         try {
             first.setCookies(listOf(record("shared", "value")))
             tokens.set("shared-token")
@@ -465,7 +496,12 @@ class FanboxAuthStorageTest {
         }
         val cookies = InMemoryFanboxCookieStorage()
         val tokens = InMemoryFanboxTokenStore()
-        val fanbox = Fanbox(factory, cookieStorage = cookies, tokenStore = tokens)
+        val fanbox = Fanbox(
+            factory,
+            nativeGuest,
+            cookieStorage = cookies,
+            tokenStore = tokens,
+        )
         try {
             fanbox.setFanboxSessionId("session-value")
             tokens.set("request-token")

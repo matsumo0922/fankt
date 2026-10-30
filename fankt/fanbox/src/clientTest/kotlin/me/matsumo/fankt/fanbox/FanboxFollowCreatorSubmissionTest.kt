@@ -73,6 +73,7 @@ class FanboxFollowCreatorSubmissionTest {
             fanbox = Fanbox(
                 dependencies = dependencies,
                 clientFactory = clientFactory,
+                loadGuest = nativeGuest,
                 ioDispatcher = Dispatchers.Default,
             ),
             requestBodies = requestBodies,

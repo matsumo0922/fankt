@@ -10,6 +10,7 @@ import me.matsumo.fankt.fanbox.domain.PageCursorInfo
 import me.matsumo.fankt.fanbox.domain.model.id.FanboxCommentId
 import me.matsumo.fankt.fanbox.domain.model.id.FanboxCreatorId
 import me.matsumo.fankt.fanbox.domain.model.id.FanboxPostId
+import me.matsumo.fankt.fanbox.endpoint.FanboxEndpointIds
 import me.matsumo.fankt.fanbox.endpoint.FanboxEndpoints
 import me.matsumo.fankt.fanbox.guest.FanboxGuestHost
 import me.matsumo.fankt.fanbox.response.FanboxDiagnosticSink
@@ -21,7 +22,7 @@ internal class FanboxPostRepository(
     private val requestExecutor: FanboxRequestExecutor,
     private val diagnosticSink: FanboxDiagnosticSink = FanboxDiagnosticSink.none,
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
-    private val guestHost: FanboxGuestHost? = null,
+    private val guestHost: FanboxGuestHost,
 ) {
 
     suspend fun getHomePosts(cursor: FanboxCursor?) = withContext(ioDispatcher) {
@@ -72,13 +73,12 @@ internal class FanboxPostRepository(
         fetchCreatorPostsPagination(creatorId)
     }
 
-    // The guest parses only a response to a request it built, so one call never mixes the two paths.
     suspend fun getPostDetail(postId: FanboxPostId) = withContext(ioDispatcher) {
-        val guestDescriptor = guestHost?.buildPostDetailRequest(postId)
-        val response = requestExecutor.execute(guestDescriptor ?: FanboxEndpoints.postDetail(postId))
-        val guestPost = guestDescriptor?.let { guestHost.parsePostDetail(response) }
-
-        guestPost ?: FanboxResponses.postDetail(response.bodyText, response.statusCode)
+        guestHost.request(
+            endpointId = FanboxEndpointIds.postInfo,
+            build = { buildPostDetailRequest(postId.value) },
+            parse = { response -> parsePostDetail(response.bodyText, response.statusCode) },
+        )
     }
 
     suspend fun getPostComment(postId: FanboxPostId, offset: Int) = withContext(ioDispatcher) {

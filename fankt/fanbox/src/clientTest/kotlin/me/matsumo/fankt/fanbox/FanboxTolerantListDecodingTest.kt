@@ -223,6 +223,7 @@ class FanboxTolerantListDecodingTest {
                 replaceCookies = {},
             ),
             clientFactory = clientFactory,
+            loadGuest = nativeGuest,
             ioDispatcher = Dispatchers.Default,
         )
     }
