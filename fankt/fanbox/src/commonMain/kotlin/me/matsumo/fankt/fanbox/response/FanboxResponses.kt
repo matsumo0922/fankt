@@ -88,23 +88,18 @@ internal val fanboxResponseOperations: List<FanboxResponseOperation> = listOf(
 internal object FanboxResponses {
     private val formatter = createFanboxJson()
 
-    fun homePosts(
-        body: String,
-        statusCode: Int = 200,
-        diagnosticSink: FanboxDiagnosticSink = FanboxDiagnosticSink.none,
-    ): FanboxTolerantResult<PageCursorInfo<FanboxPost>> = withMappers(body, statusCode, FanboxEndpointIds.postListHome, diagnosticSink) { mappers ->
+    fun homePosts(body: String, statusCode: Int = 200): FanboxTolerantResult<PageCursorInfo<FanboxPost>> = withMappers(
+        body,
+        statusCode,
+        FanboxEndpointIds.postListHome,
+    ) { mappers ->
         mappers.post.map(decode(body, FanboxPostListEntity.serializer()), "post.listHome")
     }
 
-    fun supportingPosts(
-        body: String,
-        statusCode: Int = 200,
-        diagnosticSink: FanboxDiagnosticSink = FanboxDiagnosticSink.none,
-    ): FanboxTolerantResult<PageCursorInfo<FanboxPost>> = withMappers(
+    fun supportingPosts(body: String, statusCode: Int = 200): FanboxTolerantResult<PageCursorInfo<FanboxPost>> = withMappers(
         body,
         statusCode,
         FanboxEndpointIds.postListSupporting,
-        diagnosticSink,
     ) { mappers ->
         mappers.post.map(decode(body, FanboxPostListEntity.serializer()), "post.listSupporting")
     }
@@ -113,12 +108,10 @@ internal object FanboxResponses {
         body: String,
         nextCursor: FanboxCursor?,
         statusCode: Int = 200,
-        diagnosticSink: FanboxDiagnosticSink = FanboxDiagnosticSink.none,
     ): FanboxTolerantResult<PageCursorInfo<FanboxPost>> = withMappers(
         body,
         statusCode,
         FanboxEndpointIds.postListCreator,
-        diagnosticSink,
     ) { mappers ->
         mappers.post.map(
             decode(body, FanboxCreatorPostItemsEntity.serializer()),
@@ -141,15 +134,10 @@ internal object FanboxResponses {
         mappers.post.map(decode(body, FanboxPostDetailEntity.serializer()))
     }
 
-    fun postComments(
-        body: String,
-        statusCode: Int = 200,
-        diagnosticSink: FanboxDiagnosticSink = FanboxDiagnosticSink.none,
-    ): FanboxTolerantResult<PageOffsetInfo<FanboxComment>> = withMappers(
+    fun postComments(body: String, statusCode: Int = 200): FanboxTolerantResult<PageOffsetInfo<FanboxComment>> = withMappers(
         body,
         statusCode,
         FanboxEndpointIds.postGetComments,
-        diagnosticSink,
     ) { mappers ->
         mappers.post.map(decode(body, FanboxPostCommentListEntity.serializer()), "post.getComments")
     }
@@ -160,22 +148,6 @@ internal object FanboxResponses {
     ): PageNumberInfo<FanboxPost> = withMappers(body, statusCode, FanboxEndpointIds.postListTagged) { mappers ->
         mappers.post.map(decode(body, FanboxPostSearchEntity.serializer()))
     }
-
-    // 本文を使わない操作も decoder の (String) -> Unit のシグネチャを維持する。
-    @Suppress("UNUSED_PARAMETER")
-    fun likePost(body: String): Unit = Unit
-
-    // 本文を使わない操作も decoder の (String) -> Unit のシグネチャを維持する。
-    @Suppress("UNUSED_PARAMETER")
-    fun likeComment(body: String): Unit = Unit
-
-    // 本文を使わない操作も decoder の (String) -> Unit のシグネチャを維持する。
-    @Suppress("UNUSED_PARAMETER")
-    fun addComment(body: String): Unit = Unit
-
-    // 本文を使わない操作も decoder の (String) -> Unit のシグネチャを維持する。
-    @Suppress("UNUSED_PARAMETER")
-    fun deleteComment(body: String): Unit = Unit
 
     fun creatorDetail(
         body: String,

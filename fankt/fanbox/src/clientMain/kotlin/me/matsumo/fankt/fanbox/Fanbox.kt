@@ -181,10 +181,9 @@ class Fanbox internal constructor(
 
             return FanboxResources(
                 post = FanboxPostRepository(
-                    requestExecutor = requestExecutor,
+                    guestHost = guestHost,
                     diagnosticSink = diagnosticSink,
                     ioDispatcher = ioDispatcher,
-                    guestHost = guestHost,
                 ),
                 creator = FanboxCreatorRepository(
                     requestExecutor = requestExecutor,
