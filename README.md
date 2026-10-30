@@ -40,13 +40,16 @@ target exists to keep that logic compiling and tested on Kotlin/JS, which is the
 running it as a [Zipline](https://github.com/cashapp/zipline) guest inside this library. The
 `Fanbox` client class and all HTTP execution remain Android and iOS only.
 
-### Zipline OTA prototype
+### Zipline guest
 
-The FANBOX client includes an opt-in OTA prototype for the `post.info` request builder and response
-parser. It starts the guest engine only when the caller supplies a manifest URL, trusted Ed25519
-public keys and a cache through the corresponding `Fanbox` constructor. The library embeds neither a
-production delivery URL nor a default trusted key. Without that explicit configuration, `Fanbox`
-uses the same built-in request and parsing path as before the prototype.
+The `Fanbox` client builds FANBOX requests and interprets their responses in a
+[Zipline](https://github.com/cashapp/zipline) guest, a signed JavaScript bundle delivered over HTTPS,
+so that a fix for a FANBOX API change reaches users without an application update. The host keeps
+cookies, the session and HTTP execution, and validates every request the guest builds. The guest
+sees the CSRF token in the homepage metadata it parses, but never a cookie.
+
+Every `Fanbox` takes the delivery URL, the trusted Ed25519 public keys and a cache. The library embeds
+neither a delivery URL nor a trusted key.
 
 ```kotlin
 Fanbox(
@@ -60,18 +63,25 @@ Fanbox(
 )
 ```
 
-The guest loads in the background as soon as the `Fanbox` is created, and calls never wait for it.
-`post.info` uses the built-in request builder and parser until the guest has loaded, and whenever the
-guest fails to build the request or to parse the response. A response the guest cannot parse goes to
-the built-in parser as is, without a second request, and the built-in `SchemaMismatch` is thrown only
-when that parser rejects it too. A failed call does not stop the guest for later calls.
+The guest loads in the background as soon as the `Fanbox` is created, and requests wait for it. There
+is no built-in fallback:
+
+| What happens | The request fails with |
+|---|---|
+| The guest did not load | `FanboxException.GuestFailure`, for every request of this `Fanbox` |
+| The guest failed to build the request or to interpret the response | `FanboxException.GuestFailure` |
+| The guest rejected the response | `FanboxException.SchemaMismatch` |
+
+A `Fanbox` whose guest did not load does not try again; create a new one. A failed request does not
+stop the guest for later requests.
 
 #### Loading and caching
 
 Every load fetches the manifest from the delivery URL. Modules whose SHA-256 is already in the cache
 are not downloaded again, so a load whose manifest has not changed downloads only the manifest. When
-the manifest cannot be reached, the guest does not load and `post.info` stays on the built-in path for
-the life of the `Fanbox`: a cached bundle never runs on its own.
+the manifest cannot be fetched or fails verification, the bundle last verified into the cache loads
+instead, without downloading anything. Its signature and module hashes are checked again, and a
+cached bundle missing a module does not load.
 
 Each HTTP request of a load gives up after 10 seconds. The cache keeps up to 10 MiB in a subdirectory
 per set of trusted keys, so a cache written under a previous set never blocks loading. Give each `Fanbox` its
@@ -79,21 +89,19 @@ own cache directory.
 
 #### Observing the guest
 
-Pass `guestEventListener` to follow the guest path. Every fallback above is reported, so a consumer
-can tell a guest that never loads from one that works, which otherwise look the same: both serve
-`post.info` through the built-in path.
+Pass `guestEventListener` to follow the guest.
 
 | Event | When |
 |---|---|
 | `Loaded(version)` | The guest loaded. `version` is the commit the bundle was built from |
-| `LoadFailed(errorType)` | The guest could not load; this `Fanbox` uses only the built-in path |
-| `SchemaMismatch(endpoint)` | The guest's parser rejected a response, which goes to the built-in parser |
-| `CallFailed(endpoint, operation, errorType)` | A guest call failed and the built-in path handled it |
+| `LoadFailed(errorType)` | The guest could not load; every request of this `Fanbox` fails |
+| `SchemaMismatch(endpoint)` | The guest's parser rejected a response |
+| `CallFailed(endpoint, operation, errorType)` | A guest call failed |
 
 No event carries a response body or a credential: `errorType` is the name of the exception's type.
 The listener runs on a background thread, possibly before the constructor returns and possibly from
 several threads at once. Return quickly, and do not close the `Fanbox` from it. An exception it
-throws is logged and does not reach the guest path.
+throws is logged and does not reach the request.
 
 #### Bundle delivery
 
@@ -117,9 +125,9 @@ Not promoting leaves consumers on the last bundle that was promoted.
 Both paths name the bridge API version. A consumer keeps reading the version it was built against, so
 a bundle built for a newer bridge API never reaches a host that cannot decode it. Raise the version —
 and publish under a new path without removing the old one — when the signature of a
-`FanboxGuestService` function changes, or when the wire schema of `RequestDescriptor`,
-`GuestParseResult` or `FanboxPostDetail` changes. Consumers built against the previous version keep
-reading the previous path until they are updated.
+`FanboxGuestService` function changes, or when the wire schema of a type passed to or returned from
+one changes. Consumers built against the previous version keep reading the previous path until they
+are updated.
 
 Builds without the signing key produce an unsigned manifest instead of failing, so that local builds
 and pull request CI pass. Neither workflow publishes such a manifest.
@@ -149,29 +157,31 @@ the recovery key, so delivery continues without an application update. Ship a ne
 a new name in the next update of each consumer.
 
 **When a private key leaks**, switching keys does not revoke it: a consumer trusts the leaked key
-until an update removes it. A leaked key alone cannot place a bundle at the delivery URL, but stop
-the guest with the consumer's own switch if the delivery itself may be compromised, and ship new keys
-in an update.
+until an update removes it. A leaked key alone cannot place a bundle at the delivery URL. Ship new
+keys in an update.
 
 **To rotate a key on purpose**, ship consumers that trust the new key as well, switch signing to it,
 and drop the old key from consumers once the versions that trust only the old key are no longer in
 use.
 
-#### Stopping and rolling back a delivery
+#### Rolling back a delivery
 
 Each channel is a directory on the `gh-pages` branch. A consumer loads the guest when it creates a
 `Fanbox`, so a change here reaches it the next time it creates one; a `Fanbox` that has already
 loaded keeps running what it loaded.
 
+A delivery cannot be stopped. Deleting a manifest leaves every consumer that has loaded a bundle on
+its cached one, and breaks every request of a consumer that has none. Return to an earlier bundle or
+deliver a fix instead.
+
 | Goal | Production (`zipline/v1`) | Dev (`zipline/v1-dev`) |
 |---|---|---|
-| Stop | Delete the manifest | Delete the manifest |
 | Return to an earlier bundle | Restore the directory from the `gh-pages` history | Revert on `main` |
 | Deliver a fix | Merge to `main`, check the dev channel, then promote | Merge to `main` |
 
-Both operations below start from a worktree of the latest `gh-pages`. Do not run **Deploy Guest
-Bundle** or **Promote Guest Bundle** meanwhile. If the push is rejected, another run moved the
-branch: remove the worktree and start again from here. Remove it with
+To return production to an earlier bundle, start from a worktree of the latest `gh-pages`. Do not run
+**Deploy Guest Bundle** or **Promote Guest Bundle** meanwhile. If the push is rejected, another run
+moved the branch: remove the worktree and start again from here. Remove it with
 `git worktree remove ../fankt-gh-pages` from the source checkout once the push succeeds.
 
 ```sh
@@ -180,16 +190,7 @@ git worktree add --detach ../fankt-gh-pages origin/gh-pages
 cd ../fankt-gh-pages
 ```
 
-**To stop**, delete the manifest. Consumers then fail to load the guest and use the built-in path:
-
-```sh
-git rm zipline/v1/manifest.zipline.json
-git commit -m "Stop the production guest bundle"
-git push origin HEAD:gh-pages
-```
-
-**To return production to an earlier bundle**, pick the commit that published it and restore the
-directory as it was there:
+Pick the commit that published the bundle and restore the directory as it was there:
 
 ```sh
 git log --oneline -- zipline/v1
@@ -202,11 +203,6 @@ git push origin HEAD:gh-pages
 The restored manifest keeps its original signature, so consumers accept it only if they still trust
 the key that signed it. The dev channel still holds the bundle that was rolled back, and the next
 promotion would deliver it again: land the fix on `main` before promoting.
-
-**A consumer's own switch**, such as a remote configuration flag that stops creating the guest, stops
-only that consumer, and when it takes effect depends on that consumer. Deleting the manifest stops
-every consumer at once. Use the consumer's switch when the delivery itself cannot be trusted, for
-example after a signing key leaks.
 
 ## Usage
 

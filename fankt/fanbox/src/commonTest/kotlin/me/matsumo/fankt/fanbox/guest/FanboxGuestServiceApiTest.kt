@@ -37,8 +37,8 @@ class FanboxGuestServiceApiTest {
         val mismatch: GuestParseResult<FanboxPostDetail> = GuestParseResult.SchemaMismatch("schema")
         val failure: GuestParseResult<FanboxPostDetail> = GuestParseResult.GuestFailure("engine")
 
-        // The host branches on these to decide whether to keep using the guest, so they must not
-        // collapse into one another.
+        // The host turns these into different exceptions for the caller, so they must not collapse
+        // into one another.
         assertTrue(mismatch !is GuestParseResult.GuestFailure)
         assertTrue(failure !is GuestParseResult.SchemaMismatch)
     }
