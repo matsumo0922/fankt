@@ -4,6 +4,9 @@ functions = [
   # fun buildAddCommentRequest(kotlin.String, kotlin.String, kotlin.String, kotlin.String): me.matsumo.fankt.fanbox.endpoint.RequestDescriptor
   "6Jzgt4Yg",
 
+  # fun buildBellsRequest(kotlin.Int, kotlin.Boolean): me.matsumo.fankt.fanbox.endpoint.RequestDescriptor
+  "4pv3KnXI",
+
   # fun buildCreatorDetailRequest(kotlin.String): me.matsumo.fankt.fanbox.endpoint.RequestDescriptor
   "tIPLJIZs",
 
@@ -37,11 +40,20 @@ functions = [
   # fun buildHomePostsRequest(me.matsumo.fankt.fanbox.domain.FanboxCursor): me.matsumo.fankt.fanbox.endpoint.RequestDescriptor
   "8gQ6YHJe",
 
+  # fun buildHomepageRequest(): me.matsumo.fankt.fanbox.endpoint.RequestDescriptor
+  "kD94Ogfw",
+
   # fun buildLikeCommentRequest(kotlin.String): me.matsumo.fankt.fanbox.endpoint.RequestDescriptor
   "tWWxKu9J",
 
   # fun buildLikePostRequest(kotlin.String): me.matsumo.fankt.fanbox.endpoint.RequestDescriptor
   "bBfi3z1e",
+
+  # fun buildNewslettersRequest(): me.matsumo.fankt.fanbox.endpoint.RequestDescriptor
+  "xJ6GGZVf",
+
+  # fun buildPaidRecordsRequest(): me.matsumo.fankt.fanbox.endpoint.RequestDescriptor
+  "tsbmKeQQ",
 
   # fun buildPostCommentsRequest(kotlin.String, kotlin.Int): me.matsumo.fankt.fanbox.endpoint.RequestDescriptor
   "U0qRQkmD",
@@ -58,6 +70,9 @@ functions = [
   # fun buildSearchTagsRequest(kotlin.String): me.matsumo.fankt.fanbox.endpoint.RequestDescriptor
   "Pik+bQq8",
 
+  # fun buildSupportingPlansRequest(): me.matsumo.fankt.fanbox.endpoint.RequestDescriptor
+  "k2ZKtSLN",
+
   # fun buildSupportingPostsRequest(me.matsumo.fankt.fanbox.domain.FanboxCursor): me.matsumo.fankt.fanbox.endpoint.RequestDescriptor
   "zYHbgrmn",
 
@@ -67,8 +82,14 @@ functions = [
   # fun buildUnfollowCreatorRequest(kotlin.Long): me.matsumo.fankt.fanbox.endpoint.RequestDescriptor
   "CXyNhdFb",
 
+  # fun buildUnpaidRecordsRequest(): me.matsumo.fankt.fanbox.endpoint.RequestDescriptor
+  "gAIkYIF2",
+
   # fun close(): kotlin.Unit
   "moYx+T3e",
+
+  # fun parseBells(kotlin.String, kotlin.Int): me.matsumo.fankt.fanbox.guest.GuestParseResult<me.matsumo.fankt.fanbox.FanboxTolerantResult<me.matsumo.fankt.fanbox.domain.PageNumberInfo<me.matsumo.fankt.fanbox.domain.model.FanboxBell>>>
+  "oU6MkVwH",
 
   # fun parseCreatorDetail(kotlin.String, kotlin.Int): me.matsumo.fankt.fanbox.guest.GuestParseResult<me.matsumo.fankt.fanbox.domain.model.FanboxCreatorDetail>
   "fdYvbjlu",
@@ -97,6 +118,15 @@ functions = [
   # fun parseHomePosts(kotlin.String, kotlin.Int): me.matsumo.fankt.fanbox.guest.GuestParseResult<me.matsumo.fankt.fanbox.FanboxTolerantResult<me.matsumo.fankt.fanbox.domain.PageCursorInfo<me.matsumo.fankt.fanbox.domain.model.FanboxPost>>>
   "Q9bPzFiy",
 
+  # fun parseHomepage(kotlin.String, kotlin.Int): me.matsumo.fankt.fanbox.guest.GuestParseResult<me.matsumo.fankt.fanbox.domain.model.FanboxMetaData>
+  "++/kGbzT",
+
+  # fun parseNewsletters(kotlin.String, kotlin.Int): me.matsumo.fankt.fanbox.guest.GuestParseResult<kotlin.collections.List<me.matsumo.fankt.fanbox.domain.model.FanboxNewsLetter>>
+  "3uHoIWg+",
+
+  # fun parsePaidRecords(kotlin.String, kotlin.Int): me.matsumo.fankt.fanbox.guest.GuestParseResult<kotlin.collections.List<me.matsumo.fankt.fanbox.domain.model.FanboxPaidRecord>>
+  "LBa558w4",
+
   # fun parsePostComments(kotlin.String, kotlin.Int): me.matsumo.fankt.fanbox.guest.GuestParseResult<me.matsumo.fankt.fanbox.FanboxTolerantResult<me.matsumo.fankt.fanbox.domain.PageOffsetInfo<me.matsumo.fankt.fanbox.domain.model.FanboxComment>>>
   "J134soGS",
 
@@ -112,9 +142,18 @@ functions = [
   # fun parseSearchTags(kotlin.String, kotlin.Int): me.matsumo.fankt.fanbox.guest.GuestParseResult<kotlin.collections.List<me.matsumo.fankt.fanbox.domain.model.FanboxTag>>
   "ypf7AfDe",
 
+  # fun parseSupportingPlansStrict(kotlin.String, kotlin.Int): me.matsumo.fankt.fanbox.guest.GuestParseResult<kotlin.collections.List<me.matsumo.fankt.fanbox.domain.model.FanboxCreatorPlan>>
+  "MWBHjlqT",
+
+  # fun parseSupportingPlansTolerant(kotlin.String, kotlin.Int): me.matsumo.fankt.fanbox.guest.GuestParseResult<me.matsumo.fankt.fanbox.FanboxTolerantResult<kotlin.collections.List<me.matsumo.fankt.fanbox.domain.model.FanboxCreatorPlan>>>
+  "p4i0EKwK",
+
   # fun parseSupportingPosts(kotlin.String, kotlin.Int): me.matsumo.fankt.fanbox.guest.GuestParseResult<me.matsumo.fankt.fanbox.FanboxTolerantResult<me.matsumo.fankt.fanbox.domain.PageCursorInfo<me.matsumo.fankt.fanbox.domain.model.FanboxPost>>>
   "Qu+tJfBV",
 
   # fun parseTaggedPosts(kotlin.String, kotlin.Int): me.matsumo.fankt.fanbox.guest.GuestParseResult<me.matsumo.fankt.fanbox.domain.PageNumberInfo<me.matsumo.fankt.fanbox.domain.model.FanboxPost>>
   "2pQZ6ZjX",
+
+  # fun parseUnpaidRecords(kotlin.String, kotlin.Int): me.matsumo.fankt.fanbox.guest.GuestParseResult<kotlin.collections.List<me.matsumo.fankt.fanbox.domain.model.FanboxPaidRecord>>
+  "+WGE+ILz",
 ]

@@ -6,13 +6,14 @@ import kotlin.test.Test
 import kotlin.test.assertTrue
 
 /**
- * Guards the promise that the guest cannot reach a credential.
+ * Guards the promise that the host never hands the guest a credential.
  *
  * The bridge is the only channel between the guest and the host, so a credential can only reach
- * the guest as a parameter or a return value of a bridge function. Binding every such value to its
- * declared type here means adding a credential-carrying parameter stops compiling this file, and
- * `ziplineApiCheck` separately fails the build when a bridge function changes without updating
- * `api/zipline-api.toml`.
+ * the guest as a parameter of a bridge function. Binding such values to their declared types here
+ * means adding a credential-carrying parameter stops compiling this file, and `ziplineApiCheck`
+ * separately fails the build when a bridge function changes without updating
+ * `api/zipline-api.toml`. The guest still sees the CSRF token inside the homepage it parses, and
+ * returns it for the host to store; it never sees a cookie.
  */
 class FanboxGuestServiceApiTest {
 
