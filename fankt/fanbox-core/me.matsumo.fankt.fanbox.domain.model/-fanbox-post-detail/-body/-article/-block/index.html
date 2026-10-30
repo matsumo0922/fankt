@@ -1,0 +1,213 @@
+<!doctype html>
+<html class="no-js">
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1" charset="UTF-8">
+    <title>Block</title>
+<link href="../../../../../../../images/logo-icon.svg" rel="icon" type="image/svg">    <script>var pathToRoot = "../../../../../../../";</script>
+    <script>document.documentElement.classList.replace("no-js","js");</script>
+    <script>const storage = localStorage.getItem("dokka-dark-mode")
+    if (storage == null) {
+        const osDarkSchemePreferred = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
+        if (osDarkSchemePreferred === true) {
+            document.getElementsByTagName("html")[0].classList.add("theme-dark")
+        }
+    } else {
+        const savedDarkMode = JSON.parse(storage)
+        if(savedDarkMode === true) {
+            document.getElementsByTagName("html")[0].classList.add("theme-dark")
+        }
+    }
+    </script>
+<script type="text/javascript" src="https://unpkg.com/kotlin-playground@1/dist/playground.min.js" async></script>
+<script type="text/javascript" src="../../../../../../../scripts/sourceset_dependencies.js" async></script>
+<link href="../../../../../../../styles/style.css" rel="Stylesheet">
+<link href="../../../../../../../styles/main.css" rel="Stylesheet">
+<link href="../../../../../../../styles/prism.css" rel="Stylesheet">
+<link href="../../../../../../../styles/logo-styles.css" rel="Stylesheet">
+<link href="../../../../../../../styles/font-jb-sans-auto.css" rel="Stylesheet">
+<link href="../../../../../../../ui-kit/ui-kit.min.css" rel="Stylesheet">
+<script type="text/javascript" src="../../../../../../../scripts/clipboard.js" async></script>
+<script type="text/javascript" src="../../../../../../../scripts/navigation-loader.js" async></script>
+<script type="text/javascript" src="../../../../../../../scripts/platform-content-handler.js" async></script>
+<script type="text/javascript" src="../../../../../../../scripts/main.js" defer></script>
+<script type="text/javascript" src="../../../../../../../scripts/prism.js" async></script>
+<script type="text/javascript" src="../../../../../../../ui-kit/ui-kit.min.js" defer></script>
+<script type="text/javascript" src="../../../../../../../scripts/symbol-parameters-wrapper_deferred.js" defer></script></head>
+<body>
+    <div class="root">
+    <nav class="navigation theme-dark" id="navigation-wrapper">
+<a class="library-name--link" href="../../../../../../../index.html">
+                    fanbox
+            </a>        <button class="navigation-controls--btn navigation-controls--btn_toc ui-kit_mobile-only" id="toc-toggle" type="button">Toggle table of contents
+        </button>
+        <div class="navigation-controls--break ui-kit_mobile-only"></div>
+        <div class="library-version" id="library-version">0.2.0
+        </div>
+        <div class="navigation-controls">
+        <div class="filter-section filter-section_loading" id="filter-section">
+                <button class="platform-tag platform-selector common-like" data-active="" data-filter=":fankt:fanbox-core/commonMain">common</button>
+            <div class="dropdown filter-section--dropdown" data-role="dropdown" id="filter-section-dropdown">
+                <button class="button button_dropdown filter-section--dropdown-toggle" role="combobox" data-role="dropdown-toggle" aria-controls="platform-tags-listbox" aria-haspopup="listbox" aria-expanded="false" aria-label="Toggle source sets"></button>
+                <ul role="listbox" id="platform-tags-listbox" class="dropdown--list" data-role="dropdown-listbox">
+                    <div class="dropdown--header"><span>Platform filter</span>
+                        <button class="button" data-role="dropdown-toggle" aria-label="Close platform filter">
+                            <i class="ui-kit-icon ui-kit-icon_cross"></i>
+                        </button>
+                    </div>
+                        <li role="option" class="dropdown--option platform-selector-option common-like" tabindex="0">
+                            <label class="checkbox">
+                                <input type="checkbox" class="checkbox--input" id=":fankt:fanbox-core/commonMain" data-filter=":fankt:fanbox-core/commonMain">
+                                <span class="checkbox--icon"></span>
+                                common
+                            </label>
+                        </li>
+                </ul>
+                <div class="dropdown--overlay"></div>
+            </div>
+        </div>
+            <button class="navigation-controls--btn navigation-controls--btn_theme" id="theme-toggle-button" type="button">Switch theme
+            </button>
+            <div class="navigation-controls--btn navigation-controls--btn_search" id="searchBar" role="button">Search in
+                API
+            </div>
+        </div>
+    </nav>
+        <div id="container">
+            <div class="sidebar" id="leftColumn">
+                <div class="dropdown theme-dark_mobile" data-role="dropdown" id="toc-dropdown">
+                    <ul role="listbox" id="toc-listbox" class="dropdown--list dropdown--list_toc-list" data-role="dropdown-listbox">
+                        <div class="dropdown--header">
+                            <span>
+                                    fanbox
+                            </span>
+                            <button class="button" data-role="dropdown-toggle" aria-label="Close table of contents">
+                                <i class="ui-kit-icon ui-kit-icon_cross"></i>
+                            </button>
+                        </div>
+                        <div class="sidebar--inner" id="sideMenu"></div>
+                    </ul>
+                    <div class="dropdown--overlay"></div>
+                </div>
+            </div>
+            <div id="main">
+<div class="main-content" data-page-type="classlike" id="content" pageids="fanbox-core::me.matsumo.fankt.fanbox.domain.model/FanboxPostDetail.Body.Article.Block///PointingToDeclaration//-346142737">
+  <div class="breadcrumbs"><a href="../../../../../index.html">fanbox-core</a><span class="delimiter">/</span><a href="../../../../index.html">me.matsumo.fankt.fanbox.domain.model</a><span class="delimiter">/</span><a href="../../../index.html">FanboxPostDetail</a><span class="delimiter">/</span><a href="../../index.html">Body</a><span class="delimiter">/</span><a href="../index.html">Article</a><span class="delimiter">/</span><span class="current">Block</span></div>
+  <div class="cover ">
+    <h1 class="cover"><span><span>Block</span></span></h1>
+    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":fankt:fanbox-core/commonMain"><div class="symbol monospace"><span class="token keyword">sealed </span><span class="token keyword">interface </span><a href="index.html">Block</a></div><h4 class="">Inheritors</h4><div class="table"><div class="table-row" data-filterable-current=":fankt:fanbox-core/commonMain" data-filterable-set=":fankt:fanbox-core/commonMain"><div class="main-subrow keyValue "><div class=""><span class="inline-flex"><div><a href="-text/index.html">Text</a></div></span></div><div></div></div></div><div class="table-row" data-filterable-current=":fankt:fanbox-core/commonMain" data-filterable-set=":fankt:fanbox-core/commonMain"><div class="main-subrow keyValue "><div class=""><span class="inline-flex"><div><a href="-image/index.html">Image</a></div></span></div><div></div></div></div><div class="table-row" data-filterable-current=":fankt:fanbox-core/commonMain" data-filterable-set=":fankt:fanbox-core/commonMain"><div class="main-subrow keyValue "><div class=""><span class="inline-flex"><div><a href="-file/index.html">File</a></div></span></div><div></div></div></div><div class="table-row" data-filterable-current=":fankt:fanbox-core/commonMain" data-filterable-set=":fankt:fanbox-core/commonMain"><div class="main-subrow keyValue "><div class=""><span class="inline-flex"><div><a href="-link/index.html">Link</a></div></span></div><div></div></div></div><div class="table-row" data-filterable-current=":fankt:fanbox-core/commonMain" data-filterable-set=":fankt:fanbox-core/commonMain"><div class="main-subrow keyValue "><div class=""><span class="inline-flex"><div><a href="-embed/index.html">Embed</a></div></span></div><div></div></div></div><div class="table-row" data-filterable-current=":fankt:fanbox-core/commonMain" data-filterable-set=":fankt:fanbox-core/commonMain"><div class="main-subrow keyValue "><div class=""><span class="inline-flex"><div><a href="-unknown/index.html">Unknown</a></div></span></div><div></div></div></div></div></div></div>
+  </div>
+  <div class="tabbedcontent">
+    <div class="tabs-section" tabs-section="tabs-section"><button class="section-tab" data-active="" data-togglable="CONSTRUCTOR,TYPE,PROPERTY,FUNCTION">Members</button></div>
+    <div class="tabs-section-body">
+      <div data-togglable="TYPE">
+        <h2 class="">Types</h2>
+        <div class="table"><a data-name="723089604%2FClasslikes%2F-346142737" anchor-label="Embed" id="723089604%2FClasslikes%2F-346142737" data-filterable-set=":fankt:fanbox-core/commonMain"></a>
+          <div class="table-row" data-filterable-current=":fankt:fanbox-core/commonMain" data-filterable-set=":fankt:fanbox-core/commonMain">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="-embed/index.html"><span><span>Embed</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="723089604%2FClasslikes%2F-346142737"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":fankt:fanbox-core/commonMain"><div class="symbol monospace"><span class="token keyword">data </span><span class="token keyword">class </span><a href="-embed/index.html">Embed</a><span class="token punctuation">(</span><span class="parameters "><span class="parameter "><span class="token keyword">val </span>serviceProvider<span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-string/index.html">String</a><span class="token punctuation">, </span></span><span class="parameter "><span class="token keyword">val </span>contentId<span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-string/index.html">String</a></span></span><span class="token punctuation">)</span> : <a href="index.html">FanboxPostDetail.Body.Article.Block</a></div><div class="brief "><p class="paragraph">外部サービスが提供する記事の埋め込み。 fanbox の <a href="-embed/url.html">url</a> はリダイレクト元のため、リダイレクト解決の通信は呼び出し側で行う。</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-1238667415%2FClasslikes%2F-346142737" anchor-label="File" id="-1238667415%2FClasslikes%2F-346142737" data-filterable-set=":fankt:fanbox-core/commonMain"></a>
+          <div class="table-row" data-filterable-current=":fankt:fanbox-core/commonMain" data-filterable-set=":fankt:fanbox-core/commonMain">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="-file/index.html"><span><span>File</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1238667415%2FClasslikes%2F-346142737"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":fankt:fanbox-core/commonMain"><div class="symbol monospace"><span class="token keyword">data </span><span class="token keyword">class </span><a href="-file/index.html">File</a><span class="token punctuation">(</span><span class="parameters "><span class="parameter "><span class="token keyword">val </span>item<span class="token operator">: </span><a href="../../../-file-item/index.html">FanboxPostDetail.FileItem</a></span></span><span class="token punctuation">)</span> : <a href="index.html">FanboxPostDetail.Body.Article.Block</a></div><div class="brief "><p class="paragraph">投稿本文の添付ファイル情報。</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-1317628798%2FClasslikes%2F-346142737" anchor-label="Image" id="-1317628798%2FClasslikes%2F-346142737" data-filterable-set=":fankt:fanbox-core/commonMain"></a>
+          <div class="table-row" data-filterable-current=":fankt:fanbox-core/commonMain" data-filterable-set=":fankt:fanbox-core/commonMain">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="-image/index.html"><span><span>Image</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1317628798%2FClasslikes%2F-346142737"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":fankt:fanbox-core/commonMain"><div class="symbol monospace"><span class="token keyword">data </span><span class="token keyword">class </span><a href="-image/index.html">Image</a><span class="token punctuation">(</span><span class="parameters "><span class="parameter "><span class="token keyword">val </span>item<span class="token operator">: </span><a href="../../../-image-item/index.html">FanboxPostDetail.ImageItem</a></span></span><span class="token punctuation">)</span> : <a href="index.html">FanboxPostDetail.Body.Article.Block</a></div><div class="brief "><p class="paragraph">投稿本文の画像情報。</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="734322347%2FClasslikes%2F-346142737" anchor-label="Link" id="734322347%2FClasslikes%2F-346142737" data-filterable-set=":fankt:fanbox-core/commonMain"></a>
+          <div class="table-row" data-filterable-current=":fankt:fanbox-core/commonMain" data-filterable-set=":fankt:fanbox-core/commonMain">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="-link/index.html"><span><span>Link</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="734322347%2FClasslikes%2F-346142737"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":fankt:fanbox-core/commonMain"><div class="symbol monospace"><span class="token keyword">data </span><span class="token keyword">class </span><a href="-link/index.html">Link</a><span class="token punctuation">(</span><span class="parameters "><span class="parameter "><span class="token keyword">val </span>html<span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-string/index.html">String</a><span class="token operator">?</span><span class="token punctuation">, </span></span><span class="parameter "><span class="token keyword">val </span>post<span class="token operator">: </span><a href="../../../../-fanbox-post/index.html">FanboxPost</a><span class="token operator">?</span><span class="token punctuation">, </span></span><span class="parameter "><span class="token keyword">val </span>type<span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-string/index.html">String</a><span class="token operator"> = </span><span class="token string">"unknown"</span><span class="token punctuation">, </span></span><span class="parameter "><span class="token keyword">val </span>url<span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-string/index.html">String</a><span class="token operator">?</span><span class="token operator"> = </span>null</span></span><span class="token punctuation">)</span> : <a href="index.html">FanboxPostDetail.Body.Article.Block</a></div><div class="brief "><p class="paragraph">記事ブロックから参照する URL の埋め込み。 <a href="-link/type.html">type</a> は FANBOX の埋め込み種別で、<code class="lang-kotlin">default</code> は <a href="-link/url.html">url</a>、<code class="lang-kotlin">html</code> と <code class="lang-kotlin">html.card</code> は未検証の <a href="-link/html.html">html</a>、<code class="lang-kotlin">fanbox.post</code> は <a href="-link/post.html">post</a> を持つ。 未知の種別も保持し、種別固有のメタデータを推測して補完しない。 表示前に <a href="-link/html.html">html</a> を呼び出し側でサニタイズする。</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="13531352%2FClasslikes%2F-346142737" anchor-label="Text" id="13531352%2FClasslikes%2F-346142737" data-filterable-set=":fankt:fanbox-core/commonMain"></a>
+          <div class="table-row" data-filterable-current=":fankt:fanbox-core/commonMain" data-filterable-set=":fankt:fanbox-core/commonMain">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="-text/index.html"><span><span>Text</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="13531352%2FClasslikes%2F-346142737"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":fankt:fanbox-core/commonMain"><div class="symbol monospace"><span class="token keyword">data </span><span class="token keyword">class </span><a href="-text/index.html">Text</a><span class="token punctuation">(</span><span class="parameters "><span class="parameter "><span class="token keyword">val </span>text<span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-string/index.html">String</a><span class="token punctuation">, </span></span><span class="parameter "><span class="token keyword">val </span>styles<span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin.collections/-list/index.html">List</a><span class="token operator">&lt;</span><a href="-text/-style-span/index.html">FanboxPostDetail.Body.Article.Block.Text.StyleSpan</a><span class="token operator">&gt;</span><span class="token operator"> = </span>emptyList()<span class="token punctuation">, </span></span><span class="parameter "><span class="token keyword">val </span>links<span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin.collections/-list/index.html">List</a><span class="token operator">&lt;</span><a href="-text/-link-span/index.html">FanboxPostDetail.Body.Article.Block.Text.LinkSpan</a><span class="token operator">&gt;</span><span class="token operator"> = </span>emptyList()<span class="token punctuation">, </span></span><span class="parameter "><span class="token keyword">val </span>isHeader<span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-boolean/index.html">Boolean</a><span class="token operator"> = </span><span class="token boolean">false</span></span></span><span class="token punctuation">)</span> : <a href="index.html">FanboxPostDetail.Body.Article.Block</a></div><div class="brief "><p class="paragraph">記事本文の段落または見出し。 <a href="-text/is-header.html">isHeader</a> で段落と見出しを区別する。 範囲の座標は FANBOX の UTF-16 code unit に基づく未検証の値のため、適用前に <a href="-text/text.html">text</a> の境界と照合する。</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="1991559539%2FClasslikes%2F-346142737" anchor-label="Unknown" id="1991559539%2FClasslikes%2F-346142737" data-filterable-set=":fankt:fanbox-core/commonMain"></a>
+          <div class="table-row" data-filterable-current=":fankt:fanbox-core/commonMain" data-filterable-set=":fankt:fanbox-core/commonMain">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="-unknown/index.html"><span><span>Unknown</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1991559539%2FClasslikes%2F-346142737"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":fankt:fanbox-core/commonMain"><div class="symbol monospace"><span class="token keyword">data </span><span class="token keyword">class </span><a href="-unknown/index.html">Unknown</a><span class="token punctuation">(</span><span class="parameters "><span class="parameter "><span class="token keyword">val </span>rawJson<span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-string/index.html">String</a></span></span><span class="token punctuation">)</span> : <a href="index.html">FanboxPostDetail.Body.Article.Block</a></div><div class="brief "><p class="paragraph">既知の種別で表現できない記事ブロック。 <a href="-unknown/raw-json.html">rawJson</a> は元のブロックの JSON、またはフォールバックの原因になった参照先 map の要素の JSON を保持する。</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    <div class="footer">
+        <a href="#content" id="go-to-top-link" class="footer--button footer--button_go-to-top"></a>
+        <span>© 2026 Copyright</span>
+        <span class="pull-right">
+            <span>Generated by </span>
+            <a class="footer--link footer--link_external" href="https://github.com/Kotlin/dokka">
+                <span>dokka</span>
+            </a>
+        </span>
+    </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

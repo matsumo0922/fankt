@@ -1,0 +1,543 @@
+<!doctype html>
+<html class="no-js">
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1" charset="UTF-8">
+    <title>FanboxEndpointIds</title>
+<link href="../../../../images/logo-icon.svg" rel="icon" type="image/svg">    <script>var pathToRoot = "../../../../";</script>
+    <script>document.documentElement.classList.replace("no-js","js");</script>
+    <script>const storage = localStorage.getItem("dokka-dark-mode")
+    if (storage == null) {
+        const osDarkSchemePreferred = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
+        if (osDarkSchemePreferred === true) {
+            document.getElementsByTagName("html")[0].classList.add("theme-dark")
+        }
+    } else {
+        const savedDarkMode = JSON.parse(storage)
+        if(savedDarkMode === true) {
+            document.getElementsByTagName("html")[0].classList.add("theme-dark")
+        }
+    }
+    </script>
+<script type="text/javascript" src="https://unpkg.com/kotlin-playground@1/dist/playground.min.js" async></script>
+<script type="text/javascript" src="../../../../scripts/sourceset_dependencies.js" async></script>
+<link href="../../../../styles/style.css" rel="Stylesheet">
+<link href="../../../../styles/main.css" rel="Stylesheet">
+<link href="../../../../styles/prism.css" rel="Stylesheet">
+<link href="../../../../styles/logo-styles.css" rel="Stylesheet">
+<link href="../../../../styles/font-jb-sans-auto.css" rel="Stylesheet">
+<link href="../../../../ui-kit/ui-kit.min.css" rel="Stylesheet">
+<script type="text/javascript" src="../../../../scripts/clipboard.js" async></script>
+<script type="text/javascript" src="../../../../scripts/navigation-loader.js" async></script>
+<script type="text/javascript" src="../../../../scripts/platform-content-handler.js" async></script>
+<script type="text/javascript" src="../../../../scripts/main.js" defer></script>
+<script type="text/javascript" src="../../../../scripts/prism.js" async></script>
+<script type="text/javascript" src="../../../../ui-kit/ui-kit.min.js" defer></script>
+<script type="text/javascript" src="../../../../scripts/symbol-parameters-wrapper_deferred.js" defer></script></head>
+<body>
+    <div class="root">
+    <nav class="navigation theme-dark" id="navigation-wrapper">
+<a class="library-name--link" href="../../../../index.html">
+                    fanbox
+            </a>        <button class="navigation-controls--btn navigation-controls--btn_toc ui-kit_mobile-only" id="toc-toggle" type="button">Toggle table of contents
+        </button>
+        <div class="navigation-controls--break ui-kit_mobile-only"></div>
+        <div class="library-version" id="library-version">0.2.0
+        </div>
+        <div class="navigation-controls">
+        <div class="filter-section filter-section_loading" id="filter-section">
+                <button class="platform-tag platform-selector common-like" data-active="" data-filter=":fankt:fanbox-core/commonMain">common</button>
+            <div class="dropdown filter-section--dropdown" data-role="dropdown" id="filter-section-dropdown">
+                <button class="button button_dropdown filter-section--dropdown-toggle" role="combobox" data-role="dropdown-toggle" aria-controls="platform-tags-listbox" aria-haspopup="listbox" aria-expanded="false" aria-label="Toggle source sets"></button>
+                <ul role="listbox" id="platform-tags-listbox" class="dropdown--list" data-role="dropdown-listbox">
+                    <div class="dropdown--header"><span>Platform filter</span>
+                        <button class="button" data-role="dropdown-toggle" aria-label="Close platform filter">
+                            <i class="ui-kit-icon ui-kit-icon_cross"></i>
+                        </button>
+                    </div>
+                        <li role="option" class="dropdown--option platform-selector-option common-like" tabindex="0">
+                            <label class="checkbox">
+                                <input type="checkbox" class="checkbox--input" id=":fankt:fanbox-core/commonMain" data-filter=":fankt:fanbox-core/commonMain">
+                                <span class="checkbox--icon"></span>
+                                common
+                            </label>
+                        </li>
+                </ul>
+                <div class="dropdown--overlay"></div>
+            </div>
+        </div>
+            <button class="navigation-controls--btn navigation-controls--btn_theme" id="theme-toggle-button" type="button">Switch theme
+            </button>
+            <div class="navigation-controls--btn navigation-controls--btn_search" id="searchBar" role="button">Search in
+                API
+            </div>
+        </div>
+    </nav>
+        <div id="container">
+            <div class="sidebar" id="leftColumn">
+                <div class="dropdown theme-dark_mobile" data-role="dropdown" id="toc-dropdown">
+                    <ul role="listbox" id="toc-listbox" class="dropdown--list dropdown--list_toc-list" data-role="dropdown-listbox">
+                        <div class="dropdown--header">
+                            <span>
+                                    fanbox
+                            </span>
+                            <button class="button" data-role="dropdown-toggle" aria-label="Close table of contents">
+                                <i class="ui-kit-icon ui-kit-icon_cross"></i>
+                            </button>
+                        </div>
+                        <div class="sidebar--inner" id="sideMenu"></div>
+                    </ul>
+                    <div class="dropdown--overlay"></div>
+                </div>
+            </div>
+            <div id="main">
+<div class="main-content" data-page-type="classlike" id="content" pageids="fanbox-core::me.matsumo.fankt.fanbox.endpoint/FanboxEndpointIds///PointingToDeclaration//-346142737">
+  <div class="breadcrumbs"><a href="../../index.html">fanbox-core</a><span class="delimiter">/</span><a href="../index.html">me.matsumo.fankt.fanbox.endpoint</a><span class="delimiter">/</span><span class="current">FanboxEndpointIds</span></div>
+  <div class="cover ">
+    <h1 class="cover"><span>Fanbox</span><wbr><span>Endpoint</span><wbr><span><span>Ids</span></span></h1>
+    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":fankt:fanbox-core/commonMain"><div class="symbol monospace"><span class="token keyword">object </span><a href="index.html">FanboxEndpointIds</a></div></div></div>
+  </div>
+  <div class="tabbedcontent">
+    <div class="tabs-section" tabs-section="tabs-section"><button class="section-tab" data-active="" data-togglable="CONSTRUCTOR,TYPE,PROPERTY,FUNCTION">Members</button></div>
+    <div class="tabs-section-body">
+      <div data-togglable="PROPERTY">
+        <h2 class="">Properties</h2>
+        <div class="table"><a data-name="2034783650%2FProperties%2F-346142737" anchor-label="bellList" id="2034783650%2FProperties%2F-346142737" data-filterable-set=":fankt:fanbox-core/commonMain"></a>
+          <div class="table-row" data-filterable-current=":fankt:fanbox-core/commonMain" data-filterable-set=":fankt:fanbox-core/commonMain">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="bell-list.html"><span>bell</span><wbr><span><span>List</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="2034783650%2FProperties%2F-346142737"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":fankt:fanbox-core/commonMain"><div class="symbol monospace"><span class="token keyword">val </span><a href="bell-list.html">bellList</a><span class="token operator">: </span><a href="../-fanbox-endpoint-id/index.html">FanboxEndpointId</a></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-734877447%2FProperties%2F-346142737" anchor-label="creatorGet" id="-734877447%2FProperties%2F-346142737" data-filterable-set=":fankt:fanbox-core/commonMain"></a>
+          <div class="table-row" data-filterable-current=":fankt:fanbox-core/commonMain" data-filterable-set=":fankt:fanbox-core/commonMain">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="creator-get.html"><span>creator</span><wbr><span><span>Get</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-734877447%2FProperties%2F-346142737"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":fankt:fanbox-core/commonMain"><div class="symbol monospace"><span class="token keyword">val </span><a href="creator-get.html">creatorGet</a><span class="token operator">: </span><a href="../-fanbox-endpoint-id/index.html">FanboxEndpointId</a></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-930401060%2FProperties%2F-346142737" anchor-label="creatorListFollowing" id="-930401060%2FProperties%2F-346142737" data-filterable-set=":fankt:fanbox-core/commonMain"></a>
+          <div class="table-row" data-filterable-current=":fankt:fanbox-core/commonMain" data-filterable-set=":fankt:fanbox-core/commonMain">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="creator-list-following.html"><span>creator</span><wbr><span>List</span><wbr><span><span>Following</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-930401060%2FProperties%2F-346142737"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":fankt:fanbox-core/commonMain"><div class="symbol monospace"><span class="token keyword">val </span><a href="creator-list-following.html">creatorListFollowing</a><span class="token operator">: </span><a href="../-fanbox-endpoint-id/index.html">FanboxEndpointId</a></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-914682687%2FProperties%2F-346142737" anchor-label="creatorListPixiv" id="-914682687%2FProperties%2F-346142737" data-filterable-set=":fankt:fanbox-core/commonMain"></a>
+          <div class="table-row" data-filterable-current=":fankt:fanbox-core/commonMain" data-filterable-set=":fankt:fanbox-core/commonMain">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="creator-list-pixiv.html"><span>creator</span><wbr><span>List</span><wbr><span><span>Pixiv</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-914682687%2FProperties%2F-346142737"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":fankt:fanbox-core/commonMain"><div class="symbol monospace"><span class="token keyword">val </span><a href="creator-list-pixiv.html">creatorListPixiv</a><span class="token operator">: </span><a href="../-fanbox-endpoint-id/index.html">FanboxEndpointId</a></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="1259723858%2FProperties%2F-346142737" anchor-label="creatorListRecommended" id="1259723858%2FProperties%2F-346142737" data-filterable-set=":fankt:fanbox-core/commonMain"></a>
+          <div class="table-row" data-filterable-current=":fankt:fanbox-core/commonMain" data-filterable-set=":fankt:fanbox-core/commonMain">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="creator-list-recommended.html"><span>creator</span><wbr><span>List</span><wbr><span><span>Recommended</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1259723858%2FProperties%2F-346142737"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":fankt:fanbox-core/commonMain"><div class="symbol monospace"><span class="token keyword">val </span><a href="creator-list-recommended.html">creatorListRecommended</a><span class="token operator">: </span><a href="../-fanbox-endpoint-id/index.html">FanboxEndpointId</a></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="565295619%2FProperties%2F-346142737" anchor-label="creatorSearch" id="565295619%2FProperties%2F-346142737" data-filterable-set=":fankt:fanbox-core/commonMain"></a>
+          <div class="table-row" data-filterable-current=":fankt:fanbox-core/commonMain" data-filterable-set=":fankt:fanbox-core/commonMain">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="creator-search.html"><span>creator</span><wbr><span><span>Search</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="565295619%2FProperties%2F-346142737"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":fankt:fanbox-core/commonMain"><div class="symbol monospace"><span class="token keyword">val </span><a href="creator-search.html">creatorSearch</a><span class="token operator">: </span><a href="../-fanbox-endpoint-id/index.html">FanboxEndpointId</a></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-560988074%2FProperties%2F-346142737" anchor-label="followCreate" id="-560988074%2FProperties%2F-346142737" data-filterable-set=":fankt:fanbox-core/commonMain"></a>
+          <div class="table-row" data-filterable-current=":fankt:fanbox-core/commonMain" data-filterable-set=":fankt:fanbox-core/commonMain">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="follow-create.html"><span>follow</span><wbr><span><span>Create</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-560988074%2FProperties%2F-346142737"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":fankt:fanbox-core/commonMain"><div class="symbol monospace"><span class="token keyword">val </span><a href="follow-create.html">followCreate</a><span class="token operator">: </span><a href="../-fanbox-endpoint-id/index.html">FanboxEndpointId</a></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-819499385%2FProperties%2F-346142737" anchor-label="followDelete" id="-819499385%2FProperties%2F-346142737" data-filterable-set=":fankt:fanbox-core/commonMain"></a>
+          <div class="table-row" data-filterable-current=":fankt:fanbox-core/commonMain" data-filterable-set=":fankt:fanbox-core/commonMain">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="follow-delete.html"><span>follow</span><wbr><span><span>Delete</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-819499385%2FProperties%2F-346142737"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":fankt:fanbox-core/commonMain"><div class="symbol monospace"><span class="token keyword">val </span><a href="follow-delete.html">followDelete</a><span class="token operator">: </span><a href="../-fanbox-endpoint-id/index.html">FanboxEndpointId</a></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="1268028053%2FProperties%2F-346142737" anchor-label="homepage" id="1268028053%2FProperties%2F-346142737" data-filterable-set=":fankt:fanbox-core/commonMain"></a>
+          <div class="table-row" data-filterable-current=":fankt:fanbox-core/commonMain" data-filterable-set=":fankt:fanbox-core/commonMain">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="homepage.html"><span><span>homepage</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1268028053%2FProperties%2F-346142737"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":fankt:fanbox-core/commonMain"><div class="symbol monospace"><span class="token keyword">val </span><a href="homepage.html">homepage</a><span class="token operator">: </span><a href="../-fanbox-endpoint-id/index.html">FanboxEndpointId</a></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="1315182333%2FProperties%2F-346142737" anchor-label="legacySupportCreator" id="1315182333%2FProperties%2F-346142737" data-filterable-set=":fankt:fanbox-core/commonMain"></a>
+          <div class="table-row" data-filterable-current=":fankt:fanbox-core/commonMain" data-filterable-set=":fankt:fanbox-core/commonMain">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="legacy-support-creator.html"><span>legacy</span><wbr><span>Support</span><wbr><span><span>Creator</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1315182333%2FProperties%2F-346142737"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":fankt:fanbox-core/commonMain"><div class="symbol monospace"><span class="token keyword">val </span><a href="legacy-support-creator.html">legacySupportCreator</a><span class="token operator">: </span><a href="../-fanbox-endpoint-id/index.html">FanboxEndpointId</a></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-1464668884%2FProperties%2F-346142737" anchor-label="newsletterList" id="-1464668884%2FProperties%2F-346142737" data-filterable-set=":fankt:fanbox-core/commonMain"></a>
+          <div class="table-row" data-filterable-current=":fankt:fanbox-core/commonMain" data-filterable-set=":fankt:fanbox-core/commonMain">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="newsletter-list.html"><span>newsletter</span><wbr><span><span>List</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1464668884%2FProperties%2F-346142737"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":fankt:fanbox-core/commonMain"><div class="symbol monospace"><span class="token keyword">val </span><a href="newsletter-list.html">newsletterList</a><span class="token operator">: </span><a href="../-fanbox-endpoint-id/index.html">FanboxEndpointId</a></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="789587783%2FProperties%2F-346142737" anchor-label="paymentListPaid" id="789587783%2FProperties%2F-346142737" data-filterable-set=":fankt:fanbox-core/commonMain"></a>
+          <div class="table-row" data-filterable-current=":fankt:fanbox-core/commonMain" data-filterable-set=":fankt:fanbox-core/commonMain">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="payment-list-paid.html"><span>payment</span><wbr><span>List</span><wbr><span><span>Paid</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="789587783%2FProperties%2F-346142737"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":fankt:fanbox-core/commonMain"><div class="symbol monospace"><span class="token keyword">val </span><a href="payment-list-paid.html">paymentListPaid</a><span class="token operator">: </span><a href="../-fanbox-endpoint-id/index.html">FanboxEndpointId</a></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-1104245298%2FProperties%2F-346142737" anchor-label="paymentListUnpaid" id="-1104245298%2FProperties%2F-346142737" data-filterable-set=":fankt:fanbox-core/commonMain"></a>
+          <div class="table-row" data-filterable-current=":fankt:fanbox-core/commonMain" data-filterable-set=":fankt:fanbox-core/commonMain">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="payment-list-unpaid.html"><span>payment</span><wbr><span>List</span><wbr><span><span>Unpaid</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1104245298%2FProperties%2F-346142737"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":fankt:fanbox-core/commonMain"><div class="symbol monospace"><span class="token keyword">val </span><a href="payment-list-unpaid.html">paymentListUnpaid</a><span class="token operator">: </span><a href="../-fanbox-endpoint-id/index.html">FanboxEndpointId</a></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-1885626670%2FProperties%2F-346142737" anchor-label="planListCreator" id="-1885626670%2FProperties%2F-346142737" data-filterable-set=":fankt:fanbox-core/commonMain"></a>
+          <div class="table-row" data-filterable-current=":fankt:fanbox-core/commonMain" data-filterable-set=":fankt:fanbox-core/commonMain">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="plan-list-creator.html"><span>plan</span><wbr><span>List</span><wbr><span><span>Creator</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1885626670%2FProperties%2F-346142737"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":fankt:fanbox-core/commonMain"><div class="symbol monospace"><span class="token keyword">val </span><a href="plan-list-creator.html">planListCreator</a><span class="token operator">: </span><a href="../-fanbox-endpoint-id/index.html">FanboxEndpointId</a></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-998835191%2FProperties%2F-346142737" anchor-label="planListSupporting" id="-998835191%2FProperties%2F-346142737" data-filterable-set=":fankt:fanbox-core/commonMain"></a>
+          <div class="table-row" data-filterable-current=":fankt:fanbox-core/commonMain" data-filterable-set=":fankt:fanbox-core/commonMain">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="plan-list-supporting.html"><span>plan</span><wbr><span>List</span><wbr><span><span>Supporting</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-998835191%2FProperties%2F-346142737"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":fankt:fanbox-core/commonMain"><div class="symbol monospace"><span class="token keyword">val </span><a href="plan-list-supporting.html">planListSupporting</a><span class="token operator">: </span><a href="../-fanbox-endpoint-id/index.html">FanboxEndpointId</a></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-92640059%2FProperties%2F-346142737" anchor-label="postAddComment" id="-92640059%2FProperties%2F-346142737" data-filterable-set=":fankt:fanbox-core/commonMain"></a>
+          <div class="table-row" data-filterable-current=":fankt:fanbox-core/commonMain" data-filterable-set=":fankt:fanbox-core/commonMain">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="post-add-comment.html"><span>post</span><wbr><span>Add</span><wbr><span><span>Comment</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-92640059%2FProperties%2F-346142737"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":fankt:fanbox-core/commonMain"><div class="symbol monospace"><span class="token keyword">val </span><a href="post-add-comment.html">postAddComment</a><span class="token operator">: </span><a href="../-fanbox-endpoint-id/index.html">FanboxEndpointId</a></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="1605625987%2FProperties%2F-346142737" anchor-label="postDeleteComment" id="1605625987%2FProperties%2F-346142737" data-filterable-set=":fankt:fanbox-core/commonMain"></a>
+          <div class="table-row" data-filterable-current=":fankt:fanbox-core/commonMain" data-filterable-set=":fankt:fanbox-core/commonMain">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="post-delete-comment.html"><span>post</span><wbr><span>Delete</span><wbr><span><span>Comment</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1605625987%2FProperties%2F-346142737"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":fankt:fanbox-core/commonMain"><div class="symbol monospace"><span class="token keyword">val </span><a href="post-delete-comment.html">postDeleteComment</a><span class="token operator">: </span><a href="../-fanbox-endpoint-id/index.html">FanboxEndpointId</a></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-1535203699%2FProperties%2F-346142737" anchor-label="postGetComments" id="-1535203699%2FProperties%2F-346142737" data-filterable-set=":fankt:fanbox-core/commonMain"></a>
+          <div class="table-row" data-filterable-current=":fankt:fanbox-core/commonMain" data-filterable-set=":fankt:fanbox-core/commonMain">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="post-get-comments.html"><span>post</span><wbr><span>Get</span><wbr><span><span>Comments</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1535203699%2FProperties%2F-346142737"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":fankt:fanbox-core/commonMain"><div class="symbol monospace"><span class="token keyword">val </span><a href="post-get-comments.html">postGetComments</a><span class="token operator">: </span><a href="../-fanbox-endpoint-id/index.html">FanboxEndpointId</a></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-1971130091%2FProperties%2F-346142737" anchor-label="postInfo" id="-1971130091%2FProperties%2F-346142737" data-filterable-set=":fankt:fanbox-core/commonMain"></a>
+          <div class="table-row" data-filterable-current=":fankt:fanbox-core/commonMain" data-filterable-set=":fankt:fanbox-core/commonMain">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="post-info.html"><span>post</span><wbr><span><span>Info</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1971130091%2FProperties%2F-346142737"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":fankt:fanbox-core/commonMain"><div class="symbol monospace"><span class="token keyword">val </span><a href="post-info.html">postInfo</a><span class="token operator">: </span><a href="../-fanbox-endpoint-id/index.html">FanboxEndpointId</a></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="1413888239%2FProperties%2F-346142737" anchor-label="postLikeComment" id="1413888239%2FProperties%2F-346142737" data-filterable-set=":fankt:fanbox-core/commonMain"></a>
+          <div class="table-row" data-filterable-current=":fankt:fanbox-core/commonMain" data-filterable-set=":fankt:fanbox-core/commonMain">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="post-like-comment.html"><span>post</span><wbr><span>Like</span><wbr><span><span>Comment</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1413888239%2FProperties%2F-346142737"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":fankt:fanbox-core/commonMain"><div class="symbol monospace"><span class="token keyword">val </span><a href="post-like-comment.html">postLikeComment</a><span class="token operator">: </span><a href="../-fanbox-endpoint-id/index.html">FanboxEndpointId</a></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-1697809908%2FProperties%2F-346142737" anchor-label="postLikePost" id="-1697809908%2FProperties%2F-346142737" data-filterable-set=":fankt:fanbox-core/commonMain"></a>
+          <div class="table-row" data-filterable-current=":fankt:fanbox-core/commonMain" data-filterable-set=":fankt:fanbox-core/commonMain">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="post-like-post.html"><span>post</span><wbr><span>Like</span><wbr><span><span>Post</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1697809908%2FProperties%2F-346142737"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":fankt:fanbox-core/commonMain"><div class="symbol monospace"><span class="token keyword">val </span><a href="post-like-post.html">postLikePost</a><span class="token operator">: </span><a href="../-fanbox-endpoint-id/index.html">FanboxEndpointId</a></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="945585353%2FProperties%2F-346142737" anchor-label="postListCreator" id="945585353%2FProperties%2F-346142737" data-filterable-set=":fankt:fanbox-core/commonMain"></a>
+          <div class="table-row" data-filterable-current=":fankt:fanbox-core/commonMain" data-filterable-set=":fankt:fanbox-core/commonMain">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="post-list-creator.html"><span>post</span><wbr><span>List</span><wbr><span><span>Creator</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="945585353%2FProperties%2F-346142737"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":fankt:fanbox-core/commonMain"><div class="symbol monospace"><span class="token keyword">val </span><a href="post-list-creator.html">postListCreator</a><span class="token operator">: </span><a href="../-fanbox-endpoint-id/index.html">FanboxEndpointId</a></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-1911528698%2FProperties%2F-346142737" anchor-label="postListHome" id="-1911528698%2FProperties%2F-346142737" data-filterable-set=":fankt:fanbox-core/commonMain"></a>
+          <div class="table-row" data-filterable-current=":fankt:fanbox-core/commonMain" data-filterable-set=":fankt:fanbox-core/commonMain">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="post-list-home.html"><span>post</span><wbr><span>List</span><wbr><span><span>Home</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1911528698%2FProperties%2F-346142737"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":fankt:fanbox-core/commonMain"><div class="symbol monospace"><span class="token keyword">val </span><a href="post-list-home.html">postListHome</a><span class="token operator">: </span><a href="../-fanbox-endpoint-id/index.html">FanboxEndpointId</a></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-929216846%2FProperties%2F-346142737" anchor-label="postListSupporting" id="-929216846%2FProperties%2F-346142737" data-filterable-set=":fankt:fanbox-core/commonMain"></a>
+          <div class="table-row" data-filterable-current=":fankt:fanbox-core/commonMain" data-filterable-set=":fankt:fanbox-core/commonMain">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="post-list-supporting.html"><span>post</span><wbr><span>List</span><wbr><span><span>Supporting</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-929216846%2FProperties%2F-346142737"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":fankt:fanbox-core/commonMain"><div class="symbol monospace"><span class="token keyword">val </span><a href="post-list-supporting.html">postListSupporting</a><span class="token operator">: </span><a href="../-fanbox-endpoint-id/index.html">FanboxEndpointId</a></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-1812431591%2FProperties%2F-346142737" anchor-label="postListTagged" id="-1812431591%2FProperties%2F-346142737" data-filterable-set=":fankt:fanbox-core/commonMain"></a>
+          <div class="table-row" data-filterable-current=":fankt:fanbox-core/commonMain" data-filterable-set=":fankt:fanbox-core/commonMain">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="post-list-tagged.html"><span>post</span><wbr><span>List</span><wbr><span><span>Tagged</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1812431591%2FProperties%2F-346142737"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":fankt:fanbox-core/commonMain"><div class="symbol monospace"><span class="token keyword">val </span><a href="post-list-tagged.html">postListTagged</a><span class="token operator">: </span><a href="../-fanbox-endpoint-id/index.html">FanboxEndpointId</a></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-882608222%2FProperties%2F-346142737" anchor-label="postPaginateCreator" id="-882608222%2FProperties%2F-346142737" data-filterable-set=":fankt:fanbox-core/commonMain"></a>
+          <div class="table-row" data-filterable-current=":fankt:fanbox-core/commonMain" data-filterable-set=":fankt:fanbox-core/commonMain">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="post-paginate-creator.html"><span>post</span><wbr><span>Paginate</span><wbr><span><span>Creator</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-882608222%2FProperties%2F-346142737"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":fankt:fanbox-core/commonMain"><div class="symbol monospace"><span class="token keyword">val </span><a href="post-paginate-creator.html">postPaginateCreator</a><span class="token operator">: </span><a href="../-fanbox-endpoint-id/index.html">FanboxEndpointId</a></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="1413614553%2FProperties%2F-346142737" anchor-label="tagGetFeatured" id="1413614553%2FProperties%2F-346142737" data-filterable-set=":fankt:fanbox-core/commonMain"></a>
+          <div class="table-row" data-filterable-current=":fankt:fanbox-core/commonMain" data-filterable-set=":fankt:fanbox-core/commonMain">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="tag-get-featured.html"><span>tag</span><wbr><span>Get</span><wbr><span><span>Featured</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1413614553%2FProperties%2F-346142737"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":fankt:fanbox-core/commonMain"><div class="symbol monospace"><span class="token keyword">val </span><a href="tag-get-featured.html">tagGetFeatured</a><span class="token operator">: </span><a href="../-fanbox-endpoint-id/index.html">FanboxEndpointId</a></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-1591641643%2FProperties%2F-346142737" anchor-label="tagSearch" id="-1591641643%2FProperties%2F-346142737" data-filterable-set=":fankt:fanbox-core/commonMain"></a>
+          <div class="table-row" data-filterable-current=":fankt:fanbox-core/commonMain" data-filterable-set=":fankt:fanbox-core/commonMain">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="tag-search.html"><span>tag</span><wbr><span><span>Search</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1591641643%2FProperties%2F-346142737"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":fankt:fanbox-core/commonMain"><div class="symbol monospace"><span class="token keyword">val </span><a href="tag-search.html">tagSearch</a><span class="token operator">: </span><a href="../-fanbox-endpoint-id/index.html">FanboxEndpointId</a></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    <div class="footer">
+        <a href="#content" id="go-to-top-link" class="footer--button footer--button_go-to-top"></a>
+        <span>© 2026 Copyright</span>
+        <span class="pull-right">
+            <span>Generated by </span>
+            <a class="footer--link footer--link_external" href="https://github.com/Kotlin/dokka">
+                <span>dokka</span>
+            </a>
+        </span>
+    </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
