@@ -18,6 +18,7 @@ import me.matsumo.fankt.fanbox.domain.model.id.FanboxPostId
 import me.matsumo.fankt.fanbox.endpoint.FanboxEndpoints
 import me.matsumo.fankt.fanbox.endpoint.RequestDescriptor
 import me.matsumo.fankt.fanbox.fixture.FanboxPostJsonFixtures
+import me.matsumo.fankt.fanbox.fixture.FanboxTolerantListJsonFixtures
 import me.matsumo.fankt.fanbox.repository.FanboxPostRepository
 import me.matsumo.fankt.fanbox.response.FanboxDiagnosticSink
 import me.matsumo.fankt.fanbox.response.FanboxResponses
@@ -94,6 +95,32 @@ class FanboxGuestHostTest {
             assertTrue(it.requests.isEmpty())
             assertTrue(it.diagnostics.single().startsWith("Zipline guest buildRequest failed"))
             assertEquals(FanboxGuestEvent.CallFailed("post.info", "buildRequest", "ZiplineApiMismatchException"), it.events.last())
+        }
+    }
+
+    @Test
+    fun skippedListItemsAreReportedOnce() = runBlocking {
+        val fixture = GuestFixture(
+            parse = { _, _ -> error("post.info is not requested") },
+            responseBody = FanboxTolerantListJsonFixtures.timelineMixed,
+        )
+
+        fixture.use {
+            val result = it.repository.getHomePosts(null)
+
+            assertEquals(listOf(listOf(1)), result.mismatches.map { mismatch -> mismatch.indexPath })
+            assertEquals(listOf("FANBOX list item schema mismatch (endpoint: post.listHome, indexPath: [1])"), it.diagnostics)
+        }
+    }
+
+    @Test
+    fun anOperationWithoutAResponseBodyOnlySendsTheRequest() = runBlocking {
+        val fixture = GuestFixture(parse = { _, _ -> error("a like has no response to parse") })
+
+        fixture.use {
+            it.repository.likePost(POST_ID)
+
+            assertEquals(listOf(FanboxEndpoints.likePost(POST_ID)), it.requests)
         }
     }
 
@@ -215,13 +242,14 @@ class FanboxGuestHostTest {
         buildRequest: (String) -> RequestDescriptor = { postId -> FanboxEndpoints.postDetail(FanboxPostId(postId)) },
         beforeLoad: suspend () -> Unit = {},
         eventListener: ((FanboxGuestEvent) -> Unit)? = null,
+        responseBody: String = FanboxPostJsonFixtures.postInfoTextHybrid,
     ) : AutoCloseable {
         val requests = mutableListOf<RequestDescriptor>()
         val diagnostics = mutableListOf<String>()
         val events = mutableListOf<FanboxGuestEvent>()
         private val requestExecutor = FanboxRequestExecutor { descriptor ->
             requests += descriptor
-            FanboxRawResponse(statusCode = 200, headers = emptyMap(), bodyText = FanboxPostJsonFixtures.postInfoTextHybrid)
+            FanboxRawResponse(statusCode = 200, headers = emptyMap(), bodyText = responseBody)
         }
         private val host = FanboxGuestHost(
             requestExecutor = requestExecutor,
@@ -233,10 +261,10 @@ class FanboxGuestHostTest {
         }
 
         // Unconfined, so that a call reaches the host without first waiting for another thread.
-        private val repository = FanboxPostRepository(
-            requestExecutor = requestExecutor,
-            ioDispatcher = Dispatchers.Unconfined,
+        val repository = FanboxPostRepository(
             guestHost = host,
+            diagnosticSink = FanboxDiagnosticSink(diagnostics::add),
+            ioDispatcher = Dispatchers.Unconfined,
         )
 
         suspend fun getPostDetail(): FanboxPostDetail = repository.getPostDetail(POST_ID)
@@ -247,7 +275,7 @@ class FanboxGuestHostTest {
     private class StubGuestService(
         private val buildRequest: (String) -> RequestDescriptor,
         private val parse: (String, Int) -> GuestParseResult<FanboxPostDetail>,
-    ) : FanboxGuestService {
+    ) : FanboxGuestService by RealFanboxGuestService() {
         override fun buildPostDetailRequest(postId: String): RequestDescriptor = buildRequest(postId)
 
         override fun parsePostDetail(body: String, statusCode: Int): GuestParseResult<FanboxPostDetail> = parse(body, statusCode)

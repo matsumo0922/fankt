@@ -11,36 +11,31 @@ import me.matsumo.fankt.fanbox.domain.model.id.FanboxCommentId
 import me.matsumo.fankt.fanbox.domain.model.id.FanboxCreatorId
 import me.matsumo.fankt.fanbox.domain.model.id.FanboxPostId
 import me.matsumo.fankt.fanbox.endpoint.FanboxEndpointIds
-import me.matsumo.fankt.fanbox.endpoint.FanboxEndpoints
 import me.matsumo.fankt.fanbox.guest.FanboxGuestHost
+import me.matsumo.fankt.fanbox.reportedTo
 import me.matsumo.fankt.fanbox.response.FanboxDiagnosticSink
-import me.matsumo.fankt.fanbox.response.FanboxResponses
-import me.matsumo.fankt.fanbox.transport.FanboxRequestExecutor
 
-/** 投稿に関する endpoint の実行とレスポンス変換を提供する。 */
+/** 投稿に関する endpoint を guest で実行する。 */
 internal class FanboxPostRepository(
-    private val requestExecutor: FanboxRequestExecutor,
+    private val guestHost: FanboxGuestHost,
     private val diagnosticSink: FanboxDiagnosticSink = FanboxDiagnosticSink.none,
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
-    private val guestHost: FanboxGuestHost,
 ) {
 
     suspend fun getHomePosts(cursor: FanboxCursor?) = withContext(ioDispatcher) {
-        val response = requestExecutor.execute(FanboxEndpoints.homePosts(cursor))
-        FanboxResponses.homePosts(
-            body = response.bodyText,
-            statusCode = response.statusCode,
-            diagnosticSink = diagnosticSink,
-        )
+        guestHost.request(
+            endpointId = FanboxEndpointIds.postListHome,
+            build = { buildHomePostsRequest(cursor) },
+            parse = { response -> parseHomePosts(response.bodyText, response.statusCode) },
+        ).reportedTo(diagnosticSink)
     }
 
     suspend fun getSupportedPosts(cursor: FanboxCursor?) = withContext(ioDispatcher) {
-        val response = requestExecutor.execute(FanboxEndpoints.supportingPosts(cursor))
-        FanboxResponses.supportingPosts(
-            body = response.bodyText,
-            statusCode = response.statusCode,
-            diagnosticSink = diagnosticSink,
-        )
+        guestHost.request(
+            endpointId = FanboxEndpointIds.postListSupporting,
+            build = { buildSupportingPostsRequest(cursor) },
+            parse = { response -> parseSupportingPosts(response.bodyText, response.statusCode) },
+        ).reportedTo(diagnosticSink)
     }
 
     suspend fun getCreatorPosts(
@@ -60,13 +55,17 @@ internal class FanboxPostRepository(
             cursor to nextCursor
         }
 
-        val response = requestExecutor.execute(FanboxEndpoints.creatorPosts(creatorId, currentCursor))
-        FanboxResponses.creatorPosts(
-            body = response.bodyText,
-            nextCursor = resolvedNextCursor,
-            statusCode = response.statusCode,
-            diagnosticSink = diagnosticSink,
-        )
+        guestHost.request(
+            endpointId = FanboxEndpointIds.postListCreator,
+            build = { buildCreatorPostsRequest(creatorId.value, currentCursor) },
+            parse = { response ->
+                parseCreatorPosts(
+                    body = response.bodyText,
+                    statusCode = response.statusCode,
+                    nextCursor = resolvedNextCursor,
+                )
+            },
+        ).reportedTo(diagnosticSink)
     }
 
     suspend fun getCreatorPostsPagination(creatorId: FanboxCreatorId) = withContext(ioDispatcher) {
@@ -82,12 +81,11 @@ internal class FanboxPostRepository(
     }
 
     suspend fun getPostComment(postId: FanboxPostId, offset: Int) = withContext(ioDispatcher) {
-        val response = requestExecutor.execute(FanboxEndpoints.postComments(postId, offset))
-        FanboxResponses.postComments(
-            body = response.bodyText,
-            statusCode = response.statusCode,
-            diagnosticSink = diagnosticSink,
-        )
+        guestHost.request(
+            endpointId = FanboxEndpointIds.postGetComments,
+            build = { buildPostCommentsRequest(postId.value, offset) },
+            parse = { response -> parsePostComments(response.bodyText, response.statusCode) },
+        ).reportedTo(diagnosticSink)
     }
 
     suspend fun getPostFromQuery(
@@ -95,18 +93,25 @@ internal class FanboxPostRepository(
         creatorId: FanboxCreatorId?,
         page: Int,
     ) = withContext(ioDispatcher) {
-        val response = requestExecutor.execute(FanboxEndpoints.taggedPosts(query, creatorId, page))
-        FanboxResponses.taggedPosts(response.bodyText, response.statusCode)
+        guestHost.request(
+            endpointId = FanboxEndpointIds.postListTagged,
+            build = {
+                buildTaggedPostsRequest(
+                    tag = query,
+                    creatorId = creatorId?.value,
+                    page = page,
+                )
+            },
+            parse = { response -> parseTaggedPosts(response.bodyText, response.statusCode) },
+        )
     }
 
     suspend fun likePost(postId: FanboxPostId) = withContext(ioDispatcher) {
-        val response = requestExecutor.execute(FanboxEndpoints.likePost(postId))
-        FanboxResponses.likePost(response.bodyText)
+        guestHost.send(FanboxEndpointIds.postLikePost) { buildLikePostRequest(postId.value) }
     }
 
     suspend fun likeComment(commentId: FanboxCommentId) = withContext(ioDispatcher) {
-        val response = requestExecutor.execute(FanboxEndpoints.likeComment(commentId))
-        FanboxResponses.likeComment(response.bodyText)
+        guestHost.send(FanboxEndpointIds.postLikeComment) { buildLikeCommentRequest(commentId.value) }
     }
 
     suspend fun addComment(
@@ -115,19 +120,23 @@ internal class FanboxPostRepository(
         parentCommentId: FanboxCommentId?,
         comment: String,
     ) = withContext(ioDispatcher) {
-        val response = requestExecutor.execute(
-            FanboxEndpoints.addComment(postId, rootCommentId, parentCommentId, comment),
-        )
-        FanboxResponses.addComment(response.bodyText)
+        guestHost.send(FanboxEndpointIds.postAddComment) {
+            buildAddCommentRequest(
+                postId = postId.value,
+                rootCommentId = rootCommentId?.value,
+                parentCommentId = parentCommentId?.value,
+                comment = comment,
+            )
+        }
     }
 
     suspend fun deleteComment(commentId: FanboxCommentId) = withContext(ioDispatcher) {
-        val response = requestExecutor.execute(FanboxEndpoints.deleteComment(commentId))
-        FanboxResponses.deleteComment(response.bodyText)
+        guestHost.send(FanboxEndpointIds.postDeleteComment) { buildDeleteCommentRequest(commentId.value) }
     }
 
-    private suspend fun fetchCreatorPostsPagination(creatorId: FanboxCreatorId): List<FanboxCursor> {
-        val response = requestExecutor.execute(FanboxEndpoints.creatorPostsPagination(creatorId))
-        return FanboxResponses.creatorPostsPagination(response.bodyText, response.statusCode)
-    }
+    private suspend fun fetchCreatorPostsPagination(creatorId: FanboxCreatorId) = guestHost.request(
+        endpointId = FanboxEndpointIds.postPaginateCreator,
+        build = { buildCreatorPostsPaginationRequest(creatorId.value) },
+        parse = { response -> parseCreatorPostsPagination(response.bodyText, response.statusCode) },
+    )
 }

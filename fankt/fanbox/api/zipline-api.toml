@@ -1,12 +1,60 @@
 [me.matsumo.fankt.fanbox.guest.FanboxGuestService]
 
 functions = [
+  # fun buildAddCommentRequest(kotlin.String, kotlin.String, kotlin.String, kotlin.String): me.matsumo.fankt.fanbox.endpoint.RequestDescriptor
+  "6Jzgt4Yg",
+
+  # fun buildCreatorPostsPaginationRequest(kotlin.String): me.matsumo.fankt.fanbox.endpoint.RequestDescriptor
+  "DbsHMyNM",
+
+  # fun buildCreatorPostsRequest(kotlin.String, me.matsumo.fankt.fanbox.domain.FanboxCursor): me.matsumo.fankt.fanbox.endpoint.RequestDescriptor
+  "V9635c24",
+
+  # fun buildDeleteCommentRequest(kotlin.String): me.matsumo.fankt.fanbox.endpoint.RequestDescriptor
+  "C/+czKCG",
+
+  # fun buildHomePostsRequest(me.matsumo.fankt.fanbox.domain.FanboxCursor): me.matsumo.fankt.fanbox.endpoint.RequestDescriptor
+  "8gQ6YHJe",
+
+  # fun buildLikeCommentRequest(kotlin.String): me.matsumo.fankt.fanbox.endpoint.RequestDescriptor
+  "tWWxKu9J",
+
+  # fun buildLikePostRequest(kotlin.String): me.matsumo.fankt.fanbox.endpoint.RequestDescriptor
+  "bBfi3z1e",
+
+  # fun buildPostCommentsRequest(kotlin.String, kotlin.Int): me.matsumo.fankt.fanbox.endpoint.RequestDescriptor
+  "U0qRQkmD",
+
   # fun buildPostDetailRequest(kotlin.String): me.matsumo.fankt.fanbox.endpoint.RequestDescriptor
   "iFo+/phf",
+
+  # fun buildSupportingPostsRequest(me.matsumo.fankt.fanbox.domain.FanboxCursor): me.matsumo.fankt.fanbox.endpoint.RequestDescriptor
+  "zYHbgrmn",
+
+  # fun buildTaggedPostsRequest(kotlin.String, kotlin.String, kotlin.Int): me.matsumo.fankt.fanbox.endpoint.RequestDescriptor
+  "Kn4z0aqe",
 
   # fun close(): kotlin.Unit
   "moYx+T3e",
 
+  # fun parseCreatorPosts(kotlin.String, kotlin.Int, me.matsumo.fankt.fanbox.domain.FanboxCursor): me.matsumo.fankt.fanbox.guest.GuestParseResult<me.matsumo.fankt.fanbox.FanboxTolerantResult<me.matsumo.fankt.fanbox.domain.PageCursorInfo<me.matsumo.fankt.fanbox.domain.model.FanboxPost>>>
+  "Q5VNhJtL",
+
+  # fun parseCreatorPostsPagination(kotlin.String, kotlin.Int): me.matsumo.fankt.fanbox.guest.GuestParseResult<kotlin.collections.List<me.matsumo.fankt.fanbox.domain.FanboxCursor>>
+  "YxzCcffk",
+
+  # fun parseHomePosts(kotlin.String, kotlin.Int): me.matsumo.fankt.fanbox.guest.GuestParseResult<me.matsumo.fankt.fanbox.FanboxTolerantResult<me.matsumo.fankt.fanbox.domain.PageCursorInfo<me.matsumo.fankt.fanbox.domain.model.FanboxPost>>>
+  "Q9bPzFiy",
+
+  # fun parsePostComments(kotlin.String, kotlin.Int): me.matsumo.fankt.fanbox.guest.GuestParseResult<me.matsumo.fankt.fanbox.FanboxTolerantResult<me.matsumo.fankt.fanbox.domain.PageOffsetInfo<me.matsumo.fankt.fanbox.domain.model.FanboxComment>>>
+  "J134soGS",
+
   # fun parsePostDetail(kotlin.String, kotlin.Int): me.matsumo.fankt.fanbox.guest.GuestParseResult<me.matsumo.fankt.fanbox.domain.model.FanboxPostDetail>
   "vxC5nPH7",
+
+  # fun parseSupportingPosts(kotlin.String, kotlin.Int): me.matsumo.fankt.fanbox.guest.GuestParseResult<me.matsumo.fankt.fanbox.FanboxTolerantResult<me.matsumo.fankt.fanbox.domain.PageCursorInfo<me.matsumo.fankt.fanbox.domain.model.FanboxPost>>>
+  "Qu+tJfBV",
+
+  # fun parseTaggedPosts(kotlin.String, kotlin.Int): me.matsumo.fankt.fanbox.guest.GuestParseResult<me.matsumo.fankt.fanbox.domain.PageNumberInfo<me.matsumo.fankt.fanbox.domain.model.FanboxPost>>
+  "2pQZ6ZjX",
 ]

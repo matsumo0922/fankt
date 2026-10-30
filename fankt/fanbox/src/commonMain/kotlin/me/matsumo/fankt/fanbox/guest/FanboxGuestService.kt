@@ -2,6 +2,13 @@ package me.matsumo.fankt.fanbox.guest
 
 import app.cash.zipline.ZiplineService
 import kotlinx.serialization.Serializable
+import me.matsumo.fankt.fanbox.FanboxTolerantResult
+import me.matsumo.fankt.fanbox.domain.FanboxCursor
+import me.matsumo.fankt.fanbox.domain.PageCursorInfo
+import me.matsumo.fankt.fanbox.domain.PageNumberInfo
+import me.matsumo.fankt.fanbox.domain.PageOffsetInfo
+import me.matsumo.fankt.fanbox.domain.model.FanboxComment
+import me.matsumo.fankt.fanbox.domain.model.FanboxPost
 import me.matsumo.fankt.fanbox.domain.model.FanboxPostDetail
 import me.matsumo.fankt.fanbox.endpoint.RequestDescriptor
 
@@ -12,13 +19,61 @@ internal const val FANBOX_GUEST_SERVICE_NAME: String = "fanboxGuest"
  * Builds FANBOX requests and interprets FANBOX responses inside the Zipline guest, so that a
  * parsing fix reaches users by replacing the guest bundle rather than by shipping a new app.
  *
- * No parameter or return type carries a credential. The host attaches cookies and the CSRF token
- * after it validates the descriptor this service returns, and the guest observes neither.
+ * No parameter carries a credential. The host attaches cookies and the CSRF token after it
+ * validates the descriptor this service returns. Functions that interpret no response body, such as
+ * those for liking or commenting, only build the request.
  */
+// One function per operation keeps every value that crosses the bridge typed.
+@Suppress("TooManyFunctions")
 internal interface FanboxGuestService : ZiplineService {
+    fun buildHomePostsRequest(cursor: FanboxCursor?): RequestDescriptor
+
+    fun parseHomePosts(body: String, statusCode: Int): GuestParseResult<FanboxTolerantResult<PageCursorInfo<FanboxPost>>>
+
+    fun buildSupportingPostsRequest(cursor: FanboxCursor?): RequestDescriptor
+
+    fun parseSupportingPosts(body: String, statusCode: Int): GuestParseResult<FanboxTolerantResult<PageCursorInfo<FanboxPost>>>
+
+    fun buildCreatorPostsRequest(creatorId: String, cursor: FanboxCursor): RequestDescriptor
+
+    fun parseCreatorPosts(
+        body: String,
+        statusCode: Int,
+        nextCursor: FanboxCursor?,
+    ): GuestParseResult<FanboxTolerantResult<PageCursorInfo<FanboxPost>>>
+
+    fun buildCreatorPostsPaginationRequest(creatorId: String): RequestDescriptor
+
+    fun parseCreatorPostsPagination(body: String, statusCode: Int): GuestParseResult<List<FanboxCursor>>
+
     fun buildPostDetailRequest(postId: String): RequestDescriptor
 
     fun parsePostDetail(body: String, statusCode: Int): GuestParseResult<FanboxPostDetail>
+
+    fun buildPostCommentsRequest(postId: String, offset: Int): RequestDescriptor
+
+    fun parsePostComments(body: String, statusCode: Int): GuestParseResult<FanboxTolerantResult<PageOffsetInfo<FanboxComment>>>
+
+    fun buildTaggedPostsRequest(
+        tag: String,
+        creatorId: String?,
+        page: Int,
+    ): RequestDescriptor
+
+    fun parseTaggedPosts(body: String, statusCode: Int): GuestParseResult<PageNumberInfo<FanboxPost>>
+
+    fun buildLikePostRequest(postId: String): RequestDescriptor
+
+    fun buildLikeCommentRequest(commentId: String): RequestDescriptor
+
+    fun buildAddCommentRequest(
+        postId: String,
+        rootCommentId: String?,
+        parentCommentId: String?,
+        comment: String,
+    ): RequestDescriptor
+
+    fun buildDeleteCommentRequest(commentId: String): RequestDescriptor
 }
 
 /**

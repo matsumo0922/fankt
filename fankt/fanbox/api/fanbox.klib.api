@@ -1881,6 +1881,21 @@ final class me.matsumo.fankt.fanbox/FanboxListItemSchemaMismatch { // me.matsumo
     final fun equals(kotlin/Any?): kotlin/Boolean // me.matsumo.fankt.fanbox/FanboxListItemSchemaMismatch.equals|equals(kotlin.Any?){}[0]
     final fun hashCode(): kotlin/Int // me.matsumo.fankt.fanbox/FanboxListItemSchemaMismatch.hashCode|hashCode(){}[0]
     final fun toString(): kotlin/String // me.matsumo.fankt.fanbox/FanboxListItemSchemaMismatch.toString|toString(){}[0]
+
+    final object $serializer : kotlinx.serialization.internal/GeneratedSerializer<me.matsumo.fankt.fanbox/FanboxListItemSchemaMismatch> { // me.matsumo.fankt.fanbox/FanboxListItemSchemaMismatch.$serializer|null[0]
+        final val descriptor // me.matsumo.fankt.fanbox/FanboxListItemSchemaMismatch.$serializer.descriptor|{}descriptor[0]
+            final fun <get-descriptor>(): kotlinx.serialization.descriptors/SerialDescriptor // me.matsumo.fankt.fanbox/FanboxListItemSchemaMismatch.$serializer.descriptor.<get-descriptor>|<get-descriptor>(){}[0]
+
+        final fun childSerializers(): kotlin/Array<kotlinx.serialization/KSerializer<*>> // me.matsumo.fankt.fanbox/FanboxListItemSchemaMismatch.$serializer.childSerializers|childSerializers(){}[0]
+        final fun deserialize(kotlinx.serialization.encoding/Decoder): me.matsumo.fankt.fanbox/FanboxListItemSchemaMismatch // me.matsumo.fankt.fanbox/FanboxListItemSchemaMismatch.$serializer.deserialize|deserialize(kotlinx.serialization.encoding.Decoder){}[0]
+        final fun serialize(kotlinx.serialization.encoding/Encoder, me.matsumo.fankt.fanbox/FanboxListItemSchemaMismatch) // me.matsumo.fankt.fanbox/FanboxListItemSchemaMismatch.$serializer.serialize|serialize(kotlinx.serialization.encoding.Encoder;me.matsumo.fankt.fanbox.FanboxListItemSchemaMismatch){}[0]
+    }
+
+    final object Companion { // me.matsumo.fankt.fanbox/FanboxListItemSchemaMismatch.Companion|null[0]
+        final val $childSerializers // me.matsumo.fankt.fanbox/FanboxListItemSchemaMismatch.Companion.$childSerializers|{}$childSerializers[0]
+
+        final fun serializer(): kotlinx.serialization/KSerializer<me.matsumo.fankt.fanbox/FanboxListItemSchemaMismatch> // me.matsumo.fankt.fanbox/FanboxListItemSchemaMismatch.Companion.serializer|serializer(){}[0]
+    }
 }
 
 final class me.matsumo.fankt.fanbox/InMemoryFanboxCookieStorage : me.matsumo.fankt.fanbox/FanboxCookieStorage { // me.matsumo.fankt.fanbox/InMemoryFanboxCookieStorage|null[0]

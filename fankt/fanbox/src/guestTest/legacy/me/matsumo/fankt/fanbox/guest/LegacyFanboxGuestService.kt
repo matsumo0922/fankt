@@ -7,14 +7,10 @@ import kotlinx.serialization.json.put
 import me.matsumo.fankt.fanbox.FanboxException
 import me.matsumo.fankt.fanbox.createFanboxJson
 import me.matsumo.fankt.fanbox.domain.model.FanboxPostDetail
-import me.matsumo.fankt.fanbox.domain.model.id.FanboxPostId
-import me.matsumo.fankt.fanbox.endpoint.FanboxEndpoints
-import me.matsumo.fankt.fanbox.endpoint.RequestDescriptor
 import me.matsumo.fankt.fanbox.response.FanboxResponses
 
-internal class LegacyFanboxGuestService : FanboxGuestService {
-
-    override fun buildPostDetailRequest(postId: String): RequestDescriptor = FanboxEndpoints.postDetail(FanboxPostId(postId))
+/** post.info の response を旧 envelope として解釈する guest。それ以外の operation は現行の guest と同じ。 */
+internal class LegacyFanboxGuestService : FanboxGuestService by RealFanboxGuestService() {
 
     override fun parsePostDetail(body: String, statusCode: Int): GuestParseResult<FanboxPostDetail> = try {
         val legacyPost = createFanboxJson()
