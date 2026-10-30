@@ -1,6 +1,9 @@
 package me.matsumo.fankt.fanbox.endpoint
 
-internal object FanboxEndpointIds {
+import me.matsumo.fankt.fanbox.InternalFanboxApi
+
+@InternalFanboxApi
+public object FanboxEndpointIds {
     val bellList = FanboxEndpointId("bell.list")
     val creatorGet = FanboxEndpointId("creator.get")
     val creatorListFollowing = FanboxEndpointId("creator.listFollowing")

@@ -1,13 +1,15 @@
 package me.matsumo.fankt.fanbox.response
 
 import me.matsumo.fankt.fanbox.FanboxException
+import me.matsumo.fankt.fanbox.InternalFanboxApi
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.Instant
 
 /** HTTP 応答と解析失敗を FANBOX の例外契約へ変換する。 */
-internal object FanboxFailureInterpreter {
+@InternalFanboxApi
+public object FanboxFailureInterpreter {
     private val HTTP_DATE = Regex(
         "^[A-Za-z]{3}, (\\d{2}) ([A-Za-z]{3}) (\\d{4}) (\\d{2}):(\\d{2}):(\\d{2}) GMT$",
     )
