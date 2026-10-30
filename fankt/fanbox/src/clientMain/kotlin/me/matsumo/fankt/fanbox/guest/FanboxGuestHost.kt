@@ -114,13 +114,7 @@ internal class FanboxGuestHost(
         parse: FanboxGuestService.(FanboxRawResponse) -> GuestParseResult<T>,
     ): T {
         val endpoint = endpointId.value
-        val descriptor = call(
-            endpoint = endpoint,
-            operation = "buildRequest",
-            statusCode = null,
-            block = build,
-        )
-        val response = requestExecutor.execute(descriptor)
+        val response = buildAndExecute(endpoint, build)
         val result = call(
             endpoint = endpoint,
             operation = PARSE_RESPONSE,
@@ -149,6 +143,22 @@ internal class FanboxGuestHost(
                 )
             }
         }
+    }
+
+    /** guest で request を組み立てて実行する。response の本文を使わない変更系の操作に使う。 */
+    suspend fun send(endpointId: FanboxEndpointId, build: FanboxGuestService.() -> RequestDescriptor) {
+        buildAndExecute(endpointId.value, build)
+    }
+
+    private suspend fun buildAndExecute(endpoint: String, build: FanboxGuestService.() -> RequestDescriptor): FanboxRawResponse {
+        val descriptor = call(
+            endpoint = endpoint,
+            operation = "buildRequest",
+            statusCode = null,
+            block = build,
+        )
+
+        return requestExecutor.execute(descriptor)
     }
 
     // Exception rather than a list of Zipline types: a bridge call can also fail with
