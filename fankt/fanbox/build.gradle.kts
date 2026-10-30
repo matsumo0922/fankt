@@ -184,14 +184,7 @@ kotlin {
     }
 }
 
-tasks.matching { task ->
-    task.name in setOf(
-        "testDebugUnitTest",
-        "testReleaseUnitTest",
-        "iosSimulatorArm64Test",
-        "iosX64Test",
-        "ziplineTestTest",
-    )
-}.configureEach {
+// The QuickJS tests load the guest bundle that this build produces.
+tasks.named("ziplineTestTest") {
     dependsOn("compileProductionExecutableKotlinGuestZipline")
 }
