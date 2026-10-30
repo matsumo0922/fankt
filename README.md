@@ -131,7 +131,7 @@ and pull request CI pass. Neither workflow publishes such a manifest.
 
 #### Signing keys
 
-Two key pairs are in use. `./gradlew :fankt:fanbox:generateZiplineManifestKeyPairEd25519` prints a
+Two key pairs are in use. `./gradlew :fankt:fanbox-guest:generateZiplineManifestKeyPairEd25519` prints a
 new one.
 
 | Key name | Private key kept in | Signs |
@@ -399,13 +399,14 @@ formatting extension, and both relative-time extensions. Consumers that still ne
 time-zone APIs should select a normal non-compat `kotlinx-datetime` artifact independently; fankt
 does not publish that dependency. fankt remains on Kotlin 2.3.x until Zipline supports Kotlin 2.4.
 
-The FANBOX library consists of two modules. `:fankt:fanbox-core` holds the domain models, request
+The FANBOX library consists of three modules. `:fankt:fanbox-core` holds the domain models, request
 builders, serializable descriptors, response parsers, cursor/host extraction, failure interpretation,
-and the Zipline guest service; it has no Ktor, Room, or Napier dependency, and the guest bundle is
-compiled from it. `:fankt:fanbox` holds the `Fanbox` client, the guest host, and the Ktor transport.
+and the Zipline guest service; it has no Ktor, Room, or Napier dependency. `:fankt:fanbox-guest` binds
+that service as the guest's entry point and builds the signed bundle; it is not published.
+`:fankt:fanbox` holds the `Fanbox` client, the guest host, and the Ktor transport.
 Every non-download operation passes one descriptor through one raw-response Ktor executor and then
-through the guest's endpoint-specific parser. Neither module contains a Ktorfit endpoint or
-KSP-generated API, and Ktor remains only inside the internal transport implementation.
+through the guest's endpoint-specific parser. No module contains a Ktorfit endpoint or KSP-generated
+API, and Ktor remains only inside the internal transport implementation.
 
 The declarations that `:fankt:fanbox` and the guest share, such as the guest service and the request
 descriptor, are public in `fanbox-core` but annotated with `@InternalFanboxApi`, an opt-in marker at
