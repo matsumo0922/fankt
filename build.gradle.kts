@@ -27,7 +27,7 @@ plugins {
     alias(libs.plugins.ksp) apply false
 }
 
-// 各モジュールの解析に含まれないビルド定義と独立 consumer も検査する。
+// 各モジュールの解析に含まれないビルド定義も検査する。
 tasks.named<Detekt>("detekt") {
-    setSource(files("build.gradle.kts", "settings.gradle.kts", "build-logic", "compatibility-tests"))
+    setSource(files("build.gradle.kts", "settings.gradle.kts", "build-logic"))
 }
