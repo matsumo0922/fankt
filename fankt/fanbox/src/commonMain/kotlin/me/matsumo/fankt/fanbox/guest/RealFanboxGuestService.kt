@@ -1,6 +1,7 @@
 package me.matsumo.fankt.fanbox.guest
 
 import me.matsumo.fankt.fanbox.FanboxException
+import me.matsumo.fankt.fanbox.domain.model.FanboxPostDetail
 import me.matsumo.fankt.fanbox.domain.model.id.FanboxPostId
 import me.matsumo.fankt.fanbox.endpoint.FanboxEndpoints
 import me.matsumo.fankt.fanbox.endpoint.RequestDescriptor
@@ -12,7 +13,7 @@ internal class RealFanboxGuestService : FanboxGuestService {
     override fun buildPostDetailRequest(postId: String): RequestDescriptor = FanboxEndpoints.postDetail(FanboxPostId(postId))
 
     // Throwable rather than RuntimeException: a Kotlin/JS engine failure need not be one.
-    override fun parsePostDetail(body: String, statusCode: Int): GuestParseResult = try {
+    override fun parsePostDetail(body: String, statusCode: Int): GuestParseResult<FanboxPostDetail> = try {
         GuestParseResult.Success(FanboxResponses.postDetail(body, statusCode))
     } catch (failure: FanboxException) {
         GuestParseResult.SchemaMismatch(failure.describe())

@@ -18,27 +18,26 @@ internal const val FANBOX_GUEST_SERVICE_NAME: String = "fanboxGuest"
 internal interface FanboxGuestService : ZiplineService {
     fun buildPostDetailRequest(postId: String): RequestDescriptor
 
-    fun parsePostDetail(body: String, statusCode: Int): GuestParseResult
+    fun parsePostDetail(body: String, statusCode: Int): GuestParseResult<FanboxPostDetail>
 }
 
 /**
  * The outcome of a guest-side response interpretation.
  *
  * Failures travel as a value because an exception crossing the Zipline bridge arrives as an opaque
- * type. The host parses the same response with its built-in parser whenever the result is not
- * [Success].
+ * type.
  */
 @Serializable
-internal sealed interface GuestParseResult {
+internal sealed interface GuestParseResult<out T> {
     /** The response matched the schema the guest expects. */
     @Serializable
-    data class Success(val postDetail: FanboxPostDetail) : GuestParseResult
+    data class Success<out T>(val value: T) : GuestParseResult<T>
 
     /** The guest's parser rejected the response. */
     @Serializable
-    data class SchemaMismatch(val diagnostic: String) : GuestParseResult
+    data class SchemaMismatch(val diagnostic: String) : GuestParseResult<Nothing>
 
     /** The guest failed for a reason other than the response. */
     @Serializable
-    data class GuestFailure(val diagnostic: String) : GuestParseResult
+    data class GuestFailure(val diagnostic: String) : GuestParseResult<Nothing>
 }

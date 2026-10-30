@@ -120,7 +120,7 @@ internal class FanboxGuestHost(
         val result = call(POST_INFO, PARSE_RESPONSE) { parsePostDetail(response.bodyText, response.statusCode) }
 
         return when (result) {
-            is GuestParseResult.Success -> result.postDetail
+            is GuestParseResult.Success -> result.value
 
             is GuestParseResult.SchemaMismatch -> fallBack(
                 operation = PARSE_RESPONSE,

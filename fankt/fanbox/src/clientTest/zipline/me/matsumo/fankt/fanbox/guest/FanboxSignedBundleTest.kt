@@ -26,6 +26,7 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import me.matsumo.fankt.fanbox.FanboxGuestCache
 import me.matsumo.fankt.fanbox.FanboxHttpClientFactory
+import me.matsumo.fankt.fanbox.domain.model.FanboxPostDetail
 import okio.ByteString
 import okio.ByteString.Companion.toByteString
 import okio.FileSystem
@@ -48,7 +49,7 @@ class FanboxSignedBundleTest {
         withBundleFixture {
             val result = loadGuest(signedBundle(FIXED_BUNDLE_DIRECTORY)).parseAndClose()
 
-            assertIs<GuestParseResult.Success>(result)
+            assertIs<GuestParseResult.Success<*>>(result)
         }
     }
 
@@ -88,8 +89,8 @@ class FanboxSignedBundleTest {
             val signedByPrimary = signedBundle(FIXED_BUNDLE_DIRECTORY)
             val signedByRecovery = signedBundle(FIXED_BUNDLE_DIRECTORY, signingKeyName = RECOVERY_KEY_NAME, keyPair = recoveryKey)
 
-            assertIs<GuestParseResult.Success>(loadGuest(signedByPrimary, config = config).parseAndClose())
-            assertIs<GuestParseResult.Success>(loadGuest(signedByRecovery, config = config).parseAndClose())
+            assertIs<GuestParseResult.Success<*>>(loadGuest(signedByPrimary, config = config).parseAndClose())
+            assertIs<GuestParseResult.Success<*>>(loadGuest(signedByRecovery, config = config).parseAndClose())
         }
     }
 
@@ -100,7 +101,7 @@ class FanboxSignedBundleTest {
             val fixedResult = loadGuest(signedBundle(FIXED_BUNDLE_DIRECTORY)).parseAndClose()
 
             assertIs<GuestParseResult.SchemaMismatch>(legacyResult)
-            assertIs<GuestParseResult.Success>(fixedResult)
+            assertIs<GuestParseResult.Success<*>>(fixedResult)
         }
     }
 
@@ -137,7 +138,7 @@ class FanboxSignedBundleTest {
                 keyPair = rotatedKey,
             ).parseAndClose()
 
-            assertIs<GuestParseResult.Success>(result)
+            assertIs<GuestParseResult.Success<*>>(result)
         }
     }
 
@@ -246,7 +247,7 @@ class FanboxSignedBundleTest {
             cache = cache,
         )
 
-        suspend fun LoadedGuest.parseAndClose(): GuestParseResult = withContext(dispatcher) {
+        suspend fun LoadedGuest.parseAndClose(): GuestParseResult<FanboxPostDetail> = withContext(dispatcher) {
             try {
                 service.parsePostDetail(RESPONSE_BODY, 200)
             } finally {

@@ -6,6 +6,7 @@ import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.put
 import me.matsumo.fankt.fanbox.FanboxException
 import me.matsumo.fankt.fanbox.createFanboxJson
+import me.matsumo.fankt.fanbox.domain.model.FanboxPostDetail
 import me.matsumo.fankt.fanbox.domain.model.id.FanboxPostId
 import me.matsumo.fankt.fanbox.endpoint.FanboxEndpoints
 import me.matsumo.fankt.fanbox.endpoint.RequestDescriptor
@@ -15,7 +16,7 @@ internal class LegacyFanboxGuestService : FanboxGuestService {
 
     override fun buildPostDetailRequest(postId: String): RequestDescriptor = FanboxEndpoints.postDetail(FanboxPostId(postId))
 
-    override fun parsePostDetail(body: String, statusCode: Int): GuestParseResult = try {
+    override fun parsePostDetail(body: String, statusCode: Int): GuestParseResult<FanboxPostDetail> = try {
         val legacyPost = createFanboxJson()
             .parseToJsonElement(body).jsonObject
             .getValue("body")

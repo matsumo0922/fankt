@@ -56,7 +56,7 @@ class FanboxGuestWireSchemaTest {
                 "me.matsumo.fankt.fanbox.guest.GuestParseResult.SchemaMismatch",
                 "me.matsumo.fankt.fanbox.guest.GuestParseResult.Success",
             ),
-            subtypeNames(serializer<GuestParseResult>().descriptor),
+            subtypeNames(serializer<GuestParseResult<FanboxPostDetail>>().descriptor),
         )
     }
 

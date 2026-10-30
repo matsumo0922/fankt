@@ -42,7 +42,7 @@ class FanboxGuestHostTest {
 
     @Test
     fun guestParseFailuresUseTheBuiltInParserOnTheSameResponse() = runBlocking {
-        val failures = listOf<Pair<(String, Int) -> GuestParseResult, FanboxGuestEvent>>(
+        val failures = listOf<Pair<(String, Int) -> GuestParseResult<FanboxPostDetail>, FanboxGuestEvent>>(
             { _: String, _: Int -> GuestParseResult.SchemaMismatch("changed schema") } to
                 FanboxGuestEvent.SchemaMismatch("post.info"),
             { _: String, _: Int -> GuestParseResult.GuestFailure("broken guest") } to
@@ -175,15 +175,15 @@ class FanboxGuestHostTest {
     @Test
     fun sealedPostBodyRoundTripsInGuestPayload() {
         val post = FanboxResponses.postDetail(FanboxPostJsonFixtures.postInfoArticleEmbeds, 200)
-        val encoded = Json.encodeToString<GuestParseResult>(GuestParseResult.Success(post))
-        val decoded = Json.decodeFromString<GuestParseResult>(encoded)
+        val encoded = Json.encodeToString<GuestParseResult<FanboxPostDetail>>(GuestParseResult.Success(post))
+        val decoded = Json.decodeFromString<GuestParseResult<FanboxPostDetail>>(encoded)
 
-        assertEquals(post, assertIs<GuestParseResult.Success>(decoded).postDetail)
+        assertEquals(post, assertIs<GuestParseResult.Success<FanboxPostDetail>>(decoded).value)
     }
 
     /** 偽の guest を持つ host と、それを使う repository の組。 */
     private class GuestFixture(
-        parse: (String, Int) -> GuestParseResult,
+        parse: (String, Int) -> GuestParseResult<FanboxPostDetail>,
         buildRequest: (String) -> RequestDescriptor = { postId -> FanboxEndpoints.postDetail(FanboxPostId(postId)) },
         responseBody: String = FanboxPostJsonFixtures.postInfoTextHybrid,
         load: suspend () -> LoadedGuest = { LoadedGuest(StubGuestService(buildRequest, parse), version = BUNDLE_VERSION) },
@@ -216,11 +216,11 @@ class FanboxGuestHostTest {
 
     private class StubGuestService(
         private val buildRequest: (String) -> RequestDescriptor,
-        private val parse: (String, Int) -> GuestParseResult,
+        private val parse: (String, Int) -> GuestParseResult<FanboxPostDetail>,
     ) : FanboxGuestService {
         override fun buildPostDetailRequest(postId: String): RequestDescriptor = buildRequest(postId)
 
-        override fun parsePostDetail(body: String, statusCode: Int): GuestParseResult = parse(body, statusCode)
+        override fun parsePostDetail(body: String, statusCode: Int): GuestParseResult<FanboxPostDetail> = parse(body, statusCode)
     }
 
     private companion object {

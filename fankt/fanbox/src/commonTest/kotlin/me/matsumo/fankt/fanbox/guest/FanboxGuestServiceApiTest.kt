@@ -1,5 +1,6 @@
 package me.matsumo.fankt.fanbox.guest
 
+import me.matsumo.fankt.fanbox.domain.model.FanboxPostDetail
 import me.matsumo.fankt.fanbox.domain.model.id.FanboxPostId
 import me.matsumo.fankt.fanbox.endpoint.FanboxEndpoints
 import me.matsumo.fankt.fanbox.endpoint.RequestDescriptor
@@ -25,7 +26,7 @@ class FanboxGuestServiceApiTest {
         // store, or a raw credential string in either position would fail this binding.
         val postId: String = "post_id"
         val descriptor: RequestDescriptor = service.buildPostDetailRequest(postId)
-        val parsed: GuestParseResult = service.parsePostDetail(body = "{}", statusCode = 200)
+        val parsed: GuestParseResult<FanboxPostDetail> = service.parsePostDetail(body = "{}", statusCode = 200)
 
         assertTrue(descriptor.path.isNotEmpty())
         assertTrue(parsed is GuestParseResult.SchemaMismatch)
@@ -33,8 +34,8 @@ class FanboxGuestServiceApiTest {
 
     @Test
     fun parseResultDistinguishesASchemaMismatchFromAGuestFailure() {
-        val mismatch: GuestParseResult = GuestParseResult.SchemaMismatch("schema")
-        val failure: GuestParseResult = GuestParseResult.GuestFailure("engine")
+        val mismatch: GuestParseResult<FanboxPostDetail> = GuestParseResult.SchemaMismatch("schema")
+        val failure: GuestParseResult<FanboxPostDetail> = GuestParseResult.GuestFailure("engine")
 
         // The host branches on these to decide whether to keep using the guest, so they must not
         // collapse into one another.
@@ -45,6 +46,6 @@ class FanboxGuestServiceApiTest {
     private class StubGuestService : FanboxGuestService {
         override fun buildPostDetailRequest(postId: String): RequestDescriptor = FanboxEndpoints.postDetail(FanboxPostId(postId))
 
-        override fun parsePostDetail(body: String, statusCode: Int): GuestParseResult = GuestParseResult.SchemaMismatch("stub")
+        override fun parsePostDetail(body: String, statusCode: Int): GuestParseResult<FanboxPostDetail> = GuestParseResult.SchemaMismatch("stub")
     }
 }
