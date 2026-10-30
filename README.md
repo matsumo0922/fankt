@@ -241,8 +241,14 @@ store keeps the token only in memory and belongs to one `Fanbox` instance. It is
 instance's session is replaced. Refresh it after process startup or a session change and as needed
 before later API calls. Do not race a refresh with session or reset-cookie changes.
 
+Every example below passes the guest settings described in [Zipline guest](#zipline-guest).
+
 ```kotlin
-val fanbox = Fanbox()
+val fanbox = Fanbox(
+    guestManifestUrl = guestManifestUrl,
+    guestTrustedKeys = guestTrustedKeys,
+    guestCache = guestCache,
+)
 
 try {
     // Set the session ID and CSRF token before using the API
@@ -258,8 +264,8 @@ try {
 
 #### Authentication storage
 
-Each `Fanbox()` call creates independent `InMemoryFanboxCookieStorage` and
-`InMemoryFanboxTokenStore` instances. The default Cookie and CSRF state is isolated from other
+A `Fanbox` created without `cookieStorage` and `tokenStore` creates independent
+`InMemoryFanboxCookieStorage` and `InMemoryFanboxTokenStore` instances. The default Cookie and CSRF state is isolated from other
 `Fanbox` instances and is not restored after process recreation. Applications that require durable
 sessions inject a host-owned `FanboxCookieStorage` implementation explicitly:
 
@@ -267,6 +273,9 @@ sessions inject a host-owned `FanboxCookieStorage` implementation explicitly:
 val cookieStorage: FanboxCookieStorage = applicationCookieStorage
 val tokenStore = InMemoryFanboxTokenStore()
 val fanbox = Fanbox(
+    guestManifestUrl = guestManifestUrl,
+    guestTrustedKeys = guestTrustedKeys,
+    guestCache = guestCache,
     cookieStorage = cookieStorage,
     tokenStore = tokenStore,
 )
@@ -302,7 +311,12 @@ On Android, pass a `Context` explicitly. The factory uses
 
 ```kotlin
 val storage = createRoomFanboxCookieStorage(applicationContext)
-val fanbox = Fanbox(cookieStorage = storage)
+val fanbox = Fanbox(
+    guestManifestUrl = guestManifestUrl,
+    guestTrustedKeys = guestTrustedKeys,
+    guestCache = guestCache,
+    cookieStorage = storage,
+)
 
 try {
     // A restored FANBOXSESSID is available through this Fanbox instance.
@@ -317,7 +331,12 @@ On iOS, the factory uses `NSDocumentDirectory/fankt.db`:
 
 ```kotlin
 val storage = createRoomFanboxCookieStorage()
-val fanbox = Fanbox(cookieStorage = storage)
+val fanbox = Fanbox(
+    guestManifestUrl = guestManifestUrl,
+    guestTrustedKeys = guestTrustedKeys,
+    guestCache = guestCache,
+    cookieStorage = storage,
+)
 
 try {
     // Use Fanbox with the restored persistent Cookie state.
@@ -356,7 +375,7 @@ dispatcher — for example, a single-parallelism dispatcher passed as `ioDispatc
 to run `close()`. Room's close barrier waits for in-flight database work to release, and that work
 cannot resume on a dispatcher occupied by the `close()` call itself.
 
-The v0.1.0 API keeps `Fanbox()` but replaces Ktor-facing constructor and operation types. Use
+The v0.1.0 API replaces Ktor-facing constructor and operation types. Use
 `FanboxLogLevel` instead of Ktor `LogLevel`, `FanboxCookieRecord` instead of Ktor `Cookie`, and the
 streaming `download()` callback instead of `HttpStatement`. `getHttpClient()` is removed; create and
 own a separate host client for networking outside the FANBOX API operations. When converting a Ktor
