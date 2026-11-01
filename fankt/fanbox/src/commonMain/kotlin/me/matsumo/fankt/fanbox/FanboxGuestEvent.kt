@@ -8,7 +8,7 @@ package me.matsumo.fankt.fanbox
 sealed interface FanboxGuestEvent {
     /**
      * guest をロードした。[version] は bundle のビルド元の commit で、ローカルでビルドした bundle では `null`。
-     * [isFromCache] は、配信先に届かず、検証済みのキャッシュからロードしたときに `true`。
+     * [isFromCache] は、配信先からロードできず、検証済みのキャッシュからロードしたときに `true`。
      */
     data class Loaded(
         val version: String?,
