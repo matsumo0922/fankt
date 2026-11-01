@@ -77,7 +77,8 @@ internal class FanboxGuestDeliveryConfig(
 /**
  * Zipline guest を背景でロードし、FANBOX の request の組み立てと response の解析を guest で行う。
  *
- * 呼び出しはロードの完了を待つ。ロードに失敗した host の呼び出しは、すべて [FanboxException.GuestFailure] で失敗する。
+ * 呼び出しはロードの完了を待つ。ロードに失敗した host は、以後の呼び出しをライブラリに組み込まれた
+ * [RealFanboxGuestService] で処理する。これはこのライブラリのリリース時点の guest と同じ実装である。
  */
 @OptIn(DelicateCoroutinesApi::class, ExperimentalCoroutinesApi::class)
 internal class FanboxGuestHost(
@@ -99,7 +100,7 @@ internal class FanboxGuestHost(
             throw failure
         } catch (failure: Throwable) {
             report("load", failure.describe(), FanboxGuestEvent.LoadFailed(failure.errorType()))
-            throw failure
+            return@async RealFanboxGuestService()
         }
 
         loaded = guest

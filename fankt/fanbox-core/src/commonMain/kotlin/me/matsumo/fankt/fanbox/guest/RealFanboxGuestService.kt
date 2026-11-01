@@ -27,7 +27,11 @@ import me.matsumo.fankt.fanbox.endpoint.FanboxEndpoints
 import me.matsumo.fankt.fanbox.endpoint.RequestDescriptor
 import me.matsumo.fankt.fanbox.response.FanboxResponses
 
-/** guest bundle が bind する [FanboxGuestService] の実装。FanboxEndpoints と FanboxResponses を bridge へ載せる。 */
+/**
+ * guest bundle が bind する [FanboxGuestService] の実装。FanboxEndpoints と FanboxResponses を bridge へ載せる。
+ *
+ * host も、guest をロードできなかったときに、この実装を bridge を介さずに使う。
+ */
 // Mirrors FanboxGuestService, which declares one function per operation.
 @Suppress("TooManyFunctions")
 @InternalFanboxApi

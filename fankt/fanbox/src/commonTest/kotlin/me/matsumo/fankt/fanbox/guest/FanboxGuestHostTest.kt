@@ -19,7 +19,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertTrue
 
-/** guest のロードと呼び出しの失敗が、公開 API の例外として呼び出し元へ届くことを確かめる。 */
+/** guest のロードの失敗が組み込みの guest へ渡り、呼び出しの失敗が公開 API の例外として呼び出し元へ届くことを確かめる。 */
 class FanboxGuestHostTest {
 
     @Test
@@ -72,10 +72,10 @@ class FanboxGuestHostTest {
     }
 
     @Test
-    fun aLoadFailureFailsEveryCallWithoutLoadingAgain() = runBlocking {
+    fun aLoadFailureHandsEveryCallToTheBuiltInGuestWithoutLoadingAgain() = runBlocking {
         var loads = 0
         val fixture = GuestFixture(
-            parse = { _, _ -> error("the guest failed to load") },
+            parse = { _, _ -> error("the delivered guest failed to load") },
             beforeLoad = {
                 loads += 1
                 error("manifest unreachable")
@@ -83,15 +83,21 @@ class FanboxGuestHostTest {
         )
 
         fixture.use {
+            // The fixture answers "{}", which the built-in parser rejects; a guest that never ran fails as GuestFailure instead.
             repeat(2) { _ ->
-                val failure = assertFailsWith<FanboxException.GuestFailure> { it.getPostDetail() }
-
-                assertEquals("manifest unreachable", failure.cause?.message)
+                assertFailsWith<FanboxException.SchemaMismatch> { it.getPostDetail() }
             }
 
             assertEquals(1, loads)
-            assertTrue(it.requests.isEmpty())
-            assertEquals(listOf<FanboxGuestEvent>(FanboxGuestEvent.LoadFailed("IllegalStateException")), it.events)
+            assertEquals(2, it.requests.size)
+            assertEquals(
+                listOf(
+                    FanboxGuestEvent.LoadFailed("IllegalStateException"),
+                    FanboxGuestEvent.SchemaMismatch("post.info"),
+                    FanboxGuestEvent.SchemaMismatch("post.info"),
+                ),
+                it.events,
+            )
         }
     }
 
