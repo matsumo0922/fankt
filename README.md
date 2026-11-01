@@ -60,17 +60,20 @@ Fanbox(
 )
 ```
 
-The guest loads in the background as soon as the `Fanbox` is created, and requests wait for it. There
-is no built-in fallback:
+The guest loads in the background as soon as the `Fanbox` is created, and requests wait for it. When
+it cannot load, from the delivery URL or from the cache, the `Fanbox` handles every request with the
+guest built into the library instead: the same code, as it was when this version of the library was
+released. Fixes delivered since then do not apply until a new `Fanbox` loads the delivered guest. A
+`Fanbox` does not try to load again; create a new one.
+
+A guest that loaded and then fails a request is not replaced by the built-in one:
 
 | What happens | The request fails with |
 |---|---|
-| The guest did not load | `FanboxException.GuestFailure`, for every request of this `Fanbox` |
 | The guest failed to build the request or to interpret the response | `FanboxException.GuestFailure` |
 | The guest rejected the response | `FanboxException.SchemaMismatch` |
 
-A `Fanbox` whose guest did not load does not try again; create a new one. A failed request does not
-stop the guest for later requests.
+A failed request does not stop the guest for later requests.
 
 #### Loading and caching
 
@@ -91,7 +94,7 @@ Pass `guestEventListener` to follow the guest.
 | Event | When |
 |---|---|
 | `Loaded(version)` | The guest loaded. `version` is the commit the bundle was built from |
-| `LoadFailed(errorType)` | The guest could not load; every request of this `Fanbox` fails |
+| `LoadFailed(errorType)` | The guest could not load; this `Fanbox` uses the built-in guest |
 | `SchemaMismatch(endpoint)` | The guest's parser rejected a response |
 | `CallFailed(endpoint, operation, errorType)` | A guest call failed |
 
@@ -128,10 +131,10 @@ against. A change that every host built against the current version can still de
 
 Raise the version only to make a change that such a host cannot decode: removing or renaming a
 function, changing a parameter or return type, removing, renaming or retyping a field, or adding a
-subtype to a sealed hierarchy. The guest has no fallback, so on the current version such a change
-makes every call that an older host cannot decode fail with `FanboxException.GuestFailure`; a new
-subtype, for example, fails only the calls that return it. `ziplineApiCheck` catches a changed
-function signature; a changed field is caught only in review.
+subtype to a sealed hierarchy. A guest that loaded is not replaced by the built-in one, so on the
+current version such a change makes every call that an older host cannot decode fail with
+`FanboxException.GuestFailure`; a new subtype, for example, fails only the calls that return it.
+`ziplineApiCheck` catches a changed function signature; a changed field is caught only in review.
 
 Prefer absorbing a FANBOX API change inside the guest, so that the version rarely moves: keep the
 model, fill a field FANBOX dropped with a default, and map a new kind of item to the existing
@@ -182,8 +185,8 @@ Each channel is a directory on the `gh-pages` branch. A consumer loads the guest
 loaded keeps running what it loaded.
 
 A delivery cannot be stopped. Deleting a manifest leaves every consumer that has loaded a bundle on
-its cached one, and breaks every request of a consumer that has none. Return to an earlier bundle or
-deliver a fix instead.
+its cached one, and moves a consumer that has none to its built-in guest. Return to an earlier bundle
+or deliver a fix instead.
 
 | Goal | Production (`zipline/v1`) | Dev (`zipline/v1-dev`) |
 |---|---|---|

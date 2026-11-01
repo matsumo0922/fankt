@@ -94,8 +94,8 @@ class Fanbox internal constructor(
      * The guest loads in the background from [guestManifestUrl] once this instance is created, and
      * modules already in [guestCache] are not downloaded again. When the manifest cannot be loaded
      * from [guestManifestUrl], the guest last verified into [guestCache] is loaded instead. Requests
-     * wait for the load. When neither loads, every request of this instance fails with
-     * [FanboxException.GuestFailure].
+     * wait for the load. When neither loads, this instance handles every request with the guest built
+     * into the library, as it was when this version was released.
      *
      * [guestTrustedKeys] maps each trusted signing key name to its Ed25519 public key. A manifest
      * signed by any of them is accepted.

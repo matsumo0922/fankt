@@ -10,7 +10,7 @@ sealed interface FanboxGuestEvent {
     data class Loaded(val version: String?) : FanboxGuestEvent
 
     /**
-     * guest をロードできなかった。この [Fanbox] の呼び出しはすべて [FanboxException.GuestFailure] で失敗する。
+     * guest をロードできなかった。この [Fanbox] は、ライブラリに組み込まれた guest ですべての呼び出しを処理する。
      * [errorType] は失敗した例外の型名。
      */
     data class LoadFailed(val errorType: String) : FanboxGuestEvent
