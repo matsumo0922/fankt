@@ -104,7 +104,7 @@ internal class FanboxGuestHost(
         }
 
         loaded = guest
-        emit(FanboxGuestEvent.Loaded(guest.version))
+        emit(FanboxGuestEvent.Loaded(version = guest.version, isFromCache = guest.isFromCache))
         guest.service
     }
 
@@ -228,11 +228,12 @@ internal class FanboxGuestHost(
     }
 }
 
-/** ロード済みの guest service と、その Zipline・bundle のバージョン。 */
+/** ロード済みの guest service と、その Zipline・bundle のバージョン、キャッシュからロードしたか。 */
 internal data class LoadedGuest(
     val service: FanboxGuestService,
     val zipline: Zipline? = null,
     val version: String? = null,
+    val isFromCache: Boolean = false,
 )
 
 /** [config] の配信先から、[clientFactory] の HTTP client で guest をロードする関数を返す。 */
@@ -277,7 +278,7 @@ internal suspend fun loadZiplineGuest(
             try {
                 // A fresh cached manifest loads before the network is tried, and a client that cannot
                 // download keeps a missing module from being fetched.
-                loadOnce(OfflineZiplineHttpClient, AlwaysFresh)
+                loadOnce(OfflineZiplineHttpClient, AlwaysFresh).copy(isFromCache = true)
             } catch (failure: CancellationException) {
                 throw failure
             } catch (cacheFailure: Exception) {

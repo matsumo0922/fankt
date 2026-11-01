@@ -6,8 +6,14 @@ package me.matsumo.fankt.fanbox
  * どの値も response 本文と認証情報を含まない。
  */
 sealed interface FanboxGuestEvent {
-    /** guest をロードした。[version] は bundle のビルド元の commit で、ローカルでビルドした bundle では `null`。 */
-    data class Loaded(val version: String?) : FanboxGuestEvent
+    /**
+     * guest をロードした。[version] は bundle のビルド元の commit で、ローカルでビルドした bundle では `null`。
+     * [isFromCache] は、配信先に届かず、検証済みのキャッシュからロードしたときに `true`。
+     */
+    data class Loaded(
+        val version: String?,
+        val isFromCache: Boolean,
+    ) : FanboxGuestEvent
 
     /**
      * guest をロードできなかった。この [Fanbox] は、ライブラリに組み込まれた guest ですべての呼び出しを処理する。

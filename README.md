@@ -93,7 +93,7 @@ Pass `guestEventListener` to follow the guest.
 
 | Event | When |
 |---|---|
-| `Loaded(version)` | The guest loaded. `version` is the commit the bundle was built from |
+| `Loaded(version, isFromCache)` | The guest loaded. `version` is the commit the bundle was built from; `isFromCache` is `true` when the delivery target was out of reach and the verified cache was loaded |
 | `LoadFailed(errorType)` | The guest could not load; this `Fanbox` uses the built-in guest |
 | `SchemaMismatch(endpoint)` | The guest's parser rejected a response |
 | `CallFailed(endpoint, operation, errorType)` | A guest call failed |

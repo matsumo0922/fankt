@@ -26,6 +26,7 @@ import kotlin.random.Random
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
+import kotlin.test.assertFalse
 import kotlin.test.assertIs
 import kotlin.test.assertTrue
 
@@ -37,6 +38,8 @@ class FanboxSignedBundleTest {
         withBundleFixture {
             val loaded = loadGuest(signedBundle(FIXED_BUNDLE_DIRECTORY))
             val native = RealFanboxGuestService()
+
+            assertFalse(loaded.isFromCache)
 
             withContext(dispatcher) {
                 try {
@@ -98,6 +101,7 @@ class FanboxSignedBundleTest {
 
             assertIs<GuestParseResult.Success<*>>(loaded.parseAndClose())
             assertEquals("cached", loaded.version)
+            assertTrue(loaded.isFromCache)
         }
     }
 
@@ -110,6 +114,7 @@ class FanboxSignedBundleTest {
 
             assertIs<GuestParseResult.Success<*>>(loaded.parseAndClose())
             assertEquals("cached", loaded.version)
+            assertTrue(loaded.isFromCache)
         }
     }
 
