@@ -78,8 +78,8 @@ public sealed class FanboxException(
         )
 
     /**
-     * The Zipline guest that builds requests and interprets responses failed while building the
-     * request or interpreting the response.
+     * The guest that builds requests and interprets responses, delivered or built into the library,
+     * failed while building the request or interpreting the response.
      */
     public class GuestFailure @InternalFanboxApi constructor(
         statusCode: Int?,
