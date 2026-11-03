@@ -6,6 +6,7 @@ import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Runnable
 import kotlinx.coroutines.runBlocking
+import platform.Foundation.NSLock
 import platform.Foundation.NSThread
 import kotlin.coroutines.ContinuationInterceptor
 import kotlin.coroutines.CoroutineContext
@@ -33,21 +34,37 @@ internal actual fun newZiplineDispatcher(): CloseableCoroutineDispatcher {
     )
 }
 
-/** [eventLoop] へ処理を渡す dispatcher。閉じると、[eventLoop] を動かすスレッドは残りの処理を終えてから終了する。 */
+/**
+ * [eventLoop] へ処理を渡す dispatcher。閉じると、[eventLoop] を動かすスレッドは残りの処理を終えてから終了する。
+ *
+ * 閉じた後の処理は受け付けない。終了した runBlocking の event loop は、渡された処理を別のスレッドで実行するため。
+ */
 @OptIn(ExperimentalCoroutinesApi::class)
 private class ThreadEventLoopDispatcher(
     private val eventLoop: CoroutineDispatcher,
     private val stop: CompletableDeferred<Unit>,
 ) : CloseableCoroutineDispatcher() {
 
-    override fun dispatch(context: CoroutineContext, block: Runnable) {
-        // The event loop of a finished runBlocking hands its tasks to another thread, whose stack is too small for Zipline.
+    // Held from the check to the hand-off, so that the event loop cannot finish in between.
+    private val lock = NSLock()
+
+    override fun dispatch(context: CoroutineContext, block: Runnable) = withLock {
         check(!stop.isCompleted) { "The FanboxZipline dispatcher is closed" }
 
         eventLoop.dispatch(context, block)
     }
 
     override fun close() {
-        stop.complete(Unit)
+        withLock { stop.complete(Unit) }
+    }
+
+    private inline fun <T> withLock(action: () -> T): T {
+        lock.lock()
+
+        return try {
+            action()
+        } finally {
+            lock.unlock()
+        }
     }
 }
