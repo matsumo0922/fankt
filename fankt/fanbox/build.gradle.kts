@@ -105,6 +105,19 @@ kotlin {
             implementation(libs.ktor.mock)
         }
 
+        // Android and the JVM tests share the JVM implementation of the Zipline thread.
+        val jvmAndAndroidMain by creating {
+            dependsOn(commonMain.get())
+        }
+
+        androidMain {
+            dependsOn(jvmAndAndroidMain)
+        }
+
+        named("ziplineTestMain") {
+            dependsOn(jvmAndAndroidMain)
+        }
+
         androidMain.dependencies {
             implementation(libs.ktor.okhttp)
         }
