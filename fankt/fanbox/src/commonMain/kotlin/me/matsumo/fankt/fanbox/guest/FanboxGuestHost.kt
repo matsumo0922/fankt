@@ -17,11 +17,9 @@ import io.ktor.http.Url
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.async
 import kotlinx.coroutines.cancelAndJoin
-import kotlinx.coroutines.newSingleThreadContext
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import me.matsumo.fankt.fanbox.FanboxException
@@ -80,7 +78,7 @@ internal class FanboxGuestDeliveryConfig(
  * 呼び出しはロードの完了を待つ。ロードに失敗した host は、以後の呼び出しをライブラリに組み込まれた
  * [RealFanboxGuestService] で処理する。これはこのライブラリのリリース時点の guest と同じ実装である。
  */
-@OptIn(DelicateCoroutinesApi::class, ExperimentalCoroutinesApi::class)
+@OptIn(ExperimentalCoroutinesApi::class)
 internal class FanboxGuestHost(
     private val requestExecutor: FanboxRequestExecutor,
     private val diagnosticSink: FanboxDiagnosticSink,
@@ -88,7 +86,7 @@ internal class FanboxGuestHost(
     load: suspend (CoroutineDispatcher) -> LoadedGuest,
 ) : AutoCloseable {
     // Zipline instances are thread-confined; limited parallelism does not guarantee one thread.
-    private val dispatcher = newSingleThreadContext("FanboxZipline")
+    private val dispatcher = newZiplineDispatcher()
 
     // Read and written only on the dispatcher, so that close() releases the instance the load built.
     private var loaded: LoadedGuest? = null
