@@ -176,6 +176,13 @@ internal class FanboxPostMapper(
     }
 
     private fun mapBody(post: PostEntity): Body {
+        // FANBOX は、支援していない有料投稿の本文を null で返す。本文の無い投稿として扱い、拒否しない
+        if (post.body == null && post.isRestricted) return unknownBody(post)
+
+        return mapBodyByType(post)
+    }
+
+    private fun mapBodyByType(post: PostEntity): Body {
         return when (post.type) {
             "article" -> mapArticleBody(post, formatter.decodeFromJsonElement(requireKnownBody(post)))
 
