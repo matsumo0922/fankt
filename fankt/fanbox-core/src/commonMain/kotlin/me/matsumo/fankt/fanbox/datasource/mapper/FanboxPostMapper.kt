@@ -13,6 +13,7 @@ import me.matsumo.fankt.fanbox.domain.PageCursorInfo
 import me.matsumo.fankt.fanbox.domain.PageNumberInfo
 import me.matsumo.fankt.fanbox.domain.PageOffsetInfo
 import me.matsumo.fankt.fanbox.domain.entity.FanboxCommentListEntity
+import me.matsumo.fankt.fanbox.domain.entity.FanboxCoverEntity
 import me.matsumo.fankt.fanbox.domain.entity.FanboxCreatorPostItemsEntity
 import me.matsumo.fankt.fanbox.domain.entity.FanboxCreatorPostsPaginateEntity
 import me.matsumo.fankt.fanbox.domain.entity.FanboxPostCommentListEntity
@@ -110,12 +111,7 @@ internal class FanboxPostMapper(
         isRestricted = entity.isRestricted,
         hasAdultContent = entity.hasAdultContent,
         tags = entity.tags,
-        cover = entity.cover?.let { cover ->
-            FanboxCover(
-                type = cover.type,
-                url = cover.url,
-            )
-        },
+        cover = entity.cover?.let { mapCover(it) },
         user = entity.user?.let {
             FanboxUser(
                 userId = FanboxUserId(
@@ -127,6 +123,14 @@ internal class FanboxPostMapper(
             )
         },
     )
+
+    private fun mapCover(cover: FanboxCoverEntity): FanboxCover? {
+        // 動画カバーは画像の url を持たない。YouTube の動画はサムネイルを表示し、それ以外はカバー無しとして扱う
+        val youtubeVideoId = cover.video?.takeIf { it.serviceProvider == "youtube" }?.videoId
+        val url = cover.url ?: youtubeVideoId?.let { "https://i.ytimg.com/vi/$it/hqdefault.jpg" }
+
+        return url?.let { FanboxCover(url = it, type = cover.type) }
+    }
 
     fun map(entity: FanboxPostDetailEntity): FanboxPostDetail {
         val post = entity.body.post
