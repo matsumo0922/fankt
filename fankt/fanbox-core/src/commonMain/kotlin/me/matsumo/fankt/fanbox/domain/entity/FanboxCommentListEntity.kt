@@ -32,4 +32,4 @@ internal data class FanboxCommentListEntity(@SerialName("items") val items: List
 }
 
 @Serializable
-internal data class FanboxCommentBodyEntity(@SerialName("viewMode") val viewMode: String, @SerialName("commentList") val commentList: FanboxCommentListEntity)
+internal data class FanboxCommentBodyEntity(@SerialName("viewMode") val viewMode: String, @SerialName("commentList") val commentList: FanboxCommentListEntity?)

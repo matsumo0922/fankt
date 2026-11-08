@@ -428,15 +428,18 @@ internal class FanboxPostMapper(
     )
 
     fun map(entity: FanboxPostCommentListEntity, endpoint: String): FanboxTolerantResult<PageOffsetInfo<FanboxComment>> {
+        // FANBOX は、支援していない有料投稿やコメントを閉じた投稿で commentList を null で返す。コメントの無い投稿として扱う
+        val commentList = entity.body.commentList ?: return FanboxTolerantResult(PageOffsetInfo(emptyList(), null), emptyList())
+
         val decoded = listItemDecoder.decodeAndMap(
             endpoint = endpoint,
-            items = entity.body.commentList.items,
+            items = commentList.items,
             deserializer = FanboxCommentListEntity.Item.serializer(),
         ) { item, indexPath -> mapComment(item, endpoint, indexPath) }
         return FanboxTolerantResult(
             value = PageOffsetInfo(
                 contents = decoded.value,
-                offset = entity.body.commentList.nextUrl?.let {
+                offset = commentList.nextUrl?.let {
                     FanboxUrlParts
                         .parse(it)
                         .queryValue("offset")
