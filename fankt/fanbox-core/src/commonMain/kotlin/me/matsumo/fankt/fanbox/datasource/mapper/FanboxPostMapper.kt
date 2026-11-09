@@ -126,15 +126,24 @@ internal class FanboxPostMapper(
 
     private fun mapCover(cover: FanboxCoverEntity): FanboxCover? {
         // 動画カバーは画像の url を持たない。YouTube の動画はサムネイルを表示し、それ以外はカバー無しとして扱う
-        val youtubeVideoId = cover.video?.takeIf { it.serviceProvider == "youtube" }?.videoId
-        val url = cover.url ?: youtubeVideoId?.let { "https://i.ytimg.com/vi/$it/hqdefault.jpg" }
+        val url = cover.url ?: cover.video?.let { videoThumbnailUrl(it.serviceProvider, it.videoId) }
 
         return url?.let { FanboxCover(url = it, type = cover.type) }
+    }
+
+    private fun videoThumbnailUrl(serviceProvider: String, videoId: String): String? {
+        // YouTube はどの動画にも hqdefault のサムネイルを用意している。それ以外の配信サービスはサムネイルを持たないものとして扱う
+        if (serviceProvider != "youtube") return null
+
+        return "https://i.ytimg.com/vi/$videoId/hqdefault.jpg"
     }
 
     fun map(entity: FanboxPostDetailEntity): FanboxPostDetail {
         val post = entity.body.post
         val bodyBlock = mapBody(post)
+
+        // 動画投稿は coverImageUrl を持たないため、動画のサムネイルで補う
+        val videoThumbnail = (bodyBlock as? Body.Video)?.let { videoThumbnailUrl(it.serviceProvider, it.videoId) }
 
         return FanboxPostDetail(
             id = FanboxPostId(post.id),
@@ -143,7 +152,7 @@ internal class FanboxPostMapper(
             updatedDatetime = Instant.parse(post.updatedDatetime),
             isLiked = post.isLiked,
             likeCount = post.likeCount,
-            coverImageUrl = post.coverImageUrl,
+            coverImageUrl = post.coverImageUrl ?: videoThumbnail,
             commentCount = post.commentCount,
             feeRequired = post.feeRequired,
             isRestricted = post.isRestricted,
@@ -202,7 +211,7 @@ internal class FanboxPostMapper(
                 val video = body.video ?: return@mapLegacyBody null
                 val serviceProvider = video.serviceProvider ?: return@mapLegacyBody null
                 val videoId = video.videoId ?: video.contentId ?: return@mapLegacyBody null
-                Body.Video(serviceProvider, videoId)
+                Body.Video(serviceProvider, videoId, body.text)
             }
 
             "entry" -> mapLegacyBody(post) { body ->
