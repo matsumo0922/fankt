@@ -174,9 +174,13 @@ data class FanboxPostDetail(
         @Serializable
         data class Text(val text: String) : Body
 
-        /** 配信サービスと動画 ID を持つ投稿本文。 */
+        /** 配信サービスと動画 ID、動画に添えた本文 [text] を持つ投稿本文。 */
         @Serializable
-        data class Video(val serviceProvider: String, val videoId: String) : Body {
+        data class Video(
+            val serviceProvider: String,
+            val videoId: String,
+            val text: String? = null,
+        ) : Body {
             val url: String?
                 get() = when (serviceProvider) {
                     "youtube" -> "https://www.youtube.com/watch?v=$videoId"
