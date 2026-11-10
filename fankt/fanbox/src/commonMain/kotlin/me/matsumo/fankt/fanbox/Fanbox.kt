@@ -390,12 +390,20 @@ class Fanbox internal constructor(
     /** @throws FanboxException when the FANBOX request or response decoding fails. */
     suspend fun getCreatorTags(creatorId: FanboxCreatorId): List<FanboxTag> = creator.getCreatorTags(creatorId)
 
-    /** @throws FanboxException when the FANBOX request fails. */
+    /**
+     * Follows the creator. Succeeds when the creator is already followed, for example from another device.
+     *
+     * @throws FanboxException when the FANBOX request fails.
+     */
     suspend fun followCreator(userId: FanboxUserId) {
         creator.followCreator(userId)
     }
 
-    /** @throws FanboxException when the FANBOX request fails. */
+    /**
+     * Unfollows the creator. Succeeds when the creator is already unfollowed, for example from another device.
+     *
+     * @throws FanboxException when the FANBOX request fails.
+     */
     suspend fun unfollowCreator(userId: FanboxUserId) {
         creator.unfollowCreator(userId)
     }

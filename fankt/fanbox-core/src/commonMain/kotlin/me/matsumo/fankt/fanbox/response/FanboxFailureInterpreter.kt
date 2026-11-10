@@ -1,5 +1,10 @@
 package me.matsumo.fankt.fanbox.response
 
+import kotlinx.serialization.SerializationException
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.contentOrNull
 import me.matsumo.fankt.fanbox.FanboxException
 import me.matsumo.fankt.fanbox.InternalFanboxApi
 import kotlin.time.Duration
@@ -68,6 +73,21 @@ public object FanboxFailureInterpreter {
     )
 
     fun network(endpoint: String, cause: Throwable): FanboxException.Network = FanboxException.Network(endpoint, cause)
+
+    /** FANBOX のエラー応答 `{"error": ..., "body": {"type": ...}}` から `body.type` を返す。この形で読めない場合は `null` を返す。 */
+    fun failureType(rawBody: String?): String? {
+        if (rawBody == null) return null
+
+        val root = try {
+            Json.parseToJsonElement(rawBody)
+        } catch (_: SerializationException) {
+            // JSON でない応答や、診断用に切り詰められた応答は、種類の分からない失敗として扱う
+            return null
+        }
+        val body = (root as? JsonObject)?.get("body") as? JsonObject
+
+        return (body?.get("type") as? JsonPrimitive)?.contentOrNull
+    }
 
     fun parseRetryAfter(value: String?, nowEpochMilliseconds: Long): Duration? {
         if (value == null) return null
