@@ -71,6 +71,29 @@ class FanboxSignedBundleTest {
     }
 
     @Test
+    fun theManifestMetadataReachesTheHost(): Unit = runBlocking {
+        withBundleFixture {
+            val loaded = loadGuest(signedBundle(FIXED_BUNDLE_DIRECTORY))
+            val loadedWithoutMetadata = loadGuest(signedBundle(FIXED_BUNDLE_DIRECTORY, metadata = emptyMap()))
+
+            assertIs<GuestParseResult.Success<*>>(loaded.parseAndClose())
+            assertEquals(setOf("newPostCheck.enabled", "newPostCheck.intervalHours"), loaded.metadata.keys)
+            // A bundle built before metadata existed still loads, and reports none.
+            assertIs<GuestParseResult.Success<*>>(loadedWithoutMetadata.parseAndClose())
+            assertEquals(emptyMap(), loadedWithoutMetadata.metadata)
+        }
+    }
+
+    @Test
+    fun tamperedMetadataIsRefused(): Unit = runBlocking {
+        withBundleFixture {
+            val remote = signedBundle(FIXED_BUNDLE_DIRECTORY, tamperMetadata = true)
+
+            assertFailsWith<IllegalStateException> { loadGuest(remote) }
+        }
+    }
+
+    @Test
     fun unknownSigningKeyIsRefused(): Unit = runBlocking {
         withBundleFixture {
             val remote = signedBundle(FIXED_BUNDLE_DIRECTORY, signingKeyName = "unknown")
@@ -179,6 +202,8 @@ class FanboxSignedBundleTest {
             tamperSignature: Boolean = false,
             keyPair: KeyPair = this.keyPair,
             version: String? = null,
+            metadata: Map<String, String>? = null,
+            tamperMetadata: Boolean = false,
         ): SignedBundle {
             val sourceDirectory = findBundleDirectory(sourceDirectoryName)
             val unsignedManifest = ZiplineManifest.decodeJson(
@@ -187,7 +212,16 @@ class FanboxSignedBundleTest {
             var manifest = Builder()
                 .addEd25519(signingKeyName, keyPair.privateKey)
                 .build()
-                .sign(unsignedManifest.copy(freshAtEpochMs = 0L, version = version))
+                .sign(
+                    unsignedManifest.copy(
+                        freshAtEpochMs = 0L,
+                        version = version,
+                        metadata = metadata ?: unsignedManifest.metadata,
+                    ),
+                )
+            if (tamperMetadata) {
+                manifest = manifest.copy(metadata = manifest.metadata + ("newPostCheck.enabled" to "false"))
+            }
             if (tamperSignature) {
                 manifest = manifest.copy(
                     // Hex decoding ignores case, so the replacement digit must differ in value.

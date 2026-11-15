@@ -98,13 +98,16 @@ internal class FanboxGuestHost(
             throw failure
         } catch (failure: Throwable) {
             report("load", failure.describe(), FanboxGuestEvent.LoadFailed(failure.errorType()))
-            return@async RealFanboxGuestService()
+            return@async ActiveGuest(service = RealFanboxGuestService(), metadata = emptyMap())
         }
 
         loaded = guest
         emit(FanboxGuestEvent.Loaded(version = guest.version, isFromCache = guest.isFromCache))
-        guest.service
+        ActiveGuest(service = guest.service, metadata = guest.metadata)
     }
+
+    /** ロードした guest の manifest の metadata を、ロードの完了を待って返す。組み込みの guest で動いているときは空である。 */
+    suspend fun metadata(): Map<String, String> = loading.await().metadata
 
     /** guest で request を組み立てて実行し、その response を guest で解析する。 */
     suspend fun <T> request(
@@ -169,7 +172,7 @@ internal class FanboxGuestHost(
         block: FanboxGuestService.() -> T,
     ): T {
         val service = try {
-            loading.await()
+            loading.await().service
         } catch (failure: CancellationException) {
             throw failure
         } catch (failure: Throwable) {
@@ -226,11 +229,18 @@ internal class FanboxGuestHost(
     }
 }
 
-/** ロード済みの guest service と、その Zipline・bundle のバージョン、キャッシュからロードしたか。 */
+/** 呼び出しに使う guest service と、その manifest の metadata。 */
+private class ActiveGuest(
+    val service: FanboxGuestService,
+    val metadata: Map<String, String>,
+)
+
+/** ロード済みの guest service と、その Zipline・bundle のバージョン・manifest の metadata、キャッシュからロードしたか。 */
 internal data class LoadedGuest(
     val service: FanboxGuestService,
     val zipline: Zipline? = null,
     val version: String? = null,
+    val metadata: Map<String, String> = emptyMap(),
     val isFromCache: Boolean = false,
 )
 
@@ -310,6 +320,7 @@ private suspend fun ZiplineLoader.loadGuestOnce(
                 service = result.zipline.take(FANBOX_GUEST_SERVICE_NAME),
                 zipline = result.zipline,
                 version = result.manifest.version,
+                metadata = result.manifest.metadata,
             )
 
             is LoadResult.Failure -> throw result.exception
