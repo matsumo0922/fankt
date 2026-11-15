@@ -1,4 +1,5 @@
 import app.cash.zipline.loader.SignatureAlgorithmId
+import java.util.Properties
 
 plugins {
     id("matsumo.primitive.kmp.common")
@@ -10,6 +11,16 @@ zipline {
     mainFunction.set("me.matsumo.fankt.fanbox.guest.launchZipline")
     // The delivery workflow passes the commit it builds, which consumers receive when the guest loads.
     version.set(providers.gradleProperty("fanboxZiplineVersion"))
+    // Values for host applications, which they read from the signed manifest. See the README.
+    metadata.putAll(
+        providers
+            .fileContents(layout.projectDirectory.file("host-metadata.properties"))
+            .asText
+            .map { text ->
+                val properties = Properties().apply { load(text.reader()) }
+                properties.stringPropertyNames().associateWith(properties::getProperty).toSortedMap()
+            },
+    )
 
     // The delivery workflow passes the key from a repository secret. Local builds and pull request
     // CI have no secret, and they build an unsigned manifest rather than failing: the loader

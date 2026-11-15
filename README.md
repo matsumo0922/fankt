@@ -146,6 +146,42 @@ they are updated.
 Builds without the signing key produce an unsigned manifest instead of failing, so that local builds
 and pull request CI pass. Neither workflow publishes such a manifest.
 
+#### Host metadata
+
+The manifest carries string values for the host application in its `metadata`, so that an
+application can change its own behavior through a bundle delivery instead of an update. The
+signature covers them like the rest of the manifest. `Fanbox.getGuestMetadata()` returns them once
+the guest loads:
+
+| The `Fanbox` runs | `getGuestMetadata()` returns |
+|---|---|
+| a delivered guest | the metadata of the delivered manifest |
+| the cached guest, because the delivery URL failed | the metadata of the cached manifest |
+| the built-in guest | an empty map |
+
+The library passes the strings through unchanged. The host application converts them, and decides
+what a missing or malformed value means. A bundle built without metadata returns an empty map, and a
+host that never calls `getGuestMetadata()` ignores it, so adding, changing or removing a key does not
+touch the bridge API version.
+
+The values live in `fankt/fanbox-guest/host-metadata.properties`:
+
+| Key | Value | Read by |
+|---|---|---|
+| `newPostCheck.enabled` | `true` or `false` | PixiView, whether the background check for new posts runs |
+| `newPostCheck.intervalHours` | a positive integer | PixiView, the hours between background checks for new posts |
+
+To change a value:
+
+1. Edit `host-metadata.properties` in a pull request, and merge it to `main`.
+2. **Deploy Guest Bundle** publishes the bundle with the new value to the dev channel. Check
+   `metadata` in `https://matsumo0922.github.io/fankt/zipline/v1-dev/manifest.zipline.json`.
+3. Run **Promote Guest Bundle**. Each `Fanbox` created after this reads the new value when it loads
+   the guest; a `Fanbox` that already loaded keeps the value it read.
+
+The value travels with the bundle: promoting delivers the value that was on `main` when the dev
+channel was last published, and rolling back a delivery restores the value of the bundle it restores.
+
 #### Signing keys
 
 Two key pairs are in use. `./gradlew :fankt:fanbox-guest:generateZiplineManifestKeyPairEd25519` prints a

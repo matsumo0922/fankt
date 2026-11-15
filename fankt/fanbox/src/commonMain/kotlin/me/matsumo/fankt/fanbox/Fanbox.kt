@@ -208,6 +208,19 @@ class Fanbox internal constructor(
         }
     }
 
+    /**
+     * Returns the `metadata` of the loaded guest's manifest, waiting for the guest to load.
+     *
+     * The bundle carries values for the host application, such as switches it changes without an
+     * application update, and the manifest signature covers them. The map is empty while this
+     * instance uses the built-in guest, and for a bundle built without metadata. Interpreting the
+     * strings, including the default for a missing or malformed value, is left to the caller.
+     */
+    suspend fun getGuestMetadata(): Map<String, String> {
+        ensureOpen()
+        return resources.guestHost.metadata()
+    }
+
     /** Replaces the FANBOX session Cookie and then clears the injected CSRF token on success. */
     suspend fun setFanboxSessionId(sessionId: String) {
         ensureOpen()

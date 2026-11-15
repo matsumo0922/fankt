@@ -102,6 +102,16 @@ class FanboxGuestHostTest {
     }
 
     @Test
+    fun theMetadataIsEmptyOnlyWhileTheBuiltInGuestRuns() = runBlocking {
+        val metadata = mapOf("newPostCheck.enabled" to "false")
+        val delivered = GuestFixture(parse = { _, _ -> error("unused") }, metadata = metadata)
+        val builtIn = GuestFixture(parse = { _, _ -> error("unused") }, beforeLoad = { error("manifest unreachable") })
+
+        delivered.use { assertEquals(metadata, it.metadata()) }
+        builtIn.use { assertEquals(emptyMap(), it.metadata()) }
+    }
+
+    @Test
     fun cancellationIsNotTreatedAsAGuestFailure() = runBlocking {
         val fixture = GuestFixture(parse = { _, _ -> throw CancellationException("caller went away") })
 
@@ -116,6 +126,7 @@ class FanboxGuestHostTest {
         parse: (String, Int) -> GuestParseResult<FanboxPostDetail>,
         buildRequest: (String) -> RequestDescriptor = RealFanboxGuestService()::buildPostDetailRequest,
         beforeLoad: suspend () -> Unit = {},
+        metadata: Map<String, String> = emptyMap(),
     ) : AutoCloseable {
         val requests = mutableListOf<RequestDescriptor>()
         val diagnostics = mutableListOf<String>()
@@ -130,7 +141,7 @@ class FanboxGuestHostTest {
             eventListener = { event -> events += event },
         ) {
             beforeLoad()
-            LoadedGuest(StubGuestService(buildRequest, parse))
+            LoadedGuest(service = StubGuestService(buildRequest, parse), metadata = metadata)
         }
 
         // Unconfined, so that a call reaches the host without first waiting for another thread.
@@ -141,6 +152,8 @@ class FanboxGuestHostTest {
         )
 
         suspend fun getPostDetail(): FanboxPostDetail = repository.getPostDetail(FanboxPostId("10000001"))
+
+        suspend fun metadata(): Map<String, String> = host.metadata()
 
         override fun close() = host.close()
     }
