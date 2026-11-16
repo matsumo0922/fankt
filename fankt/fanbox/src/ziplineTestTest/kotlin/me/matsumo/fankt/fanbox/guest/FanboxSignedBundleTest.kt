@@ -77,7 +77,7 @@ class FanboxSignedBundleTest {
             val loadedWithoutMetadata = loadGuest(signedBundle(FIXED_BUNDLE_DIRECTORY, metadata = emptyMap()))
 
             assertIs<GuestParseResult.Success<*>>(loaded.parseAndClose())
-            assertEquals(setOf("newPostCheck.enabled", "newPostCheck.intervalHours"), loaded.metadata.keys)
+            assertEquals(setOf("newPostCheck.enabled", "newPostCheck.intervalHours", "newMessageCheck.enabled"), loaded.metadata.keys)
             // A bundle built before metadata existed still loads, and reports none.
             assertIs<GuestParseResult.Success<*>>(loadedWithoutMetadata.parseAndClose())
             assertEquals(emptyMap(), loadedWithoutMetadata.metadata)
