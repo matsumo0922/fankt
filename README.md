@@ -168,8 +168,9 @@ The values live in `fankt/fanbox-guest/host-metadata.properties`:
 
 | Key | Value | Read by |
 |---|---|---|
-| `newPostCheck.enabled` | `true` or `false` | PixiView, whether the background check for new posts runs |
-| `newPostCheck.intervalHours` | a positive integer | PixiView, the hours between background checks for new posts |
+| `newContentCheck.intervalHours` | a positive integer | PixiView, the hours between background checks for new content (new posts and new messages) |
+| `newPostCheck.enabled` | `true` or `false` | PixiView, whether the background check looks for new posts |
+| `newMessageCheck.enabled` | `true` or `false` | PixiView, whether the background check looks for new messages |
 
 To change a value:
 
